@@ -1,0 +1,22 @@
+.navbar{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 3%;
+    background-color:#F1F8E8;
+}
+
+
+
+
+
+.navbar .logo {
+  width: clamp(100px, 20vw, 200px);
+  height: auto;
+  cursor: pointer;
+}
+.navbar .profile{
+    cursor: pointer;
+    width: 55px;
+}
+
