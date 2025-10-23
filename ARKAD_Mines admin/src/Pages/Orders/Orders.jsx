@@ -5,10 +5,14 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 import { FiPackage, FiCheckCircle, FiXCircle, FiClock, FiDollarSign, FiUser, FiMapPin, FiPhone, FiCalendar, FiTruck } from 'react-icons/fi';
 const Orders = () => {
+  //state to store all orders fetched from the backend
   const [orders, setOrders] = useState([]);
+  //loading state to show spinner while data is being fetched
   const [loading, setLoading] = useState(true);
+  //state to track which order is currently expanded to show details
   const [expandedOrder, setExpandedOrder] = useState(null);
 
+ //array of possible order statuses with their display labels and icons
  const statusOptions = [
   { value: 'Food Processing', label: 'Processing', icon: <FiClock className="status-icon processing" /> },
   { value: 'Out for Delivery', label: 'Out for Delivery', icon: <FiTruck className="status-icon out-for-delivery" /> },
@@ -16,6 +20,7 @@ const Orders = () => {
   { value: 'Cancelled', label: 'Cancelled', icon: <FiXCircle className="status-icon cancelled" /> }
 ];
 
+  //function to fetch all orders from the backend API
   const fetchAllOrders = async () => {
     try {
       setLoading(true);
@@ -33,6 +38,7 @@ const Orders = () => {
     }
   };
 
+  //function to update the status of a specific order
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const response = await axios.put(`http://localhost:4000/api/order/update-status/${orderId}`, {
@@ -41,6 +47,7 @@ const Orders = () => {
       
       if (response.data.success) {
         toast.success(`Order status updated to ${newStatus}`);
+        //refresh the orders list to show updated status
         fetchAllOrders();
       } else {
         toast.error("Failed to update order status");
@@ -51,19 +58,23 @@ const Orders = () => {
     }
   };
 
+  //toggles the expanded view for a specific order - if same order clicked again, collapses it
   const toggleOrderExpand = (orderId) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
 
+  //formats date string into more readable format
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  //fetch orders when component first loads
   useEffect(() => {
     fetchAllOrders();
   }, []);
 
+  //show loading spinner while data is being fetched
   if (loading) {
     return (
       <div className="loading-container">
@@ -80,6 +91,7 @@ const Orders = () => {
         <p>Manage and track all customer orders</p>
       </div>
 
+      {/*statistics cards showing order counts and revenue*/}
       <div className="orders-stats">
         <div className="stat-card">
           <div className="stat-icon total">
@@ -125,6 +137,7 @@ const Orders = () => {
           </div>
           <div className="stat-info">
              <h3>
+      {/*calculate total revenue from delivered orders only*/}
       ${orders.reduce((sum, order) => {
         return order.status === "Delivered" ? sum + order.amount : sum;
       }, 0)}
@@ -134,6 +147,7 @@ const Orders = () => {
         </div>
       </div>
 
+      {/*main orders table*/}
       <div className="orders-table-container">
         <div className="table-responsive">
           <table className="orders-table">
@@ -149,6 +163,7 @@ const Orders = () => {
               </tr>
             </thead>
             <tbody>
+              {/*show empty state if no orders exist*/}
               {orders.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="no-orders">
@@ -159,6 +174,7 @@ const Orders = () => {
                   </td>
                 </tr>
               ) : (
+                //map through all orders and render each as a table row
                 orders.map(order => (
                   <React.Fragment key={order._id}>
                     <tr className="order-row" onClick={() => toggleOrderExpand(order._id)}>
@@ -187,6 +203,7 @@ const Orders = () => {
                         </button>
                       </td>
                     </tr>
+                    {/*expanded details section that shows when order is clicked*/}
                     {expandedOrder === order._id && (
                       <tr className="order-details-row">
                         <td colSpan="7">

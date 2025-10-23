@@ -4,18 +4,23 @@ import bcrypt from "bcrypt";
 import validator from "validator";
 
 
+//creates JWT token containing user ID and role - used for maintaining authenticated sessions
+//the token expires after 7 days, requiring users to log in again for security
 const createToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
 
+//handles the user login process - validates credentials and returns auth token
 const loginUser = async (req, res) => {
+  //extract email and password from the request body sent by frontend
   const { email, password } = req.body;
 
   try 
   {
-
+    //search database for user with the provided email address
     const user = await userModel.findOne({ email });
+    //if no user found, return a json response 401 Unauthorized with helpful message
     if (!user) {
       return res.status(401).json({ 
         success: false, 
@@ -23,7 +28,10 @@ const loginUser = async (req, res) => {
       });
     }
 
+    //compare the provided password with the hashed password stored in database
+    //bcrypt.compare handles the hashing and comparison securely
     const isMatch = await bcrypt.compare(password, user.password);
+    //if passwords don't match, return 401 Unauthorized
     if (!isMatch) {
       return res.status(401).json({ 
         success: false, 
@@ -31,7 +39,9 @@ const loginUser = async (req, res) => {
       });
     }
 
+    //if credentials are valid, generate JWT token for this user session
     const token = createToken(user._id, user.role);
+    //return success response with token and user data to frontend
     res.json({ 
   success: true, 
   token,
@@ -44,7 +54,9 @@ const loginUser = async (req, res) => {
 });
 
   } catch (error) {
+    //log the actual error for debugging but don't expose details to client
     console.error("Login error:", error);
+    //return 500 Internal Server Error with generic message
     res.status(500).json({ 
       success: false, 
       message: "Server error during authentication" 
@@ -53,19 +65,23 @@ const loginUser = async (req, res) => {
 };
 
 
+//handles new user registration - validates input and creates new user account
 const registerUser = async (req, res) => {
+  //extract all required fields from request body
   const { companyName, email, password, role } = req.body;
 
   try {
-
+    //check if a user already exists with this email to prevent duplicates
     const exists = await userModel.findOne({ email });
     if (exists) {
+      //return 409 Conflict status if email already registered
       return res.status(409).json({ 
         success: false, 
         message: "A business account with this email already exists." 
       });
     }
 
+    //validate that the email format is correct using validator library
     if (!validator.isEmail(email)) {
       return res.status(400).json({ 
         success: false, 
@@ -73,6 +89,7 @@ const registerUser = async (req, res) => {
       });
     }
 
+    //enforce minimum password length requirement for security
     if (password.length < 8) {
       return res.status(400).json({
         success: false,
@@ -80,6 +97,7 @@ const registerUser = async (req, res) => {
       });
     }
 
+    //validate that company name is provided and has reasonable length
     if (!companyName || companyName.trim().length < 2) {
       return res.status(400).json({
         success: false,
@@ -87,21 +105,27 @@ const registerUser = async (req, res) => {
       });
     }
 
+    //generate salt for password hashing - higher cost factor means more secure but slower
     const salt = await bcrypt.genSalt(10);
+    //hash the plain text password before storing to database
     const hashedPassword = await bcrypt.hash(password, salt);
 
+   //create new user object with validated and processed data
    const newUser = new userModel({ 
-    companyName: companyName.trim(),
-    email: email.toLowerCase().trim(),
-    password: hashedPassword,
-    role: role || "customer"
+    companyName: companyName.trim(), //remove extra whitespace
+    email: email.toLowerCase().trim(), //normalize email to lowercase
+    password: hashedPassword, //store only the hashed password, never plain text
+    role: role || "customer" //default to customer role if not specified
     });
 
 
+    //save the new user to MongoDB database
     const user = await newUser.save();
 
+    //generate JWT token immediately so user is logged in after registration
     const token = createToken(user._id, user.role);
 
+    //return success response with token and user data
     res.json({ 
   success: true, 
   token,
@@ -114,7 +138,9 @@ const registerUser = async (req, res) => {
 });
 
   } catch (error) {
+    //log detailed error for server-side debugging
     console.error("Registration error:", error);
+    //return generic error message to client for security
     res.status(500).json({ 
       success: false, 
       message: "Server error during account creation" 
