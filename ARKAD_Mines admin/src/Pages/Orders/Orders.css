@@ -1,6 +1,6 @@
 
 :root {
-  --primary-color: #82ad3d;
+  --primary-color: #536438;
   --secondary-color: #f8f9fa;
   --success-color: #28a745;
   --danger-color: #dc3545;
@@ -23,7 +23,7 @@
 }
 
 body {
-  background-color: #f3ffdd;
+  background-color: #f4f3f3;
   color: var(--text-color);
 }
 

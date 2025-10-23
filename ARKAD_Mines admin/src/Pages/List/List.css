@@ -1,7 +1,7 @@
 .list {
   width: 100%;
   padding: 2rem;
-  background-color: #F1F8E8;
+  background-color: #f4f3f3;
   min-height: 100vh;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -15,7 +15,7 @@
 
 .list-table {
   width: 100%;
-  background-color: #f1ffdd;
+  background-color: #ffffff;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -31,11 +31,11 @@
 }
 
 .list-table-format:hover {
-  background-color: #ffffff;
+  background-color: #2a481c;
 }
 
 .list-table-format.title {
-  background-color: #bada87;
+  background-color: #526d2e;
   color: white;
   font-weight: 700;
   text-transform: uppercase;

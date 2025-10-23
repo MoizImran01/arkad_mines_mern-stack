@@ -2,7 +2,7 @@
   display: flex;
   justify-content: center;
   padding: 40px 20px;
-  background: #f5ffde;
+  background-color: #f4f3f3;
   min-height: 100vh;
   width: 100%;
 }
@@ -97,7 +97,7 @@ form {
 }
 
 .add-product-btn {
-  background: #209435;
+  background: #6d8a4b;
   color: white;
   font-weight: 600;
   font-size: 16px;
@@ -111,7 +111,7 @@ form {
 }
 
 .add-product-btn:hover {
-  background: #345e41;
+  background: #3f592d;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(44, 62, 80, 0.3);
 }
