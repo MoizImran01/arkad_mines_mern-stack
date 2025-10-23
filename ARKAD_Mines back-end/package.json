@@ -2,9 +2,9 @@
   "name": "arkad_mines-back-end",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
+  "main": "api/index.js",
   "scripts": {
-    "server": "nodemon server.js"
+    "server": "nodemon api/index.js"
   },
   "keywords": [],
   "author": "",
