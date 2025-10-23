@@ -12,7 +12,8 @@ const createToken = (id, role) => {
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
-  try {
+  try 
+  {
 
     const user = await userModel.findOne({ email });
     if (!user) {
