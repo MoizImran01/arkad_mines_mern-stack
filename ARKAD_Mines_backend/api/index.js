@@ -7,7 +7,7 @@ import userRouter from "../Routes/userRouter.js";
 //load environment variables from config file
 dotenv.config({ path: './config.env' });
 const app = express();
-
+const port = 4000;
 
 //middleware to parse JSON request bodies
 app.use(express.json());
