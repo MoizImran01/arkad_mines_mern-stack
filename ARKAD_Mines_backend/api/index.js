@@ -26,3 +26,5 @@ app.get("/", (req, res) => {
 });
 
 //start the server and listen on specified port
+
+export default app;
