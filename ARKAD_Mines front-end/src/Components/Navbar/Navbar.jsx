@@ -6,22 +6,29 @@ import { Link, useNavigate } from 'react-router-dom';
 import { StoreContext } from '../../context/StoreContext';
 import { assets } from '../../assets/assets.js';
 
+//main navbar component with authentication state and mobile menu
 const Navbar = ({ setShowLogin }) => {
+  //state for mobile menu toggle
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  //tracks which nav item is currently active
   const [menu, setMenu] = useState("home");
+  //authentication token from global context
   const { token, setToken } = useContext(StoreContext);
   const navigate = useNavigate();
 
+  //toggles mobile menu open/close state
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  //handles user logout by clearing token and redirecting
   const logout = () => {
     localStorage.removeItem("token");
     setToken("");
     navigate("/");
   };
 
+  //sets active menu item and closes mobile menu on selection
   const handleNavClick = (section) => {
     setMenu(section);
     setIsMenuOpen(false); 
@@ -73,8 +80,6 @@ const Navbar = ({ setShowLogin }) => {
         </Link>
       </nav>
 
-   
-
       <div className="navbar-actions">
             <button 
           className="btn-primary" 
@@ -86,11 +91,14 @@ const Navbar = ({ setShowLogin }) => {
           Get Started
         </button>
 
+        {/*conditional rendering based on auth state*/}
         {!token ? (
+          //show login button if not authenticated
           <button className="btn-secondary" onClick={() => setShowLogin(true)}>
             Client Login
           </button>
         ) : (
+          //show user profile dropdown if authenticated
           <div className='nav-profile'>
             <img src={assets.profile_icon} alt="Profile" className="profile-img" />
             <ul className="nav-dropdown">
@@ -111,6 +119,7 @@ const Navbar = ({ setShowLogin }) => {
           </div>
         )}
 
+        {/*mobile hamburger menu button*/}
         <button 
           className="nav-toggle" 
           onClick={toggleMenu}
