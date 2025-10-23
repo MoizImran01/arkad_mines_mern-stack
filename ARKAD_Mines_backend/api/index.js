@@ -16,7 +16,7 @@ app.use(cors());
 
 
 //connect to MongoDB database
-await connectDB();
+connectDB();
 //mount user routes at /api/user endpoint
 app.use("/api/user", userRouter);
 
@@ -26,5 +26,6 @@ app.get("/", (req, res) => {
 });
 
 //start the server and listen on specified port
-
-export default app;
+app.listen(port, () => {
+    console.log(`Server running on port: ${port}`);
+});
