@@ -2,7 +2,8 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv"; 
 import { connectDB } from "../config/db.js";
-import userRouter from "../Routes/userRouter.js";
+import userRouter from "../Routes/UserRoutes/userRouter.js";
+import adminRouter from "../Routes/AdminRoutes/AdminRouter.js";
 
 //load environment variables from config file
 dotenv.config({ path: './config.env' });
@@ -19,7 +20,7 @@ app.use(cors());
 connectDB();
 //mount user routes at /api/user endpoint
 app.use("/api/user", userRouter);
-
+app.use("/api",adminRouter);
 //basic check route to verify API is running
 app.get("/", (req, res) => {
     res.send("API Working");
