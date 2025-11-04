@@ -13,7 +13,7 @@ const [list, setList] = useState([]);
 const fetchList = async ()=>{
     try{
     //make GET request to fetch all food items
-    const response = await axios.get("http://localhost:4000/api/food/list");
+    const response = await axios.get("http://localhost:4000/api/stones/list");
     //check if the request was successful
     if(response.data.success)
     {

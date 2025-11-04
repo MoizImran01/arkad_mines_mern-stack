@@ -5,79 +5,59 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 export const AddProduct = () => {
-  //state for image preview URL to show selected image before upload
   const [imagePreview, setImagePreview] = useState(null);
-  //state to hold the actual image file for form submission
   const [imageFile, setImageFile] = useState(null);
-  //state object to manage all product form fields
+
   const [productDetails, setProductDetails] = useState({
     name: "",
-    description: "",
+    dimensions: "",
     category: "granite",
+    subcategory: "top_stripe",
     price: ""
   });
 
-  //handles image file selection and creates preview URL
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      //create temporary URL for image preview
       setImagePreview(URL.createObjectURL(file));
-      //store the actual file for later upload
       setImageFile(file);
     }
   };
 
-  //handles changes to text inputs, selects, and textareas
   const handleDetailChange = (event) => {
     const { name, value } = event.target;
-    //update specific field in productDetails while preserving others
     setProductDetails(prevDetails => ({ ...prevDetails, [name]: value }));
   };
 
-  //handles form submission - sends product data to backend API
   const onSubmitHandler = async (event) => {
-    //prevent default form submission which would reload the page
     event.preventDefault();
-    //create FormData object to handle file upload with other form fields
     const formData = new FormData();
     formData.append("name", productDetails.name);
-    formData.append("description", productDetails.description);
-    //convert price string to number for backend processing
+    formData.append("dimensions", productDetails.dimensions);
     formData.append("price", Number(productDetails.price));
     formData.append("category", productDetails.category);
-    //append the actual image file for upload
+    formData.append("subcategory", productDetails.subcategory);
     formData.append("image", imageFile);
-    try{
-        //send POST request to backend product creation endpoint
-        const response = await axios.post("http://localhost:4000/api/products/add",formData);
-        //check if backend successfully created the product
-        if(response.data.success)
-        {
-            //reset form to initial state after successful submission
-            setProductDetails({
-            name: "",
-            description: "",
-            category: "granite",
-            price: ""
-        })
-        //clear image states
-        setImageFile(null)
-        setImagePreview(null)
-        //show success notification to user
-        toast.success(response.data.message)
-        }
-        else{
-            //show error message from backend response
-            toast.error(response.data.message)
-        }
-    }
-    catch(error)
-    {
-        //log full error for debugging
-        console.log("Error adding product", error)
-        //show user-friendly error message
-        toast.error("Failed to add product")
+
+    try {
+      const response = await axios.post("http://localhost:4000/api/stones/add", formData);
+      if (response.data.success) {
+        setProductDetails({
+          name: "",
+          dimensions: "",
+          category: "granite",
+          subcategory: "top_stripe",
+          price: ""
+        });
+        setImageFile(null);
+        setImagePreview(null);
+        toast.success(response.data.message);
+      } else {
+        toast.error(response.data.message);
+      }
+    } catch (error) {
+      console.error("Error adding stone:", error);
+      toast.error("Failed to add stone");
     }
   };
 
@@ -85,9 +65,9 @@ export const AddProduct = () => {
     <div className='add-product'>
       <form className="flex-col" onSubmit={onSubmitHandler}>
         <div className="add-img-upload flex-col">
-          <p className='upload-image'>Upload Product Image</p>
+          <p className='upload-image'>Upload Stone Image</p>
           <label htmlFor="image">
-            <img src={imagePreview || assets.upload_area} alt="Product preview" />
+            <img src={imagePreview || assets.upload_area} alt="Stone preview" />
           </label>
           <input
             type="file"
@@ -100,43 +80,60 @@ export const AddProduct = () => {
         </div>
 
         <div className="add-product-name flex-col">
-          <p>Material Name</p>
+          <p>Stone Name</p>
           <input
             type='text'
             name='name'
-            placeholder='e.g., Premium White Marble Slab'
+            placeholder='e.g., Premium White Marble'
             onChange={handleDetailChange}
             value={productDetails.name}
           />
         </div>
 
-        <div className="add-product-description flex-col">
-          <p>Material Description</p>
-          <textarea
-            name='description'
-            rows="6"
-            placeholder='Describe the material specifications, grade, typical applications...'
-            value={productDetails.description}
+        <div className="add-product-dimensions flex-col">
+          <p>Stone Dimensions</p>
+          <input
+            type='text'
+            name='dimensions'
+            placeholder='e.g., 60x40 cm'
             onChange={handleDetailChange}
+            value={productDetails.dimensions}
           />
         </div>
 
         <div className="add-category-price">
           <div className="add-category flex-col">
-            <p>Material Category</p>
+            <p>Category</p>
             <select
               name='category'
               onChange={handleDetailChange}
               value={productDetails.category}
             >
-              <option value="granite">Granite</option>
-              <option value="marble">Marble</option>
-              <option value="limestone">Limestone</option>
-              <option value="crushed_stone">Crushed Stone</option>
-              <option value="quartzite">Quartzite</option>
-              <option value="industrial_sand">Industrial Sand</option>
-              <option value="sandstone">Sandstone</option>
-              <option value="slate">Slate</option>
+             <option value="granite">Chatral White</option> 
+             <option value="marble">Cheeta White</option> 
+             <option value="limestone">Pradeso</option> 
+             <option value="crushed_stone">Tiger Gray</option> 
+             <option value="quartzite">Imperial White</option> 
+             <option value="industrial_sand">Fantasy</option> 
+             <option value="sandstone">Sado Pink</option> 
+             <option value="slate">Jebrana</option> 
+             <option value="industrial_sand">Gray</option>
+            <option value="sandstone">Black</option>
+              <option value="slate">Sado Gray</option>
+            </select>
+          </div>
+
+          <div className="add-subcategory flex-col">
+            <p>Subcategory</p>
+            <select
+              name='subcategory'
+              onChange={handleDetailChange}
+              value={productDetails.subcategory}
+            >
+              <option value="top_stripe">Top Stripe</option>
+              <option value="top_plain">Top Plain</option>
+              <option value="bottom_stripe">Bottom Stripe</option>
+              <option value="bottom_plain">Bottom Plain</option>
             </select>
           </div>
 
@@ -152,7 +149,7 @@ export const AddProduct = () => {
           </div>
         </div>
 
-        <button type='submit' className='add-product-btn'>Add Product</button>
+        <button type='submit' className='add-product-btn'>Add Stone</button>
       </form>
     </div>
   );

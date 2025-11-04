@@ -4,6 +4,7 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import Navbar from './Components/Navbar/Navbar'
 import LoginPopup from './Components/LoginPopup/LoginPopup'
+import Home from './Pages/Home/Home'
 
 function App() {
 const [showLogin, setShowLogin] = useState(false);
@@ -13,7 +14,9 @@ const [showLogin, setShowLogin] = useState(false);
     {showLogin?<LoginPopup setShowLogin={setShowLogin}/>: <></>}
 
       <div>
+        
          <Navbar setShowLogin={setShowLogin}/>
+         <Home/>
       </div>
       </>
      

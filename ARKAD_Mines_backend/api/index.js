@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import { connectDB } from "../config/db.js";
 import userRouter from "../Routes/UserRoutes/userRouter.js";
 import adminRouter from "../Routes/AdminRoutes/AdminRouter.js";
+import stonesRouter from "../Routes/StonesRoutes/StonesRoutes.js";
+
 
 //load environment variables from config file
 dotenv.config({ path: './config.env' });
@@ -21,6 +23,8 @@ connectDB();
 //mount user routes at /api/user endpoint
 app.use("/api/user", userRouter);
 app.use("/api",adminRouter);
+app.use("/api/stones", stonesRouter);
+
 //basic check route to verify API is running
 app.get("/", (req, res) => {
     res.send("API Working");
