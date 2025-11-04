@@ -5,6 +5,8 @@ import './App.css'
 import Navbar from './Components/Navbar/Navbar'
 import LoginPopup from './Components/LoginPopup/LoginPopup'
 import Home from './Pages/Home/Home'
+import {Route} from 'react-router-dom'
+import { Routes } from 'react-router-dom'
 
 function App() {
 const [showLogin, setShowLogin] = useState(false);
@@ -13,11 +15,12 @@ const [showLogin, setShowLogin] = useState(false);
     <>
     {showLogin?<LoginPopup setShowLogin={setShowLogin}/>: <></>}
 
-      <div>
-        
-         <Navbar setShowLogin={setShowLogin}/>
-         <Home/>
-      </div>
+      <div className='app'>
+      <Navbar setShowLogin={setShowLogin}/>
+      <Routes>
+        <Route path='/' element={<Home/>}/>
+      </Routes>
+    </div>
       </>
      
   )

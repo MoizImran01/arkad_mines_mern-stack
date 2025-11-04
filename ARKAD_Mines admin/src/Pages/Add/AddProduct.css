@@ -58,11 +58,15 @@ form {
   background-color: #fafafa;
 }
 
+/* Input and Select Styles */
 .add-product-name input,
 .add-product-dimensions input,
 .add-category select,
 .add-subcategory select,
-.add-price input {
+.add-price input,
+.add-price-unit select,
+.add-stock-availability select,
+.add-stock-quantity input {
   padding: 12px 16px;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -76,11 +80,15 @@ form {
 .add-product-dimensions input:focus,
 .add-category select:focus,
 .add-subcategory select:focus,
-.add-price input:focus {
+.add-price input:focus,
+.add-price-unit select:focus,
+.add-stock-availability select:focus,
+.add-stock-quantity input:focus {
   border-color: #3498db;
   box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
+/* Category Price Section - OLD STYLE */
 .add-category-price {
   display: flex;
   gap: 20px;
@@ -89,11 +97,40 @@ form {
 
 .add-category,
 .add-subcategory,
-.add-price {
+.add-price,
+.add-price-unit {
   flex: 1;
   min-width: 200px;
 }
 
+/* Stock Info Section - OLD STYLE */
+.add-stock-info {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.add-stock-availability,
+.add-stock-quantity {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Labels */
+.add-product-name p,
+.add-product-dimensions p,
+.add-category p,
+.add-subcategory p,
+.add-price p,
+.add-price-unit p,
+.add-stock-availability p,
+.add-stock-quantity p {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+/* Button */
 .add-product-btn {
   background: #6d8a4b;
   color: white;
@@ -106,6 +143,7 @@ form {
   transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  margin-top: 10px;
 }
 
 .add-product-btn:hover {
@@ -118,21 +156,52 @@ form {
   transform: translateY(0);
 }
 
-@media (max-width: 600px) {
+/* Responsive Design */
+@media (max-width: 768px) {
   .add-product {
-    padding: 20px 10px;
+    padding: 20px 15px;
   }
 
   form {
     padding: 25px 20px;
   }
 
-  .add-category-price {
+  .add-category-price,
+  .add-stock-info {
     flex-direction: column;
     gap: 20px;
   }
 
+  .add-category,
+  .add-subcategory,
+  .add-price,
+  .add-price-unit,
+  .add-stock-availability,
+  .add-stock-quantity {
+    min-width: 100%;
+  }
+
   .add-img-upload label {
     max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .add-product {
+    padding: 15px 10px;
+  }
+
+  form {
+    padding: 20px 15px;
+  }
+
+  .upload-image {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+  }
+
+  .add-product-btn {
+    padding: 12px 16px;
+    font-size: 14px;
   }
 }

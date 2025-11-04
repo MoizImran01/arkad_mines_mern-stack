@@ -7,7 +7,7 @@
 }
 
 .carousel-slider {
-    margin-top: 70px;
+  margin-top: 70px; /* This should match your navbar height */
   width: 100%;
   height: auto;
 }

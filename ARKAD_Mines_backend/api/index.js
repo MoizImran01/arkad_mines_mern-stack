@@ -21,6 +21,7 @@ app.use(cors());
 //connect to MongoDB database
 connectDB();
 //mount user routes at /api/user endpoint
+app.use("/images", express.static('uploads'));
 app.use("/api/user", userRouter);
 app.use("/api",adminRouter);
 app.use("/api/stones", stonesRouter);

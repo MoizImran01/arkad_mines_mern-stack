@@ -2,7 +2,7 @@
 
 import React from 'react';
 import './Header.css';
-import ControlledCarousel from '../ControlledCarousel/ControlledCarousel'; 
+import ControlledCarousel from '../ControlledCarousel/ControlledCarousel';
 
 export const Header = () => {
   return (

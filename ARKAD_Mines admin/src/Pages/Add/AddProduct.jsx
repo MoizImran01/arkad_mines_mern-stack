@@ -9,11 +9,14 @@ export const AddProduct = () => {
   const [imageFile, setImageFile] = useState(null);
 
   const [productDetails, setProductDetails] = useState({
-    name: "",
+    stoneName: "",
     dimensions: "",
-    category: "granite",
-    subcategory: "top_stripe",
-    price: ""
+    price: "",
+    priceUnit: "per sqm",
+    category: "chatral_white",
+    subcategory: "slabs",
+    stockAvailability: "In Stock",
+    stockQuantity: ""
   });
 
   const handleImageChange = (event) => {
@@ -32,22 +35,28 @@ export const AddProduct = () => {
   const onSubmitHandler = async (event) => {
     event.preventDefault();
     const formData = new FormData();
-    formData.append("name", productDetails.name);
+    formData.append("stoneName", productDetails.stoneName);
     formData.append("dimensions", productDetails.dimensions);
     formData.append("price", Number(productDetails.price));
+    formData.append("priceUnit", productDetails.priceUnit);
     formData.append("category", productDetails.category);
     formData.append("subcategory", productDetails.subcategory);
+    formData.append("stockAvailability", productDetails.stockAvailability);
+    formData.append("stockQuantity", Number(productDetails.stockQuantity));
     formData.append("image", imageFile);
 
     try {
       const response = await axios.post("http://localhost:4000/api/stones/add", formData);
       if (response.data.success) {
         setProductDetails({
-          name: "",
+          stoneName: "",
           dimensions: "",
-          category: "granite",
-          subcategory: "top_stripe",
-          price: ""
+          price: "",
+          priceUnit: "per sqm",
+          category: "chatral_white",
+          subcategory: "slabs",
+          stockAvailability: "In Stock",
+          stockQuantity: ""
         });
         setImageFile(null);
         setImagePreview(null);
@@ -67,7 +76,7 @@ export const AddProduct = () => {
         <div className="add-img-upload flex-col">
           <p className='upload-image'>Upload Stone Image</p>
           <label htmlFor="image">
-            <img src={imagePreview || assets.upload_area} alt="Stone preview" />
+            <img src={imagePreview || assets.upload_area} alt="Upload stone product image" />
           </label>
           <input
             type="file"
@@ -83,10 +92,10 @@ export const AddProduct = () => {
           <p>Stone Name</p>
           <input
             type='text'
-            name='name'
-            placeholder='e.g., Premium White Marble'
+            name='stoneName'
+            placeholder='e.g., Premium White Marble, Absolute Black Granite'
             onChange={handleDetailChange}
-            value={productDetails.name}
+            value={productDetails.stoneName}
           />
         </div>
 
@@ -95,7 +104,7 @@ export const AddProduct = () => {
           <input
             type='text'
             name='dimensions'
-            placeholder='e.g., 60x40 cm'
+            placeholder='e.g., 3000x2000x20mm, Slabs, Blocks'
             onChange={handleDetailChange}
             value={productDetails.dimensions}
           />
@@ -103,33 +112,37 @@ export const AddProduct = () => {
 
         <div className="add-category-price">
           <div className="add-category flex-col">
-            <p>Category</p>
+            <p>Stone Category</p>
             <select
               name='category'
               onChange={handleDetailChange}
               value={productDetails.category}
             >
-             <option value="granite">Chatral White</option> 
-             <option value="marble">Cheeta White</option> 
-             <option value="limestone">Pradeso</option> 
-             <option value="crushed_stone">Tiger Gray</option> 
-             <option value="quartzite">Imperial White</option> 
-             <option value="industrial_sand">Fantasy</option> 
-             <option value="sandstone">Sado Pink</option> 
-             <option value="slate">Jebrana</option> 
-             <option value="industrial_sand">Gray</option>
-            <option value="sandstone">Black</option>
-              <option value="slate">Sado Gray</option>
+              <option value="chatral_white">Chatral White</option> 
+              <option value="cheeta_white">Cheeta White</option> 
+              <option value="pradeso">Pradeso</option> 
+              <option value="tiger_gray">Tiger Gray</option> 
+              <option value="imperial_white">Imperial White</option> 
+              <option value="fantasy">Fantasy</option> 
+              <option value="sado_pink">Sado Pink</option> 
+              <option value="jebrana">Jebrana</option> 
+              <option value="gray">Gray</option>
+              <option value="black">Black</option>
+              <option value="sado_gray">Sado Gray</option>
             </select>
           </div>
 
           <div className="add-subcategory flex-col">
-            <p>Subcategory</p>
+            <p>Product Type</p>
             <select
               name='subcategory'
               onChange={handleDetailChange}
               value={productDetails.subcategory}
             >
+              <option value="slabs">Slabs</option>
+              <option value="tiles">Tiles</option>
+              <option value="blocks">Blocks</option>
+              <option value="crushed">Crushed Stone</option>
               <option value="top_stripe">Top Stripe</option>
               <option value="top_plain">Top Plain</option>
               <option value="bottom_stripe">Bottom Stripe</option>
@@ -138,7 +151,7 @@ export const AddProduct = () => {
           </div>
 
           <div className="add-price flex-col">
-            <p>Price per Unit</p>
+            <p>Price</p>
             <input
               type='number'
               name='price'
@@ -147,9 +160,51 @@ export const AddProduct = () => {
               value={productDetails.price}
             />
           </div>
+
+          <div className="add-price-unit flex-col">
+            <p>Price Unit</p>
+            <select
+              name='priceUnit'
+              onChange={handleDetailChange}
+              value={productDetails.priceUnit}
+            >
+              <option value="per sqm">Per SQM</option>
+              <option value="per ton">Per Ton</option>
+              <option value="per slab">Per Slab</option>
+              <option value="per block">Per Block</option>
+              <option value="per cubic meter">Per Cubic Meter</option>
+            </select>
+          </div>
         </div>
 
-        <button type='submit' className='add-product-btn'>Add Stone</button>
+        <div className="add-stock-info">
+          <div className="add-stock-availability flex-col">
+            <p>Stock Status</p>
+            <select
+              name='stockAvailability'
+              onChange={handleDetailChange}
+              value={productDetails.stockAvailability}
+            >
+              <option value="In Stock">In Stock</option>
+              <option value="Low Stock">Low Stock</option>
+              <option value="Out of Stock">Out of Stock</option>
+              <option value="Pre-order">Pre-order</option>
+            </select>
+          </div>
+
+          <div className="add-stock-quantity flex-col">
+            <p>Available Quantity</p>
+            <input
+              type='number'
+              name='stockQuantity'
+              placeholder='e.g., 1000'
+              onChange={handleDetailChange}
+              value={productDetails.stockQuantity}
+            />
+          </div>
+        </div>
+
+        <button type='submit' className='add-product-btn'>Add Stone Product</button>
       </form>
     </div>
   );
