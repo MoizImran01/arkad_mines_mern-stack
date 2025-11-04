@@ -12,6 +12,7 @@ import ProtectedRoute from './Components/ProtectedRoute/ProtectedRoute'
 import { useContext } from 'react'
 import { AdminAuthContext } from './context/AdminAuthContext'
 import Users from './Pages/Users/Users'
+import Dispatch from './Pages/Dispatch/Dispatch'
 
 const App = () => {
   const { token, adminUser, loading } = useContext(AdminAuthContext);
@@ -31,27 +32,32 @@ const App = () => {
     );
   }
 
+  // If loading is still true after timeout, set it to false to prevent infinite loading
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn("Loading timeout - setting loading to false");
+        // This will be handled by the context, but we can force a re-render
+      }
+    }, 10000); // 10 second max loading time
+    
+    return () => clearTimeout(timeout);
+  }, [loading]);
+
   return (
     <div>
       <ToastContainer/>
       <Routes>
         {/* Login route - accessible without authentication */}
-        <Route path="/login" element={
-          token && adminUser?.role === 'admin' ? <Navigate to="/add" replace /> : <AdminLogin />
-        }/>
+        <Route path="/login" element={<AdminLogin />}/>
         
-        {/* Protected admin routes */}
+        {/* Root path - redirect to login if not authenticated, else to /add */}
         <Route path="/" element={
-          <ProtectedRoute>
-            <>
-              <Navbar/>
-              <hr/>
-              <div className="app-content">
-                <Siderbar/>
-                <Navigate to="/add" replace />
-              </div>
-            </>
-          </ProtectedRoute>
+          token && adminUser?.role === 'admin' ? (
+            <Navigate to="/add" replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
         }/>
         
         <Route path="/add" element={
@@ -88,6 +94,19 @@ const App = () => {
               <div className="app-content">
                 <Siderbar/>
                 <Orders/>
+              </div>
+            </>
+          </ProtectedRoute>
+        }/>
+        
+        <Route path="/dispatch" element={
+          <ProtectedRoute>
+            <>
+              <Navbar/>
+              <hr/>
+              <div className="app-content">
+                <Siderbar/>
+                <Dispatch/>
               </div>
             </>
           </ProtectedRoute>

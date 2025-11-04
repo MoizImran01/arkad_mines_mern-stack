@@ -1,5 +1,12 @@
 import stonesModel from '../../Models/stonesModel/stonesModel.js';
-import fs from 'fs'
+import fs from 'fs';
+import QRCode from 'qrcode';
+import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // add stones item to the db
 const addStones = async (req, res) => {
@@ -15,11 +22,36 @@ const addStones = async (req, res) => {
             category, 
             subcategory, 
             stockAvailability, 
-            stockQuantity 
+            stockQuantity,
+            grade 
         } = req.body;
 
+        // Generate unique QR code identifier
+        const qrCodeId = uuidv4();
+        
+        // Create QR code data containing block information
+        const qrCodeData = JSON.stringify({
+            blockId: qrCodeId,
+            stoneName: stoneName,
+            dimensions: dimensions,
+            category: category,
+            grade: grade || "Standard",
+            registeredAt: new Date().toISOString()
+        });
+
+        // Generate QR code image
+        const qrCodeFilename = `qr_${Date.now()}_${qrCodeId.substring(0, 8)}.png`;
+        const qrCodePath = path.join(__dirname, '../../uploads', qrCodeFilename);
+        
+        await QRCode.toFile(qrCodePath, qrCodeData, {
+            errorCorrectionLevel: 'H',
+            type: 'png',
+            width: 300,
+            margin: 1
+        });
+
         const stones = new stonesModel({
-            stoneName: stoneName, // Just the value, not the schema definition
+            stoneName: stoneName,
             dimensions: dimensions,
             price: Number(price),
             priceUnit: priceUnit,
@@ -27,14 +59,24 @@ const addStones = async (req, res) => {
             category: category,
             subcategory: subcategory,
             stockAvailability: stockAvailability,
-            stockQuantity: stockQuantity ? Number(stockQuantity) : undefined
+            stockQuantity: stockQuantity ? Number(stockQuantity) : undefined,
+            grade: grade || "Standard",
+            qrCode: qrCodeId,
+            qrCodeImage: qrCodeFilename,
+            status: "Registered"
         });
 
         await stones.save();
-        res.json({ success: true, message: "Stone entry added" });
+        res.json({ 
+            success: true, 
+            message: "Stone block registered successfully with QR code",
+            blockId: stones._id,
+            qrCode: qrCodeId,
+            qrCodeImage: qrCodeFilename
+        });
     } catch (error) {
         console.log("Error adding stone:", error);
-        res.json({ success: false, message: "Error adding stone" });
+        res.json({ success: false, message: "Error adding stone: " + error.message });
     }
 }
 
@@ -53,8 +95,13 @@ const listStones = async (req, res) => {
 const removeStones = async (req, res) => {
     try {
         const stones = await stonesModel.findById(req.body.id); 
-        if (stones && stones.image) {
-            fs.unlink(`uploads/${stones.image}`, () => {});
+        if (stones) {
+            if (stones.image) {
+                fs.unlink(`uploads/${stones.image}`, () => {});
+            }
+            if (stones.qrCodeImage) {
+                fs.unlink(`uploads/${stones.qrCodeImage}`, () => {});
+            }
         }
 
         await stonesModel.findByIdAndDelete(req.body.id);
@@ -65,4 +112,85 @@ const removeStones = async (req, res) => {
     }
 }
 
-export { addStones, listStones, removeStones };
+// Dispatch block by scanning QR code
+const dispatchBlock = async (req, res) => {
+    try {
+        const { qrCode } = req.body;
+
+        if (!qrCode) {
+            return res.status(400).json({
+                success: false,
+                message: "QR code is required"
+            });
+        }
+
+        // Find block by QR code
+        const block = await stonesModel.findOne({ qrCode: qrCode });
+
+        if (!block) {
+            return res.status(404).json({
+                success: false,
+                message: "Block not found with the provided QR code"
+            });
+        }
+
+        // Check if already dispatched
+        if (block.status === "Dispatched") {
+            return res.status(400).json({
+                success: false,
+                message: "This block has already been dispatched"
+            });
+        }
+
+        // Update status to Dispatched
+        block.status = "Dispatched";
+        block.stockAvailability = "Out of Stock";
+        await block.save();
+
+        res.json({
+            success: true,
+            message: "Block dispatched successfully",
+            block: {
+                id: block._id,
+                stoneName: block.stoneName,
+                dimensions: block.dimensions,
+                status: block.status
+            }
+        });
+    } catch (error) {
+        console.log("Error dispatching block:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error dispatching block: " + error.message
+        });
+    }
+}
+
+// Get block by QR code
+const getBlockByQRCode = async (req, res) => {
+    try {
+        const { qrCode } = req.params;
+
+        const block = await stonesModel.findOne({ qrCode: qrCode }).select('-__v');
+
+        if (!block) {
+            return res.status(404).json({
+                success: false,
+                message: "Block not found"
+            });
+        }
+
+        res.json({
+            success: true,
+            block: block
+        });
+    } catch (error) {
+        console.log("Error fetching block:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error fetching block: " + error.message
+        });
+    }
+}
+
+export { addStones, listStones, removeStones, dispatchBlock, getBlockByQRCode };

@@ -16,8 +16,12 @@ export const AddProduct = () => {
     category: "chatral_white",
     subcategory: "slabs",
     stockAvailability: "In Stock",
-    stockQuantity: ""
+    stockQuantity: "",
+    grade: "Standard"
   });
+  const [qrCodeImage, setQrCodeImage] = useState(null);
+  const [qrCodeId, setQrCodeId] = useState(null);
+  const [showQRCode, setShowQRCode] = useState(false);
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
@@ -43,11 +47,18 @@ export const AddProduct = () => {
     formData.append("subcategory", productDetails.subcategory);
     formData.append("stockAvailability", productDetails.stockAvailability);
     formData.append("stockQuantity", Number(productDetails.stockQuantity));
+    formData.append("grade", productDetails.grade);
     formData.append("image", imageFile);
 
     try {
       const response = await axios.post("http://localhost:4000/api/stones/add", formData);
       if (response.data.success) {
+        // Show QR code if generated
+        if (response.data.qrCodeImage && response.data.qrCode) {
+          setQrCodeImage(`http://localhost:4000/images/${response.data.qrCodeImage}`);
+          setQrCodeId(response.data.qrCode);
+          setShowQRCode(true);
+        }
         setProductDetails({
           stoneName: "",
           dimensions: "",
@@ -56,13 +67,16 @@ export const AddProduct = () => {
           category: "chatral_white",
           subcategory: "slabs",
           stockAvailability: "In Stock",
-          stockQuantity: ""
+          stockQuantity: "",
+          grade: "Standard"
         });
         setImageFile(null);
         setImagePreview(null);
-        toast.success(response.data.message);
+        toast.success(response.data.message + " QR code generated!");
       } else {
         toast.error(response.data.message);
+        setQrCodeImage(null);
+        setQrCodeId(null);
       }
     } catch (error) {
       console.error("Error adding stone:", error);
@@ -202,10 +216,69 @@ export const AddProduct = () => {
               value={productDetails.stockQuantity}
             />
           </div>
+
+          <div className="add-grade flex-col">
+            <p>Grade/Quality</p>
+            <select
+              name='grade'
+              onChange={handleDetailChange}
+              value={productDetails.grade}
+            >
+              <option value="Premium">Premium</option>
+              <option value="Standard">Standard</option>
+              <option value="Commercial">Commercial</option>
+              <option value="Economy">Economy</option>
+            </select>
+          </div>
         </div>
 
-        <button type='submit' className='add-product-btn'>Add Stone Product</button>
+        <button type='submit' className='add-product-btn'>Register Block</button>
       </form>
+
+      {/* QR Code Display Modal */}
+      {showQRCode && qrCodeImage && qrCodeId && (
+        <div className="qr-code-modal" onClick={() => setShowQRCode(false)}>
+          <div className="qr-code-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Block Registered Successfully!</h3>
+            <p>QR Code Generated - Print this label and attach to the block</p>
+            <div className="qr-code-image-container">
+              <img src={qrCodeImage} alt="QR Code" />
+              <div className="qr-code-id-container">
+                <p className="qr-id-label">QR Code ID (for manual entry):</p>
+                <div className="qr-id-box">
+                  <code className="qr-id-text">{qrCodeId}</code>
+                  <button 
+                    className="copy-btn"
+                    onClick={() => {
+                      navigator.clipboard.writeText(qrCodeId);
+                      toast.success("QR Code ID copied to clipboard!");
+                    }}
+                    title="Copy to clipboard"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+            <button 
+              className="print-btn"
+              onClick={() => window.print()}
+            >
+              Print QR Code
+            </button>
+            <button 
+              className="close-btn"
+              onClick={() => {
+                setShowQRCode(false);
+                setQrCodeImage(null);
+                setQrCodeId(null);
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

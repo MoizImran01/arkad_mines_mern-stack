@@ -35,7 +35,25 @@ const stonesSchema = new mongoose.Schema({
     },
     stockQuantity: { 
         type: Number 
+    },
+    grade: {
+        type: String,
+        default: "Standard"
+    },
+    qrCode: {
+        type: String,
+        unique: true
+    },
+    qrCodeImage: {
+        type: String
+    },
+    status: {
+        type: String,
+        enum: ["Registered", "In Warehouse", "Dispatched"],
+        default: "Registered"
     }
+}, {
+    timestamps: true
 });
 
 const stonesModel = mongoose.models.stones || mongoose.model("stones", stonesSchema);

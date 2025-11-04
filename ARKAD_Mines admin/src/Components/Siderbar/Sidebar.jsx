@@ -2,7 +2,7 @@ import React from 'react';
 import './Sidebar.css';
 import { assets } from '../../assets/assets';
 import { NavLink } from 'react-router-dom';
-import { FiUser } from 'react-icons/fi';
+import { FiUser, FiPackage } from 'react-icons/fi';
 
 const Siderbar = () => {
   return (
@@ -21,6 +21,11 @@ const Siderbar = () => {
         <NavLink to='/orders' className="sidebar-option">
           <img src={assets.order_icon} alt="Orders" />
           <p>Orders</p>
+        </NavLink>
+
+        <NavLink to='/dispatch' className="sidebar-option">
+          <FiPackage className="sidebar-icon" />
+          <p>Dispatch</p>
         </NavLink>
 
         <NavLink to='/users' className="sidebar-option">

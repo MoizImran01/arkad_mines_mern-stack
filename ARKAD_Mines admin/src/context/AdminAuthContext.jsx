@@ -27,6 +27,7 @@ const AdminAuthContextProvider = (props) => {
     } else {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sync token changes to localStorage - persist login state
@@ -45,7 +46,8 @@ const AdminAuthContextProvider = (props) => {
       const response = await axios.get(`${url}/api/admin-dashboard`, {
         headers: {
           Authorization: `Bearer ${tokenToVerify}`
-        }
+        },
+        timeout: 5000 // 5 second timeout
       });
       
       if (response.data) {
@@ -64,16 +66,23 @@ const AdminAuthContextProvider = (props) => {
           setToken(tokenToVerify);
         } catch (decodeError) {
           console.error("Error decoding token:", decodeError);
-          throw new Error("Invalid token format");
+          // Clear invalid token
+          localStorage.removeItem("adminToken");
+          localStorage.removeItem("adminUserData");
+          setToken("");
+          setAdminUser(null);
         }
       }
     } catch (error) {
-      // Token is invalid or user is not admin
+      // Token is invalid, user is not admin, or server error
       console.error("Token verification failed:", error);
-      localStorage.removeItem("adminToken");
-      localStorage.removeItem("adminUserData");
-      setToken("");
-      setAdminUser(null);
+      // Only clear if it's an auth error, not a network error
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("adminUserData");
+        setToken("");
+        setAdminUser(null);
+      }
     } finally {
       setLoading(false);
     }

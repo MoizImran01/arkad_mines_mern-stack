@@ -77,9 +77,10 @@ const List = () => {
                 <b>Category</b>
                 <b>Product Type</b>
                 <b>Dimensions</b>
+                <b>Grade</b>
                 <b>Price</b>
-                <b>Stock Status</b>
-                <b>Quantity</b>
+                <b>Status</b>
+                <b>QR Code</b>
                 <b>Action</b>
             </div>
             
@@ -95,11 +96,23 @@ const List = () => {
                     <p>{item.category}</p>
                     <p>{item.subcategory}</p>
                     <p>{item.dimensions}</p>
+                    <p>{item.grade || 'Standard'}</p>
                     <p>Rs {item.price} {item.priceUnit}</p>
-                    <p className={`stock-status ${item.stockAvailability?.toLowerCase().replace(' ', '-')}`}>
-                      {item.stockAvailability}
+                    <p className={`block-status ${item.status?.toLowerCase().replace(' ', '-') || 'registered'}`}>
+                      {item.status || 'Registered'}
                     </p>
-                    <p>{item.stockQuantity || 'N/A'}</p>
+                    <div className="qr-code-cell">
+                      {item.qrCodeImage ? (
+                        <img 
+                          src={'http://localhost:4000/images/' + item.qrCodeImage} 
+                          alt="QR Code" 
+                          className="qr-code-thumbnail"
+                          title={`QR Code: ${item.qrCode}`}
+                        />
+                      ) : (
+                        <span className="no-qr">N/A</span>
+                      )}
+                    </div>
                     {/*clickable X to remove this stone item*/}
                     <p onClick={()=>{removeStoneItem(item._id)}} className="remove-btn">X</p>
                   </div>
