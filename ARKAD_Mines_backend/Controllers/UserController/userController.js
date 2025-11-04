@@ -148,4 +148,110 @@ const registerUser = async (req, res) => {
   }
 };
 
-export { loginUser, registerUser };
+// Get all users - Admin only
+const getAllUsers = async (req, res) => {
+  try {
+    // Fetch all users from database, excluding password field for security
+    const users = await userModel.find({}).select('-password');
+    
+    res.json({
+      success: true,
+      users: users
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching users"
+    });
+  }
+};
+
+// Update user role - Admin only
+const updateUserRole = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { role } = req.body;
+
+    // Validate role
+    const validRoles = ["admin", "employee", "customer"];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role. Must be one of: admin, employee, customer"
+      });
+    }
+
+    // Prevent admin from removing their own admin role
+    if (req.user.id === userId && role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot remove your own admin privileges"
+      });
+    }
+
+    // Update user role
+    const updatedUser = await userModel.findByIdAndUpdate(
+      userId,
+      { role: role },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "User role updated successfully",
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error("Error updating user role:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating user role"
+    });
+  }
+};
+
+// Delete user - Admin only
+const deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Prevent admin from deleting themselves
+    if (req.user.id === userId) {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot delete your own account"
+      });
+    }
+
+    // Find and delete user
+    const deletedUser = await userModel.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "User deleted successfully"
+    });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error deleting user"
+    });
+  }
+};
+
+export { loginUser, registerUser, getAllUsers, updateUserRole, deleteUser };

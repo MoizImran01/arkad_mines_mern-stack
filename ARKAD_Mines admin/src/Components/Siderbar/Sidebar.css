@@ -27,6 +27,11 @@
     background-color: #e6ffd3;
     border-color: rgb(52, 111, 34);
 }
+.sidebar-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
 @media (max-width:900px){
     .sidebar-option p{
         display: none;

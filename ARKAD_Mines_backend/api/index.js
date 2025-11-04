@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv"; 
 import { connectDB } from "../config/db.js";
 import userRouter from "../Routes/UserRoutes/userRouter.js";
-import adminRouter from "../Routes/AdminRoutes/AdminRouter.js";
+import adminRouter from "../Routes/AdminRoutes/adminRouter.js";
 import stonesRouter from "../Routes/StonesRoutes/StonesRoutes.js";
 
 
