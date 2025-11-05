@@ -16,8 +16,7 @@ export const AddProduct = () => {
     category: "chatral_white",
     subcategory: "slabs",
     stockAvailability: "In Stock",
-    stockQuantity: "",
-    grade: "Standard"
+    stockQuantity: ""
   });
   const [qrCodeImage, setQrCodeImage] = useState(null);
   const [qrCodeId, setQrCodeId] = useState(null);
@@ -47,7 +46,6 @@ export const AddProduct = () => {
     formData.append("subcategory", productDetails.subcategory);
     formData.append("stockAvailability", productDetails.stockAvailability);
     formData.append("stockQuantity", Number(productDetails.stockQuantity));
-    formData.append("grade", productDetails.grade);
     formData.append("image", imageFile);
 
     try {
@@ -67,8 +65,7 @@ export const AddProduct = () => {
           category: "chatral_white",
           subcategory: "slabs",
           stockAvailability: "In Stock",
-          stockQuantity: "",
-          grade: "Standard"
+          stockQuantity: ""
         });
         setImageFile(null);
         setImagePreview(null);
@@ -215,20 +212,6 @@ export const AddProduct = () => {
               onChange={handleDetailChange}
               value={productDetails.stockQuantity}
             />
-          </div>
-
-          <div className="add-grade flex-col">
-            <p>Grade/Quality</p>
-            <select
-              name='grade'
-              onChange={handleDetailChange}
-              value={productDetails.grade}
-            >
-              <option value="Premium">Premium</option>
-              <option value="Standard">Standard</option>
-              <option value="Commercial">Commercial</option>
-              <option value="Economy">Economy</option>
-            </select>
           </div>
         </div>
 

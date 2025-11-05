@@ -22,8 +22,7 @@ const addStones = async (req, res) => {
             category, 
             subcategory, 
             stockAvailability, 
-            stockQuantity,
-            grade 
+            stockQuantity
         } = req.body;
 
         // Generate unique QR code identifier
@@ -35,7 +34,6 @@ const addStones = async (req, res) => {
             stoneName: stoneName,
             dimensions: dimensions,
             category: category,
-            grade: grade || "Standard",
             registeredAt: new Date().toISOString()
         });
 
@@ -60,7 +58,6 @@ const addStones = async (req, res) => {
             subcategory: subcategory,
             stockAvailability: stockAvailability,
             stockQuantity: stockQuantity ? Number(stockQuantity) : undefined,
-            grade: grade || "Standard",
             qrCode: qrCodeId,
             qrCodeImage: qrCodeFilename,
             status: "Registered"
@@ -193,4 +190,133 @@ const getBlockByQRCode = async (req, res) => {
     }
 }
 
-export { addStones, listStones, removeStones, dispatchBlock, getBlockByQRCode };
+// Filter and search stones with advanced filtering
+const filterStones = async (req, res) => {
+    try {
+        const {
+            category,
+            subcategory,
+            minPrice,
+            maxPrice,
+            stockAvailability,
+            keywords,
+            sortBy,
+            source
+        } = req.query;
+
+        // Build filter query
+        let query = {};
+
+        // Category filter (color/pattern)
+        if (category && category !== 'all') {
+            query.category = category;
+        }
+
+        // Subcategory filter (product type)
+        if (subcategory && subcategory !== 'all') {
+            query.subcategory = subcategory;
+        }
+
+        // Price range filter
+        if (minPrice || maxPrice) {
+            query.price = {};
+            if (minPrice) {
+                query.price.$gte = Number(minPrice);
+            }
+            if (maxPrice) {
+                query.price.$lte = Number(maxPrice);
+            }
+        }
+
+        // Stock availability filter
+        if (stockAvailability && stockAvailability !== 'all') {
+            query.stockAvailability = stockAvailability;
+        }
+
+        // Only show blocks that are not dispatched (available for purchase)
+        query.status = { $ne: "Dispatched" };
+
+        // Keywords/SKU search (searches in stoneName, dimensions, category)
+        if (keywords && keywords.trim()) {
+            const keywordRegex = new RegExp(keywords.trim(), 'i');
+            query.$or = [
+                { stoneName: keywordRegex },
+                { dimensions: keywordRegex },
+                { category: keywordRegex },
+                { subcategory: keywordRegex }
+            ];
+        }
+
+        // Source filter - source can be used as an alternative way to filter by category
+        // If both category and source are set, use category (source is secondary)
+        if (source && source !== 'all' && !category) {
+            query.category = source;
+        }
+
+        // Build sort query
+        let sortQuery = {};
+        let needsCaseInsensitiveSort = false;
+        
+        if (sortBy) {
+            switch (sortBy) {
+                case 'newest':
+                    sortQuery.createdAt = -1; // Newest first
+                    break;
+                case 'oldest':
+                    sortQuery.createdAt = 1; // Oldest first
+                    break;
+                case 'price_low':
+                    sortQuery.price = 1; // Price low to high
+                    break;
+                case 'price_high':
+                    sortQuery.price = -1; // Price high to low
+                    break;
+                case 'name_asc':
+                    sortQuery.stoneName = 1; // Name A-Z
+                    needsCaseInsensitiveSort = true;
+                    break;
+                case 'name_desc':
+                    sortQuery.stoneName = -1; // Name Z-A
+                    needsCaseInsensitiveSort = true;
+                    break;
+                default:
+                    sortQuery.createdAt = -1; // Default: newest first
+            }
+        } else {
+            sortQuery.createdAt = -1; // Default: newest first
+        }
+
+        // Execute query
+        let stones = await stonesModel.find(query)
+            .select('-__v')
+            .sort(sortQuery);
+
+        // Handle case-insensitive sorting for name-based sorts
+        if (needsCaseInsensitiveSort) {
+            stones = stones.sort((a, b) => {
+                const nameA = a.stoneName.toLowerCase();
+                const nameB = b.stoneName.toLowerCase();
+                if (sortBy === 'name_asc') {
+                    return nameA.localeCompare(nameB);
+                } else if (sortBy === 'name_desc') {
+                    return nameB.localeCompare(nameA);
+                }
+                return 0;
+            });
+        }
+
+        res.json({
+            success: true,
+            count: stones.length,
+            stones: stones
+        });
+    } catch (error) {
+        console.log("Error filtering stones:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error filtering stones: " + error.message
+        });
+    }
+}
+
+export { addStones, listStones, removeStones, dispatchBlock, getBlockByQRCode, filterStones };

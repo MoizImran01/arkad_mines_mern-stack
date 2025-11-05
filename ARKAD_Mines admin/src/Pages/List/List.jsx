@@ -8,6 +8,8 @@ import axios from 'axios'
 const List = () => {
   //state to store the list of stone items fetched from the backend
   const [list, setList] = useState([]);
+  //state for QR code modal
+  const [qrModal, setQrModal] = useState({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null });
 
   //function to fetch the list of stone items from the backend API
   const fetchList = async ()=>{
@@ -77,7 +79,6 @@ const List = () => {
                 <b>Category</b>
                 <b>Product Type</b>
                 <b>Dimensions</b>
-                <b>Grade</b>
                 <b>Price</b>
                 <b>Status</b>
                 <b>QR Code</b>
@@ -96,7 +97,6 @@ const List = () => {
                     <p>{item.category}</p>
                     <p>{item.subcategory}</p>
                     <p>{item.dimensions}</p>
-                    <p>{item.grade || 'Standard'}</p>
                     <p>Rs {item.price} {item.priceUnit}</p>
                     <p className={`block-status ${item.status?.toLowerCase().replace(' ', '-') || 'registered'}`}>
                       {item.status || 'Registered'}
@@ -107,7 +107,13 @@ const List = () => {
                           src={'http://localhost:4000/images/' + item.qrCodeImage} 
                           alt="QR Code" 
                           className="qr-code-thumbnail"
-                          title={`QR Code: ${item.qrCode}`}
+                          title={`Click to view QR Code: ${item.qrCode}`}
+                          onClick={() => setQrModal({
+                            isOpen: true,
+                            qrCodeImage: 'http://localhost:4000/images/' + item.qrCodeImage,
+                            qrCodeId: item.qrCode,
+                            stoneName: item.stoneName
+                          })}
                         />
                       ) : (
                         <span className="no-qr">N/A</span>
@@ -122,6 +128,63 @@ const List = () => {
               );
             })}
         </div>
+
+        {/* QR Code Modal */}
+        {qrModal.isOpen && (
+          <div className="qr-modal-overlay" onClick={() => setQrModal({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null })}>
+            <div className="qr-modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="qr-modal-header">
+                <h3>QR Code Details</h3>
+                <button 
+                  className="qr-modal-close"
+                  onClick={() => setQrModal({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null })}
+                >
+                  ×
+                </button>
+              </div>
+              {qrModal.stoneName && (
+                <p className="qr-modal-stone-name">{qrModal.stoneName}</p>
+              )}
+              <div className="qr-modal-image-container">
+                <img 
+                  src={qrModal.qrCodeImage} 
+                  alt="QR Code" 
+                  className="qr-modal-image"
+                />
+              </div>
+              <div className="qr-modal-uuid-container">
+                <label className="qr-modal-uuid-label">QR Code UUID:</label>
+                <div className="qr-modal-uuid-box">
+                  <code className="qr-modal-uuid-text">{qrModal.qrCodeId}</code>
+                  <button 
+                    className="qr-modal-copy-btn"
+                    onClick={() => {
+                      navigator.clipboard.writeText(qrModal.qrCodeId);
+                      toast.success("UUID copied to clipboard!");
+                    }}
+                    title="Copy UUID"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+              <div className="qr-modal-actions">
+                <button 
+                  className="qr-modal-print-btn"
+                  onClick={() => window.print()}
+                >
+                  Print QR Code
+                </button>
+                <button 
+                  className="qr-modal-close-btn"
+                  onClick={() => setQrModal({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null })}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   )
 }

@@ -50,13 +50,15 @@ const Navbar = ({ setShowLogin }) => {
         >
           Home
         </Link>
-        <Link 
-          to="/products" 
-          className={`nav-link ${menu === "products" ? "nav-active" : ""}`}
-          onClick={() => handleNavClick("products")}
-        >
-          Product Catalog
-        </Link>
+        {token && (
+          <Link 
+            to="/products" 
+            className={`nav-link ${menu === "products" ? "nav-active" : ""}`}
+            onClick={() => handleNavClick("products")}
+          >
+            Product Catalog
+          </Link>
+        )}
         <Link 
           to="/industries" 
           className={`nav-link ${menu === "industries" ? "nav-active" : ""}`}

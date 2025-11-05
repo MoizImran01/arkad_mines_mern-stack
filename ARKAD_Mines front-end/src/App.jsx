@@ -5,6 +5,8 @@ import './App.css'
 import Navbar from './Components/Navbar/Navbar'
 import LoginPopup from './Components/LoginPopup/LoginPopup'
 import Home from './Pages/Home/Home'
+import Products from './Pages/Products/Products'
+import ProtectedRoute from './Components/ProtectedRoute/ProtectedRoute'
 import {Route} from 'react-router-dom'
 import { Routes } from 'react-router-dom'
 
@@ -19,6 +21,14 @@ const [showLogin, setShowLogin] = useState(false);
       <Navbar setShowLogin={setShowLogin}/>
       <Routes>
         <Route path='/' element={<Home/>}/>
+        <Route 
+          path='/products' 
+          element={
+            <ProtectedRoute setShowLogin={setShowLogin}>
+              <Products/>
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </div>
       </>
