@@ -13,7 +13,7 @@ const Navbar = ({ setShowLogin }) => {
 
   const [menu, setMenu] = useState("home");
 
-  const { token, setToken } = useContext(StoreContext);
+  const { token, logout, quoteItems } = useContext(StoreContext);
   const navigate = useNavigate();
 
 
@@ -21,12 +21,6 @@ const Navbar = ({ setShowLogin }) => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken("");
-    navigate("/");
-  };
 
 
   const handleNavClick = (section) => {
@@ -90,7 +84,7 @@ const Navbar = ({ setShowLogin }) => {
             handleNavClick("quote");
           }}
         >
-          Get Started
+          Get Started{quoteItems?.length ? ` (${quoteItems.length})` : ''}
         </button>
 
 
@@ -113,7 +107,13 @@ const Navbar = ({ setShowLogin }) => {
                 <span>My Orders</span>
               </li>
               <hr className="dropdown-divider" />
-              <li onClick={logout} className="dropdown-item">
+              <li
+                onClick={() => {
+                  logout();
+                  navigate("/");
+                }}
+                className="dropdown-item"
+              >
                 <img src={assets.logout_icon} alt="Logout" />
                 <span>Logout</span>
               </li>

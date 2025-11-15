@@ -4,9 +4,11 @@ import axios from 'axios';
 import { FiFilter, FiX, FiSearch, FiSliders } from 'react-icons/fi';
 import { StoreContext } from '../../context/StoreContext';
 import { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Products = () => {
-  const { url } = useContext(StoreContext);
+  const navigate = useNavigate();
+  const { url, addItemToQuote } = useContext(StoreContext);
   
   //filter the states
   const [filters, setFilters] = useState({
@@ -405,6 +407,17 @@ const Products = () => {
                         />
                       </div>
                     )}
+                  </div>
+                  <div className="product-actions">
+                    <button
+                      className="request-btn"
+                      onClick={() => {
+                        addItemToQuote(product);
+                        navigate('/request-quote');
+                      }}
+                    >
+                      Request Quote
+                    </button>
                   </div>
                 </div>
               ))}

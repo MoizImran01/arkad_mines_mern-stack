@@ -5,6 +5,7 @@ import { connectDB } from "../config/db.js";
 import userRouter from "../Routes/UserRoutes/userRouter.js";
 import adminRouter from "../Routes/AdminRoutes/adminRouter.js";
 import stonesRouter from "../Routes/StonesRoutes/StonesRoutes.js";
+import quoteRouter from "../Routes/QuoteRoutes/quoteRouter.js";
 
 dotenv.config({ path: "./config.env" });
 
@@ -24,6 +25,7 @@ app.use("/images", express.static("uploads"));
 app.use("/api/user", userRouter);
 app.use("/api", adminRouter);
 app.use("/api/stones", stonesRouter);
+app.use("/api/quotes", quoteRouter);
 
 
 app.get("/", (req, res) => res.status(200).send(" Server running successfully"));

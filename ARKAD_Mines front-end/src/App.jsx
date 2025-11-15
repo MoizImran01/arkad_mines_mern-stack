@@ -8,6 +8,8 @@ import AboutUs from './Pages/AboutUs/AboutUs';
 import ContactUs from './Pages/ContactUs/ContactUs';
 import ProtectedRoute from './Components/ProtectedRoute/ProtectedRoute';
 import { Routes, Route } from 'react-router-dom';
+import RequestQuote from './Pages/RequestQuote/RequestQuote';
+import Orders from './Pages/Orders/Orders';
 
 function App() {
   const [showLogin, setShowLogin] = useState(false);
@@ -29,6 +31,22 @@ function App() {
           />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
+          <Route
+            path="/request-quote"
+            element={
+              <ProtectedRoute setShowLogin={setShowLogin}>
+                <RequestQuote />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute setShowLogin={setShowLogin}>
+                <Orders />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<div></div>} />
         </Routes>
       </div>
