@@ -425,6 +425,23 @@
   background: white;
 }
 
+.product-actions {
+  padding: 16px 20px;
+  border-top: 1px solid #f1f5f9;
+  background: #fafbff;
+}
+
+.request-btn {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 600;
+  background: #1d4ed8;
+  color: white;
+  cursor: pointer;
+}
+
 
 .loading-state,
 .empty-state {

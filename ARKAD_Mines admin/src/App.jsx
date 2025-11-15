@@ -13,6 +13,7 @@ import { useContext } from 'react'
 import { AdminAuthContext } from './context/AdminAuthContext'
 import Users from './Pages/Users/Users'
 import Dispatch from './Pages/Dispatch/Dispatch'
+import Quotations from './Pages/Quotations/Quotations'
 
 const App = () => {
   const { token, adminUser, loading } = useContext(AdminAuthContext);
@@ -120,6 +121,19 @@ const App = () => {
               <div className="app-content">
                 <Siderbar/>
                 <Users/>
+              </div>
+            </>
+          </ProtectedRoute>
+        }/>
+        
+        <Route path="/quotes" element={
+          <ProtectedRoute>
+            <>
+              <Navbar/>
+              <hr/>
+              <div className="app-content">
+                <Siderbar/>
+                <Quotations/>
               </div>
             </>
           </ProtectedRoute>
