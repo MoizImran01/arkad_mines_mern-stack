@@ -1,0 +1,16 @@
+*
+{
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+body{
+  min-height: 100vh;
+  background-color: #F1F8E8;
+  padding-top: 80px;
+}
+a{
+  text-decoration: none;
+  color: inherit;
+}

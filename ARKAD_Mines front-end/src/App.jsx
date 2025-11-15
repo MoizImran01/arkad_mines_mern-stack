@@ -1,0 +1,39 @@
+import { useState } from 'react';
+import './App.css';
+import Navbar from './Components/Navbar/Navbar';
+import LoginPopup from './Components/LoginPopup/LoginPopup';
+import Home from './Pages/Home/Home';
+import Products from './Pages/Products/Products';
+import AboutUs from './Pages/AboutUs/AboutUs';
+import ContactUs from './Pages/ContactUs/ContactUs';
+import ProtectedRoute from './Components/ProtectedRoute/ProtectedRoute';
+import { Routes, Route } from 'react-router-dom';
+
+function App() {
+  const [showLogin, setShowLogin] = useState(false);
+
+  return (
+    <>
+      {showLogin ? <LoginPopup setShowLogin={setShowLogin} /> : null}
+      <div className="app">
+        <Navbar setShowLogin={setShowLogin} />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route
+            path="/products"
+            element={
+              <ProtectedRoute setShowLogin={setShowLogin}>
+                <Products />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/contact" element={<ContactUs />} />
+          <Route path="*" element={<div></div>} />
+        </Routes>
+      </div>
+    </>
+  );
+}
+
+export default App;
