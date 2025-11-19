@@ -4,14 +4,21 @@ import { createContext, useEffect, useState } from "react";
 export const StoreContext = createContext(null);
 
 const StoreContextProvider = (props) => {
-
-  const url = "http://localhost:4000"; 
+  const url = "http://localhost:4000";
 
   const [token, setToken] = useState("");
-
   const [user, setUser] = useState(null);
+  const [quoteItems, setQuoteItems] = useState(() => {
+    const stored = localStorage.getItem("quoteItems");
+    return stored ? JSON.parse(stored) : [];
+  });
+  const [quoteNotes, setQuoteNotes] = useState(
+    () => localStorage.getItem("quoteNotes") || ""
+  );
+  const [activeQuoteId, setActiveQuoteId] = useState(
+    () => sessionStorage.getItem("activeQuoteId") || null
+  );
 
-  //check for existing token in localStorage on component mount
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     if (storedToken) {
@@ -19,7 +26,6 @@ const StoreContextProvider = (props) => {
     }
   }, []);
 
-  //sync token changes to localStorage - persist login state
   useEffect(() => {
     if (token) {
       localStorage.setItem("token", token);
@@ -28,15 +34,101 @@ const StoreContextProvider = (props) => {
     }
   }, [token]);
 
+  useEffect(() => {
+    if (quoteItems.length) {
+      localStorage.setItem("quoteItems", JSON.stringify(quoteItems));
+    } else {
+      localStorage.removeItem("quoteItems");
+    }
+  }, [quoteItems]);
 
-  //clear all auth data and logout user
+  useEffect(() => {
+    if (quoteNotes?.trim()) {
+      localStorage.setItem("quoteNotes", quoteNotes);
+    } else {
+      localStorage.removeItem("quoteNotes");
+    }
+  }, [quoteNotes]);
+
+  useEffect(() => {
+    if (activeQuoteId) {
+      sessionStorage.setItem("activeQuoteId", activeQuoteId);
+    } else {
+      sessionStorage.removeItem("activeQuoteId");
+    }
+  }, [activeQuoteId]);
+
+  const addItemToQuote = (item) => {
+    setQuoteItems((prev) => {
+      if (prev.some((existing) => existing._id === item._id)) {
+        return prev;
+      }
+
+      return [
+        ...prev,
+        {
+          _id: item._id,
+          stoneName: item.stoneName,
+          price: item.price,
+          priceUnit: item.priceUnit,
+          dimensions: item.dimensions,
+          image: item.image,
+          stockAvailability: item.stockAvailability,
+          requestedQuantity: 1,
+          category: item.category,
+          subcategory: item.subcategory,
+        },
+      ];
+    });
+  };
+
+  const removeItemFromQuote = (stoneId) => {
+    setQuoteItems((prev) => prev.filter((item) => item._id !== stoneId));
+  };
+
+  const updateQuoteItemQuantity = (stoneId, quantity) => {
+    setQuoteItems((prev) =>
+      prev.map((item) =>
+        item._id === stoneId
+          ? {
+              ...item,
+              requestedQuantity: Math.max(1, Number(quantity) || 1),
+            }
+          : item
+      )
+    );
+  };
+
+  const replaceQuoteItems = (items = []) => {
+    setQuoteItems(
+      items.map((item) => ({
+        _id: item._id,
+        stoneName: item.stoneName,
+        price: item.price,
+        priceUnit: item.priceUnit,
+        dimensions: item.dimensions,
+        image: item.image,
+        stockAvailability: item.stockAvailability,
+        requestedQuantity: Math.max(1, Number(item.requestedQuantity) || 1),
+        category: item.category,
+        subcategory: item.subcategory,
+      }))
+    );
+  };
+
+  const clearQuoteItems = () => {
+    setQuoteItems([]);
+    setQuoteNotes("");
+    setActiveQuoteId(null);
+  };
+
   const logout = () => {
     setToken("");
     setUser(null);
     localStorage.removeItem("token");
+    clearQuoteItems();
   };
 
-  //context value that will be available to all consuming components
   const contextValue = {
     url,
     token,
@@ -44,6 +136,16 @@ const StoreContextProvider = (props) => {
     user,
     setUser,
     logout,
+    quoteItems,
+    addItemToQuote,
+    removeItemFromQuote,
+    updateQuoteItemQuantity,
+    replaceQuoteItems,
+    clearQuoteItems,
+    quoteNotes,
+    setQuoteNotes,
+    activeQuoteId,
+    setActiveQuoteId,
   };
 
   return (
