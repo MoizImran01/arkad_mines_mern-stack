@@ -25,7 +25,7 @@ const Products = () => {
   const [showFilters, setShowFilters] = useState(true);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [hasSearched, setHasSearched] = useState(true);
 
 
   const categories = [
@@ -129,9 +129,13 @@ const Products = () => {
       sortBy: 'newest',
       source: 'all'
     });
-    setProducts([]);
-    setHasSearched(false);
+    // Filters will auto-apply via useEffect, which will reload all blocks
   };
+
+  // Auto-load all blocks on component mount
+  useEffect(() => {
+    applyFilters();
+  }, []);
 
   // Auto-apply filters when they change (debounced for keywords)
   useEffect(() => {
@@ -169,6 +173,21 @@ const Products = () => {
     return subcategory.split('_').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
+  };
+
+  const getStockStatusClass = (status) => {
+    if (!status) return 'unknown';
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('available') || statusLower === 'in stock') {
+      return 'available';
+    } else if (statusLower.includes('reserved')) {
+      return 'reserved';
+    } else if (statusLower.includes('hold')) {
+      return 'hold';
+    } else if (statusLower.includes('out of stock')) {
+      return 'out-of-stock';
+    }
+    return 'unknown';
   };
 
   return (
@@ -337,18 +356,6 @@ const Products = () => {
               <div className="spinner"></div>
               <p>Loading blocks...</p>
             </div>
-          ) : !hasSearched ? (
-            <div className="empty-state">
-              <FiFilter className="empty-icon" />
-              <h3>Apply Filters to View Blocks</h3>
-              <p>Use the filters on the left to search and filter available stone blocks</p>
-              <button 
-                className="apply-filters-btn"
-                onClick={applyFilters}
-              >
-                Load All Blocks
-              </button>
-            </div>
           ) : products.length === 0 ? (
             <div className="empty-state">
               <FiSearch className="empty-icon" />
@@ -364,7 +371,12 @@ const Products = () => {
           ) : (
             <div className="products-grid">
               {products.map((product) => (
-                <div key={product._id} className="product-card">
+                <div 
+                  key={product._id} 
+                  className="product-card"
+                  onClick={() => navigate(`/item/${product._id}`)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="product-image">
                     <img 
                       src={`${url}/images/${product.image}`} 
@@ -378,37 +390,27 @@ const Products = () => {
                   <div className="product-info">
                     <h3 className="product-name">{product.stoneName}</h3>
                     <div className="product-details">
-                      <p className="product-category">
-                        <span className="detail-label">Category:</span> {formatCategory(product.category)}
-                      </p>
-                      <p className="product-type">
-                        <span className="detail-label">Type:</span> {formatSubcategory(product.subcategory)}
-                      </p>
                       <p className="product-dimensions">
                         <span className="detail-label">Dimensions:</span> {product.dimensions}
                       </p>
-                      <p className="product-price">
-                        <span className="price-amount">Rs {product.price}</span>
-                        <span className="price-unit">/{product.priceUnit}</span>
-                      </p>
-                      <p className={`product-stock ${product.stockAvailability?.toLowerCase().replace(' ', '-')}`}>
-                        {product.stockAvailability}
-                        {product.stockQuantity && (
-                          <span className="stock-quantity"> ({product.stockQuantity} available)</span>
-                        )}
+                      {(product.qaNotes || product.defects) && (
+                        <p className="product-qa">
+                          <span className="detail-label">Notes:</span> 
+                          {product.qaNotes && ` ${product.qaNotes.length > 40 ? `${product.qaNotes.substring(0, 40)}...` : product.qaNotes}`}
+                          {product.defects && ` ${product.defects.length > 40 ? `${product.defects.substring(0, 40)}...` : product.defects}`}
+                        </p>
+                      )}
+                      {product.location && (
+                        <p className="product-location">
+                          <span className="detail-label">Location:</span> {product.location}
+                        </p>
+                      )}
+                      <p className={`product-stock ${getStockStatusClass(product.stockAvailability)}`}>
+                        <span className="detail-label">Status:</span> {product.stockAvailability}
                       </p>
                     </div>
-                    {product.qrCodeImage && (
-                      <div className="product-qr">
-                        <img 
-                          src={`${url}/images/${product.qrCodeImage}`} 
-                          alt="QR Code" 
-                          className="qr-thumbnail"
-                        />
-                      </div>
-                    )}
                   </div>
-                  <div className="product-actions">
+                  <div className="product-actions" onClick={(e) => e.stopPropagation()}>
                     <button
                       className="request-btn"
                       onClick={() => {

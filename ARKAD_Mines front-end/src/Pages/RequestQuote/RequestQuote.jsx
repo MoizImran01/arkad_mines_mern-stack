@@ -148,17 +148,6 @@ const RequestQuote = () => {
         <div>
           <h1>Request a Formal Quotation</h1>
         </div>
-        <div className="quote-summary-card">
-          <FiFileText />
-          <div>
-            <p>Items Selected</p>
-            <strong>{quoteItems.length}</strong>
-          </div>
-          <div>
-            <p>Estimated Total</p>
-            <strong>Rs {estimatedTotal.toLocaleString()}</strong>
-          </div>
-        </div>
       </div>
 
       {feedback && (
@@ -283,10 +272,7 @@ const RequestQuote = () => {
 
         <div className="quote-actions-card">
           <div className="notes-section">
-            <label htmlFor="notes">
-              Delivery or finishing notes{" "}
-              <span>(optional: transport, polishing, timelines)</span>
-            </label>
+            <label htmlFor="notes">Delivery Notes</label>
             <textarea
               id="notes"
               rows="5"

@@ -22,7 +22,9 @@ const addStones = async (req, res) => {
             category, 
             subcategory, 
             stockAvailability, 
-            stockQuantity
+            stockQuantity,
+            location,
+            qaNotes
         } = req.body;
 
         // Generate unique QR code identifier
@@ -58,6 +60,8 @@ const addStones = async (req, res) => {
             subcategory: subcategory,
             stockAvailability: stockAvailability,
             stockQuantity: stockQuantity ? Number(stockQuantity) : undefined,
+            location: location || undefined,
+            qaNotes: qaNotes || undefined,
             qrCode: qrCodeId,
             qrCodeImage: qrCodeFilename,
             status: "Registered"
@@ -159,6 +163,33 @@ const dispatchBlock = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Error dispatching block: " + error.message
+        });
+    }
+}
+
+// Get block by ID
+const getStoneById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const stone = await stonesModel.findById(id).select('-__v');
+
+        if (!stone) {
+            return res.status(404).json({
+                success: false,
+                message: "Stone block not found"
+            });
+        }
+
+        res.json({
+            success: true,
+            stone: stone
+        });
+    } catch (error) {
+        console.log("Error fetching stone:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error fetching stone: " + error.message
         });
     }
 }
@@ -318,4 +349,4 @@ const filterStones = async (req, res) => {
     }
 }
 
-export { addStones, listStones, removeStones, dispatchBlock, getBlockByQRCode, filterStones };
+export { addStones, listStones, removeStones, dispatchBlock, getStoneById, getBlockByQRCode, filterStones };
