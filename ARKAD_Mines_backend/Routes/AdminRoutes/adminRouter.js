@@ -8,7 +8,7 @@ adminRouter.get("/admin-dashboard", verifyToken, authorizeRoles("admin"), (req, 
   res.json({ message: "Welcome, Admin." });
 });
 
-// User management routes - Admin only
+//User management routes - Admin only
 adminRouter.get("/users", verifyToken, authorizeRoles("admin"), getAllUsers);
 adminRouter.put("/users/:userId/role", verifyToken, authorizeRoles("admin"), updateUserRole);
 adminRouter.delete("/users/:userId", verifyToken, authorizeRoles("admin"), deleteUser);

@@ -129,15 +129,15 @@ const Products = () => {
       sortBy: 'newest',
       source: 'all'
     });
-    // Filters will auto-apply via useEffect, which will reload all blocks
+    //Filters will auto-apply via useEffect, which will reload all blocks
   };
 
-  // Auto-load all blocks on component mount
+  //Auto load all blocks on component mount
   useEffect(() => {
     applyFilters();
   }, []);
 
-  // Auto-apply filters when they change (debounced for keywords)
+  //Auto apply filters when they change (debounced for keywords)
   useEffect(() => {
     if (hasSearched) {
       const timeoutId = setTimeout(() => {

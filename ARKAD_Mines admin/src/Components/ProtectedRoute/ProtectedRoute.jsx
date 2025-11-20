@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
 import { AdminAuthContext } from '../../context/AdminAuthContext';
 
-// Protected route component that ensures only authenticated admins can access
+//Protected route component that ensures only authenticated admins can access
 const ProtectedRoute = ({ children }) => {
   const { token, adminUser, loading } = useContext(AdminAuthContext);
 

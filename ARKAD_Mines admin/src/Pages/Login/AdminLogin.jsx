@@ -6,7 +6,7 @@ import { AdminAuthContext } from '../../context/AdminAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-// Admin login component that only allows admin users to log in
+//Admin login component that only allows admin users to log in
 const AdminLogin = () => {
 
   const [isLoading, setIsLoading] = useState(false);

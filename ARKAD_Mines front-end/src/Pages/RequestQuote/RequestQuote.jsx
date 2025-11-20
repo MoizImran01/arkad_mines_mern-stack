@@ -13,6 +13,8 @@ import {
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
+//Handles quotation request submission with item management and draft saving
+
 const RequestQuote = () => {
   const {
     quoteItems,

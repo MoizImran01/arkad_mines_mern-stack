@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// add stones item to the db
+//add stones item to the db
 const addStones = async (req, res) => {
     try {
         let image_filename = `${req.file.filename}`; 
@@ -81,7 +81,7 @@ const addStones = async (req, res) => {
     }
 }
 
-// list all stones
+//list all stones
 const listStones = async (req, res) => {
     try {
         const stones = await stonesModel.find({});
@@ -92,7 +92,7 @@ const listStones = async (req, res) => {
     }
 }
 
-// remove stones item
+//remove stones item
 const removeStones = async (req, res) => {
     try {
         const stones = await stonesModel.findById(req.body.id); 
@@ -221,7 +221,7 @@ const getBlockByQRCode = async (req, res) => {
     }
 }
 
-// Filter and search stones with advanced filtering
+//Filter and search stones with advanced filtering
 const filterStones = async (req, res) => {
     try {
         const {

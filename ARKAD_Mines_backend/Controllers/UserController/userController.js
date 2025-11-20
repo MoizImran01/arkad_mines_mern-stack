@@ -147,7 +147,7 @@ const registerUser = async (req, res) => {
   }
 };
 
-// Get all users, Admin only functionality
+//Get all users, Admin only functionality
 const getAllUsers = async (req, res) => {
   try {
 
@@ -217,7 +217,7 @@ const updateUserRole = async (req, res) => {
   }
 };
 
-// Delete user, Admin only functionality
+//Delete user, Admin only functionality
 const deleteUser = async (req, res) => {
   try {
     const { userId } = req.params;

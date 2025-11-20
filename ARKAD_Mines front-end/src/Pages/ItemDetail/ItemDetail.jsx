@@ -17,6 +17,8 @@ import {
 } from 'react-icons/fi';
 import './ItemDetail.css';
 
+//Displays detailed information about a stone item with image zoom and quote request functionality
+
 const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();

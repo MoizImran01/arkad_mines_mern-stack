@@ -11,7 +11,7 @@ dotenv.config({ path: "./config.env" });
 
 const app = express();
 
-// Middlewares
+//Middlewares
 app.use(express.json());
 app.use(cors());
 
@@ -21,7 +21,7 @@ connectDB().catch((e) => console.error("DB connect error:", e));
 
 app.use("/images", express.static("uploads"));
 
-// Routes
+//Routes
 app.use("/api/user", userRouter);
 app.use("/api", adminRouter);
 app.use("/api/stones", stonesRouter);

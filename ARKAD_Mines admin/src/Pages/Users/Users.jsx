@@ -11,7 +11,7 @@ const Users = () => {
   const [loading, setLoading] = useState(true);
   const { token, url, adminUser } = useContext(AdminAuthContext);
 
-  // Function to fetch all users from the backend API
+  //Function to fetch all users from the backend API
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -60,7 +60,7 @@ const Users = () => {
     }
   };
 
-  // Function to delete a user
+  //Function to delete a user
   const deleteUser = async (userId, userName) => {
 
     if (!window.confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
