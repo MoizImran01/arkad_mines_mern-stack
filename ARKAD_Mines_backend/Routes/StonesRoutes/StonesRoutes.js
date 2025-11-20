@@ -1,5 +1,5 @@
 import express from "express"
-import { addStones, listStones, removeStones, dispatchBlock, getBlockByQRCode, filterStones } from "../../Controllers/stonesController/stonesController.js"
+import { addStones, listStones, removeStones, dispatchBlock, getStoneById, getBlockByQRCode, filterStones } from "../../Controllers/stonesController/stonesController.js"
 import multer from "multer"
 
 const stonesRouter = express.Router();
@@ -20,6 +20,7 @@ stonesRouter.get("/filter", filterStones)
 stonesRouter.post("/remove", removeStones)
 stonesRouter.post("/dispatch", dispatchBlock)
 stonesRouter.get("/qr/:qrCode", getBlockByQRCode)
+stonesRouter.get("/:id", getStoneById)
 
 
 export default stonesRouter;

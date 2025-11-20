@@ -14,7 +14,7 @@ const Dispatch = () => {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
 
-  // Function to search for block by QR code
+  //Function to search for block by QR code
   const searchBlock = async () => {
     if (!qrCode.trim()) {
       toast.error("Please enter a QR code");
@@ -87,7 +87,7 @@ const Dispatch = () => {
     }
   };
 
-  // Handle camera scanning using browser's built-in QR code scanner
+  //Handle camera scanning using browser's built-in QR code scanner
   const startCameraScan = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 

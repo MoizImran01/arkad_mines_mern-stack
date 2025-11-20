@@ -55,7 +55,7 @@ const Orders = () => {
 
   useEffect(() => {
     fetchDrafts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const continueDraft = (draft) => {
@@ -92,8 +92,7 @@ const Orders = () => {
     <div className="orders-page">
       <div className="orders-header">
         <div>
-          <h1>My Draft Quotations</h1>
-          <p>Resume any draft requests you saved earlier.</p>
+          <h1>Drafts</h1>
         </div>
         <button className="refresh-btn" onClick={fetchDrafts} disabled={refreshing}>
           {refreshing ? <FiRefreshCw className="spin" /> : <FiRefreshCw />}

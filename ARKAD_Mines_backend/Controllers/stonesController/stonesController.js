@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// add stones item to the db
+//add stones item to the db
 const addStones = async (req, res) => {
     try {
         let image_filename = `${req.file.filename}`; 
@@ -22,7 +22,9 @@ const addStones = async (req, res) => {
             category, 
             subcategory, 
             stockAvailability, 
-            stockQuantity
+            stockQuantity,
+            location,
+            qaNotes
         } = req.body;
 
         // Generate unique QR code identifier
@@ -58,6 +60,8 @@ const addStones = async (req, res) => {
             subcategory: subcategory,
             stockAvailability: stockAvailability,
             stockQuantity: stockQuantity ? Number(stockQuantity) : undefined,
+            location: location || undefined,
+            qaNotes: qaNotes || undefined,
             qrCode: qrCodeId,
             qrCodeImage: qrCodeFilename,
             status: "Registered"
@@ -77,7 +81,7 @@ const addStones = async (req, res) => {
     }
 }
 
-// list all stones
+//list all stones
 const listStones = async (req, res) => {
     try {
         const stones = await stonesModel.find({});
@@ -88,7 +92,7 @@ const listStones = async (req, res) => {
     }
 }
 
-// remove stones item
+//remove stones item
 const removeStones = async (req, res) => {
     try {
         const stones = await stonesModel.findById(req.body.id); 
@@ -163,6 +167,33 @@ const dispatchBlock = async (req, res) => {
     }
 }
 
+// Get block by ID
+const getStoneById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const stone = await stonesModel.findById(id).select('-__v');
+
+        if (!stone) {
+            return res.status(404).json({
+                success: false,
+                message: "Stone block not found"
+            });
+        }
+
+        res.json({
+            success: true,
+            stone: stone
+        });
+    } catch (error) {
+        console.log("Error fetching stone:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error fetching stone: " + error.message
+        });
+    }
+}
+
 // Get block by QR code
 const getBlockByQRCode = async (req, res) => {
     try {
@@ -190,7 +221,7 @@ const getBlockByQRCode = async (req, res) => {
     }
 }
 
-// Filter and search stones with advanced filtering
+//Filter and search stones with advanced filtering
 const filterStones = async (req, res) => {
     try {
         const {
@@ -318,4 +349,4 @@ const filterStones = async (req, res) => {
     }
 }
 
-export { addStones, listStones, removeStones, dispatchBlock, getBlockByQRCode, filterStones };
+export { addStones, listStones, removeStones, dispatchBlock, getStoneById, getBlockByQRCode, filterStones };
