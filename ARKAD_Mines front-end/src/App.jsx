@@ -10,6 +10,7 @@ import ProtectedRoute from './Components/ProtectedRoute/ProtectedRoute';
 import { Routes, Route } from 'react-router-dom';
 import RequestQuote from './Pages/RequestQuote/RequestQuote';
 import Orders from './Pages/Orders/Orders';
+import ItemDetail from './Pages/ItemDetail/ItemDetail';
 
 function App() {
   const [showLogin, setShowLogin] = useState(false);
@@ -26,6 +27,14 @@ function App() {
             element={
               <ProtectedRoute setShowLogin={setShowLogin}>
                 <Products />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/item/:id"
+            element={
+              <ProtectedRoute setShowLogin={setShowLogin}>
+                <ItemDetail />
               </ProtectedRoute>
             }
           />

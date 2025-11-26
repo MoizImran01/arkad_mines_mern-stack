@@ -66,7 +66,9 @@ form {
 .add-price input,
 .add-price-unit select,
 .add-stock-availability select,
-.add-stock-quantity input {
+.add-stock-quantity input,
+.add-product-location input,
+.add-product-notes textarea {
   padding: 12px 16px;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -74,6 +76,8 @@ form {
   font-size: 16px;
   transition: border-color 0.3s ease;
   background: #ffffff;
+  font-family: inherit;
+  resize: vertical;
 }
 
 .add-product-name input:focus,
@@ -83,7 +87,9 @@ form {
 .add-price input:focus,
 .add-price-unit select:focus,
 .add-stock-availability select:focus,
-.add-stock-quantity input:focus {
+.add-stock-quantity input:focus,
+.add-product-location input:focus,
+.add-product-notes textarea:focus {
   border-color: #3498db;
   box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
@@ -124,7 +130,9 @@ form {
 .add-price p,
 .add-price-unit p,
 .add-stock-availability p,
-.add-stock-quantity p {
+.add-stock-quantity p,
+.add-product-location p,
+.add-product-notes p {
   font-weight: 600;
   color: #333;
   margin-bottom: 4px;

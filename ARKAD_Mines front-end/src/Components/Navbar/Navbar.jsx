@@ -13,7 +13,7 @@ const Navbar = ({ setShowLogin }) => {
 
   const [menu, setMenu] = useState("home");
 
-  const { token, logout, quoteItems } = useContext(StoreContext);
+  const { token, logout } = useContext(StoreContext);
   const navigate = useNavigate();
 
 
@@ -77,17 +77,6 @@ const Navbar = ({ setShowLogin }) => {
       </nav>
 
       <div className="navbar-actions">
-            <button 
-          className="btn-primary" 
-          onClick={() => {
-            navigate('/request-quote');
-            handleNavClick("quote");
-          }}
-        >
-          Get Started{quoteItems?.length ? ` (${quoteItems.length})` : ''}
-        </button>
-
-
         {!token ? (
 
           <button className="btn-secondary" onClick={() => setShowLogin(true)}>

@@ -7,80 +7,51 @@ const quotationItemSchema = new mongoose.Schema(
       ref: "stones",
       required: true,
     },
-    stoneName: {
-      type: String,
-      required: true,
-    },
-    priceSnapshot: {
-      type: Number,
-      required: true,
-    },
-    priceUnit: {
-      type: String,
-      required: true,
-    },
-    requestedQuantity: {
-      type: Number,
-      required: true,
-      min: 1,
-    },
-    availabilityAtRequest: {
-      type: String,
-    },
-    image: {
-      type: String,
-    },
-    dimensions: {
-      type: String,
-    },
-    category: {
-      type: String,
-    },
-    subcategory: {
-      type: String,
-    },
+    stoneName: { type: String, required: true },
+    priceSnapshot: { type: Number, required: true },
+    priceUnit: { type: String, required: true },
+    requestedQuantity: { type: Number, required: true, min: 1 },
+    availabilityAtRequest: { type: String },
+    image: { type: String },
+    dimensions: { type: String },
+
+    finalUnitPrice: { type: Number }, 
   },
   { _id: false }
 );
 
 const quotationSchema = new mongoose.Schema(
   {
-    referenceNumber: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    buyer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
-      required: true,
-    },
+    referenceNumber: { type: String, required: true, unique: true },
+    buyer: { type: mongoose.Schema.Types.ObjectId, ref: "user", required: true },
+
     status: {
       type: String,
-      enum: ["draft", "submitted", "adjustment_required"],
+      enum: ["draft", "submitted", "adjustment_required", "issued", "approved", "rejected"],
       default: "draft",
     },
-    notes: {
-      type: String,
-      trim: true,
-    },
+    notes: { type: String, trim: true }, 
+    adminNotes: { type: String, trim: true }, 
     items: {
       type: [quotationItemSchema],
       validate: [(items) => items.length > 0, "At least one item required"],
     },
-    totalEstimatedCost: {
-      type: Number,
-      default: 0,
+
+    totalEstimatedCost: { type: Number, default: 0 },
+    
+
+    financials: {
+      subtotal: { type: Number, default: 0 },
+      taxPercentage: { type: Number, default: 0 },
+      taxAmount: { type: Number, default: 0 },
+      shippingCost: { type: Number, default: 0 },
+      discountAmount: { type: Number, default: 0 },
+      grandTotal: { type: Number, default: 0 },
     },
+    
     validity: {
-      start: {
-        type: Date,
-        required: true,
-      },
-      end: {
-        type: Date,
-        required: true,
-      },
+      start: { type: Date, required: true },
+      end: { type: Date, required: true },
     },
     adjustments: [
       {
@@ -88,18 +59,13 @@ const quotationSchema = new mongoose.Schema(
         stoneName: String,
         reason: String,
         availableQuantity: Number,
-        type: {
-          type: String,
-          enum: ["removed", "adjusted"],
-        },
+        type: { type: String, enum: ["removed", "adjusted"] },
       },
     ],
   },
   { timestamps: true }
 );
 
-const quotationModel =
-  mongoose.models.quotation || mongoose.model("quotation", quotationSchema);
+const quotationModel = mongoose.models.quotation || mongoose.model("quotation", quotationSchema);
 
 export default quotationModel;
-

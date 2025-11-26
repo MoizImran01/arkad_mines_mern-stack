@@ -2,7 +2,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 3%;
+    padding: 5px 3%;
     background-color:#ffffff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -12,7 +12,7 @@
 
 
 .navbar .logo {
-  width: clamp(100px, 20vw, 200px);
+  width: clamp(80px, 15vw, 150px);
   height: auto;
   cursor: pointer;
 }
@@ -31,12 +31,12 @@
 
 .admin-name {
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
     color: #1a2a2a;
 }
 
 .admin-role {
-    font-size: 12px;
+    font-size: 11px;
     color: #6b7280;
 }
 
@@ -48,19 +48,19 @@
 
 .navbar .profile{
     cursor: pointer;
-    width: 55px;
-    height: 55px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     object-fit: cover;
 }
 
 .logout-btn {
-    padding: 8px 16px;
+    padding: 6px 14px;
     background-color: #dc2626;
     color: white;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;

@@ -16,7 +16,9 @@ export const AddProduct = () => {
     category: "chatral_white",
     subcategory: "slabs",
     stockAvailability: "In Stock",
-    stockQuantity: ""
+    stockQuantity: "",
+    location: "",
+    notes: ""
   });
   const [qrCodeImage, setQrCodeImage] = useState(null);
   const [qrCodeId, setQrCodeId] = useState(null);
@@ -46,6 +48,8 @@ export const AddProduct = () => {
     formData.append("subcategory", productDetails.subcategory);
     formData.append("stockAvailability", productDetails.stockAvailability);
     formData.append("stockQuantity", Number(productDetails.stockQuantity));
+    formData.append("location", productDetails.location);
+    formData.append("qaNotes", productDetails.notes);
     formData.append("image", imageFile);
 
     try {
@@ -65,7 +69,9 @@ export const AddProduct = () => {
           category: "chatral_white",
           subcategory: "slabs",
           stockAvailability: "In Stock",
-          stockQuantity: ""
+          stockQuantity: "",
+          location: "",
+          notes: ""
         });
         setImageFile(null);
         setImagePreview(null);
@@ -213,6 +219,28 @@ export const AddProduct = () => {
               value={productDetails.stockQuantity}
             />
           </div>
+        </div>
+
+        <div className="add-product-location flex-col">
+          <p>Location</p>
+          <input
+            type='text'
+            name='location'
+            placeholder='e.g., Warehouse A, Section B, Shelf 3'
+            onChange={handleDetailChange}
+            value={productDetails.location}
+          />
+        </div>
+
+        <div className="add-product-notes flex-col">
+          <p>Notes</p>
+          <textarea
+            name='notes'
+            placeholder='e.g., QA notes, defects, or any additional information about the block'
+            onChange={handleDetailChange}
+            value={productDetails.notes}
+            rows="4"
+          />
         </div>
 
         <button type='submit' className='add-product-btn'>Register Block</button>

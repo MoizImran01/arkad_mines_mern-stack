@@ -40,6 +40,22 @@ const stonesSchema = new mongoose.Schema({
         type: String,
         default: "Standard"
     },
+    gradeNotes: {
+        type: String,
+        trim: true
+    },
+    qaNotes: {
+        type: String,
+        trim: true
+    },
+    defects: {
+        type: String,
+        trim: true
+    },
+    location: {
+        type: String,
+        trim: true
+    },
     qrCode: {
         type: String,
         unique: true
