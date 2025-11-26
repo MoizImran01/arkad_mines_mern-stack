@@ -1,5 +1,7 @@
 import quotationModel from "../../Models/quotationModel/quotationModel.js";
 import stonesModel from "../../Models/stonesModel/stonesModel.js";
+import { generateQuotationPDF } from "../../Utils/pdfGenerator.js";
+import { sendQuotationEmail } from "../../Utils/emailService.js";
 
 const VALID_STATUSES = ["draft", "submitted", "adjustment_required"];
 
@@ -250,5 +252,99 @@ const getAllQuotations = async (req, res) => {
   }
 };
 
-export { createOrUpdateQuotation, getMyQuotations, getAllQuotations };
+const issueQuotation = async (req, res) => {
+  try {
+    const { quoteId } = req.params;
+    const { 
+      taxPercentage = 0, 
+      shippingCost = 0, 
+      discountAmount = 0, 
+      adminNotes,
+      validityDays = 7 
+    } = req.body;
+
+    const quotation = await quotationModel.findById(quoteId);
+
+    if (!quotation) {
+      return res.status(404).json({ success: false, message: "Quotation not found" });
+    }
+
+
+    const subtotal = quotation.items.reduce((sum, item) => {
+      const price = item.finalUnitPrice || item.priceSnapshot;
+      return sum + (price * item.requestedQuantity);
+    }, 0);
+
+ 
+    const taxAmount = (subtotal * taxPercentage) / 100;
+    const grandTotal = subtotal + taxAmount + Number(shippingCost) - Number(discountAmount);
+    quotation.financials = {
+      subtotal,
+      taxPercentage,
+      taxAmount,
+      shippingCost,
+      discountAmount,
+      grandTotal
+    };
+
+    quotation.status = "issued";
+    quotation.adminNotes = adminNotes;
+    
+    const now = new Date();
+    const end = new Date(now.getTime() + validityDays * 24 * 60 * 60 * 1000);
+    quotation.validity = { start: now, end: end };
+
+    await quotation.save();
+
+    console.log(`[quotation] Quote ${quotation.referenceNumber} ISSUED by Admin.`);
+
+   const pdfBuffer = await generateQuotationPDF(quotation);
+
+
+    if (quotation.buyer && quotation.buyer.email) {
+       await sendQuotationEmail(
+         quotation.buyer.email, 
+         quotation.referenceNumber, 
+         pdfBuffer
+       );
+       console.log(`Email sent to ${quotation.buyer.email}`);
+    }
+
+    res.json({
+      success: true,
+      message: "Quotation issued and emailed to customer.",
+      quotation,
+    });
+
+  } catch (error) {
+    console.error("Error issuing quotation:", error);
+    res.status(500).json({ success: false, message: "Error processing quotation issuance" });
+  }
+};
+const downloadQuotation = async (req, res) => {
+  try {
+    const { quoteId } = req.params;
+ 
+    const quotation = await quotationModel.findById(quoteId).populate("buyer");
+
+    if (!quotation) {
+      return res.status(404).json({ message: "Quotation not found" });
+    }
+
+    const pdfBuffer = await generateQuotationPDF(quotation);
+
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename=Quotation-${quotation.referenceNumber}.pdf`,
+      "Content-Length": pdfBuffer.length,
+    });
+
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error("Download error:", error);
+    res.status(500).json({ message: "Error generating PDF" });
+  }
+};
+
+export { createOrUpdateQuotation, getMyQuotations, getAllQuotations, issueQuotation, downloadQuotation };
 
