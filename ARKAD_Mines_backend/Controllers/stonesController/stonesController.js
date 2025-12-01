@@ -93,37 +93,38 @@ const listStones = async (req, res) => {
     }
 }
 
-//remove stones item - now deletes from Cloudinary
+//remove stones item - now deletes from Cloudinary (non-blocking for faster response)
 const removeStones = async (req, res) => {
     try {
         const stones = await stonesModel.findById(req.body.id); 
+        
+        // Delete from database FIRST for immediate response
+        await stonesModel.findByIdAndDelete(req.body.id);
+        
+        // Send response immediately - don't wait for Cloudinary
+        res.json({ success: true, message: "Stone Removed" });
+
+        // Delete from Cloudinary in background (non-blocking)
         if (stones) {
-            // Delete main image from Cloudinary
+            // Delete main image from Cloudinary (async, no await)
             if (stones.image) {
                 const imagePublicId = getPublicIdFromUrl(stones.image);
                 if (imagePublicId) {
-                    try {
-                        await deleteImage(imagePublicId);
-                    } catch (err) {
-                        console.log("Error deleting image from Cloudinary:", err);
-                    }
+                    deleteImage(imagePublicId).catch(err => {
+                        console.log("Background: Error deleting image from Cloudinary:", err);
+                    });
                 }
             }
-            // Delete QR code image from Cloudinary
+            // Delete QR code image from Cloudinary (async, no await)
             if (stones.qrCodeImage) {
                 const qrPublicId = getPublicIdFromUrl(stones.qrCodeImage);
                 if (qrPublicId) {
-                    try {
-                        await deleteImage(qrPublicId);
-                    } catch (err) {
-                        console.log("Error deleting QR code from Cloudinary:", err);
-                    }
+                    deleteImage(qrPublicId).catch(err => {
+                        console.log("Background: Error deleting QR code from Cloudinary:", err);
+                    });
                 }
             }
         }
-
-        await stonesModel.findByIdAndDelete(req.body.id);
-        res.json({ success: true, message: "Stone Removed" });
     } catch (error) {
         console.log("Error removing stone:", error);
         res.json({ success: false, message: "Error removing stone" });

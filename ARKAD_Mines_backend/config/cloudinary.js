@@ -2,39 +2,85 @@ import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
 
-// Configure Cloudinary with credentials from environment variables
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-});
+// Flag to track if cloudinary has been configured
+let isConfigured = false;
+
+// Function to configure Cloudinary (called lazily)
+const configureCloudinary = () => {
+    if (!isConfigured) {
+        cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET
+        });
+        isConfigured = true;
+    }
+};
 
 // Configure Cloudinary storage for multer (for stone images)
-const storage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'arkad_mines/stones', // Folder in Cloudinary
-        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
-        transformation: [{ width: 1000, height: 1000, crop: 'limit' }] // Resize large images
-    }
-});
+// Uses a function to lazily create storage after env vars are loaded
+const createStorage = () => {
+    configureCloudinary();
+    return new CloudinaryStorage({
+        cloudinary: cloudinary,
+        params: {
+            folder: 'arkad_mines/stones',
+            allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+            transformation: [{ width: 1000, height: 1000, crop: 'limit' }]
+        }
+    });
+};
 
 // Configure storage for QR codes
-const qrStorage = new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: {
-        folder: 'arkad_mines/qrcodes',
-        allowed_formats: ['png'],
-        format: 'png'
-    }
-});
+const createQrStorage = () => {
+    configureCloudinary();
+    return new CloudinaryStorage({
+        cloudinary: cloudinary,
+        params: {
+            folder: 'arkad_mines/qrcodes',
+            allowed_formats: ['png'],
+            format: 'png'
+        }
+    });
+};
 
-// Create multer upload instance
-const upload = multer({ storage: storage });
-const qrUpload = multer({ storage: qrStorage });
+// Create multer upload instances lazily
+let _upload = null;
+let _qrUpload = null;
+
+const getUpload = () => {
+    if (!_upload) {
+        _upload = multer({ storage: createStorage() });
+    }
+    return _upload;
+};
+
+const getQrUpload = () => {
+    if (!_qrUpload) {
+        _qrUpload = multer({ storage: createQrStorage() });
+    }
+    return _qrUpload;
+};
+
+// Middleware wrapper that lazily initializes upload
+const upload = {
+    single: (fieldName) => (req, res, next) => {
+        return getUpload().single(fieldName)(req, res, next);
+    },
+    array: (fieldName, maxCount) => (req, res, next) => {
+        return getUpload().array(fieldName, maxCount)(req, res, next);
+    }
+};
+
+const qrUpload = {
+    single: (fieldName) => (req, res, next) => {
+        return getQrUpload().single(fieldName)(req, res, next);
+    }
+};
 
 // Helper function to upload a buffer (for QR codes generated in memory)
 const uploadBuffer = async (buffer, folder = 'arkad_mines/qrcodes') => {
+    configureCloudinary();
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
             { 
@@ -52,6 +98,7 @@ const uploadBuffer = async (buffer, folder = 'arkad_mines/qrcodes') => {
 
 // Helper function to delete an image from Cloudinary
 const deleteImage = async (publicId) => {
+    configureCloudinary();
     try {
         const result = await cloudinary.uploader.destroy(publicId);
         return result;
@@ -70,4 +117,3 @@ const getPublicIdFromUrl = (url) => {
 };
 
 export { cloudinary, upload, qrUpload, uploadBuffer, deleteImage, getPublicIdFromUrl };
-
