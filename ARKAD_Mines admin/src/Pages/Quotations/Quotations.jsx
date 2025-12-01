@@ -26,6 +26,7 @@ const Quotations = () => {
     shippingCost: 0,
     discountAmount: 0,
     adminNotes: "",
+    itemPrices: {},
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -68,11 +69,17 @@ const Quotations = () => {
     } else {
       setSelectedQuote(quote);
      
+      const itemPrices = {};
+      quote.items?.forEach((item, idx) => {
+        itemPrices[idx] = item.finalUnitPrice || item.priceSnapshot || 0;
+      });
+
       setIssueFormData({
         taxPercentage: quote.financials?.taxPercentage || 0,
         shippingCost: quote.financials?.shippingCost || 0,
         discountAmount: quote.financials?.discountAmount || 0,
         adminNotes: quote.adminNotes || "",
+        itemPrices,
       });
     }
   };
@@ -85,8 +92,34 @@ const Quotations = () => {
     }));
   };
 
+  const handleItemPriceChange = (itemIndex, value) => {
+    const price = value === "" ? "" : Number(value);
+    setIssueFormData((prev) => ({
+      ...prev,
+      itemPrices: {
+        ...prev.itemPrices,
+        [itemIndex]: price,
+      },
+    }));
+  };
+
   const handleIssueQuote = async () => {
     if (!selectedQuote) return;
+    
+    //Validation
+    const invalidPrices = [];
+    selectedQuote.items?.forEach((item, idx) => {
+      const price = issueFormData.itemPrices[idx];
+      if (price !== undefined && (isNaN(price) || price < 0)) {
+        invalidPrices.push(item.stoneName);
+      }
+    });
+
+    if (invalidPrices.length > 0) {
+      alert(`Invalid prices for items: ${invalidPrices.join(", ")}. Please enter valid non-negative numbers.`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const response = await axios.put(
@@ -100,11 +133,12 @@ const Quotations = () => {
         fetchQuotes(); 
         setSelectedQuote(null); 
       } else {
-        alert("Failed to issue quote: " + response.data.message);
+        alert("Failed to issue quote: " + (response.data.message || "Unknown error"));
       }
     } catch (err) {
       console.error("Error issuing quote:", err);
-      alert("Error issuing quote");
+      const errorMessage = err.response?.data?.message || "Error issuing quote";
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -113,9 +147,26 @@ const Quotations = () => {
 
   const calculatePreviewTotal = () => {
     if (!selectedQuote) return 0;
-    const subtotal = selectedQuote.totalEstimatedCost;
+    
+    const subtotal = selectedQuote.items?.reduce((sum, item, idx) => {
+      const price = issueFormData.itemPrices[idx] !== undefined 
+        ? (issueFormData.itemPrices[idx] || 0)
+        : (item.finalUnitPrice || item.priceSnapshot || 0);
+      return sum + (price * item.requestedQuantity);
+    }, 0) || 0;
+    
     const tax = (subtotal * issueFormData.taxPercentage) / 100;
     return subtotal + tax + issueFormData.shippingCost - issueFormData.discountAmount;
+  };
+
+  const calculatePreviewSubtotal = () => {
+    if (!selectedQuote) return 0;
+    return selectedQuote.items?.reduce((sum, item, idx) => {
+      const price = issueFormData.itemPrices[idx] !== undefined 
+        ? (issueFormData.itemPrices[idx] || 0)
+        : (item.finalUnitPrice || item.priceSnapshot || 0);
+      return sum + (price * item.requestedQuantity);
+    }, 0) || 0;
   };
 
   const handleDownloadPDF = async () => {
@@ -226,15 +277,39 @@ const Quotations = () => {
             <div className="panel-section">
               <h4>Items</h4>
               <div className="quote-items-list">
-                {selectedQuote.items?.map((item, idx) => (
-                  <div key={idx} className="quote-item-card">
-                    <div className="item-meta">
-                      <strong>{item.stoneName}</strong>
-                      <span>x{item.requestedQuantity}</span>
+                {selectedQuote.items?.map((item, idx) => {
+                  const currentPrice = issueFormData.itemPrices[idx] !== undefined 
+                    ? issueFormData.itemPrices[idx] 
+                    : (item.finalUnitPrice || item.priceSnapshot || 0);
+                  const isEditable = ["draft", "submitted", "adjustment_required"].includes(selectedQuote.status);
+                  
+                  return (
+                    <div key={idx} className="quote-item-card">
+                      <div className="item-meta">
+                        <strong>{item.stoneName}</strong>
+                        <span>x{item.requestedQuantity}</span>
+                      </div>
+                      <div className="item-price-section">
+                        {isEditable ? (
+                          <div className="item-price-input-group">
+                            <label>Unit Price (Rs):</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={currentPrice}
+                              onChange={(e) => handleItemPriceChange(idx, e.target.value)}
+                              placeholder={item.priceSnapshot}
+                            />
+                            <small>Base: Rs {item.priceSnapshot}</small>
+                          </div>
+                        ) : (
+                          <small>Price: Rs {currentPrice} (Base: Rs {item.priceSnapshot})</small>
+                        )}
+                      </div>
                     </div>
-                    <small>Base: Rs {item.priceSnapshot}</small>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -289,7 +364,8 @@ const Quotations = () => {
                 </div>
 
                 <div className="summary-preview">
-                  <p>Est. Total: Rs {selectedQuote.totalEstimatedCost}</p>
+                  <p>Subtotal: Rs {calculatePreviewSubtotal().toLocaleString()}</p>
+                  <p>Est. Total (original): Rs {selectedQuote.totalEstimatedCost?.toLocaleString()}</p>
                   <p><strong>Final Total: Rs {calculatePreviewTotal().toLocaleString()}</strong></p>
                 </div>
 

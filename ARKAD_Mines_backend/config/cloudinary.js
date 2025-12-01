@@ -1,7 +1,8 @@
 import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import pkg from 'multer-storage-cloudinary';
 import multer from 'multer';
 
+const { CloudinaryStorage } = pkg;
 // Flag to track if cloudinary has been configured
 let isConfigured = false;
 

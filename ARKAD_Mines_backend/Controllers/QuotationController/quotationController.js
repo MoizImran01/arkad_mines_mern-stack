@@ -260,30 +260,105 @@ const issueQuotation = async (req, res) => {
       shippingCost = 0, 
       discountAmount = 0, 
       adminNotes,
-      validityDays = 7 
+      validityDays = 7,
+      itemPrices = {}
     } = req.body;
 
-    const quotation = await quotationModel.findById(quoteId);
+    const quotation = await quotationModel.findById(quoteId).populate("buyer");
 
     if (!quotation) {
       return res.status(404).json({ success: false, message: "Quotation not found" });
     }
 
+    //Validations
+    const taxPercent = Number(taxPercentage);
+    if (isNaN(taxPercent) || taxPercent < 0 || taxPercent > 100) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid tax percentage. Must be between 0 and 100." 
+      });
+    }
 
-    const subtotal = quotation.items.reduce((sum, item) => {
+    
+    const shipping = Number(shippingCost);
+    if (isNaN(shipping) || shipping < 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid shipping cost. Must be a non-negative number." 
+      });
+    }
+
+    
+    const discount = Number(discountAmount);
+    if (isNaN(discount) || discount < 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid discount amount. Must be a non-negative number." 
+      });
+    }
+
+    
+    const validity = Number(validityDays);
+    if (isNaN(validity) || validity < 1 || validity > 365) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid validity days. Must be between 1 and 365." 
+      });
+    }
+
+    
+    let subtotal = 0;
+    quotation.items.forEach((item, index) => {
+      
+      if (itemPrices[index] !== undefined && itemPrices[index] !== null) {
+        const customPrice = Number(itemPrices[index]);
+        
+        
+        if (isNaN(customPrice) || customPrice < 0) {
+          throw new Error(`Invalid price for item "${item.stoneName}" at index ${index}. Price must be a non-negative number.`);
+        }
+        
+        item.finalUnitPrice = customPrice;
+      } else {
+        //Use existing finalUnitPrice
+        item.finalUnitPrice = item.finalUnitPrice || item.priceSnapshot;
+      }
+
+      
       const price = item.finalUnitPrice || item.priceSnapshot;
-      return sum + (price * item.requestedQuantity);
-    }, 0);
+      if (!price || price < 0) {
+        throw new Error(`Invalid price for item "${item.stoneName}" at index ${index}.`);
+      }
 
- 
-    const taxAmount = (subtotal * taxPercentage) / 100;
-    const grandTotal = subtotal + taxAmount + Number(shippingCost) - Number(discountAmount);
+      subtotal += price * item.requestedQuantity;
+    });
+
+    
+    if (discount > subtotal) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Discount amount (Rs ${discount}) cannot exceed subtotal (Rs ${subtotal}).` 
+      });
+    }
+
+    
+    const taxAmount = (subtotal * taxPercent) / 100;
+    const grandTotal = subtotal + taxAmount + shipping - discount;
+
+    //Ensure grand total is non-negative
+    if (grandTotal < 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid pricing. Grand total cannot be negative." 
+      });
+    }
+
     quotation.financials = {
       subtotal,
-      taxPercentage,
+      taxPercentage: taxPercent,
       taxAmount,
-      shippingCost,
-      discountAmount,
+      shippingCost: shipping,
+      discountAmount: discount,
       grandTotal
     };
 
@@ -291,7 +366,7 @@ const issueQuotation = async (req, res) => {
     quotation.adminNotes = adminNotes;
     
     const now = new Date();
-    const end = new Date(now.getTime() + validityDays * 24 * 60 * 60 * 1000);
+    const end = new Date(now.getTime() + validity * 24 * 60 * 60 * 1000);
     quotation.validity = { start: now, end: end };
 
     await quotation.save();
@@ -318,6 +393,15 @@ const issueQuotation = async (req, res) => {
 
   } catch (error) {
     console.error("Error issuing quotation:", error);
+    
+    
+    if (error.message && error.message.includes("Invalid")) {
+      return res.status(400).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+    
     res.status(500).json({ success: false, message: "Error processing quotation issuance" });
   }
 };
