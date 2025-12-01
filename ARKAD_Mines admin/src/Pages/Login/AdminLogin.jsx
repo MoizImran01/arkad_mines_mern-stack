@@ -1,10 +1,14 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import './AdminLogin.css';
 import { assets } from '../../assets/assets';
 import axios from "axios";
 import { AdminAuthContext } from '../../context/AdminAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import ReCAPTCHA from "react-google-recaptcha";
+
+// Google reCAPTCHA site key - Replace with your production key from https://www.google.com/recaptcha/admin
+const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
 //Admin login component that only allows admin users to log in
 const AdminLogin = () => {
@@ -13,6 +17,8 @@ const AdminLogin = () => {
   
 
   const [error, setError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const recaptchaRef = useRef(null);
   
 
   const { setToken, setAdminUser, url } = useContext(AdminAuthContext);
@@ -23,6 +29,17 @@ const AdminLogin = () => {
     email: "",
     password: ""
   });
+
+  // Handle CAPTCHA completion
+  const handleCaptchaChange = (token) => {
+    setCaptchaToken(token);
+    if (error) setError("");
+  };
+
+  // Handle CAPTCHA expiration
+  const handleCaptchaExpired = () => {
+    setCaptchaToken(null);
+  };
 
 
   const handleInputChange = (event) => {
@@ -37,12 +54,21 @@ const AdminLogin = () => {
 
     event.preventDefault();
 
+    // Check if CAPTCHA is completed
+    if (!captchaToken) {
+      setError("Please complete the CAPTCHA verification.");
+      return;
+    }
+
     setIsLoading(true);
     setError("");
 
     try {
-      // Make API call to backend authentication service
-      const response = await axios.post(`${url}/api/user/login`, formData);
+      // Make API call to backend authentication service with CAPTCHA token
+      const response = await axios.post(`${url}/api/user/login`, {
+        ...formData,
+        captchaToken
+      });
 
 
       if (response.data.success) {
@@ -52,6 +78,9 @@ const AdminLogin = () => {
         if (user.role !== "admin") {
           setError("Access denied. Only administrators can access this portal.");
           setIsLoading(false);
+          // Reset CAPTCHA on error
+          recaptchaRef.current?.reset();
+          setCaptchaToken(null);
           return;
         }
 
@@ -68,11 +97,17 @@ const AdminLogin = () => {
       } else {
 
         setError(response.data.message || "An error occurred");
+        // Reset CAPTCHA on error
+        recaptchaRef.current?.reset();
+        setCaptchaToken(null);
       }
     } catch (error) {
 
       console.error("Authentication error:", error);
       setError(error.response?.data?.message || "Network error. Please try again.");
+      // Reset CAPTCHA on error
+      recaptchaRef.current?.reset();
+      setCaptchaToken(null);
     } finally {
 
       setIsLoading(false);
@@ -127,10 +162,20 @@ const AdminLogin = () => {
             </div>
           </div>
 
+          <div className="captcha-container">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={RECAPTCHA_SITE_KEY}
+              onChange={handleCaptchaChange}
+              onExpired={handleCaptchaExpired}
+              theme="light"
+            />
+          </div>
+
           <button
             type="submit"
             className={`submit-btn ${isLoading ? 'loading' : ''}`}
-            disabled={isLoading}
+            disabled={isLoading || !captchaToken}
           >
             {isLoading ? (
               <div className="spinner"></div>

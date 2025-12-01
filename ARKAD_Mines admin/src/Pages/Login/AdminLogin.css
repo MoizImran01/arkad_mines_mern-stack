@@ -191,3 +191,22 @@
   font-size: 14px;
 }
 
+/* CAPTCHA Container Styles */
+.captcha-container {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
+}
+
+.captcha-container > div {
+  transform-origin: center;
+}
+
+/* Responsive CAPTCHA for smaller screens */
+@media (max-width: 400px) {
+  .captcha-container > div {
+    transform: scale(0.85);
+    transform-origin: center;
+  }
+}
+

@@ -1,8 +1,12 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useRef } from 'react'
 import './LoginPopup.css'
 import crossicon from '../../assets/cross_icon.png'
 import axios from "axios";
 import { StoreContext } from '../../context/StoreContext';
+import ReCAPTCHA from "react-google-recaptcha";
+
+// Google reCAPTCHA site key - Replace with your production key from https://www.google.com/recaptcha/admin
+const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
 //main login/signup popup component that handles user authentication
 const LoginPopup = ({ setShowLogin }) => {
@@ -12,6 +16,8 @@ const LoginPopup = ({ setShowLogin }) => {
     const [isLoading, setIsLoading] = useState(false)
  
     const [error, setError] = useState("")
+    const [captchaToken, setCaptchaToken] = useState(null)
+    const recaptchaRef = useRef(null)
 
     const { setToken } = useContext(StoreContext)
     
@@ -33,10 +39,27 @@ const LoginPopup = ({ setShowLogin }) => {
         if (error) setError("")
     }
 
+    // Handle CAPTCHA completion
+    const handleCaptchaChange = (token) => {
+        setCaptchaToken(token)
+        if (error) setError("")
+    }
+
+    // Handle CAPTCHA expiration
+    const handleCaptchaExpired = () => {
+        setCaptchaToken(null)
+    }
+
 
 const handleSubmit = async (event) => {
 
   event.preventDefault();
+
+  // Check if CAPTCHA is completed
+  if (!captchaToken) {
+    setError("Please complete the CAPTCHA verification.");
+    return;
+  }
 
   setIsLoading(true);
   setError("");
@@ -45,7 +68,11 @@ const handleSubmit = async (event) => {
 
     const endpoint = currentState === "Login" ? "/api/user/login" : "/api/user/register";
 
-    const response = await axios.post(`${url}${endpoint}`, formData);
+    // Include CAPTCHA token with the request
+    const response = await axios.post(`${url}${endpoint}`, {
+      ...formData,
+      captchaToken
+    });
 
 
     if (response.data.success) {
@@ -68,11 +95,17 @@ const handleSubmit = async (event) => {
     } else {
 
       setError(response.data.message || "An error occurred");
+      // Reset CAPTCHA on error
+      recaptchaRef.current?.reset();
+      setCaptchaToken(null);
     }
   } catch (error) {
 
     console.error("Authentication error:", error);
     setError(error.response?.data?.message || "Network error. Please try again.");
+    // Reset CAPTCHA on error
+    recaptchaRef.current?.reset();
+    setCaptchaToken(null);
   } finally {
 
     setIsLoading(false);
@@ -86,6 +119,9 @@ const handleSubmit = async (event) => {
 
         setError("")
         setFormData({ name: "", email: "", password: "" })
+        // Reset CAPTCHA when switching between login and signup
+        recaptchaRef.current?.reset()
+        setCaptchaToken(null)
     }
 
     //handles clicking outside the modal to close it (backdrop click)
@@ -182,10 +218,20 @@ const handleSubmit = async (event) => {
                 </div>
                 </div>
 
+                    <div className="captcha-container">
+                        <ReCAPTCHA
+                            ref={recaptchaRef}
+                            sitekey={RECAPTCHA_SITE_KEY}
+                            onChange={handleCaptchaChange}
+                            onExpired={handleCaptchaExpired}
+                            theme="light"
+                        />
+                    </div>
+
                     <button 
                         type='submit' 
                         className={`submit-btn ${isLoading ? 'loading' : ''}`}
-                        disabled={isLoading}
+                        disabled={isLoading || !captchaToken}
                     >
 
                         {isLoading ? (

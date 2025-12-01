@@ -2,6 +2,7 @@ import userModel from "../../Models/Users/userModel.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import validator from "validator";
+import axios from "axios";
 
 
 //creates JWT token containing user ID and role, it is used for maintaining authenticated sessions
@@ -10,14 +11,52 @@ const createToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
+// Verifies Google reCAPTCHA token to prevent bot submissions
+const verifyCaptcha = async (captchaToken) => {
+  try {
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+    
+    if (!secretKey) {
+      console.warn("RECAPTCHA_SECRET_KEY not configured - skipping verification");
+      return true; // Skip verification if not configured
+    }
+
+    const response = await axios.post(
+      `https://www.google.com/recaptcha/api/siteverify`,
+      null,
+      {
+        params: {
+          secret: secretKey,
+          response: captchaToken,
+        },
+      }
+    );
+
+    return response.data.success;
+  } catch (error) {
+    console.error("CAPTCHA verification error:", error);
+    return false;
+  }
+};
+
 
 //handles the user login process. it validates credentials and returns auth token
 const loginUser = async (req, res) => {
 
-  const { email, password } = req.body;
+  const { email, password, captchaToken } = req.body;
 
   try 
   {
+    // Verify CAPTCHA first to block bots early
+    if (captchaToken) {
+      const isCaptchaValid = await verifyCaptcha(captchaToken);
+      if (!isCaptchaValid) {
+        return res.status(400).json({
+          success: false,
+          message: "CAPTCHA verification failed. Please try again."
+        });
+      }
+    }
 
     const user = await userModel.findOne({ email });
 
@@ -67,9 +106,19 @@ const loginUser = async (req, res) => {
 //handles new user registration it validates input and creates new user account
 const registerUser = async (req, res) => {
 
-  const { companyName, email, password, role } = req.body;
+  const { companyName, email, password, role, captchaToken } = req.body;
 
   try {
+    // Verify CAPTCHA first to block bots early
+    if (captchaToken) {
+      const isCaptchaValid = await verifyCaptcha(captchaToken);
+      if (!isCaptchaValid) {
+        return res.status(400).json({
+          success: false,
+          message: "CAPTCHA verification failed. Please try again."
+        });
+      }
+    }
 
     const exists = await userModel.findOne({ email });
     if (exists) {
