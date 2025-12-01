@@ -190,6 +190,17 @@ const Products = () => {
     return 'unknown';
   };
 
+  // Helper function to get image URL - handles both Cloudinary URLs and legacy local images
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://via.placeholder.com/300x200?text=No+Image';
+    // If it's already a full URL (Cloudinary), return as is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    // Otherwise, construct local URL for legacy images
+    return `${url}/images/${imagePath}`;
+  };
+
   return (
     <div className="products-page">
       <div className="products-header">
@@ -379,7 +390,7 @@ const Products = () => {
                 >
                   <div className="product-image">
                     <img 
-                      src={`${url}/images/${product.image}`} 
+                      src={getImageUrl(product.image)} 
                       alt={product.stoneName}
                       onError={(e) => {
                         e.target.onerror = null;

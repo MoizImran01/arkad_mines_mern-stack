@@ -14,6 +14,17 @@ const Dispatch = () => {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
 
+  // Helper function to get image URL - handles both Cloudinary URLs and legacy local images
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://via.placeholder.com/100?text=No+QR';
+    // If it's already a full URL (Cloudinary), return as is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    // Otherwise, construct local URL for legacy images
+    return `http://localhost:4000/images/${imagePath}`;
+  };
+
   //Function to search for block by QR code
   const searchBlock = async () => {
     if (!qrCode.trim()) {
@@ -312,7 +323,7 @@ const Dispatch = () => {
                 <span className="detail-label">QR Code:</span>
                 <div className="qr-preview-image">
                   <img 
-                    src={`http://localhost:4000/images/${blockInfo.qrCodeImage}`} 
+                    src={getImageUrl(blockInfo.qrCodeImage)} 
                     alt="QR Code" 
                   />
                 </div>

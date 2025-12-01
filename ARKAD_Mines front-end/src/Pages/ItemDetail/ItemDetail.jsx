@@ -104,6 +104,17 @@ const ItemDetail = () => {
     }
   };
 
+  // Helper function to get image URL - handles both Cloudinary URLs and legacy local images
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://via.placeholder.com/800x600?text=No+Image';
+    // If it's already a full URL (Cloudinary), return as is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    // Otherwise, construct local URL for legacy images
+    return `${url}/images/${imagePath}`;
+  };
+
   if (loading) {
     return (
       <div className="item-detail-container">
@@ -144,7 +155,7 @@ const ItemDetail = () => {
               onClick={handleImageClick}
             >
               <img
-                src={`${url}/images/${stone.image}`}
+                src={getImageUrl(stone.image)}
                 alt={stone.stoneName}
                 style={{ transform: `scale(${zoomLevel})` }}
                 onError={(e) => {

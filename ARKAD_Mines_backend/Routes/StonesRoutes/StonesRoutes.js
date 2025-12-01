@@ -1,18 +1,11 @@
 import express from "express"
 import { addStones, listStones, removeStones, dispatchBlock, getStoneById, getBlockByQRCode, filterStones } from "../../Controllers/stonesController/stonesController.js"
-import multer from "multer"
+import { upload } from "../../config/cloudinary.js"
 
 const stonesRouter = express.Router();
 
-
-const storage = multer.diskStorage({
-    destination: "uploads", 
-    filename:(req,file,cb)=>{
-    return cb(null, `${Date.now()}${file.originalname}`) 
-}})
-
-const upload = multer({storage:storage})
-
+// Using Cloudinary storage instead of local multer storage
+// Images will be automatically uploaded to Cloudinary cloud storage
 
 stonesRouter.post("/add", upload.single("image"), addStones)
 stonesRouter.get("/list", listStones)

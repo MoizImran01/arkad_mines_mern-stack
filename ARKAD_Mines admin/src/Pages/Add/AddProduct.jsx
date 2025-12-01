@@ -55,9 +55,13 @@ export const AddProduct = () => {
     try {
       const response = await axios.post("http://localhost:4000/api/stones/add", formData);
       if (response.data.success) {
-        // Show QR code if generated
+        // Show QR code if generated - now uses Cloudinary URL directly
         if (response.data.qrCodeImage && response.data.qrCode) {
-          setQrCodeImage(`http://localhost:4000/images/${response.data.qrCodeImage}`);
+          // Check if it's already a full URL (Cloudinary) or legacy local path
+          const qrImageUrl = response.data.qrCodeImage.startsWith('http') 
+            ? response.data.qrCodeImage 
+            : `http://localhost:4000/images/${response.data.qrCodeImage}`;
+          setQrCodeImage(qrImageUrl);
           setQrCodeId(response.data.qrCode);
           setShowQRCode(true);
         }

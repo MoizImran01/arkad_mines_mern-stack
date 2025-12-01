@@ -12,6 +12,17 @@ const Orders = () => {
 
   const [expandedOrder, setExpandedOrder] = useState(null);
 
+  // Helper function to get image URL - handles both Cloudinary URLs and legacy local images
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://via.placeholder.com/50?text=No+Image';
+    // If it's already a full URL (Cloudinary), return as is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    // Otherwise, construct local URL for legacy images
+    return `http://localhost:4000/images/${imagePath}`;
+  };
+
 
  const statusOptions = [
   { value: 'Food Processing', label: 'Processing', icon: <FiClock className="status-icon processing" /> },
@@ -242,7 +253,7 @@ const Orders = () => {
                                   <div key={item._id} className="order-item">
                                     <div className="item-image">
                                       <img 
-                                        src={`http://localhost:4000/images/${item.image}`} 
+                                        src={getImageUrl(item.image)} 
                                         alt={item.name} 
                                         onError={(e) => {
                                           e.target.onerror = null; 

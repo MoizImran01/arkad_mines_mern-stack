@@ -41,6 +41,17 @@ const RequestQuote = () => {
     [token]
   );
 
+  // Helper function to get image URL - handles both Cloudinary URLs and legacy local images
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://via.placeholder.com/80x80?text=No+Image';
+    // If it's already a full URL (Cloudinary), return as is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    // Otherwise, construct local URL for legacy images
+    return `${url}/images/${imagePath}`;
+  };
+
   const estimatedTotal = useMemo(
     () =>
       quoteItems.reduce(
@@ -223,7 +234,7 @@ const RequestQuote = () => {
                 <div key={item._id} className="quote-item">
                   <div className="item-details">
                     <img
-                      src={`${url}/images/${item.image}`}
+                      src={getImageUrl(item.image)}
                       alt={item.stoneName}
                       onError={(e) => {
                         e.target.onerror = null;

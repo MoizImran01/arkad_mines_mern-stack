@@ -1,18 +1,18 @@
 import stonesModel from '../../Models/stonesModel/stonesModel.js';
-import fs from 'fs';
 import QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { uploadBuffer, deleteImage, getPublicIdFromUrl } from '../../config/cloudinary.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-//add stones item to the db
+//add stones item to the db - now using Cloudinary for image storage
 const addStones = async (req, res) => {
     try {
-        let image_filename = `${req.file.filename}`; 
+        // req.file now contains Cloudinary response with path (URL) and filename
+        if (!req.file) {
+            return res.json({ success: false, message: "Image is required" });
+        }
 
+        // Cloudinary provides the full URL in req.file.path
+        const image_url = req.file.path;
 
         const { 
             stoneName, 
@@ -39,23 +39,24 @@ const addStones = async (req, res) => {
             registeredAt: new Date().toISOString()
         });
 
-        // Generate QR code image
-        const qrCodeFilename = `qr_${Date.now()}_${qrCodeId.substring(0, 8)}.png`;
-        const qrCodePath = path.join(__dirname, '../../uploads', qrCodeFilename);
-        
-        await QRCode.toFile(qrCodePath, qrCodeData, {
+        // Generate QR code as buffer and upload to Cloudinary
+        const qrCodeBuffer = await QRCode.toBuffer(qrCodeData, {
             errorCorrectionLevel: 'H',
             type: 'png',
             width: 300,
             margin: 1
         });
 
+        // Upload QR code to Cloudinary
+        const qrCodeResult = await uploadBuffer(qrCodeBuffer, 'arkad_mines/qrcodes');
+        const qrCodeUrl = qrCodeResult.secure_url;
+
         const stones = new stonesModel({
             stoneName: stoneName,
             dimensions: dimensions,
             price: Number(price),
             priceUnit: priceUnit,
-            image: image_filename,
+            image: image_url, // Now storing full Cloudinary URL
             category: category,
             subcategory: subcategory,
             stockAvailability: stockAvailability,
@@ -63,7 +64,7 @@ const addStones = async (req, res) => {
             location: location || undefined,
             qaNotes: qaNotes || undefined,
             qrCode: qrCodeId,
-            qrCodeImage: qrCodeFilename,
+            qrCodeImage: qrCodeUrl, // Now storing full Cloudinary URL
             status: "Registered"
         });
 
@@ -73,7 +74,7 @@ const addStones = async (req, res) => {
             message: "Stone block registered successfully with QR code",
             blockId: stones._id,
             qrCode: qrCodeId,
-            qrCodeImage: qrCodeFilename
+            qrCodeImage: qrCodeUrl
         });
     } catch (error) {
         console.log("Error adding stone:", error);
@@ -92,16 +93,32 @@ const listStones = async (req, res) => {
     }
 }
 
-//remove stones item
+//remove stones item - now deletes from Cloudinary
 const removeStones = async (req, res) => {
     try {
         const stones = await stonesModel.findById(req.body.id); 
         if (stones) {
+            // Delete main image from Cloudinary
             if (stones.image) {
-                fs.unlink(`uploads/${stones.image}`, () => {});
+                const imagePublicId = getPublicIdFromUrl(stones.image);
+                if (imagePublicId) {
+                    try {
+                        await deleteImage(imagePublicId);
+                    } catch (err) {
+                        console.log("Error deleting image from Cloudinary:", err);
+                    }
+                }
             }
+            // Delete QR code image from Cloudinary
             if (stones.qrCodeImage) {
-                fs.unlink(`uploads/${stones.qrCodeImage}`, () => {});
+                const qrPublicId = getPublicIdFromUrl(stones.qrCodeImage);
+                if (qrPublicId) {
+                    try {
+                        await deleteImage(qrPublicId);
+                    } catch (err) {
+                        console.log("Error deleting QR code from Cloudinary:", err);
+                    }
+                }
             }
         }
 

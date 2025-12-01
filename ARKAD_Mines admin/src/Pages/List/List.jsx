@@ -11,6 +11,17 @@ const List = () => {
 
   const [qrModal, setQrModal] = useState({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null });
 
+  // Helper function to get image URL - handles both Cloudinary URLs and legacy local images
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://via.placeholder.com/100x100?text=No+Image';
+    // If it's already a full URL (Cloudinary), return as is
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    // Otherwise, construct local URL for legacy images
+    return `http://localhost:4000/images/${imagePath}`;
+  };
+
 
   const fetchList = async ()=>{
       try{
@@ -92,7 +103,7 @@ const List = () => {
                 <div key={index} className="list-row-wrapper">
                   <div className="list-table-format">
 
-                    <img src={'http://localhost:4000/images/' + item.image} alt={item.stoneName} />
+                    <img src={getImageUrl(item.image)} alt={item.stoneName} />
                     <p>{item.stoneName}</p>
                     <p>{item.category}</p>
                     <p>{item.subcategory}</p>
@@ -104,13 +115,13 @@ const List = () => {
                     <div className="qr-code-cell">
                       {item.qrCodeImage ? (
                         <img 
-                          src={'http://localhost:4000/images/' + item.qrCodeImage} 
+                          src={getImageUrl(item.qrCodeImage)} 
                           alt="QR Code" 
                           className="qr-code-thumbnail"
                           title={`Click to view QR Code: ${item.qrCode}`}
                           onClick={() => setQrModal({
                             isOpen: true,
-                            qrCodeImage: 'http://localhost:4000/images/' + item.qrCodeImage,
+                            qrCodeImage: getImageUrl(item.qrCodeImage),
                             qrCodeId: item.qrCode,
                             stoneName: item.stoneName
                           })}

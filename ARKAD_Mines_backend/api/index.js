@@ -19,6 +19,8 @@ app.use(cors());
 connectDB().catch((e) => console.error("DB connect error:", e));
 
 
+// Legacy: Keep serving local uploads for any existing images
+// New images are stored on Cloudinary and served via full URLs
 app.use("/images", express.static("uploads"));
 
 //Routes
