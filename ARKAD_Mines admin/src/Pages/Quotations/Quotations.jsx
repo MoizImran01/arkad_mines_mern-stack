@@ -19,6 +19,7 @@ const Quotations = () => {
   const [selectedQuote, setSelectedQuote] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("all"); // Filter by tab: all, draft, submitted, adjustment_required, revision_requested, issued, approved, rejected
 
   
   const [issueFormData, setIssueFormData] = useState({
@@ -26,6 +27,7 @@ const Quotations = () => {
     shippingCost: 0,
     discountAmount: 0,
     adminNotes: "",
+    itemPrices: {},
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -41,9 +43,17 @@ const Quotations = () => {
     setRefreshing(true);
     setError(null);
     try {
-      const response = await axios.get(`${url}/api/quotes/admin`, { headers });
+      // Fetch all quotations - we'll filter client-side by tab
+      const response = await axios.get(`${url}/api/quotes/admin`, { 
+        headers
+      });
       if (response.data.success) {
-        setQuotes(response.data.quotations || []);
+        let quotations = response.data.quotations || [];
+        
+        // Filter by active tab
+        quotations = filterQuotationsByTab(quotations, activeTab);
+        
+        setQuotes(quotations);
       } else {
         setQuotes([]);
         setError(response.data.message || "Unable to load quotations");
@@ -58,9 +68,17 @@ const Quotations = () => {
     }
   };
 
+  const filterQuotationsByTab = (quotations, tab) => {
+    if (tab === "all") {
+      return quotations;
+    }
+    return quotations.filter(q => q.status === tab);
+  };
+
   useEffect(() => {
     fetchQuotes();
-  }, []);
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const handleSelectQuote = (quote) => {
     if (selectedQuote?._id === quote._id) {
@@ -68,11 +86,17 @@ const Quotations = () => {
     } else {
       setSelectedQuote(quote);
      
+      const itemPrices = {};
+      quote.items?.forEach((item, idx) => {
+        itemPrices[idx] = item.finalUnitPrice || item.priceSnapshot || 0;
+      });
+
       setIssueFormData({
         taxPercentage: quote.financials?.taxPercentage || 0,
         shippingCost: quote.financials?.shippingCost || 0,
         discountAmount: quote.financials?.discountAmount || 0,
         adminNotes: quote.adminNotes || "",
+        itemPrices,
       });
     }
   };
@@ -85,8 +109,34 @@ const Quotations = () => {
     }));
   };
 
+  const handleItemPriceChange = (itemIndex, value) => {
+    const price = value === "" ? "" : Number(value);
+    setIssueFormData((prev) => ({
+      ...prev,
+      itemPrices: {
+        ...prev.itemPrices,
+        [itemIndex]: price,
+      },
+    }));
+  };
+
   const handleIssueQuote = async () => {
     if (!selectedQuote) return;
+    
+    //Validation
+    const invalidPrices = [];
+    selectedQuote.items?.forEach((item, idx) => {
+      const price = issueFormData.itemPrices[idx];
+      if (price !== undefined && (isNaN(price) || price < 0)) {
+        invalidPrices.push(item.stoneName);
+      }
+    });
+
+    if (invalidPrices.length > 0) {
+      alert(`Invalid prices for items: ${invalidPrices.join(", ")}. Please enter valid non-negative numbers.`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const response = await axios.put(
@@ -100,11 +150,13 @@ const Quotations = () => {
         fetchQuotes(); 
         setSelectedQuote(null); 
       } else {
-        alert("Failed to issue quote: " + response.data.message);
+        alert("Failed to issue quote: " + (response.data.message || "Unknown error"));
       }
     } catch (err) {
       console.error("Error issuing quote:", err);
-      alert("Error issuing quote");
+      console.error("Error response:", err.response?.data);
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || "Error issuing quote. Please check the console for details.";
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -113,9 +165,26 @@ const Quotations = () => {
 
   const calculatePreviewTotal = () => {
     if (!selectedQuote) return 0;
-    const subtotal = selectedQuote.totalEstimatedCost;
+    
+    const subtotal = selectedQuote.items?.reduce((sum, item, idx) => {
+      const price = issueFormData.itemPrices[idx] !== undefined 
+        ? (issueFormData.itemPrices[idx] || 0)
+        : (item.finalUnitPrice || item.priceSnapshot || 0);
+      return sum + (price * item.requestedQuantity);
+    }, 0) || 0;
+    
     const tax = (subtotal * issueFormData.taxPercentage) / 100;
     return subtotal + tax + issueFormData.shippingCost - issueFormData.discountAmount;
+  };
+
+  const calculatePreviewSubtotal = () => {
+    if (!selectedQuote) return 0;
+    return selectedQuote.items?.reduce((sum, item, idx) => {
+      const price = issueFormData.itemPrices[idx] !== undefined 
+        ? (issueFormData.itemPrices[idx] || 0)
+        : (item.finalUnitPrice || item.priceSnapshot || 0);
+      return sum + (price * item.requestedQuantity);
+    }, 0) || 0;
   };
 
   const handleDownloadPDF = async () => {
@@ -152,6 +221,57 @@ const Quotations = () => {
         </div>
         <button className="refresh-btn" onClick={fetchQuotes} disabled={refreshing}>
           {refreshing ? <FiRefreshCw className="spin" /> : <FiRefreshCw />} Refresh
+        </button>
+      </div>
+
+      <div className="quotations-tabs">
+        <button
+          className={`tab-button ${activeTab === "all" ? "active" : ""}`}
+          onClick={() => setActiveTab("all")}
+        >
+          All Quotations
+        </button>
+        <button
+          className={`tab-button ${activeTab === "draft" ? "active" : ""}`}
+          onClick={() => setActiveTab("draft")}
+        >
+          Draft
+        </button>
+        <button
+          className={`tab-button ${activeTab === "submitted" ? "active" : ""}`}
+          onClick={() => setActiveTab("submitted")}
+        >
+          Submitted
+        </button>
+        <button
+          className={`tab-button ${activeTab === "adjustment_required" ? "active" : ""}`}
+          onClick={() => setActiveTab("adjustment_required")}
+        >
+          Adjustment Required
+        </button>
+        <button
+          className={`tab-button ${activeTab === "revision_requested" ? "active" : ""}`}
+          onClick={() => setActiveTab("revision_requested")}
+        >
+          Revision Requested
+        </button>
+        <button
+          className={`tab-button ${activeTab === "issued" ? "active" : ""}`}
+          onClick={() => setActiveTab("issued")}
+        >
+          Issued
+        </button>
+        <button
+          className={`tab-button ${activeTab === "approved" ? "active" : ""}`}
+          onClick={() => setActiveTab("approved")}
+        >
+          Approved
+        </button>
+        <button
+          className={`tab-button ${activeTab === "rejected" ? "active" : ""}`}
+          onClick={() => setActiveTab("rejected")}
+        >
+          Rejected
         </button>
       </div>
 
@@ -220,26 +340,71 @@ const Quotations = () => {
 
             <div className="panel-section">
               <h4>Status: <span style={{textTransform: 'capitalize'}}>{selectedQuote.status}</span></h4>
-              <small>Buyer Note: {selectedQuote.notes || "None"}</small>
+              {selectedQuote.notes && (
+                <div className="buyer-note-section">
+                  <strong>Buyer Note:</strong>
+                  <p className="buyer-note-text">{selectedQuote.notes}</p>
+                </div>
+              )}
+              {selectedQuote.buyerDecision && (
+                <div className="buyer-decision-section">
+                  <strong>Buyer Decision:</strong>
+                  <p className="buyer-decision-text">
+                    <span className={`decision-badge ${selectedQuote.buyerDecision.decision}`}>
+                      {selectedQuote.buyerDecision.decision}
+                    </span>
+                    {selectedQuote.buyerDecision.comment && (
+                      <span className="decision-comment"> - {selectedQuote.buyerDecision.comment}</span>
+                    )}
+                  </p>
+                  {selectedQuote.buyerDecision.decisionDate && (
+                    <small>Decision Date: {new Date(selectedQuote.buyerDecision.decisionDate).toLocaleString()}</small>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="panel-section">
               <h4>Items</h4>
               <div className="quote-items-list">
-                {selectedQuote.items?.map((item, idx) => (
-                  <div key={idx} className="quote-item-card">
-                    <div className="item-meta">
-                      <strong>{item.stoneName}</strong>
-                      <span>x{item.requestedQuantity}</span>
+                {selectedQuote.items?.map((item, idx) => {
+                  const currentPrice = issueFormData.itemPrices[idx] !== undefined 
+                    ? issueFormData.itemPrices[idx] 
+                    : (item.finalUnitPrice || item.priceSnapshot || 0);
+                  const isEditable = ["draft", "submitted", "adjustment_required"].includes(selectedQuote.status);
+                  
+                  return (
+                    <div key={idx} className="quote-item-card">
+                      <div className="item-meta">
+                        <strong>{item.stoneName}</strong>
+                        <span>x{item.requestedQuantity}</span>
+                      </div>
+                      <div className="item-price-section">
+                        {isEditable ? (
+                          <div className="item-price-input-group">
+                            <label>Unit Price (Rs):</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={currentPrice}
+                              onChange={(e) => handleItemPriceChange(idx, e.target.value)}
+                              placeholder={item.priceSnapshot}
+                            />
+                            <small>Base: Rs {item.priceSnapshot}</small>
+                          </div>
+                        ) : (
+                          <small>Price: Rs {currentPrice} (Base: Rs {item.priceSnapshot})</small>
+                        )}
+                      </div>
                     </div>
-                    <small>Base: Rs {item.priceSnapshot}</small>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
           
-            {["draft", "submitted", "adjustment_required"].includes(selectedQuote.status) && (
+            {["draft", "submitted", "adjustment_required", "revision_requested"].includes(selectedQuote.status) && (
               <div className="admin-action-area">
                 <hr />
                 <h4> Issue Formal Quote</h4>
@@ -289,7 +454,8 @@ const Quotations = () => {
                 </div>
 
                 <div className="summary-preview">
-                  <p>Est. Total: Rs {selectedQuote.totalEstimatedCost}</p>
+                  <p>Subtotal: Rs {calculatePreviewSubtotal().toLocaleString()}</p>
+                  <p>Est. Total (original): Rs {selectedQuote.totalEstimatedCost?.toLocaleString()}</p>
                   <p><strong>Final Total: Rs {calculatePreviewTotal().toLocaleString()}</strong></p>
                 </div>
 

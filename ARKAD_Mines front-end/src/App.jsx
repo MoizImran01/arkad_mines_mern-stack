@@ -10,6 +10,7 @@ import ProtectedRoute from './Components/ProtectedRoute/ProtectedRoute';
 import { Routes, Route } from 'react-router-dom';
 import RequestQuote from './Pages/RequestQuote/RequestQuote';
 import Orders from './Pages/Orders/Orders';
+import Quotations from './Pages/Quotations/Quotations';
 import ItemDetail from './Pages/ItemDetail/ItemDetail';
 
 function App() {
@@ -53,6 +54,14 @@ function App() {
             element={
               <ProtectedRoute setShowLogin={setShowLogin}>
                 <Orders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quotations"
+            element={
+              <ProtectedRoute setShowLogin={setShowLogin}>
+                <Quotations />
               </ProtectedRoute>
             }
           />

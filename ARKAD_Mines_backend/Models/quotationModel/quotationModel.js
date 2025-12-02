@@ -27,7 +27,7 @@ const quotationSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["draft", "submitted", "adjustment_required", "issued", "approved", "rejected"],
+      enum: ["draft", "submitted", "adjustment_required", "revision_requested", "issued", "approved", "rejected"],
       default: "draft",
     },
     notes: { type: String, trim: true }, 
@@ -62,6 +62,11 @@ const quotationSchema = new mongoose.Schema(
         type: { type: String, enum: ["removed", "adjusted"] },
       },
     ],
+    buyerDecision: {
+      decision: { type: String, enum: ["approved", "rejected"], default: null },
+      comment: { type: String, trim: true },
+      decisionDate: { type: Date },
+    },
   },
   { timestamps: true }
 );

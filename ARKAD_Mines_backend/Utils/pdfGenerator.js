@@ -86,11 +86,25 @@ export const generateQuotationPDF = (quotation) => {
     doc.text(`Email: ${buyerEmail}`, 50, detailsTop + 60);
 
     
+    // Format status for display
+    const formatStatus = (status) => {
+      const statusMap = {
+        'draft': 'DRAFT',
+        'submitted': 'SUBMITTED',
+        'adjustment_required': 'ADJUSTMENT REQUIRED',
+        'revision_requested': 'REVISION REQUESTED',
+        'issued': 'PENDING',
+        'approved': 'APPROVED',
+        'rejected': 'REJECTED'
+      };
+      return statusMap[status] || status.toUpperCase();
+    };
+
     const metaData = [
       { label: 'QUOTATION NO:', value: quotation.referenceNumber },
-      { label: 'DATE ISSUED:', value: new Date().toLocaleDateString('en-GB') },
+      { label: 'DATE ISSUED:', value: new Date(quotation.validity?.start || quotation.createdAt || new Date()).toLocaleDateString('en-GB') },
       { label: 'VALID UNTIL:', value: new Date(quotation.validity.end).toLocaleDateString('en-GB') },
-      { label: 'QUOTATION STATUS:', value: 'PENDING' }
+      { label: 'QUOTATION STATUS:', value: formatStatus(quotation.status || 'issued') }
     ];
 
     let metaY = detailsTop;
