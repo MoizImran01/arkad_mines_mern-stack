@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import validator from "validator";
 import axios from "axios";
+import { logAudit, logError, getClientIp, normalizeRole } from "../../logger/auditLogger.js";
 
 
 //creates JWT token containing user ID and role, it is used for maintaining authenticated sessions
@@ -44,6 +45,7 @@ const verifyCaptcha = async (captchaToken) => {
 const loginUser = async (req, res) => {
 
   const { email, password, captchaToken } = req.body;
+  const clientIp = getClientIp(req);
 
   try 
   {
@@ -51,6 +53,14 @@ const loginUser = async (req, res) => {
     if (captchaToken) {
       const isCaptchaValid = await verifyCaptcha(captchaToken);
       if (!isCaptchaValid) {
+        logAudit({
+          userId: null,
+          role: 'GUEST',
+          action: 'LOGIN_FAILED',
+          status: 'FAILED_VALIDATION',
+          clientIp,
+          details: `CAPTCHA verification failed for email=${email}`
+        });
         return res.status(400).json({
           success: false,
           message: "CAPTCHA verification failed. Please try again."
@@ -61,6 +71,14 @@ const loginUser = async (req, res) => {
     const user = await userModel.findOne({ email });
 
     if (!user) {
+      logAudit({
+        userId: null,
+        role: 'GUEST',
+        action: 'LOGIN_FAILED',
+        status: 'FAILED_AUTH',
+        clientIp,
+        details: `User not found for email=${email}`
+      });
       return res.status(401).json({ 
         success: false, 
         message: "Business account not found. Please check your email or register." 
@@ -71,6 +89,14 @@ const loginUser = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
+      logAudit({
+        userId: user._id.toString(),
+        role: normalizeRole(user.role),
+        action: 'LOGIN_FAILED',
+        status: 'FAILED_AUTH',
+        clientIp,
+        details: `Invalid password for userId=${user._id}, email=${email}`
+      });
       return res.status(401).json({ 
         success: false, 
         message: "Invalid password. Please try again." 
@@ -79,6 +105,15 @@ const loginUser = async (req, res) => {
 
 
     const token = createToken(user._id, user.role);
+
+    logAudit({
+      userId: user._id.toString(),
+      role: normalizeRole(user.role),
+      action: 'LOGIN_SUCCESS',
+      status: 'SUCCESS',
+      clientIp,
+      details: `User logged in successfully, email=${email}`
+    });
 
     res.json({ 
   success: true, 
@@ -93,7 +128,11 @@ const loginUser = async (req, res) => {
 
   } catch (error) {
 
-    console.error("Login error:", error);
+    logError(error, {
+      action: 'LOGIN_ERROR',
+      clientIp,
+      details: `Unexpected error during login for email=${email}`
+    });
 
     res.status(500).json({ 
       success: false, 
@@ -107,12 +146,21 @@ const loginUser = async (req, res) => {
 const registerUser = async (req, res) => {
 
   const { companyName, email, password, role, captchaToken } = req.body;
+  const clientIp = getClientIp(req);
 
   try {
     // Verify CAPTCHA first to block bots early
     if (captchaToken) {
       const isCaptchaValid = await verifyCaptcha(captchaToken);
       if (!isCaptchaValid) {
+        logAudit({
+          userId: null,
+          role: 'GUEST',
+          action: 'REGISTER_FAILED',
+          status: 'FAILED_VALIDATION',
+          clientIp,
+          details: `CAPTCHA verification failed for email=${email}`
+        });
         return res.status(400).json({
           success: false,
           message: "CAPTCHA verification failed. Please try again."
@@ -122,7 +170,14 @@ const registerUser = async (req, res) => {
 
     const exists = await userModel.findOne({ email });
     if (exists) {
-
+      logAudit({
+        userId: null,
+        role: 'GUEST',
+        action: 'REGISTER_FAILED',
+        status: 'FAILED_VALIDATION',
+        clientIp,
+        details: `Email already exists: email=${email}`
+      });
       return res.status(409).json({ 
         success: false, 
         message: "A business account with this email already exists." 
@@ -131,6 +186,14 @@ const registerUser = async (req, res) => {
 
 
     if (!validator.isEmail(email)) {
+      logAudit({
+        userId: null,
+        role: 'GUEST',
+        action: 'REGISTER_FAILED',
+        status: 'FAILED_VALIDATION',
+        clientIp,
+        details: `Invalid email format: email=${email}`
+      });
       return res.status(400).json({ 
         success: false, 
         message: "Please enter a valid business email address." 
@@ -139,6 +202,14 @@ const registerUser = async (req, res) => {
 
 
     if (password.length < 8) {
+      logAudit({
+        userId: null,
+        role: 'GUEST',
+        action: 'REGISTER_FAILED',
+        status: 'FAILED_VALIDATION',
+        clientIp,
+        details: `Password too short for email=${email}`
+      });
       return res.status(400).json({
         success: false,
         message: "Password must be at least 8 characters long.",
@@ -147,6 +218,14 @@ const registerUser = async (req, res) => {
 
 
     if (!companyName || companyName.trim().length < 2) {
+      logAudit({
+        userId: null,
+        role: 'GUEST',
+        action: 'REGISTER_FAILED',
+        status: 'FAILED_VALIDATION',
+        clientIp,
+        details: `Invalid company name for email=${email}`
+      });
       return res.status(400).json({
         success: false,
         message: "Please provide your company name.",
@@ -173,6 +252,14 @@ const registerUser = async (req, res) => {
 
     const token = createToken(user._id, user.role);
 
+    logAudit({
+      userId: user._id.toString(),
+      role: normalizeRole(user.role),
+      action: 'REGISTER_SUCCESS',
+      status: 'SUCCESS',
+      clientIp,
+      details: `New user registered: email=${email}, companyName=${companyName}`
+    });
 
     res.json({ 
   success: true, 
@@ -187,7 +274,11 @@ const registerUser = async (req, res) => {
 
   } catch (error) {
 
-    console.error("Registration error:", error);
+    logError(error, {
+      action: 'REGISTER_ERROR',
+      clientIp,
+      details: `Unexpected error during registration for email=${email}`
+    });
 
     res.status(500).json({ 
       success: false, 
@@ -198,16 +289,30 @@ const registerUser = async (req, res) => {
 
 //Get all users, Admin only functionality
 const getAllUsers = async (req, res) => {
+  const clientIp = getClientIp(req);
   try {
 
     const users = await userModel.find({}).select('-password');
+    
+    logAudit({
+      userId: req.user?.id,
+      role: normalizeRole(req.user?.role),
+      action: 'VIEW_ALL_USERS',
+      status: 'SUCCESS',
+      clientIp,
+      details: `Admin viewed all users, count=${users.length}`
+    });
     
     res.json({
       success: true,
       users: users
     });
   } catch (error) {
-    console.error("Error fetching users:", error);
+    logError(error, {
+      action: 'VIEW_ALL_USERS',
+      userId: req.user?.id,
+      clientIp
+    });
     res.status(500).json({
       success: false,
       message: "Error fetching users"
@@ -217,6 +322,7 @@ const getAllUsers = async (req, res) => {
 
 // Update user role, Admin only functionality
 const updateUserRole = async (req, res) => {
+  const clientIp = getClientIp(req);
   try {
     const { userId } = req.params;
     const { role } = req.body;
@@ -224,6 +330,15 @@ const updateUserRole = async (req, res) => {
 
     const validRoles = ["admin", "employee", "customer"];
     if (!validRoles.includes(role)) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'UPDATE_USER_ROLE',
+        status: 'FAILED_VALIDATION',
+        resourceId: userId,
+        clientIp,
+        details: `Invalid role provided: role=${role}`
+      });
       return res.status(400).json({
         success: false,
         message: "Invalid role. Must be one of: admin, employee, customer"
@@ -232,6 +347,15 @@ const updateUserRole = async (req, res) => {
 
 
     if (req.user.id === userId && role !== "admin") {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'UPDATE_USER_ROLE',
+        status: 'FAILED_BUSINESS_RULE',
+        resourceId: userId,
+        clientIp,
+        details: `Admin attempted to remove own admin privileges`
+      });
       return res.status(403).json({
         success: false,
         message: "You cannot remove your own admin privileges"
@@ -246,11 +370,30 @@ const updateUserRole = async (req, res) => {
     ).select('-password');
 
     if (!updatedUser) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'UPDATE_USER_ROLE',
+        status: 'FAILED_VALIDATION',
+        resourceId: userId,
+        clientIp,
+        details: `User not found: userId=${userId}`
+      });
       return res.status(404).json({
         success: false,
         message: "User not found"
       });
     }
+
+    logAudit({
+      userId: req.user?.id,
+      role: normalizeRole(req.user?.role),
+      action: 'UPDATE_USER_ROLE',
+      status: 'SUCCESS',
+      resourceId: userId,
+      clientIp,
+      details: `Role updated: targetUserId=${userId}, oldRole=${updatedUser.role}, newRole=${role}`
+    });
 
     res.json({
       success: true,
@@ -258,7 +401,12 @@ const updateUserRole = async (req, res) => {
       user: updatedUser
     });
   } catch (error) {
-    console.error("Error updating user role:", error);
+    logError(error, {
+      action: 'UPDATE_USER_ROLE',
+      userId: req.user?.id,
+      resourceId: req.params.userId,
+      clientIp
+    });
     res.status(500).json({
       success: false,
       message: "Error updating user role"
@@ -268,11 +416,21 @@ const updateUserRole = async (req, res) => {
 
 //Delete user, Admin only functionality
 const deleteUser = async (req, res) => {
+  const clientIp = getClientIp(req);
   try {
     const { userId } = req.params;
 
 
     if (req.user.id === userId) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'DELETE_USER',
+        status: 'FAILED_BUSINESS_RULE',
+        resourceId: userId,
+        clientIp,
+        details: `Admin attempted to delete own account`
+      });
       return res.status(403).json({
         success: false,
         message: "You cannot delete your own account"
@@ -283,18 +441,42 @@ const deleteUser = async (req, res) => {
     const deletedUser = await userModel.findByIdAndDelete(userId);
 
     if (!deletedUser) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'DELETE_USER',
+        status: 'FAILED_VALIDATION',
+        resourceId: userId,
+        clientIp,
+        details: `User not found: userId=${userId}`
+      });
       return res.status(404).json({
         success: false,
         message: "User not found"
       });
     }
 
+    logAudit({
+      userId: req.user?.id,
+      role: normalizeRole(req.user?.role),
+      action: 'DELETE_USER',
+      status: 'SUCCESS',
+      resourceId: userId,
+      clientIp,
+      details: `User deleted: deletedUserId=${userId}, email=${deletedUser.email}`
+    });
+
     res.json({
       success: true,
       message: "User deleted successfully"
     });
   } catch (error) {
-    console.error("Error deleting user:", error);
+    logError(error, {
+      action: 'DELETE_USER',
+      userId: req.user?.id,
+      resourceId: req.params.userId,
+      clientIp
+    });
     res.status(500).json({
       success: false,
       message: "Error deleting user"

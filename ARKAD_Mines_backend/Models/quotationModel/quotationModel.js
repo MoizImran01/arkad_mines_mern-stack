@@ -23,6 +23,7 @@ const quotationItemSchema = new mongoose.Schema(
 const quotationSchema = new mongoose.Schema(
   {
     referenceNumber: { type: String, required: true, unique: true },
+    quotationRequestId: { type: String, unique: true, sparse: true }, // UUID for tracking quotation requests
     buyer: { type: mongoose.Schema.Types.ObjectId, ref: "user", required: true },
 
     status: {
