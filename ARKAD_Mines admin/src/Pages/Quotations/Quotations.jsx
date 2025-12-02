@@ -19,6 +19,7 @@ const Quotations = () => {
   const [selectedQuote, setSelectedQuote] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("all"); // Filter by tab: all, draft, submitted, adjustment_required, revision_requested, issued, approved, rejected
 
   
   const [issueFormData, setIssueFormData] = useState({
@@ -42,9 +43,17 @@ const Quotations = () => {
     setRefreshing(true);
     setError(null);
     try {
-      const response = await axios.get(`${url}/api/quotes/admin`, { headers });
+      // Fetch all quotations - we'll filter client-side by tab
+      const response = await axios.get(`${url}/api/quotes/admin`, { 
+        headers
+      });
       if (response.data.success) {
-        setQuotes(response.data.quotations || []);
+        let quotations = response.data.quotations || [];
+        
+        // Filter by active tab
+        quotations = filterQuotationsByTab(quotations, activeTab);
+        
+        setQuotes(quotations);
       } else {
         setQuotes([]);
         setError(response.data.message || "Unable to load quotations");
@@ -59,9 +68,17 @@ const Quotations = () => {
     }
   };
 
+  const filterQuotationsByTab = (quotations, tab) => {
+    if (tab === "all") {
+      return quotations;
+    }
+    return quotations.filter(q => q.status === tab);
+  };
+
   useEffect(() => {
     fetchQuotes();
-  }, []);
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const handleSelectQuote = (quote) => {
     if (selectedQuote?._id === quote._id) {
@@ -137,7 +154,8 @@ const Quotations = () => {
       }
     } catch (err) {
       console.error("Error issuing quote:", err);
-      const errorMessage = err.response?.data?.message || "Error issuing quote";
+      console.error("Error response:", err.response?.data);
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || "Error issuing quote. Please check the console for details.";
       alert(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -206,6 +224,57 @@ const Quotations = () => {
         </button>
       </div>
 
+      <div className="quotations-tabs">
+        <button
+          className={`tab-button ${activeTab === "all" ? "active" : ""}`}
+          onClick={() => setActiveTab("all")}
+        >
+          All Quotations
+        </button>
+        <button
+          className={`tab-button ${activeTab === "draft" ? "active" : ""}`}
+          onClick={() => setActiveTab("draft")}
+        >
+          Draft
+        </button>
+        <button
+          className={`tab-button ${activeTab === "submitted" ? "active" : ""}`}
+          onClick={() => setActiveTab("submitted")}
+        >
+          Submitted
+        </button>
+        <button
+          className={`tab-button ${activeTab === "adjustment_required" ? "active" : ""}`}
+          onClick={() => setActiveTab("adjustment_required")}
+        >
+          Adjustment Required
+        </button>
+        <button
+          className={`tab-button ${activeTab === "revision_requested" ? "active" : ""}`}
+          onClick={() => setActiveTab("revision_requested")}
+        >
+          Revision Requested
+        </button>
+        <button
+          className={`tab-button ${activeTab === "issued" ? "active" : ""}`}
+          onClick={() => setActiveTab("issued")}
+        >
+          Issued
+        </button>
+        <button
+          className={`tab-button ${activeTab === "approved" ? "active" : ""}`}
+          onClick={() => setActiveTab("approved")}
+        >
+          Approved
+        </button>
+        <button
+          className={`tab-button ${activeTab === "rejected" ? "active" : ""}`}
+          onClick={() => setActiveTab("rejected")}
+        >
+          Rejected
+        </button>
+      </div>
+
       {error && (
         <div className="quotations-error">
           <FiAlertTriangle /> {error}
@@ -271,7 +340,28 @@ const Quotations = () => {
 
             <div className="panel-section">
               <h4>Status: <span style={{textTransform: 'capitalize'}}>{selectedQuote.status}</span></h4>
-              <small>Buyer Note: {selectedQuote.notes || "None"}</small>
+              {selectedQuote.notes && (
+                <div className="buyer-note-section">
+                  <strong>Buyer Note:</strong>
+                  <p className="buyer-note-text">{selectedQuote.notes}</p>
+                </div>
+              )}
+              {selectedQuote.buyerDecision && (
+                <div className="buyer-decision-section">
+                  <strong>Buyer Decision:</strong>
+                  <p className="buyer-decision-text">
+                    <span className={`decision-badge ${selectedQuote.buyerDecision.decision}`}>
+                      {selectedQuote.buyerDecision.decision}
+                    </span>
+                    {selectedQuote.buyerDecision.comment && (
+                      <span className="decision-comment"> - {selectedQuote.buyerDecision.comment}</span>
+                    )}
+                  </p>
+                  {selectedQuote.buyerDecision.decisionDate && (
+                    <small>Decision Date: {new Date(selectedQuote.buyerDecision.decisionDate).toLocaleString()}</small>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="panel-section">
@@ -314,7 +404,7 @@ const Quotations = () => {
             </div>
 
           
-            {["draft", "submitted", "adjustment_required"].includes(selectedQuote.status) && (
+            {["draft", "submitted", "adjustment_required", "revision_requested"].includes(selectedQuote.status) && (
               <div className="admin-action-area">
                 <hr />
                 <h4> Issue Formal Quote</h4>

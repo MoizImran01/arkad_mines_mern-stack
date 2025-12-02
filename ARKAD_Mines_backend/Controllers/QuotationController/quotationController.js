@@ -1,5 +1,6 @@
 import quotationModel from "../../Models/quotationModel/quotationModel.js";
 import stonesModel from "../../Models/stonesModel/stonesModel.js";
+import orderModel from "../../Models/orderModel/orderModel.js";
 import { generateQuotationPDF } from "../../Utils/pdfGenerator.js";
 import { sendQuotationEmail } from "../../Utils/emailService.js";
 
@@ -215,7 +216,9 @@ const getMyQuotations = async (req, res) => {
     const { status } = req.query;
     const query = { buyer: req.user.id };
 
-    if (status && VALID_STATUSES.includes(status)) {
+    // Allow filtering by any valid status, including issued, approved, rejected
+    const allValidStatuses = ["draft", "submitted", "adjustment_required", "issued", "approved", "rejected"];
+    if (status && allValidStatuses.includes(status)) {
       query.status = status;
     }
 
@@ -236,8 +239,17 @@ const getMyQuotations = async (req, res) => {
 
 const getAllQuotations = async (req, res) => {
   try {
+    const { status } = req.query;
+    const query = {};
+
+    // Filter by status if provided
+    const validStatuses = ["draft", "submitted", "adjustment_required", "revision_requested", "issued", "approved", "rejected"];
+    if (status && validStatuses.includes(status)) {
+      query.status = status;
+    }
+
     const quotations = await quotationModel
-      .find({})
+      .find(query)
       .sort({ createdAt: -1 })
       .populate("buyer", "companyName email role")
       .select("-__v");
@@ -268,6 +280,22 @@ const issueQuotation = async (req, res) => {
 
     if (!quotation) {
       return res.status(404).json({ success: false, message: "Quotation not found" });
+    }
+
+    // Check if quotation has items
+    if (!quotation.items || quotation.items.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Quotation has no items. Cannot issue an empty quotation." 
+      });
+    }
+
+    // Ensure buyer is populated
+    if (!quotation.buyer) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Buyer information is missing. Cannot issue quotation." 
+      });
     }
 
     //Validations
@@ -309,6 +337,10 @@ const issueQuotation = async (req, res) => {
     
     let subtotal = 0;
     quotation.items.forEach((item, index) => {
+      // Safety check for item
+      if (!item) {
+        throw new Error(`Item at index ${index} is missing or invalid.`);
+      }
       
       if (itemPrices[index] !== undefined && itemPrices[index] !== null) {
         const customPrice = Number(itemPrices[index]);
@@ -373,28 +405,48 @@ const issueQuotation = async (req, res) => {
 
     console.log(`[quotation] Quote ${quotation.referenceNumber} ISSUED by Admin.`);
 
-   const pdfBuffer = await generateQuotationPDF(quotation);
+    // Generate PDF and send email (non-blocking - don't fail if email fails)
+    let emailSent = false;
+    try {
+      const pdfBuffer = await generateQuotationPDF(quotation);
 
-
-    if (quotation.buyer && quotation.buyer.email) {
-       await sendQuotationEmail(
-         quotation.buyer.email, 
-         quotation.referenceNumber, 
-         pdfBuffer
-       );
-       console.log(`Email sent to ${quotation.buyer.email}`);
+      if (quotation.buyer && quotation.buyer.email) {
+        try {
+          await sendQuotationEmail(
+            quotation.buyer.email, 
+            quotation.referenceNumber, 
+            pdfBuffer
+          );
+          emailSent = true;
+          console.log(`Email sent to ${quotation.buyer.email}`);
+        } catch (emailError) {
+          console.error("Error sending email (non-critical):", emailError);
+          // Don't fail the whole operation if email fails
+        }
+      }
+    } catch (pdfError) {
+      console.error("Error generating PDF:", pdfError);
+      // PDF generation is critical, but we'll still return success if quotation is saved
+      // The admin can download it later
     }
 
     res.json({
       success: true,
-      message: "Quotation issued and emailed to customer.",
+      message: emailSent 
+        ? "Quotation issued and emailed to customer." 
+        : "Quotation issued successfully. Email notification may have failed.",
       quotation,
     });
 
   } catch (error) {
     console.error("Error issuing quotation:", error);
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     
-    
+    // If it's a validation error we threw, return it with 400 status
     if (error.message && error.message.includes("Invalid")) {
       return res.status(400).json({ 
         success: false, 
@@ -402,7 +454,16 @@ const issueQuotation = async (req, res) => {
       });
     }
     
-    res.status(500).json({ success: false, message: "Error processing quotation issuance" });
+    // Return more detailed error in development
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? `Error processing quotation issuance: ${error.message}`
+      : "Error processing quotation issuance. Please check server logs for details.";
+    
+    res.status(500).json({ 
+      success: false, 
+      message: errorMessage,
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
+    });
   }
 };
 const downloadQuotation = async (req, res) => {
@@ -413,6 +474,15 @@ const downloadQuotation = async (req, res) => {
 
     if (!quotation) {
       return res.status(404).json({ message: "Quotation not found" });
+    }
+
+    // Check if user is admin or the buyer of this quotation
+    const isAdmin = req.user.role === "admin";
+    const buyerId = quotation.buyer._id ? quotation.buyer._id.toString() : quotation.buyer.toString();
+    const isBuyer = buyerId === req.user.id;
+
+    if (!isAdmin && !isBuyer) {
+      return res.status(403).json({ message: "Unauthorized to download this quotation" });
     }
 
     const pdfBuffer = await generateQuotationPDF(quotation);
@@ -430,5 +500,257 @@ const downloadQuotation = async (req, res) => {
   }
 };
 
-export { createOrUpdateQuotation, getMyQuotations, getAllQuotations, issueQuotation, downloadQuotation };
+const approveQuotation = async (req, res) => {
+  try {
+    const { quoteId } = req.params;
+    const { comment } = req.body;
+
+    const quotation = await quotationModel.findOne({
+      _id: quoteId,
+      buyer: req.user.id,
+    }).populate("buyer");
+
+    if (!quotation) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Quotation not found" 
+      });
+    }
+
+    // Check if quotation is in issued status
+    if (quotation.status !== "issued") {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Cannot approve quotation with status: ${quotation.status}. Only issued quotations can be approved.` 
+      });
+    }
+
+    // Check if quotation is still valid
+    const now = new Date();
+    if (new Date(quotation.validity.end) < now) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "This quotation has expired. Please request a refreshed quote from the sales team." 
+      });
+    }
+
+    // Update quotation status and buyer decision
+    quotation.status = "approved";
+    quotation.buyerDecision = {
+      decision: "approved",
+      comment: comment || "",
+      decisionDate: now,
+    };
+
+    await quotation.save();
+
+    console.log(`[quotation] Quote ${quotation.referenceNumber} APPROVED by buyer ${quotation.buyer?.email}`);
+
+    // Create sales order draft
+    const generateOrderNumber = () => {
+      const random = Math.floor(Math.random() * 900) + 100;
+      return `ORD-${Date.now().toString().slice(-6)}-${random}`;
+    };
+
+    const orderItems = quotation.items.map((item) => ({
+      stone: item.stone,
+      stoneName: item.stoneName,
+      unitPrice: item.finalUnitPrice || item.priceSnapshot,
+      priceUnit: item.priceUnit,
+      quantity: item.requestedQuantity,
+      totalPrice: (item.finalUnitPrice || item.priceSnapshot) * item.requestedQuantity,
+      image: item.image,
+      dimensions: item.dimensions,
+    }));
+
+    const order = new orderModel({
+      orderNumber: generateOrderNumber(),
+      quotation: quotation._id,
+      buyer: quotation.buyer._id,
+      status: "draft",
+      items: orderItems,
+      financials: quotation.financials,
+      notes: `Order created from approved quotation ${quotation.referenceNumber}`,
+    });
+
+    await order.save();
+
+    console.log(`[order] Order ${order.orderNumber} created from quotation ${quotation.referenceNumber}`);
+
+    res.json({
+      success: true,
+      message: "Quotation approved successfully. Sales order has been created.",
+      quotation,
+      order: {
+        orderNumber: order.orderNumber,
+        status: order.status,
+      },
+    });
+
+  } catch (error) {
+    console.error("Error approving quotation:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Error processing quotation approval" 
+    });
+  }
+};
+
+const rejectQuotation = async (req, res) => {
+  try {
+    const { quoteId } = req.params;
+    const { comment } = req.body;
+
+    const quotation = await quotationModel.findOne({
+      _id: quoteId,
+      buyer: req.user.id,
+    }).populate("buyer");
+
+    if (!quotation) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Quotation not found" 
+      });
+    }
+
+    // Check if quotation is in issued status
+    if (quotation.status !== "issued") {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Cannot reject quotation with status: ${quotation.status}. Only issued quotations can be rejected.` 
+      });
+    }
+
+    // Update quotation status and buyer decision
+    const now = new Date();
+    quotation.status = "rejected";
+    quotation.buyerDecision = {
+      decision: "rejected",
+      comment: comment || "",
+      decisionDate: now,
+    };
+
+    await quotation.save();
+
+    console.log(`[quotation] Quote ${quotation.referenceNumber} REJECTED by buyer ${quotation.buyer?.email}`);
+
+    res.json({
+      success: true,
+      message: "Quotation rejected successfully.",
+      quotation,
+    });
+
+  } catch (error) {
+    console.error("Error rejecting quotation:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Error processing quotation rejection" 
+    });
+  }
+};
+
+const requestRevision = async (req, res) => {
+  try {
+    const { quoteId } = req.params;
+    const { comment } = req.body;
+
+    const quotation = await quotationModel.findOne({
+      _id: quoteId,
+      buyer: req.user.id,
+    }).populate("buyer");
+
+    if (!quotation) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Quotation not found" 
+      });
+    }
+
+    // Check if quotation is in issued status
+    if (quotation.status !== "issued") {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Cannot request revision for quotation with status: ${quotation.status}. Only issued quotations can be revised.` 
+      });
+    }
+
+    // Update quotation status to revision_requested
+    quotation.status = "revision_requested";
+    quotation.notes = (quotation.notes || "") + (quotation.notes ? "\n\n" : "") + 
+      `[Revision Requested: ${new Date().toLocaleString()}]\n${comment || "Buyer requested revision"}`;
+
+    await quotation.save();
+
+    console.log(`[quotation] Quote ${quotation.referenceNumber} - Revision requested by buyer ${quotation.buyer?.email}`);
+
+    res.json({
+      success: true,
+      message: "Revision request submitted. Sales team will review and update the quotation.",
+      quotation,
+    });
+
+  } catch (error) {
+    console.error("Error requesting revision:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Error processing revision request" 
+    });
+  }
+};
+
+const convertToSalesOrder = async (req, res) => {
+  try {
+    const { quoteId } = req.params;
+
+    const quotation = await quotationModel.findOne({
+      _id: quoteId,
+      buyer: req.user.id,
+    }).populate("buyer");
+
+    if (!quotation) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Quotation not found" 
+      });
+    }
+
+    // Check if quotation is approved
+    if (quotation.status !== "approved") {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Cannot convert quotation to sales order. Quotation status must be "approved". Current status: ${quotation.status}` 
+      });
+    }
+
+    // TODO: Implement sales order conversion logic
+    // This is a placeholder for future implementation
+    // Steps to implement:
+    // 1. Check if sales order already exists for this quotation
+    // 2. Create sales order from approved quotation
+    // 3. Link sales order to quotation
+    // 4. Update quotation status if needed
+    // 5. Return sales order details
+
+    console.log(`[quotation] Quote ${quotation.referenceNumber} - Convert to Sales Order requested by buyer ${quotation.buyer?.email}`);
+
+    res.json({
+      success: true,
+      message: "Sales order conversion functionality is coming soon. This is a placeholder.",
+      quotation: {
+        referenceNumber: quotation.referenceNumber,
+        status: quotation.status,
+      },
+      note: "This endpoint will convert the approved quotation to a sales order in a future update."
+    });
+
+  } catch (error) {
+    console.error("Error converting to sales order:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Error processing sales order conversion" 
+    });
+  }
+};
+
+export { createOrUpdateQuotation, getMyQuotations, getAllQuotations, issueQuotation, downloadQuotation, approveQuotation, rejectQuotation, requestRevision, convertToSalesOrder };
 

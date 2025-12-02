@@ -12,6 +12,45 @@
   gap: 16px;
 }
 
+.quotations-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e4e7ec;
+  flex-wrap: wrap;
+  overflow-x: auto;
+}
+
+.tab-button {
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  position: relative;
+  bottom: -2px;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  color: #475467;
+  background: #f8fafc;
+}
+
+.tab-button.active {
+  color: #47674c;
+  border-bottom-color: #47674c;
+  background: transparent;
+}
+
+.tab-button.active:hover {
+  background: transparent;
+}
+
 .quotations-header h1 {
   display: flex;
   align-items: center;
@@ -209,6 +248,76 @@
   color: #64748b;
 }
 
+.buyer-note-section {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f0f9ff;
+  border-left: 3px solid #0284c7;
+  border-radius: 6px;
+}
+
+.buyer-note-section strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #0284c7;
+  font-size: 13px;
+}
+
+.buyer-note-text {
+  margin: 0;
+  color: #475467;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.buyer-decision-section {
+  margin-top: 12px;
+  padding: 12px;
+  background: #fef2f2;
+  border-left: 3px solid #dc2626;
+  border-radius: 6px;
+}
+
+.buyer-decision-section strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #dc2626;
+  font-size: 13px;
+}
+
+.buyer-decision-text {
+  margin: 6px 0;
+  color: #475467;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.decision-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  margin-right: 8px;
+}
+
+.decision-badge.approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.decision-badge.rejected {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.decision-comment {
+  color: #64748b;
+  font-style: italic;
+}
+
 .adjustments-list {
   margin: 0;
   padding-left: 18px;
@@ -246,7 +355,10 @@
 .status-badge.submitted { background: #e0f2fe; color: #0284c7; }
 .status-badge.issued { background: #f3e8ff; color: #7e22ce; }
 .status-badge.approved { background: #dcfce7; color: #166534; }
+.status-badge.rejected { background: #fee2e2; color: #dc2626; }
 .status-badge.draft { background: #f1f5f9; color: #475467; }
+.status-badge.adjustment_required { background: #fef3c7; color: #92400e; }
+.status-badge.revision_requested { background: #fef3c7; color: #d97706; }
 
 .admin-action-area {
   display: flex;

@@ -5,6 +5,7 @@ import dashboard from '../../assets/dashboard.png'
 import { Link, useNavigate } from 'react-router-dom';
 import { StoreContext } from '../../context/StoreContext';
 import { assets } from '../../assets/assets.js';
+import { FiFileText } from 'react-icons/fi';
 
 
 const Navbar = ({ setShowLogin }) => {
@@ -94,6 +95,10 @@ const Navbar = ({ setShowLogin }) => {
               <li onClick={() => navigate('/orders')} className="dropdown-item">
                 <img src={assets.bag_icon} alt="Orders" />
                 <span>My Orders</span>
+              </li>
+              <li onClick={() => navigate('/quotations')} className="dropdown-item">
+                <FiFileText style={{ fontSize: '18px', color: '#475467' }} />
+                <span>My Quotations</span>
               </li>
               <hr className="dropdown-divider" />
               <li
