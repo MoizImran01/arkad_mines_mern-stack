@@ -1,8 +1,14 @@
-import { v2 as cloudinary } from 'cloudinary';
-import pkg from 'multer-storage-cloudinary';
+import cloudinaryPackage from 'cloudinary';
 import multer from 'multer';
+import { createRequire } from 'module';
 
-const { CloudinaryStorage } = pkg;
+// multer-storage-cloudinary is a CommonJS package, use createRequire for ES modules
+const require = createRequire(import.meta.url);
+const CloudinaryStorage = require('multer-storage-cloudinary');
+
+// Get the v2 instance for direct use
+const cloudinary = cloudinaryPackage.v2;
+
 // Flag to track if cloudinary has been configured
 let isConfigured = false;
 
@@ -20,14 +26,20 @@ const configureCloudinary = () => {
 
 // Configure Cloudinary storage for multer (for stone images)
 // Uses a function to lazily create storage after env vars are loaded
+// Note: CloudinaryStorage expects the full cloudinary package object (with v2 property)
 const createStorage = () => {
     configureCloudinary();
     return new CloudinaryStorage({
-        cloudinary: cloudinary,
+        cloudinary: cloudinaryPackage, // Pass full package, not just v2
         params: {
             folder: 'arkad_mines/stones',
             allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
             transformation: [{ width: 1000, height: 1000, crop: 'limit' }]
+        },
+        // Ensure path is set correctly
+        filename: (req, file, cb) => {
+            // CloudinaryStorage will handle the upload and set req.file.path
+            cb(null, file.originalname);
         }
     });
 };
@@ -36,7 +48,7 @@ const createStorage = () => {
 const createQrStorage = () => {
     configureCloudinary();
     return new CloudinaryStorage({
-        cloudinary: cloudinary,
+        cloudinary: cloudinaryPackage, // Pass full package, not just v2
         params: {
             folder: 'arkad_mines/qrcodes',
             allowed_formats: ['png'],
@@ -117,4 +129,4 @@ const getPublicIdFromUrl = (url) => {
     return matches ? matches[1] : null;
 };
 
-export { cloudinary, upload, qrUpload, uploadBuffer, deleteImage, getPublicIdFromUrl };
+export { cloudinary, cloudinaryPackage, upload, qrUpload, uploadBuffer, deleteImage, getPublicIdFromUrl };
