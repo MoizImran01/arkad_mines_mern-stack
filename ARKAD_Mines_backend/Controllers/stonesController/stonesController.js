@@ -324,6 +324,7 @@ const dispatchBlock = async (req, res) => {
 
 // Get block by ID
 const getStoneById = async (req, res) => {
+
     const clientIp = getClientIp(req);
     try {
         const { id } = req.params;

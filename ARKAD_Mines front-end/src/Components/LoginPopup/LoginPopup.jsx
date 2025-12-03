@@ -52,66 +52,63 @@ const LoginPopup = ({ setShowLogin }) => {
 
 
 const handleSubmit = async (event) => {
+    event.preventDefault();
 
-  event.preventDefault();
+    // Check if CAPTCHA is completed
+    if (!captchaToken) {
+      setError("Please complete the CAPTCHA verification.");
+      return;
+    }
 
-  // Check if CAPTCHA is completed
-  if (!captchaToken) {
-    setError("Please complete the CAPTCHA verification.");
-    return;
-  }
+    setIsLoading(true);
+    setError("");
 
-  setIsLoading(true);
-  setError("");
+    try {
+      const endpoint = currentState === "Login" ? "/api/user/login" : "/api/user/register";
 
-  try {
+      // Include CAPTCHA token with the request
+      const response = await axios.post(`${url}${endpoint}`, {
+        ...formData,
+        captchaToken
+      });
 
-    const endpoint = currentState === "Login" ? "/api/user/login" : "/api/user/register";
+      if (response.data.success) {
+        const { token, user } = response.data;
 
-    // Include CAPTCHA token with the request
-    const response = await axios.post(`${url}${endpoint}`, {
-      ...formData,
-      captchaToken
-    });
+        setToken(token);
+        localStorage.setItem("token", token);
+        localStorage.setItem("userRole", user.role);
 
+        if (user.role === "admin") {
+          window.location.href = "http://localhost:5174";
+        } else {
+          window.location.href = "/";
+        }
 
-    if (response.data.success) {
-      const { token, user } = response.data;
-
-      setToken(token);
-      localStorage.setItem("token", token);
-      localStorage.setItem("userRole", user.role);
-
-
-      if (user.role === "admin") {
-        window.location.href = "http://localhost:5174"; 
+        setShowLogin(false);
+        setFormData({ name: "", email: "", password: "" });
       } else {
-        window.location.href = "/"; 
+        setError(response.data.message || "An error occurred");
+        recaptchaRef.current?.reset();
+        setCaptchaToken(null);
       }
+    } catch (err) { 
+      console.error("Authentication error:", err);
+      const errorMessage = 
+        err.response?.data?.error || 
+        err.response?.data?.message || 
+        err.response?.statusText || 
+        "Network error. Please try again.";
 
 
-      setShowLogin(false);
-      setFormData({ name: "", email: "", password: "" });
-    } else {
+      setError(errorMessage);
 
-      setError(response.data.message || "An error occurred");
-      // Reset CAPTCHA on error
       recaptchaRef.current?.reset();
       setCaptchaToken(null);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-
-    console.error("Authentication error:", error);
-    setError(error.response?.data?.message || "Network error. Please try again.");
-    // Reset CAPTCHA on error
-    recaptchaRef.current?.reset();
-    setCaptchaToken(null);
-  } finally {
-
-    setIsLoading(false);
-  }
-};
-
+  };
 
 
     const toggleState = () => {

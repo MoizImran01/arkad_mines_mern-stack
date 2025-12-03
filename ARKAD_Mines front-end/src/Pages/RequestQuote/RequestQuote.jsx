@@ -65,7 +65,8 @@ const RequestQuote = () => {
     updateQuoteItemQuantity(stoneId, value);
   };
 
-  const handleServerError = (error) => {
+ const handleServerError = (error) => {
+
     if (error.response?.data?.code === "ITEMS_UNAVAILABLE") {
       setUnavailableItems(error.response.data.unavailableItems || []);
       setFeedback({
@@ -75,11 +76,15 @@ const RequestQuote = () => {
       return;
     }
 
+    const actualMessage = 
+      error.response?.data?.error || 
+      error.response?.data?.message || 
+      error.response?.statusText || 
+      "Unable to process your request at this time.";
+
     setFeedback({
       type: "error",
-      message:
-        error.response?.data?.message ||
-        "Unable to process your request at this time.",
+      message: actualMessage, 
     });
   };
 
@@ -143,8 +148,9 @@ const RequestQuote = () => {
         setActiveQuoteId(null);
         setQuoteNotes("");
       }
-    } catch (error) {
-      handleServerError(error);
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || err.response?.statusText || err.message;
+      handleServerError(err);
     } finally {
       setLoading(false);
     }

@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import './Products.css';
 import axios from 'axios';
-import { FiFilter, FiX, FiSearch, FiSliders } from 'react-icons/fi';
+import { FiFilter, FiX, FiSearch, FiSliders, FiAlertTriangle } from 'react-icons/fi';
 import { StoreContext } from '../../context/StoreContext';
-import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Products = () => {
   const navigate = useNavigate();
   const { url, addItemToQuote } = useContext(StoreContext);
   
-  //filter the states
+  // Filter states
   const [filters, setFilters] = useState({
     category: 'all',
     subcategory: 'all',
@@ -26,7 +25,9 @@ const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(true);
-
+  
+  // New State for handling API errors (Rate limits, Network errors)
+  const [error, setError] = useState(null);
 
   const categories = [
     { value: 'all', label: 'All Categories' },
@@ -71,15 +72,15 @@ const Products = () => {
     { value: 'name_desc', label: 'Name: Z-A' }
   ];
 
-
   const sourceOptions = [
     { value: 'all', label: 'All Sources' },
     ...categories.filter(cat => cat.value !== 'all')
   ];
 
-  //apply filters
+  // Apply filters and fetch products
   const applyFilters = async () => {
     setLoading(true);
+    setError(null); // Reset error state before new request
     setHasSearched(true);
     
     try {
@@ -101,9 +102,17 @@ const Products = () => {
       } else {
         setProducts([]);
       }
-    } catch (error) {
-      console.error("Error fetching filtered products:", error);
-      setProducts([]);
+    } catch (err) {
+      console.error("Error fetching filtered products:", err);
+      
+      // Extract specific error message (Priority: Backend Rate Limit Message > Status Text > Generic)
+      const errorMessage = 
+        err.response?.data?.error || 
+        err.response?.statusText || 
+        "Unable to load products. Please check your connection.";
+      
+      setError(errorMessage);
+      setProducts([]); // Clear products on error to avoid confusion
     } finally {
       setLoading(false);
     }
@@ -129,15 +138,16 @@ const Products = () => {
       sortBy: 'newest',
       source: 'all'
     });
-    //Filters will auto-apply via useEffect, which will reload all blocks
+    // Filters will auto-apply via useEffect
   };
 
-  //Auto load all blocks on component mount
+  // Auto load all blocks on component mount
   useEffect(() => {
     applyFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  //Auto apply filters when they change (debounced for keywords)
+  // Auto apply filters when they change (debounced for keywords)
   useEffect(() => {
     if (hasSearched) {
       const timeoutId = setTimeout(() => {
@@ -146,9 +156,8 @@ const Products = () => {
 
       return () => clearTimeout(timeoutId);
     }
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.category, filters.subcategory, filters.minPrice, filters.maxPrice, filters.stockAvailability, filters.sortBy, filters.source]);
-
 
   useEffect(() => {
     if (hasSearched) {
@@ -158,22 +167,8 @@ const Products = () => {
 
       return () => clearTimeout(timeoutId);
     }
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.keywords]);
-
-
-  const formatCategory = (category) => {
-    return category.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  };
-
-
-  const formatSubcategory = (subcategory) => {
-    return subcategory.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  };
 
   const getStockStatusClass = (status) => {
     if (!status) return 'unknown';
@@ -190,14 +185,12 @@ const Products = () => {
     return 'unknown';
   };
 
-  // Helper function to get image URL - handles both Cloudinary URLs and legacy local images
+  // Helper function to get image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/300x200?text=No+Image';
-    // If it's already a full URL (Cloudinary), return as is
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath;
     }
-    // Otherwise, construct local URL for legacy images
     return `${url}/images/${imagePath}`;
   };
 
@@ -223,7 +216,6 @@ const Products = () => {
 
           {showFilters && (
             <div className="filters-content">
-
               <div className="filter-group">
                 <label>Product Search</label>
                 <div className="search-input-wrapper">
@@ -238,7 +230,7 @@ const Products = () => {
                 </div>
               </div>
 
-              {/* Category Filter (Color/Pattern) */}
+              {/* Category Filter */}
               <div className="filter-group">
                 <label>Color / Pattern</label>
                 <select
@@ -252,7 +244,7 @@ const Products = () => {
                 </select>
               </div>
 
-              {/* Subcategory Filter (Product Type) */}
+              {/* Subcategory Filter */}
               <div className="filter-group">
                 <label>Product Type</label>
                 <select
@@ -336,7 +328,7 @@ const Products = () => {
           )}
         </div>
 
-        {/* Products Grid */}
+        {/* Products Main Content */}
         <div className="products-main">
 
           <div className="sort-bar">
@@ -361,8 +353,20 @@ const Products = () => {
             </div>
           </div>
 
-          {/* Products Grid */}
-          {loading ? (
+          {/* Logic: Error ? Error UI : Loading ? Spinner : Empty ? Empty UI : Grid */}
+          {error ? (
+            <div className="empty-state" style={{ borderColor: '#ef4444' }}>
+              <FiAlertTriangle className="empty-icon" style={{ color: '#ef4444' }} />
+              <h3 style={{ color: '#ef4444' }}>Request Failed</h3>
+              <p>{error}</p>
+              <button 
+                className="clear-filters-btn"
+                onClick={applyFilters}
+              >
+                Try Again
+              </button>
+            </div>
+          ) : loading ? (
             <div className="loading-state">
               <div className="spinner"></div>
               <p>Loading blocks...</p>
@@ -443,4 +447,3 @@ const Products = () => {
 };
 
 export default Products;
-

@@ -63,8 +63,10 @@ const Quotations = () => {
         setError(response.data.message || "Unable to load quotations");
       }
     } catch (err) {
-      console.error("Error fetching quotations:", err);
-      setError("Unable to load quotations");
+
+      const errorMessage = err.response?.data?.error || err.response?.statusText || err.message;
+      console.error("Error fetching quotations:", errorMessage);
+      setError(errorMessage); 
       setQuotes([]);
     } finally {
       setLoading(false);
@@ -140,8 +142,8 @@ const Quotations = () => {
       }
     } catch (err) {
       console.error("Error approving quotation:", err);
-      const errorMessage = err.response?.data?.message || "Error approving quotation";
-      alert(errorMessage);
+      const errorMessage = err.response?.data?.error || err.response?.statusText || err.message;
+      alert(`Failed to approve: ${errorMessage}`);
     } finally {
       setActionLoading(false);
     }
@@ -168,8 +170,8 @@ const Quotations = () => {
       }
     } catch (err) {
       console.error("Error rejecting quotation:", err);
-      const errorMessage = err.response?.data?.message || "Error rejecting quotation";
-      alert(errorMessage);
+      const errorMessage = err.response?.data?.error || err.response?.statusText || err.message;
+      alert(`Failed to reject: ${errorMessage}`);
     } finally {
       setActionLoading(false);
     }
@@ -201,8 +203,8 @@ const Quotations = () => {
       }
     } catch (err) {
       console.error("Error requesting revision:", err);
-      const errorMessage = err.response?.data?.message || "Error requesting revision";
-      alert(errorMessage);
+      const errorMessage = err.response?.data?.error || err.response?.statusText || err.message;
+      alert(`Failed to request revision: ${errorMessage}`);
     } finally {
       setActionLoading(false);
     }
@@ -227,8 +229,12 @@ const Quotations = () => {
       link.click();
       link.remove();
     } catch (err) {
+      const errorMessage = 
+    err.response?.data?.error || 
+    err.response?.statusText || 
+    err.message;
       console.error("Download failed", err);
-      alert("Failed to download PDF");
+      alert(`Failed to download PDF: ${errorMessage}`);
     }
   };
 
