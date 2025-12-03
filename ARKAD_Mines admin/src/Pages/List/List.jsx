@@ -1,12 +1,13 @@
-import React from 'react'
+import React, { useContext, useMemo } from 'react'
 import './List.css'
 import { useState } from 'react'
 import { toast } from 'react-toastify';
 import { useEffect } from 'react';
 import axios from 'axios'
+import { AdminAuthContext } from '../../context/AdminAuthContext';
 
 const List = () => {
-
+  const { token, url } = useContext(AdminAuthContext);
   const [list, setList] = useState([]);
 
   const [qrModal, setQrModal] = useState({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null });
@@ -23,10 +24,17 @@ const List = () => {
   };
 
 
+  const headers = useMemo(
+    () => ({
+      Authorization: `Bearer ${token}`,
+    }),
+    [token]
+  );
+
   const fetchList = async ()=>{
       try{
       //make GET request to fetch all stone items
-      const response = await axios.get("http://localhost:4000/api/stones/list");
+      const response = await axios.get(`${url}/api/stones/list`);
 
       if(response.data.success)
       {
@@ -50,9 +58,13 @@ const List = () => {
 
   //function to remove a specific stone item by its ID
   const removeStoneItem = async (stoneID)=>{
+      if (!token) {
+        toast.error("Authentication required. Please log in again.");
+        return;
+      }
+      
       try{
-
-          const response = await axios.post("http://localhost:4000/api/stones/remove", {id: stoneID})
+          const response = await axios.post(`${url}/api/stones/remove`, {id: stoneID}, { headers })
            console.log("Stone item removed with id: ", stoneID)
 
            if(response.data.success)

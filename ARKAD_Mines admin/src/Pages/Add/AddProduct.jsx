@@ -1,12 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import './AddProduct.css';
 import { assets } from '../../assets/assets';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { AdminAuthContext } from '../../context/AdminAuthContext';
 
 export const AddProduct = () => {
+  const { token, url } = useContext(AdminAuthContext);
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile, setImageFile] = useState(null);
+  
+  const headers = useMemo(
+    () => ({
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data',
+    }),
+    [token]
+  );
 
   const [productDetails, setProductDetails] = useState({
     stoneName: "",
@@ -52,8 +62,13 @@ export const AddProduct = () => {
     formData.append("qaNotes", productDetails.notes);
     formData.append("image", imageFile);
 
+    if (!token) {
+      toast.error("Authentication required. Please log in again.");
+      return;
+    }
+
     try {
-      const response = await axios.post("http://localhost:4000/api/stones/add", formData);
+      const response = await axios.post(`${url}/api/stones/add`, formData, { headers });
       if (response.data.success) {
         // Show QR code if generated - now uses Cloudinary URL directly
         if (response.data.qrCodeImage && response.data.qrCode) {
