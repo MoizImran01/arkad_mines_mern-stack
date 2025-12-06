@@ -355,10 +355,23 @@ export default function Industries() {
               <div className="structure-container">
                 <div className={`structure-3d ${item.structure}`}>
                   {item.structure === 'pyramid' && (
-                    <div className="pyramid"></div>
+                    <div className="pyramid">
+                      <div className="pyramid-face front"></div>
+                      <div className="pyramid-face back"></div>
+                      <div className="pyramid-face left"></div>
+                      <div className="pyramid-face right"></div>
+                      <div className="pyramid-base"></div>
+                    </div>
                   )}
                   {item.structure === 'greatPyramid' && (
-                    <div className="great-pyramid"></div>
+                    <div className="great-pyramid">
+                      <div className="pyramid-face front golden"></div>
+                      <div className="pyramid-face back golden"></div>
+                      <div className="pyramid-face left golden"></div>
+                      <div className="pyramid-face right golden"></div>
+                      <div className="pyramid-base golden"></div>
+                      <div className="pyramid-capstone"></div>
+                    </div>
                   )}
                   {item.structure === 'greekTemple' && (
                     <div className="greek-temple">

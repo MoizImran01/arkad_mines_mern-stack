@@ -739,7 +739,7 @@
   line-height: 1.6;
 }
 
-/* ===== 3D PYRAMID (Solid) ===== */
+/* ===== 3D PYRAMID ===== */
 .pyramid, .great-pyramid {
   position: relative;
   width: 80px;
@@ -747,73 +747,65 @@
   transform-style: preserve-3d;
 }
 
-/* Solid Pyramid using clip-path */
-.pyramid {
-  position: relative;
-}
-
-.pyramid::before {
-  content: '';
+.pyramid-face {
   position: absolute;
-  width: 70px;
-  height: 70px;
-  background: linear-gradient(135deg, #e8c9a0 0%, #d4a574 50%, #c4956a 100%);
-  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-  box-shadow: 
-    inset -10px 0 20px rgba(0,0,0,0.2),
-    inset 10px 0 20px rgba(255,255,255,0.1),
-    0 10px 30px rgba(0,0,0,0.3);
+  width: 0;
+  height: 0;
+  border-left: 40px solid transparent;
+  border-right: 40px solid transparent;
+  border-bottom: 70px solid #d4a574;
+  transform-origin: bottom center;
 }
 
-.pyramid::after {
-  content: '';
-  position: absolute;
-  width: 70px;
-  height: 70px;
-  background: linear-gradient(225deg, #c4956a 0%, #a67c52 100%);
-  clip-path: polygon(50% 0%, 100% 100%, 50% 80%);
-  opacity: 0.7;
+.pyramid-face.front {
+  transform: rotateX(30deg) translateZ(23px);
 }
 
-/* Great Pyramid - Golden */
-.great-pyramid::before {
-  content: '';
+.pyramid-face.back {
+  transform: rotateX(30deg) rotateY(180deg) translateZ(23px);
+}
+
+.pyramid-face.left {
+  transform: rotateX(30deg) rotateY(-90deg) translateZ(23px);
+}
+
+.pyramid-face.right {
+  transform: rotateX(30deg) rotateY(90deg) translateZ(23px);
+}
+
+.pyramid-base {
   position: absolute;
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #ffd700 0%, #f0c040 30%, #daa520 70%, #b8860b 100%);
-  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-  box-shadow: 
-    inset -15px 0 25px rgba(0,0,0,0.2),
-    inset 15px 0 25px rgba(255,255,255,0.3),
-    0 15px 40px rgba(218, 165, 32, 0.5);
-  animation: pyramidGlow 3s ease-in-out infinite;
+  background: #c4956a;
+  transform: rotateX(90deg) translateZ(-35px);
 }
 
-.great-pyramid::after {
-  content: '';
-  position: absolute;
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(225deg, #b8860b 0%, #8b6914 100%);
-  clip-path: polygon(50% 0%, 100% 100%, 50% 75%);
-  opacity: 0.6;
+/* Golden Pyramid (Great Pyramid) */
+.pyramid-face.golden {
+  border-bottom-color: #f0c040;
+  filter: drop-shadow(0 0 5px rgba(240, 192, 64, 0.5));
 }
 
-@keyframes pyramidGlow {
-  0%, 100% { 
-    filter: brightness(1) drop-shadow(0 0 10px rgba(255, 215, 0, 0.3));
-  }
-  50% { 
-    filter: brightness(1.1) drop-shadow(0 0 20px rgba(255, 215, 0, 0.6));
-  }
+.pyramid-base.golden {
+  background: #d4a030;
 }
 
-/* Hide the old pyramid faces */
-.pyramid-face,
-.pyramid-base,
 .pyramid-capstone {
-  display: none;
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: gold;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px gold; }
+  50% { box-shadow: 0 0 20px gold, 0 0 30px gold; }
 }
 
 /* ===== GREEK TEMPLE ===== */
