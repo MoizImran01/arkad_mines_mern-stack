@@ -739,7 +739,7 @@
   line-height: 1.6;
 }
 
-/* ===== 3D PYRAMID ===== */
+/* ===== 3D PYRAMID (Solid) ===== */
 .pyramid, .great-pyramid {
   position: relative;
   width: 80px;
@@ -747,65 +747,73 @@
   transform-style: preserve-3d;
 }
 
-.pyramid-face {
+/* Solid Pyramid using clip-path */
+.pyramid {
+  position: relative;
+}
+
+.pyramid::before {
+  content: '';
   position: absolute;
-  width: 0;
-  height: 0;
-  border-left: 40px solid transparent;
-  border-right: 40px solid transparent;
-  border-bottom: 70px solid #d4a574;
-  transform-origin: bottom center;
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #e8c9a0 0%, #d4a574 50%, #c4956a 100%);
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  box-shadow: 
+    inset -10px 0 20px rgba(0,0,0,0.2),
+    inset 10px 0 20px rgba(255,255,255,0.1),
+    0 10px 30px rgba(0,0,0,0.3);
 }
 
-.pyramid-face.front {
-  transform: rotateX(30deg) translateZ(23px);
+.pyramid::after {
+  content: '';
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(225deg, #c4956a 0%, #a67c52 100%);
+  clip-path: polygon(50% 0%, 100% 100%, 50% 80%);
+  opacity: 0.7;
 }
 
-.pyramid-face.back {
-  transform: rotateX(30deg) rotateY(180deg) translateZ(23px);
-}
-
-.pyramid-face.left {
-  transform: rotateX(30deg) rotateY(-90deg) translateZ(23px);
-}
-
-.pyramid-face.right {
-  transform: rotateX(30deg) rotateY(90deg) translateZ(23px);
-}
-
-.pyramid-base {
+/* Great Pyramid - Golden */
+.great-pyramid::before {
+  content: '';
   position: absolute;
   width: 80px;
   height: 80px;
-  background: #c4956a;
-  transform: rotateX(90deg) translateZ(-35px);
+  background: linear-gradient(135deg, #ffd700 0%, #f0c040 30%, #daa520 70%, #b8860b 100%);
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  box-shadow: 
+    inset -15px 0 25px rgba(0,0,0,0.2),
+    inset 15px 0 25px rgba(255,255,255,0.3),
+    0 15px 40px rgba(218, 165, 32, 0.5);
+  animation: pyramidGlow 3s ease-in-out infinite;
 }
 
-/* Golden Pyramid (Great Pyramid) */
-.pyramid-face.golden {
-  border-bottom-color: #f0c040;
-  filter: drop-shadow(0 0 5px rgba(240, 192, 64, 0.5));
-}
-
-.pyramid-base.golden {
-  background: #d4a030;
-}
-
-.pyramid-capstone {
+.great-pyramid::after {
+  content: '';
   position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 10px;
-  height: 10px;
-  background: gold;
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-  animation: glow 2s ease-in-out infinite;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(225deg, #b8860b 0%, #8b6914 100%);
+  clip-path: polygon(50% 0%, 100% 100%, 50% 75%);
+  opacity: 0.6;
 }
 
-@keyframes glow {
-  0%, 100% { box-shadow: 0 0 5px gold; }
-  50% { box-shadow: 0 0 20px gold, 0 0 30px gold; }
+@keyframes pyramidGlow {
+  0%, 100% { 
+    filter: brightness(1) drop-shadow(0 0 10px rgba(255, 215, 0, 0.3));
+  }
+  50% { 
+    filter: brightness(1.1) drop-shadow(0 0 20px rgba(255, 215, 0, 0.6));
+  }
+}
+
+/* Hide the old pyramid faces */
+.pyramid-face,
+.pyramid-base,
+.pyramid-capstone {
+  display: none;
 }
 
 /* ===== GREEK TEMPLE ===== */
@@ -1102,41 +1110,144 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4rem;
-  align-items: center;
+  align-items: stretch;
+}
+
+.why-visual {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .comparison-slider {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding: 2rem;
-  background: var(--secondary-light);
-  border-radius: 0.5rem;
+  gap: 0;
+  padding: 2.5rem;
+  background: linear-gradient(145deg, var(--secondary-light) 0%, #ffffff 100%);
+  border-radius: 1rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.comparison-slider::before {
+  content: '📊 Durability Comparison';
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.comparison-slider::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(22, 163, 74, 0.08) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .comparison-item {
   display: flex;
   align-items: center;
   gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.comparison-item:last-child {
+  border-bottom: none;
 }
 
 .comparison-item span {
-  width: 80px;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  font-weight: 500;
+  width: 90px;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  font-weight: 600;
+}
+
+.comparison-item .bar-container {
+  flex: 1;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
 }
 
 .durability-bar {
-  height: 12px;
+  height: 24px;
   background: linear-gradient(90deg, var(--primary-green-light) 0%, var(--primary-green) 100%);
-  border-radius: 6px;
-  transition: width 1s ease-out;
-  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+  border-radius: 12px;
+  transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 10px rgba(22, 163, 74, 0.4);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  animation: barPulse 2s ease-in-out infinite;
+}
+
+.durability-bar::after {
+  content: attr(data-value);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+@keyframes barPulse {
+  0%, 100% { box-shadow: 0 2px 10px rgba(22, 163, 74, 0.4); }
+  50% { box-shadow: 0 4px 20px rgba(22, 163, 74, 0.6); }
 }
 
 .comparison-item.granite .durability-bar {
-  background: linear-gradient(90deg, var(--primary-green) 0%, var(--primary-green-dark) 100%);
+  background: linear-gradient(90deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+  box-shadow: 0 2px 10px rgba(217, 119, 6, 0.5);
+  animation: goldBarPulse 2s ease-in-out infinite;
+}
+
+@keyframes goldBarPulse {
+  0%, 100% { box-shadow: 0 2px 10px rgba(217, 119, 6, 0.5); }
+  50% { box-shadow: 0 4px 25px rgba(217, 119, 6, 0.8); }
+}
+
+.comparison-item.granite span {
+  color: #b45309;
+}
+
+.comparison-item.granite::before {
+  content: '👑';
+  position: absolute;
+  right: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  animation: crownBounce 1s ease-in-out infinite;
+}
+
+@keyframes crownBounce {
+  0%, 100% { transform: translateY(-50%) scale(1); }
+  50% { transform: translateY(-50%) scale(1.2); }
+}
+
+/* Rating stars under the comparison */
+.comparison-slider .rating-info {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .why-content h2 {

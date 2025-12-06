@@ -355,23 +355,10 @@ export default function Industries() {
               <div className="structure-container">
                 <div className={`structure-3d ${item.structure}`}>
                   {item.structure === 'pyramid' && (
-                    <div className="pyramid">
-                      <div className="pyramid-face front"></div>
-                      <div className="pyramid-face back"></div>
-                      <div className="pyramid-face left"></div>
-                      <div className="pyramid-face right"></div>
-                      <div className="pyramid-base"></div>
-                    </div>
+                    <div className="pyramid"></div>
                   )}
                   {item.structure === 'greatPyramid' && (
-                    <div className="great-pyramid">
-                      <div className="pyramid-face front golden"></div>
-                      <div className="pyramid-face back golden"></div>
-                      <div className="pyramid-face left golden"></div>
-                      <div className="pyramid-face right golden"></div>
-                      <div className="pyramid-base golden"></div>
-                      <div className="pyramid-capstone"></div>
-                    </div>
+                    <div className="great-pyramid"></div>
                   )}
                   {item.structure === 'greekTemple' && (
                     <div className="greek-temple">
@@ -444,19 +431,30 @@ export default function Industries() {
             <div className="comparison-slider">
               <div className="comparison-item granite">
                 <span>Granite</span>
-                <div className="durability-bar" style={{ width: "95%" }}></div>
+                <div className="bar-container">
+                  <div className="durability-bar" style={{ width: "95%" }} data-value="95%"></div>
+                </div>
               </div>
               <div className="comparison-item marble">
                 <span>Marble</span>
-                <div className="durability-bar" style={{ width: "70%" }}></div>
+                <div className="bar-container">
+                  <div className="durability-bar" style={{ width: "70%" }} data-value="70%"></div>
+                </div>
               </div>
               <div className="comparison-item quartz">
                 <span>Quartz</span>
-                <div className="durability-bar" style={{ width: "85%" }}></div>
+                <div className="bar-container">
+                  <div className="durability-bar" style={{ width: "85%" }} data-value="85%"></div>
+                </div>
               </div>
               <div className="comparison-item laminate">
                 <span>Laminate</span>
-                <div className="durability-bar" style={{ width: "40%" }}></div>
+                <div className="bar-container">
+                  <div className="durability-bar" style={{ width: "40%" }} data-value="40%"></div>
+                </div>
+              </div>
+              <div className="rating-info">
+                <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>⭐ Based on hardness, heat & scratch resistance</span>
               </div>
             </div>
           </div>
