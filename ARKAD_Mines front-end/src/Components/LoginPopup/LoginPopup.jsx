@@ -29,7 +29,8 @@ const LoginPopup = ({ setShowLogin }) => {
     })
 
 
-    const url = "http://localhost:4000"
+    // Use environment variable for API URL, fallback to localhost for development
+    const url = import.meta.env.VITE_API_URL || "http://localhost:4000"
 
 
     const handleInputChange = (event) => {
@@ -79,9 +80,9 @@ const handleSubmit = async (event) => {
         localStorage.setItem("token", token);
         localStorage.setItem("userRole", user.role);
 
-        if (user.role === "admin") {
-          window.location.href = "http://localhost:5174";
-        } else {
+      if (user.role === "admin") {
+        window.location.href = import.meta.env.VITE_ADMIN_URL || "http://localhost:5174"; 
+      } else {
           window.location.href = "/";
         }
 

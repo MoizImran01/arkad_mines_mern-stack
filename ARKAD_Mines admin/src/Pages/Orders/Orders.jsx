@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { FiPackage, FiCheckCircle, FiXCircle, FiClock, FiDollarSign, FiUser, FiMapPin, FiPhone, FiCalendar, FiTruck } from 'react-icons/fi';
+// API URL from environment variable
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 const Orders = () => {
 
   const [orders, setOrders] = useState([]);
@@ -20,7 +23,7 @@ const Orders = () => {
       return imagePath;
     }
     // Otherwise, construct local URL for legacy images
-    return `http://localhost:4000/images/${imagePath}`;
+    return `${API_URL}/images/${imagePath}`;
   };
 
 
@@ -35,7 +38,7 @@ const Orders = () => {
   const fetchAllOrders = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:4000/api/order/list");
+      const response = await axios.get(`${API_URL}/api/order/list`);
       if (response.data.success) {
         setOrders(response.data.data);
       } else {
@@ -52,7 +55,7 @@ const Orders = () => {
   //function to update the status of a specific order
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      const response = await axios.put(`http://localhost:4000/api/order/update-status/${orderId}`, {
+      const response = await axios.put(`${API_URL}/api/order/update-status/${orderId}`, {
         status: newStatus
       });
       

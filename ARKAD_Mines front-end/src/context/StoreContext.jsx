@@ -4,7 +4,8 @@ import { createContext, useEffect, useState } from "react";
 export const StoreContext = createContext(null);
 
 const StoreContextProvider = (props) => {
-  const url = "http://localhost:4000";
+  // Use environment variable for API URL, fallback to localhost for development
+  const url = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
   const [token, setToken] = useState("");
   const [user, setUser] = useState(null);

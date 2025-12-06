@@ -4,6 +4,9 @@ import { assets } from '../../assets/assets';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
+// API URL from environment variable
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 export const AddProduct = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -58,7 +61,7 @@ export const AddProduct = () => {
         toast.error('No authentication token found. Please login again.');
         return;
       }
-      const response = await axios.post("http://localhost:4000/api/stones/add", formData, {
+      const response = await axios.post(`${API_URL}/api/stones/add`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -69,7 +72,7 @@ export const AddProduct = () => {
           // Check if it's already a full URL (Cloudinary) or legacy local path
           const qrImageUrl = response.data.qrCodeImage.startsWith('http') 
             ? response.data.qrCodeImage 
-            : `http://localhost:4000/images/${response.data.qrCodeImage}`;
+            : `${API_URL}/images/${response.data.qrCodeImage}`;
           setQrCodeImage(qrImageUrl);
           setQrCodeId(response.data.qrCode);
           setShowQRCode(true);

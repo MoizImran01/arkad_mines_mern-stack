@@ -5,6 +5,9 @@ import { toast } from 'react-toastify';
 import { useEffect } from 'react';
 import axios from 'axios'
 
+// API URL from environment variable
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 const List = () => {
 
   const [list, setList] = useState([]);
@@ -19,14 +22,14 @@ const List = () => {
       return imagePath;
     }
     // Otherwise, construct local URL for legacy images
-    return `http://localhost:4000/images/${imagePath}`;
+    return `${API_URL}/images/${imagePath}`;
   };
 
 
   const fetchList = async ()=>{
       try{
       //make GET request to fetch all stone items
-      const response = await axios.get("http://localhost:4000/api/stones/list");
+      const response = await axios.get(`${API_URL}/api/stones/list`);
 
       if(response.data.success)
       {
@@ -60,7 +63,7 @@ const List = () => {
           }
 
           const response = await axios.post(
-              "http://localhost:4000/api/stones/remove", 
+              `${API_URL}/api/stones/remove`, 
               { id: stoneID },
               {
                   headers: {

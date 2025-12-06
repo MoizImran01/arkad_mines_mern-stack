@@ -4,6 +4,9 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FiPackage, FiCheckCircle, FiXCircle, FiSearch, FiGrid, FiCamera, FiType } from 'react-icons/fi';
 
+// API URL from environment variable
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 const Dispatch = () => {
   const [qrCode, setQrCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,7 +25,7 @@ const Dispatch = () => {
       return imagePath;
     }
     // Otherwise, construct local URL for legacy images
-    return `http://localhost:4000/images/${imagePath}`;
+    return `${API_URL}/images/${imagePath}`;
   };
 
   //Function to search for block by QR code
@@ -43,7 +46,7 @@ const Dispatch = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:4000/api/stones/qr/${qrCode}`,
+        `${API_URL}/api/stones/qr/${qrCode}`,
         { headers }
       );
       
@@ -87,7 +90,7 @@ const Dispatch = () => {
       }
 
      const response = await axios.post(
-        "http://localhost:4000/api/stones/dispatch",
+        `${API_URL}/api/stones/dispatch`,
         { qrCode: qrCode },
         {
           headers: {
@@ -177,7 +180,7 @@ const Dispatch = () => {
                 if (detectedCode.trim()) {
                   try {
                     setLoading(true);
-                    const response = await axios.get(`http://localhost:4000/api/stones/qr/${detectedCode}`);
+                    const response = await axios.get(`${API_URL}/api/stones/qr/${detectedCode}`);
                     if (response.data.success) {
                       setBlockInfo(response.data.block);
                       setShowBlockInfo(true);
