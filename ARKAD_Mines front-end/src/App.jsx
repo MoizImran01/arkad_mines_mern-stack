@@ -40,7 +40,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/industries" element={<Industries />} />
+          <Route path="/industries" element={<Industries setShowLogin={setShowLogin} />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
           <Route

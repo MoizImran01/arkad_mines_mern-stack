@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Industries.css";
 import { 
   Building2, 
@@ -15,13 +16,17 @@ import {
   Hammer,
   ChevronDown
 } from "lucide-react";
+import { StoreContext } from "../../context/StoreContext";
 
-export default function Industries() {
+export default function Industries({ setShowLogin }) {
   const [activeSection, setActiveSection] = useState(0);
   const [scrollY, setScrollY] = useState(0);
   const [isVisible, setIsVisible] = useState({});
   const statsRef = useRef(null);
   const [counters, setCounters] = useState({ market: 0, countries: 0, years: 0, types: 0 });
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const navigate = useNavigate();
+  const { token } = useContext(StoreContext);
 
   // Parallax scroll effect
   useEffect(() => {
@@ -122,12 +127,38 @@ export default function Industries() {
 
   const graniteTypes = [
     { name: "Black Galaxy", origin: "India", color: "#1a1a2e", sparkle: true },
-    { name: "Absolute Black", origin: "Zimbabwe", color: "#0d0d0d", sparkle: false },
+    { name: "Absolute Black", origin: "Zimbabwe", color: "#0d0d0d", sparkle: true },
     { name: "Kashmir White", origin: "India", color: "#f5f5f5", sparkle: true },
     { name: "Blue Pearl", origin: "Norway", color: "#2c3e50", sparkle: true },
-    { name: "Baltic Brown", origin: "Finland", color: "#8b4513", sparkle: false },
+    { name: "Baltic Brown", origin: "Finland", color: "#8b4513", sparkle: true },
     { name: "Giallo Ornamental", origin: "Brazil", color: "#daa520", sparkle: true },
   ];
+
+  // Handle catalog button click
+  const handleCatalogClick = () => {
+    if (token) {
+      navigate('/products');
+    } else {
+      setShowLoginPrompt(true);
+    }
+  };
+
+  // Handle quote button click
+  const handleQuoteClick = () => {
+    if (token) {
+      navigate('/request-quote');
+    } else {
+      setShowLoginPrompt(true);
+    }
+  };
+
+  // Handle login from prompt
+  const handleLoginClick = () => {
+    setShowLoginPrompt(false);
+    if (setShowLogin) {
+      setShowLogin(true);
+    }
+  };
 
   const timeline = [
     { year: "3000 BCE", event: "Ancient Egyptians begin quarrying granite for pyramids and obelisks", structure: "pyramid" },
@@ -164,13 +195,13 @@ export default function Industries() {
             the stone that has shaped civilizations for millennia.
           </p>
           <div className="hero-cta">
-            <button className="primary-btn">
+            <button className="primary-btn" onClick={handleCatalogClick}>
               Explore Our Catalog
               <span className="btn-arrow">→</span>
             </button>
-            <button className="secondary-btn">
-              <span className="play-icon">▶</span>
-              Watch Our Process
+            <button className="secondary-btn" onClick={handleQuoteClick}>
+              <span className="play-icon">📋</span>
+              Request a Quote
             </button>
           </div>
         </div>
@@ -524,11 +555,31 @@ export default function Industries() {
           <h2>Ready to Transform Your Space?</h2>
           <p>Explore our premium collection of Pakistani granite and discover the perfect stone for your project.</p>
           <div className="cta-buttons">
-            <button className="cta-primary">View Our Catalog</button>
-            <button className="cta-secondary">Request a Quote</button>
+            <button className="cta-primary" onClick={handleCatalogClick}>View Our Catalog</button>
+            <button className="cta-secondary" onClick={handleQuoteClick}>Request a Quote</button>
           </div>
         </div>
       </section>
+
+      {/* Login Prompt Modal */}
+      {showLoginPrompt && (
+        <div className="login-prompt-overlay" onClick={() => setShowLoginPrompt(false)}>
+          <div className="login-prompt-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="close-prompt" onClick={() => setShowLoginPrompt(false)}>×</button>
+            <div className="prompt-icon">🔐</div>
+            <h3>Login Required</h3>
+            <p>To access this feature, please log in or create an account first.</p>
+            <div className="prompt-buttons">
+              <button className="prompt-login-btn" onClick={handleLoginClick}>
+                Login / Register
+              </button>
+              <button className="prompt-cancel-btn" onClick={() => setShowLoginPrompt(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
