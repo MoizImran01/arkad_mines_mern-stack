@@ -835,21 +835,33 @@
 /* ===== PROCESS SECTION ===== */
 .process-section-new {
   position: relative;
-  padding: 5rem 2rem;
+  padding: 8rem 2rem 5rem;
   background: var(--bg-dark);
+  overflow: hidden;
 }
 
-.process-bg-wave {
+/* Animated Wave at top of process section */
+.process-wave-animated {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
+  width: 100%;
+  overflow: hidden;
   line-height: 0;
+  transform: rotate(180deg);
 }
 
-.process-bg-wave svg {
-  width: 100%;
-  height: auto;
+.process-wave-animated svg {
+  position: relative;
+  display: block;
+  width: 200%;
+  height: 100px;
+  animation: processWaveScroll 15s linear infinite;
+}
+
+@keyframes processWaveScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 .process-wrapper {
@@ -934,24 +946,34 @@
 /* ===== CTA SECTION ===== */
 .cta-section-new {
   position: relative;
-  padding: 6rem 2rem;
+  padding: 8rem 2rem 6rem;
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   text-align: center;
   overflow: hidden;
 }
 
-.cta-wave-top {
+/* Animated Wave at top of CTA section */
+.cta-wave-animated {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
+  width: 100%;
+  overflow: hidden;
   line-height: 0;
   transform: rotate(180deg);
 }
 
-.cta-wave-top svg {
-  width: 100%;
-  height: auto;
+.cta-wave-animated svg {
+  position: relative;
+  display: block;
+  width: 200%;
+  height: 100px;
+  animation: ctaWaveScroll 18s linear infinite;
+}
+
+@keyframes ctaWaveScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 .cta-content-new {

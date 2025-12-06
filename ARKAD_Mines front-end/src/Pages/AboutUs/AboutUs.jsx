@@ -324,9 +324,21 @@ export default function AboutUs() {
 
       {/* Process Section */}
       <section className="process-section-new">
-        <div className="process-bg-wave">
-          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0,80 C360,20 720,100 1080,40 C1260,10 1380,50 1440,40 L1440,0 L0,0 Z" fill="#ffffff"/>
+        {/* Animated Wave Top */}
+        <div className="process-wave-animated">
+          <svg viewBox="0 0 2880 120" preserveAspectRatio="none">
+            <path fill="#ffffff">
+              <animate
+                attributeName="d"
+                dur="8s"
+                repeatCount="indefinite"
+                values="
+                  M0,60 C480,120 960,0 1440,60 C1920,120 2400,0 2880,60 L2880,120 L0,120 Z;
+                  M0,90 C480,30 960,120 1440,60 C1920,0 2400,120 2880,60 L2880,120 L0,120 Z;
+                  M0,60 C480,120 960,0 1440,60 C1920,120 2400,0 2880,60 L2880,120 L0,120 Z
+                "
+              />
+            </path>
           </svg>
         </div>
         
@@ -353,9 +365,21 @@ export default function AboutUs() {
 
       {/* CTA Section */}
       <section className="cta-section-new">
-        <div className="cta-wave-top">
-          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0,60 C360,120 720,0 1080,60 C1260,90 1380,30 1440,60 L1440,0 L0,0 Z" fill="#111827"/>
+        {/* Animated Wave Top */}
+        <div className="cta-wave-animated">
+          <svg viewBox="0 0 2880 120" preserveAspectRatio="none">
+            <path fill="#111827">
+              <animate
+                attributeName="d"
+                dur="10s"
+                repeatCount="indefinite"
+                values="
+                  M0,80 C480,20 960,100 1440,50 C1920,0 2400,80 2880,40 L2880,120 L0,120 Z;
+                  M0,40 C480,100 960,20 1440,70 C1920,120 2400,40 2880,80 L2880,120 L0,120 Z;
+                  M0,80 C480,20 960,100 1440,50 C1920,0 2400,80 2880,40 L2880,120 L0,120 Z
+                "
+              />
+            </path>
           </svg>
         </div>
         
