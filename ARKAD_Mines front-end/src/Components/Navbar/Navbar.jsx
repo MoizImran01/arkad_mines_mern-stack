@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import './Navbar.css';
 import logoimg from '../../assets/logo.png';
 import dashboard from '../../assets/dashboard.png'
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { StoreContext } from '../../context/StoreContext';
 import { assets } from '../../assets/assets.js';
 import { FiFileText } from 'react-icons/fi';
@@ -12,27 +12,35 @@ const Navbar = ({ setShowLogin }) => {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const [menu, setMenu] = useState("home");
-
   const { token, logout } = useContext(StoreContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
+  // Determine active menu based on current path
+  const getActiveMenu = () => {
+    const path = location.pathname;
+    if (path === '/') return 'home';
+    if (path === '/products' || path.startsWith('/products')) return 'products';
+    if (path === '/industries' || path.startsWith('/industries')) return 'industries';
+    if (path === '/about' || path.startsWith('/about')) return 'about';
+    if (path === '/contact' || path.startsWith('/contact')) return 'contact';
+    return '';
+  };
+
+  const menu = getActiveMenu();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-
-
-  const handleNavClick = (section) => {
-    setMenu(section);
+  const handleNavClick = () => {
     setIsMenuOpen(false); 
   };
 
   return (
     <header className="navbar-container">
       <div className="navbar-brand">
-        <Link to='/' onClick={() => handleNavClick("home")}>
+        <Link to='/' onClick={handleNavClick}>
           <img src={logoimg} alt="Stone & Minerals Co." className="logo" />
         </Link>
       </div>
@@ -41,7 +49,7 @@ const Navbar = ({ setShowLogin }) => {
         <Link 
           to="/" 
           className={`nav-link ${menu === "home" ? "nav-active" : ""}`}
-          onClick={() => handleNavClick("home")}
+          onClick={handleNavClick}
         >
           Home
         </Link>
@@ -49,7 +57,7 @@ const Navbar = ({ setShowLogin }) => {
           <Link 
             to="/products" 
             className={`nav-link ${menu === "products" ? "nav-active" : ""}`}
-            onClick={() => handleNavClick("products")}
+            onClick={handleNavClick}
           >
             Product Catalog
           </Link>
@@ -57,21 +65,21 @@ const Navbar = ({ setShowLogin }) => {
         <Link 
           to="/industries" 
           className={`nav-link ${menu === "industries" ? "nav-active" : ""}`}
-          onClick={() => handleNavClick("industries")}
+          onClick={handleNavClick}
         >
           Industries
         </Link>
         <Link 
           to="/about" 
           className={`nav-link ${menu === "about" ? "nav-active" : ""}`}
-          onClick={() => handleNavClick("about")}
+          onClick={handleNavClick}
         >
           About Us
         </Link>
         <Link 
           to="/contact" 
           className={`nav-link ${menu === "contact" ? "nav-active" : ""}`}
-          onClick={() => handleNavClick("contact")}
+          onClick={handleNavClick}
         >
           Contact
         </Link>
