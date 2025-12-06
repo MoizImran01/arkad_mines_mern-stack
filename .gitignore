@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# SonarQube local scan files
+.scannerwork/
+sonar-project.properties
+
+# Build outputs
+dist/
+build/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local environment overrides (optional)
+*.local
+
