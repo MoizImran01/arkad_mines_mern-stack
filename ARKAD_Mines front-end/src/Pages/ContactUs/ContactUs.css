@@ -1,4 +1,6 @@
-/* ===== CONTACT PAGE - PROFESSIONAL DESIGN WITH WAVES ===== */
+/* ===== CONTACT PAGE - PROFESSIONAL DESIGN WITH ANIMATED WAVES ===== */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 .contact-page-pro {
   --primary: #16a34a;
@@ -20,43 +22,67 @@
   overflow-x: hidden;
 }
 
-/* ===== WAVE BACKGROUND ===== */
-.contact-page-pro::before {
-  content: '';
-  position: fixed;
+/* ===== ANIMATED WAVE BACKGROUNDS ===== */
+.wave-container {
+  position: absolute;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  z-index: 1;
+}
+
+.wave-container.top {
   top: 0;
-  left: 0;
-  right: 0;
+  transform: rotate(180deg);
+}
+
+.wave-container.bottom {
   bottom: 0;
-  background: 
-    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(22, 163, 74, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(22, 163, 74, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse 70% 60% at 60% 80%, rgba(22, 163, 74, 0.05) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: 0;
+}
+
+.wave-container svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 100px;
+}
+
+.wave-path-1 {
+  animation: waveMove1 8s ease-in-out infinite;
+}
+
+.wave-path-2 {
+  animation: waveMove2 10s ease-in-out infinite;
+}
+
+.wave-path-3 {
+  animation: waveMove3 12s ease-in-out infinite;
+}
+
+@keyframes waveMove1 {
+  0%, 100% { d: path("M0,64 C320,128 640,0 960,64 C1280,128 1440,64 1440,64 L1440,120 L0,120 Z"); }
+  50% { d: path("M0,96 C320,32 640,128 960,64 C1280,0 1440,96 1440,96 L1440,120 L0,120 Z"); }
+}
+
+@keyframes waveMove2 {
+  0%, 100% { d: path("M0,80 C240,120 480,40 720,80 C960,120 1200,40 1440,80 L1440,120 L0,120 Z"); }
+  50% { d: path("M0,40 C240,80 480,120 720,60 C960,0 1200,100 1440,60 L1440,120 L0,120 Z"); }
+}
+
+@keyframes waveMove3 {
+  0%, 100% { d: path("M0,50 C360,100 720,20 1080,70 C1260,95 1380,50 1440,70 L1440,120 L0,120 Z"); }
+  50% { d: path("M0,90 C360,40 720,110 1080,50 C1260,25 1380,80 1440,50 L1440,120 L0,120 Z"); }
 }
 
 /* ===== HERO SECTION ===== */
 .contact-hero-pro {
   position: relative;
-  padding: 6rem 2rem 8rem;
+  padding: 6rem 2rem 10rem;
   min-height: 80vh;
   display: flex;
   align-items: center;
   overflow: hidden;
-}
-
-/* Hero Wave Background */
-.contact-hero-pro::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 150px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23f9fafb' fill-opacity='1' d='M0,192L48,176C96,160,192,128,288,138.7C384,149,480,203,576,213.3C672,224,768,192,864,165.3C960,139,1056,117,1152,128C1248,139,1344,181,1392,202.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E") no-repeat bottom;
-  background-size: cover;
-  z-index: 1;
+  background: linear-gradient(135deg, #ffffff 0%, var(--primary-lighter) 50%, var(--primary-light) 100%);
 }
 
 .contact-hero-pro::after {
@@ -70,6 +96,30 @@
     radial-gradient(circle at 20% 50%, rgba(22, 163, 74, 0.1) 0%, transparent 40%),
     radial-gradient(circle at 80% 30%, rgba(22, 163, 74, 0.08) 0%, transparent 35%);
   pointer-events: none;
+}
+
+/* Hero Animated Wave */
+.hero-wave-animated {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  z-index: 1;
+}
+
+.hero-wave-animated svg {
+  position: relative;
+  display: block;
+  width: calc(200% + 1.3px);
+  height: 120px;
+  animation: waveScroll 15s linear infinite;
+}
+
+@keyframes waveScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 .hero-container-pro {
@@ -97,6 +147,7 @@
 }
 
 .hero-title-pro {
+  font-family: 'Playfair Display', serif;
   font-size: clamp(2.5rem, 5vw, 3.5rem);
   font-weight: 700;
   line-height: 1.2;
@@ -128,7 +179,8 @@
 
 .stat-number-pro {
   display: block;
-  font-size: 1.75rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
   font-weight: 700;
   color: var(--primary);
 }
@@ -256,34 +308,45 @@
 /* ===== CONTACT INFO SECTION ===== */
 .contact-info-pro {
   position: relative;
-  padding: 5rem 2rem;
+  padding: 6rem 2rem;
   background: var(--bg-light);
 }
 
-/* Wave top */
-.contact-info-pro::before {
-  content: '';
+/* Animated Wave Top */
+.contact-info-pro .animated-wave-top {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  height: 100px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='1' d='M0,96L48,112C96,128,192,160,288,165.3C384,171,480,149,576,149.3C672,149,768,171,864,176C960,181,1056,171,1152,149.3C1248,128,1344,96,1392,80L1440,64L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z'%3E%3C/path%3E%3C/svg%3E") no-repeat top;
-  background-size: cover;
-  z-index: 1;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  transform: rotate(180deg);
 }
 
-/* Wave bottom */
-.contact-info-pro::after {
-  content: '';
+.contact-info-pro .animated-wave-top svg {
+  position: relative;
+  display: block;
+  width: calc(200% + 1.3px);
+  height: 80px;
+  animation: waveScroll 20s linear infinite;
+}
+
+/* Animated Wave Bottom */
+.contact-info-pro .animated-wave-bottom {
   position: absolute;
   bottom: 0;
   left: 0;
-  right: 0;
-  height: 100px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='1' d='M0,192L48,176C96,160,192,128,288,138.7C384,149,480,203,576,213.3C672,224,768,192,864,165.3C960,139,1056,117,1152,128C1248,139,1344,181,1392,202.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E") no-repeat bottom;
-  background-size: cover;
-  z-index: 1;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.contact-info-pro .animated-wave-bottom svg {
+  position: relative;
+  display: block;
+  width: calc(200% + 1.3px);
+  height: 80px;
+  animation: waveScroll 18s linear infinite reverse;
 }
 
 .section-container {
@@ -307,7 +370,8 @@
 }
 
 .section-header-pro h2 {
-  font-size: 2rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 2.25rem;
   font-weight: 700;
   color: var(--text-dark);
   margin-bottom: 0.5rem;
@@ -409,6 +473,7 @@
 }
 
 .form-info-side h2 {
+  font-family: 'Playfair Display', serif;
   font-size: 2rem;
   font-weight: 700;
   color: var(--text-dark);
@@ -543,21 +608,27 @@
 /* ===== FAQ SECTION ===== */
 .faq-section-pro {
   position: relative;
-  padding: 5rem 2rem;
+  padding: 6rem 2rem;
   background: var(--bg-light);
 }
 
-/* Wave top for FAQ */
-.faq-section-pro::before {
-  content: '';
+/* Animated Wave Top for FAQ */
+.faq-section-pro .animated-wave-top {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  height: 100px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='1' d='M0,64L48,80C96,96,192,128,288,128C384,128,480,96,576,101.3C672,107,768,149,864,154.7C960,160,1056,128,1152,112C1248,96,1344,96,1392,96L1440,96L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z'%3E%3C/path%3E%3C/svg%3E") no-repeat top;
-  background-size: cover;
-  z-index: 1;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  transform: rotate(180deg);
+}
+
+.faq-section-pro .animated-wave-top svg {
+  position: relative;
+  display: block;
+  width: calc(200% + 1.3px);
+  height: 80px;
+  animation: waveScroll 22s linear infinite;
 }
 
 .faq-grid-pro {
@@ -597,39 +668,62 @@
 /* ===== CTA SECTION ===== */
 .cta-section-pro {
   position: relative;
-  padding: 6rem 2rem;
+  padding: 8rem 2rem;
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   overflow: hidden;
 }
 
-/* Wave top for CTA */
-.cta-section-pro::before {
-  content: '';
+/* Animated Wave Top for CTA */
+.cta-section-pro .animated-wave-top {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  height: 100px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23f9fafb' fill-opacity='1' d='M0,128L48,144C96,160,192,192,288,186.7C384,181,480,139,576,128C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z'%3E%3C/path%3E%3C/svg%3E") no-repeat top;
-  background-size: cover;
-  z-index: 1;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  transform: rotate(180deg);
 }
 
-/* Decorative circles */
+.cta-section-pro .animated-wave-top svg {
+  position: relative;
+  display: block;
+  width: calc(200% + 1.3px);
+  height: 100px;
+  animation: waveScroll 16s linear infinite;
+}
+
+/* Decorative floating circles */
+.cta-section-pro::before {
+  content: '';
+  position: absolute;
+  top: 20%;
+  left: -100px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: floatCircle 8s ease-in-out infinite;
+}
+
 .cta-section-pro::after {
   content: '';
   position: absolute;
-  top: 50%;
-  right: -100px;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  bottom: 10%;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
   border-radius: 50%;
-  transform: translateY(-50%);
+  animation: floatCircle 10s ease-in-out infinite reverse;
+}
+
+@keyframes floatCircle {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-30px) scale(1.1); }
 }
 
 .cta-container-pro {
-  max-width: 800px;
+  max-width: 700px;
   margin: 0 auto;
   text-align: center;
   position: relative;
@@ -637,25 +731,29 @@
 }
 
 .cta-content-pro h2 {
-  font-size: 2.5rem;
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 4vw, 2.75rem);
   font-weight: 700;
   color: white;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.2;
 }
 
 .cta-content-pro p {
   font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 2.5rem;
-  max-width: 600px;
+  max-width: 500px;
   margin-left: auto;
   margin-right: auto;
+  line-height: 1.7;
 }
 
 .cta-buttons-pro {
   display: flex;
   gap: 1.25rem;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .cta-primary-pro {
@@ -673,7 +771,7 @@
 
 .cta-primary-pro:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
 }
 
 .cta-secondary-pro {
@@ -694,7 +792,7 @@
 
 .cta-secondary-pro:hover {
   background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.7);
   transform: translateY(-3px);
 }
 
@@ -779,6 +877,7 @@
 }
 
 .prompt-header-pro h3 {
+  font-family: 'Playfair Display', serif;
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-dark);
@@ -895,12 +994,16 @@
 
 @media (max-width: 768px) {
   .contact-hero-pro {
-    padding: 4rem 1rem 6rem;
+    padding: 4rem 1rem 8rem;
     min-height: auto;
   }
   
-  .contact-hero-pro::before {
-    height: 80px;
+  .hero-wave-animated svg,
+  .contact-info-pro .animated-wave-top svg,
+  .contact-info-pro .animated-wave-bottom svg,
+  .faq-section-pro .animated-wave-top svg,
+  .cta-section-pro .animated-wave-top svg {
+    height: 60px;
   }
   
   .hero-stats-pro {
@@ -916,13 +1019,6 @@
   .phone-3d {
     width: 140px;
     height: 280px;
-  }
-  
-  .contact-info-pro::before,
-  .contact-info-pro::after,
-  .faq-section-pro::before,
-  .cta-section-pro::before {
-    height: 60px;
   }
   
   .contact-grid-pro {
@@ -941,8 +1037,13 @@
     grid-template-columns: 1fr;
   }
   
+  .cta-section-pro {
+    padding: 6rem 1.5rem;
+  }
+  
   .cta-buttons-pro {
     flex-direction: column;
+    gap: 1rem;
   }
   
   .cta-content-pro h2 {
@@ -950,6 +1051,6 @@
   }
   
   .section-header-pro h2 {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
   }
 }

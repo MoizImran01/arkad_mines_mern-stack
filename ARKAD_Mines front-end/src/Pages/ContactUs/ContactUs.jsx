@@ -113,6 +113,27 @@ export default function ContactUs({ setShowLogin }) {
     console.log(formData);
   };
 
+  // Animated Wave SVG Component
+  const AnimatedWave = ({ fill = "#f9fafb", className = "" }) => (
+    <svg className={className} viewBox="0 0 2880 120" preserveAspectRatio="none">
+      <path 
+        fill={fill} 
+        d="M0,64 C320,128 640,0 960,64 C1280,128 1600,0 1920,64 C2240,128 2560,0 2880,64 L2880,120 L0,120 Z"
+      >
+        <animate
+          attributeName="d"
+          dur="8s"
+          repeatCount="indefinite"
+          values="
+            M0,64 C320,128 640,0 960,64 C1280,128 1600,0 1920,64 C2240,128 2560,0 2880,64 L2880,120 L0,120 Z;
+            M0,96 C320,32 640,128 960,64 C1280,0 1600,128 1920,64 C2240,0 2560,128 2880,64 L2880,120 L0,120 Z;
+            M0,64 C320,128 640,0 960,64 C1280,128 1600,0 1920,64 C2240,128 2560,0 2880,64 L2880,120 L0,120 Z
+          "
+        />
+      </path>
+    </svg>
+  );
+
   return (
     <div className="contact-page-pro">
       {/* Hero Section */}
@@ -163,12 +184,22 @@ export default function ContactUs({ setShowLogin }) {
                 </div>
               </div>
             </div>
+          </div>
         </div>
+        
+        {/* Animated Wave at bottom of hero */}
+        <div className="hero-wave-animated">
+          <AnimatedWave fill="#f9fafb" />
         </div>
       </section>
 
       {/* Contact Information Section */}
       <section className="contact-info-pro animate-section" id="info">
+        {/* Animated Wave Top */}
+        <div className="animated-wave-top">
+          <AnimatedWave fill="#ffffff" />
+        </div>
+        
         <div className={`section-container ${isVisible["info"] ? "visible" : ""}`}>
           <div className="section-header-pro">
             <h2>Get In Touch</h2>
@@ -192,6 +223,11 @@ export default function ContactUs({ setShowLogin }) {
               </div>
             ))}
           </div>
+        </div>
+        
+        {/* Animated Wave Bottom */}
+        <div className="animated-wave-bottom">
+          <AnimatedWave fill="#ffffff" />
         </div>
       </section>
 
@@ -303,6 +339,11 @@ export default function ContactUs({ setShowLogin }) {
 
       {/* FAQ Section */}
       <section className="faq-section-pro animate-section" id="faq">
+        {/* Animated Wave Top */}
+        <div className="animated-wave-top">
+          <AnimatedWave fill="#ffffff" />
+        </div>
+        
         <div className={`section-container ${isVisible["faq"] ? "visible" : ""}`}>
           <div className="section-header-pro">
             <h2>Frequently Asked Questions</h2>
@@ -332,6 +373,11 @@ export default function ContactUs({ setShowLogin }) {
 
       {/* CTA Section */}
       <section className="cta-section-pro">
+        {/* Animated Wave Top */}
+        <div className="animated-wave-top">
+          <AnimatedWave fill="#f9fafb" />
+        </div>
+        
         <div className="cta-container-pro">
           <div className="cta-content-pro">
             <h2>Ready to Start Your Project?</h2>
