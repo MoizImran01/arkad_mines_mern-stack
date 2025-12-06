@@ -130,12 +130,12 @@ export default function Industries() {
   ];
 
   const timeline = [
-    { year: "3000 BCE", event: "Ancient Egyptians begin quarrying granite for pyramids and obelisks" },
-    { year: "2500 BCE", event: "The Great Pyramid of Giza incorporates massive granite blocks" },
-    { year: "500 BCE", event: "Greeks use granite for temples and sculptures" },
-    { year: "100 CE", event: "Romans perfect granite cutting techniques for monuments" },
-    { year: "1800s", event: "Industrial revolution enables mass granite production" },
-    { year: "Modern Era", event: "Advanced technology allows precise cuts and finishes" },
+    { year: "3000 BCE", event: "Ancient Egyptians begin quarrying granite for pyramids and obelisks", structure: "pyramid" },
+    { year: "2500 BCE", event: "The Great Pyramid of Giza incorporates massive granite blocks", structure: "greatPyramid" },
+    { year: "500 BCE", event: "Greeks use granite for temples and sculptures", structure: "greekTemple" },
+    { year: "100 CE", event: "Romans perfect granite cutting techniques for monuments", structure: "romanColumn" },
+    { year: "1800s", event: "Industrial revolution enables mass granite production", structure: "factory" },
+    { year: "Modern Era", event: "Advanced technology allows precise cuts and finishes", structure: "skyscraper" },
   ];
 
   return (
@@ -344,17 +344,91 @@ export default function Industries() {
           <p>From ancient pyramids to modern skyscrapers — granite's journey through history</p>
         </div>
         
-        <div className={`timeline ${isVisible["timeline"] ? "visible" : ""}`}>
+        <div className={`timeline-with-structures ${isVisible["timeline"] ? "visible" : ""}`}>
           {timeline.map((item, index) => (
             <div 
               key={index} 
-              className="timeline-item"
+              className={`timeline-item-enhanced ${index % 2 === 0 ? 'left' : 'right'}`}
               style={{ "--item-delay": `${index * 0.2}s` }}
             >
-              <div className="timeline-marker">
-                <div className="marker-dot"></div>
+              {/* 3D Structure */}
+              <div className="structure-container">
+                <div className={`structure-3d ${item.structure}`}>
+                  {item.structure === 'pyramid' && (
+                    <div className="pyramid">
+                      <div className="pyramid-face front"></div>
+                      <div className="pyramid-face back"></div>
+                      <div className="pyramid-face left"></div>
+                      <div className="pyramid-face right"></div>
+                      <div className="pyramid-base"></div>
+                    </div>
+                  )}
+                  {item.structure === 'greatPyramid' && (
+                    <div className="great-pyramid">
+                      <div className="pyramid-face front golden"></div>
+                      <div className="pyramid-face back golden"></div>
+                      <div className="pyramid-face left golden"></div>
+                      <div className="pyramid-face right golden"></div>
+                      <div className="pyramid-base golden"></div>
+                      <div className="pyramid-capstone"></div>
+                    </div>
+                  )}
+                  {item.structure === 'greekTemple' && (
+                    <div className="greek-temple">
+                      <div className="temple-roof"></div>
+                      <div className="temple-pediment"></div>
+                      <div className="temple-columns">
+                        <div className="column"></div>
+                        <div className="column"></div>
+                        <div className="column"></div>
+                        <div className="column"></div>
+                      </div>
+                      <div className="temple-base"></div>
+                    </div>
+                  )}
+                  {item.structure === 'romanColumn' && (
+                    <div className="roman-column">
+                      <div className="column-capital"></div>
+                      <div className="column-shaft"></div>
+                      <div className="column-base"></div>
+                    </div>
+                  )}
+                  {item.structure === 'factory' && (
+                    <div className="factory">
+                      <div className="factory-building"></div>
+                      <div className="factory-chimney">
+                        <div className="smoke"></div>
+                        <div className="smoke delay"></div>
+                      </div>
+                      <div className="factory-windows">
+                        <div className="window"></div>
+                        <div className="window"></div>
+                        <div className="window"></div>
+                      </div>
+                    </div>
+                  )}
+                  {item.structure === 'skyscraper' && (
+                    <div className="skyscraper">
+                      <div className="building-top"></div>
+                      <div className="building-body">
+                        <div className="glass-panel"></div>
+                        <div className="glass-panel"></div>
+                        <div className="glass-panel"></div>
+                        <div className="glass-panel"></div>
+                      </div>
+                      <div className="building-base"></div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="timeline-content">
+              
+              {/* Timeline Content */}
+              <div className="timeline-connector">
+                <div className="connector-line"></div>
+                <div className="connector-dot"></div>
+              </div>
+              
+              <div className="timeline-content-enhanced">
                 <span className="timeline-year">{item.year}</span>
                 <p className="timeline-event">{item.event}</p>
               </div>
