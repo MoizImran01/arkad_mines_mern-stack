@@ -1,14 +1,28 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./AboutUs.css";
 import { Link } from "react-router-dom";
+import { Mountain, Award, Users, Layers, Sparkles, Target, Shield, Zap, Scissors, Truck, ChevronRight } from "lucide-react";
 
 export default function AboutUs() {
   const [hoveredId, setHoveredId] = useState(null);
   const [isVisible, setIsVisible] = useState({});
   const [counters, setCounters] = useState({ years: 0, clients: 0, varieties: 0 });
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const statsRef = useRef(null);
+  const heroRef = useRef(null);
+
+  // Mouse parallax for hero
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 30;
+      const y = (e.clientY / window.innerHeight - 0.5) * 30;
+      setMousePos({ x, y });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   // Intersection Observer for animations
   useEffect(() => {
@@ -66,311 +80,284 @@ export default function AboutUs() {
     }, interval);
   };
 
-  const facilities = [
-    {
-      title: "Advanced Cutting Equipment",
-      description:
-        "State-of-the-art precision cutting machines imported from Europe. Our equipment ensures perfect edges and dimensions for every stone slab.",
-      icon: "⚙️",
-      color: "#3b82f6"
-    },
-    {
-      title: "Quality Polishing",
-      description:
-        "Multi-stage polishing process delivers mirror-like finishes. Premium abrasives and skilled craftsmen ensure the highest quality output.",
-      icon: "✨",
-      color: "#f59e0b"
-    },
-    {
-      title: "Wholesale & Distribution",
-      description:
-        "Direct supply to shops and wholesalers across Pakistan. Competitive pricing with reliable delivery and excellent customer support.",
-      icon: "📦",
-      color: "#10b981"
-    },
-  ];
-
   const granites = [
-    { id: 1, name: "Chatral", color1: "#8B7355", color2: "#A0522D" },
-    { id: 2, name: "White Cheeta", color1: "#F5F5F5", color2: "#D3D3D3" },
-    { id: 3, name: "White Pradeso", color1: "#FFFAF0", color2: "#F5DEB3" },
-    { id: 4, name: "Golden Tiger", color1: "#DAA520", color2: "#B8860B" },
-    { id: 5, name: "Grey Imperial", color1: "#708090", color2: "#2F4F4F" },
-    { id: 6, name: "White Fantasy", color1: "#FFFFF0", color2: "#E6E6FA" },
-    { id: 7, name: "Sado Pink", color1: "#FFB6C1", color2: "#DB7093" },
-    { id: 8, name: "Jebrana", color1: "#8B4513", color2: "#A0522D" },
-    { id: 9, name: "Grey Black", color1: "#2F2F2F", color2: "#1a1a1a" },
-    { id: 10, name: "Sado Grey", color1: "#696969", color2: "#808080" },
-    { id: 11, name: "Premium Black", color1: "#0d0d0d", color2: "#1a1a1a" },
-    { id: 12, name: "Sunset Beige", color1: "#F5DEB3", color2: "#DEB887" },
+    { id: 1, name: "Chatral", color1: "#8B7355", color2: "#A0522D", origin: "Pakistan" },
+    { id: 2, name: "White Cheeta", color1: "#F5F5F5", color2: "#D3D3D3", origin: "Pakistan" },
+    { id: 3, name: "White Pradeso", color1: "#FFFAF0", color2: "#F5DEB3", origin: "Pakistan" },
+    { id: 4, name: "Golden Tiger", color1: "#DAA520", color2: "#B8860B", origin: "Pakistan" },
+    { id: 5, name: "Grey Imperial", color1: "#708090", color2: "#2F4F4F", origin: "Pakistan" },
+    { id: 6, name: "White Fantasy", color1: "#FFFFF0", color2: "#E6E6FA", origin: "Pakistan" },
+    { id: 7, name: "Sado Pink", color1: "#FFB6C1", color2: "#DB7093", origin: "Pakistan" },
+    { id: 8, name: "Jebrana", color1: "#8B4513", color2: "#A0522D", origin: "Pakistan" },
+    { id: 9, name: "Grey Black", color1: "#2F2F2F", color2: "#1a1a1a", origin: "Pakistan" },
+    { id: 10, name: "Sado Grey", color1: "#696969", color2: "#808080", origin: "Pakistan" },
+    { id: 11, name: "Premium Black", color1: "#0d0d0d", color2: "#1a1a1a", origin: "Pakistan" },
+    { id: 12, name: "Sunset Beige", color1: "#F5DEB3", color2: "#DEB887", origin: "Pakistan" },
   ];
 
   const values = [
-    { icon: "🎯", title: "Precision", desc: "Every cut is measured to perfection" },
-    { icon: "💎", title: "Quality", desc: "Only the finest granite materials" },
-    { icon: "🤝", title: "Trust", desc: "Building lasting relationships" },
-    { icon: "🚀", title: "Innovation", desc: "Leading with latest technology" },
+    { icon: <Target size={28} />, title: "Precision", desc: "Every cut measured to perfection" },
+    { icon: <Award size={28} />, title: "Quality", desc: "Only the finest granite materials" },
+    { icon: <Shield size={28} />, title: "Trust", desc: "Building lasting relationships" },
+    { icon: <Zap size={28} />, title: "Innovation", desc: "Leading with latest technology" },
+  ];
+
+  const process = [
+    { step: "01", title: "Quarrying", desc: "Premium stone extraction", icon: <Mountain size={24} /> },
+    { step: "02", title: "Cutting", desc: "Precision machinery", icon: <Scissors size={24} /> },
+    { step: "03", title: "Polishing", desc: "Mirror-like finish", icon: <Sparkles size={24} /> },
+    { step: "04", title: "Delivery", desc: "Safe & timely", icon: <Truck size={24} /> },
   ];
 
   return (
-    <div className="about-page">
-      {/* Floating Sparkles Background */}
-      <div className="sparkles-container">
-        {[...Array(20)].map((_, i) => (
-          <div 
-            key={i} 
-            className="sparkle" 
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${3 + Math.random() * 4}s`
-            }}
-          />
-        ))}
-      </div>
-
+    <div className="about-page-new">
       {/* Hero Section */}
-      <section className="about-hero">
-        <div className="hero-background-shapes">
-          <div className="floating-stone stone-1"></div>
-          <div className="floating-stone stone-2"></div>
-          <div className="floating-stone stone-3"></div>
-          <div className="geometric-pattern"></div>
-        </div>
-        
-        <div className="hero-container">
-          <div className="hero-badge">
-            <span className="badge-icon">🏔️</span>
-            <span>Since 2009</span>
-          </div>
-          
-          <h1 className="hero-title">
-            <span className="title-line">Premium Granite</span>
-            <span className="title-line highlight">Processing Excellence</span>
-          </h1>
-          
-          <p className="hero-description">
-            Located in Peshawar, our state-of-the-art granite factory specializes in stone cutting and processing
-            services. We serve wholesalers and shops with the highest quality finished products, offering a diverse
-            range of premium granite varieties.
-          </p>
-
-          <div className="hero-cta">
-            <Link to="/contact" className="cta-primary">
-              Contact Us
-              <span className="cta-arrow">→</span>
-            </Link>
-            <Link to="/products" className="cta-secondary">
-              View Products
-            </Link>
+      <section className="hero-section-new" ref={heroRef}>
+        <div className="hero-bg-layers">
+          <div className="bg-gradient-layer"></div>
+          <div className="bg-pattern-layer"></div>
+          <div 
+            className="bg-floating-shapes"
+            style={{
+              transform: `translate(${mousePos.x * 0.5}px, ${mousePos.y * 0.5}px)`
+            }}
+          >
+            <div className="floating-shape shape-1"></div>
+            <div className="floating-shape shape-2"></div>
+            <div className="floating-shape shape-3"></div>
           </div>
         </div>
 
-        {/* 3D Rotating Stone */}
-        <div className="hero-3d-element">
-          <div className="rotating-cube">
-            <div className="cube-face front"></div>
-            <div className="cube-face back"></div>
-            <div className="cube-face right"></div>
-            <div className="cube-face left"></div>
-            <div className="cube-face top"></div>
-            <div className="cube-face bottom"></div>
-          </div>
-        </div>
-      </section>
-
-      {/* Animated Stats Section */}
-      <section className="stats-section" ref={statsRef}>
-        <div className="stats-container">
-          <div className="stat-card">
-            <div className="stat-icon-wrapper">
-              <span className="stat-emoji">📅</span>
-              <div className="stat-glow"></div>
+        <div className="hero-content-new">
+          <div className="hero-text-side">
+            <div className="hero-badge-new">
+              <Mountain size={16} />
+              <span>Established 2009</span>
             </div>
-            <div className="stat-number">{counters.years}+</div>
-            <p className="stat-label">Years Experience</p>
-            <div className="stat-bar">
-              <div className="stat-bar-fill" style={{ width: '100%' }}></div>
-            </div>
-          </div>
-          
-          <div className="stat-card">
-            <div className="stat-icon-wrapper">
-              <span className="stat-emoji">👥</span>
-              <div className="stat-glow"></div>
-            </div>
-            <div className="stat-number">{counters.clients}+</div>
-            <p className="stat-label">Happy Clients</p>
-            <div className="stat-bar">
-              <div className="stat-bar-fill" style={{ width: '85%' }}></div>
-            </div>
-          </div>
-          
-          <div className="stat-card">
-            <div className="stat-icon-wrapper">
-              <span className="stat-emoji">🪨</span>
-              <div className="stat-glow"></div>
-            </div>
-            <div className="stat-number">{counters.varieties}+</div>
-            <p className="stat-label">Stone Varieties</p>
-            <div className="stat-bar">
-              <div className="stat-bar-fill" style={{ width: '75%' }}></div>
-            </div>
-          </div>
-        </div>
-      </section>
+            
+            <h1 className="hero-title-new">
+              <span className="title-line-new">Crafting</span>
+              <span className="title-line-new title-accent">Excellence</span>
+              <span className="title-line-new">in Stone</span>
+            </h1>
+            
+            <p className="hero-desc-new">
+              From the heart of Peshawar, we deliver premium granite processing services 
+              with state-of-the-art technology and masterful craftsmanship. Trusted by 
+              wholesalers and retailers across Pakistan.
+            </p>
 
-      {/* Our Values Section */}
-      <section className="values-section animate-section" id="values">
-        <div className={`values-container ${isVisible["values"] ? "visible" : ""}`}>
-          <h2 className="section-title">
-            <span className="title-decoration">✦</span>
-            Our Core Values
-            <span className="title-decoration">✦</span>
-          </h2>
-          <div className="values-grid">
-            {values.map((value, index) => (
-              <div 
-                key={index} 
-                className="value-card"
-                style={{ animationDelay: `${index * 0.15}s` }}
-              >
-                <div className="value-icon">{value.icon}</div>
-                <h3>{value.title}</h3>
-                <p>{value.desc}</p>
-                <div className="value-shine"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Facilities Section */}
-      <section className="facilities-section animate-section" id="facilities">
-        <div className={`facilities-container ${isVisible["facilities"] ? "visible" : ""}`}>
-          <h2 className="section-title">Our Facilities & Services</h2>
-          <p className="section-description">
-            We combine cutting-edge technology with expert craftsmanship to deliver premium granite products for your
-            projects.
-          </p>
-
-          <div className="facilities-grid">
-            {facilities.map((facility, index) => (
-              <div 
-                key={index} 
-                className="facility-card"
-                style={{ 
-                  animationDelay: `${index * 0.2}s`,
-                  '--accent-color': facility.color 
-                }}
-              >
-                <div className="facility-icon-wrapper">
-                  <span className="facility-icon">{facility.icon}</span>
-                  <div className="icon-ring"></div>
-                  <div className="icon-ring ring-2"></div>
-                </div>
-                <h3 className="facility-title">{facility.title}</h3>
-                <p className="facility-description">{facility.description}</p>
-                <div className="card-gradient"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Products Section */}
-      <section className="products-section animate-section" id="products">
-        <div className={`products-container ${isVisible["products"] ? "visible" : ""}`}>
-          <h2 className="section-title">Premium Granite Varieties</h2>
-          <p className="section-description">
-            Explore our extensive collection of premium granite stones, each selected for its unique beauty and
-            durability. Perfect for countertops, flooring, and decorative applications.
-          </p>
-
-          <div className="products-grid">
-            {granites.map((granite, index) => (
-              <div
-                key={granite.id}
-                className="product-card"
-                style={{ animationDelay: `${index * 0.08}s` }}
-                onMouseEnter={() => setHoveredId(granite.id)}
-                onMouseLeave={() => setHoveredId(null)}
-              >
-                <div
-                  className={`product-image ${hoveredId === granite.id ? "hovered" : ""}`}
-                  style={{
-                    background: `linear-gradient(135deg, ${granite.color1} 0%, ${granite.color2} 100%)`,
-                  }}
-                >
-                  <div className="product-placeholder">🪨</div>
-                  <div className="shimmer-effect"></div>
-                  <div className={`product-overlay ${hoveredId === granite.id ? "visible" : ""}`}>
-                    <span className="view-icon">👁️</span>
-                    <p className="overlay-text">View Details</p>
-                  </div>
-                </div>
-
-                <div className="product-info">
-                  <h3 className="product-name">{granite.name}</h3>
-                  <p className="product-grade">Premium Grade</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="cta-section">
-            <div className="cta-content">
-              <p className="cta-text">Interested in bulk orders or custom processing?</p>
-              <Link to="/request-quote" className="cta-button">
-                <span>Request a Quote</span>
-                <span className="btn-sparkle">✨</span>
+            <div className="hero-buttons-new">
+              <Link to="/products" className="btn-primary-new">
+                Explore Collection
+                <ChevronRight size={18} />
+              </Link>
+              <Link to="/contact" className="btn-secondary-new">
+                Get in Touch
               </Link>
             </div>
+          </div>
+
+          <div className="hero-visual-side">
+            <div 
+              className="floating-slab-container"
+              style={{
+                transform: `perspective(1000px) rotateY(${mousePos.x * 0.3}deg) rotateX(${-mousePos.y * 0.3}deg)`
+              }}
+            >
+              <div className="granite-slab-3d">
+                <div className="slab-face slab-front"></div>
+                <div className="slab-face slab-back"></div>
+                <div className="slab-face slab-top"></div>
+                <div className="slab-face slab-bottom"></div>
+                <div className="slab-face slab-left"></div>
+                <div className="slab-face slab-right"></div>
+                <div className="slab-glow"></div>
+              </div>
+              
+              {/* Orbiting elements */}
+              <div className="orbit-ring">
+                <div className="orbit-dot dot-1"></div>
+                <div className="orbit-dot dot-2"></div>
+                <div className="orbit-dot dot-3"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Wave transition */}
+        <div className="hero-wave">
+          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,60 C360,120 720,0 1080,60 C1260,90 1380,90 1440,60 L1440,120 L0,120 Z" fill="#f9fafb"/>
+          </svg>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="stats-section-new" ref={statsRef}>
+        <div className="stats-container-new">
+          <div className="stat-card-new">
+            <div className="stat-icon-new">
+              <Award size={32} />
+            </div>
+            <div className="stat-content-new">
+              <span className="stat-number-new">{counters.years}+</span>
+              <span className="stat-label-new">Years of Excellence</span>
+            </div>
+            <div className="stat-bar-new"><div className="stat-fill" style={{width: '100%'}}></div></div>
+          </div>
+          
+          <div className="stat-card-new">
+            <div className="stat-icon-new">
+              <Users size={32} />
+            </div>
+            <div className="stat-content-new">
+              <span className="stat-number-new">{counters.clients}+</span>
+              <span className="stat-label-new">Satisfied Clients</span>
+            </div>
+            <div className="stat-bar-new"><div className="stat-fill" style={{width: '85%'}}></div></div>
+          </div>
+          
+          <div className="stat-card-new highlight-stat">
+            <div className="stat-icon-new">
+              <Layers size={32} />
+            </div>
+            <div className="stat-content-new">
+              <span className="stat-number-new">{counters.varieties}</span>
+              <span className="stat-label-new">Stone Categories</span>
+            </div>
+            <div className="stat-bar-new"><div className="stat-fill" style={{width: '75%'}}></div></div>
+          </div>
+        </div>
+      </section>
+
+      {/* Values Section */}
+      <section className="values-section-new animate-section" id="values">
+        <div className={`values-wrapper ${isVisible["values"] ? "visible" : ""}`}>
+          <div className="section-header-new">
+            <span className="section-tag">Our Philosophy</span>
+            <h2 className="section-title-new">Core Values That Drive Us</h2>
+            <p className="section-desc-new">Built on principles that ensure exceptional quality and service</p>
+          </div>
+          
+          <div className="values-grid-new">
+            {values.map((value) => (
+              <div 
+                key={value.title} 
+                className="value-card-new"
+              >
+                <div className="value-icon-new">{value.icon}</div>
+                <h3>{value.title}</h3>
+                <p>{value.desc}</p>
+                <div className="value-line"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Wave transition */}
+      <div className="wave-divider">
+        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,40 C240,100 480,0 720,60 C960,120 1200,40 1440,80 L1440,120 L0,120 Z" fill="#ffffff"/>
+        </svg>
+      </div>
+
+      {/* Products Showcase */}
+      <section className="products-section-new animate-section" id="products">
+        <div className={`products-wrapper ${isVisible["products"] ? "visible" : ""}`}>
+          <div className="section-header-new">
+            <span className="section-tag">Our Collection</span>
+            <h2 className="section-title-new">12 Premium Granite Varieties</h2>
+            <p className="section-desc-new">Handpicked selection of the finest stones from Pakistani quarries</p>
+          </div>
+
+          <div className="products-showcase">
+            {granites.map((granite) => (
+              <div
+                key={granite.id}
+                className={`product-tile ${hoveredId === granite.id ? 'active' : ''}`}
+                onMouseEnter={() => setHoveredId(granite.id)}
+                onMouseLeave={() => setHoveredId(null)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setHoveredId(granite.id)}
+              >
+                <div 
+                  className="tile-visual"
+                  style={{
+                    background: `linear-gradient(145deg, ${granite.color1} 0%, ${granite.color2} 100%)`
+                  }}
+                >
+                  <div className="tile-shine"></div>
+                  <div className="tile-overlay">
+                    <span className="tile-number">{String(granite.id).padStart(2, '0')}</span>
+                  </div>
+                </div>
+                <div className="tile-info">
+                  <h4>{granite.name}</h4>
+                  <span>Premium Grade</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="products-cta-new">
+            <Link to="/products" className="btn-view-all">
+              View Full Catalog
+              <ChevronRight size={18} />
+            </Link>
           </div>
         </div>
       </section>
 
       {/* Process Section */}
-      <section className="process-section">
-        <div className="process-container">
-          <h2 className="section-title">Our Process</h2>
-          <div className="process-timeline">
-            <div className="process-step">
-              <div className="step-number">01</div>
-              <div className="step-content">
-                <h3>Quarrying</h3>
-                <p>Premium stone extraction from finest quarries</p>
+      <section className="process-section-new">
+        <div className="process-bg-wave">
+          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,80 C360,20 720,100 1080,40 C1260,10 1380,50 1440,40 L1440,0 L0,0 Z" fill="#ffffff"/>
+          </svg>
+        </div>
+        
+        <div className="process-wrapper">
+          <div className="section-header-new light">
+            <span className="section-tag">How We Work</span>
+            <h2 className="section-title-new">Our Process</h2>
+            <p className="section-desc-new">From quarry to delivery, every step is precision-crafted</p>
+          </div>
+
+          <div className="process-timeline-new">
+            {process.map((item) => (
+              <div key={item.step} className="process-item-new">
+                <div className="process-icon-new">{item.icon}</div>
+                <div className="process-number-new">{item.step}</div>
+                <h4>{item.title}</h4>
+                <p>{item.desc}</p>
+                {item.step !== "04" && <div className="process-connector-new"></div>}
               </div>
-              <div className="step-icon">⛏️</div>
-            </div>
-            <div className="process-connector"></div>
-            <div className="process-step">
-              <div className="step-number">02</div>
-              <div className="step-content">
-                <h3>Cutting</h3>
-                <p>Precision cutting with advanced machinery</p>
-              </div>
-              <div className="step-icon">🔪</div>
-            </div>
-            <div className="process-connector"></div>
-            <div className="process-step">
-              <div className="step-number">03</div>
-              <div className="step-content">
-                <h3>Polishing</h3>
-                <p>Multi-stage polishing for mirror finish</p>
-              </div>
-              <div className="step-icon">✨</div>
-            </div>
-            <div className="process-connector"></div>
-            <div className="process-step">
-              <div className="step-number">04</div>
-              <div className="step-content">
-                <h3>Delivery</h3>
-                <p>Safe packaging and timely delivery</p>
-              </div>
-              <div className="step-icon">🚚</div>
-            </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="cta-section-new">
+        <div className="cta-wave-top">
+          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,60 C360,120 720,0 1080,60 C1260,90 1380,30 1440,60 L1440,0 L0,0 Z" fill="#111827"/>
+          </svg>
+        </div>
+        
+        <div className="cta-content-new">
+          <h2>Ready to Transform Your Space?</h2>
+          <p>Get premium quality granite at competitive prices. Request a personalized quote today.</p>
+          <div className="cta-buttons-new">
+            <Link to="/request-quote" className="cta-btn-primary">
+              Request a Quote
+            </Link>
+            <Link to="/contact" className="cta-btn-secondary">
+              Contact Us
+            </Link>
           </div>
         </div>
       </section>
