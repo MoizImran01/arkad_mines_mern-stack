@@ -10,6 +10,7 @@ export default function ContactUs({ setShowLogin }) {
   const [isVisible, setIsVisible] = useState({});
   const [copied, setCopied] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [phoneRotation, setPhoneRotation] = useState({ x: 0, y: 0 });
   const navigate = useNavigate();
   const { token } = useContext(StoreContext);
   
@@ -22,6 +23,17 @@ export default function ContactUs({ setShowLogin }) {
   });
 
   const phoneNumber = "+92 300 1234567";
+
+  // 3D Phone mouse tracking
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 20;
+      const y = (e.clientY / window.innerHeight - 0.5) * 20;
+      setPhoneRotation({ x: -y, y: x });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   // Intersection Observer for animations
   useEffect(() => {
@@ -135,27 +147,23 @@ export default function ContactUs({ setShowLogin }) {
           </div>
 
           <div className="hero-visual-pro">
-            <div className="visual-card">
-              <div className="card-header">
-                <Building size={20} />
-                <span>ARKAD Mines & Minerals</span>
-              </div>
-              <div className="card-body">
-                <div className="contact-quick">
-                  <Phone size={18} />
-                  <span>{phoneNumber}</span>
+            <div 
+              className="phone-3d-container"
+              style={{
+                transform: `perspective(1000px) rotateX(${phoneRotation.x}deg) rotateY(${phoneRotation.y}deg)`
+              }}
+            >
+              <div className="phone-3d">
+                <div className="phone-screen">
+                  <div className="phone-notch"></div>
+                  <div className="phone-content">
+                    <Phone size={40} className="phone-icon-animated" />
+                    <span className="phone-text">Call Now</span>
+                  </div>
                 </div>
-                <div className="contact-quick">
-                  <Mail size={18} />
-                  <span>info@arkadmines.com</span>
-                </div>
               </div>
-              <button className="card-cta" onClick={handleCopyNumber}>
-                {copied ? <Check size={18} /> : <Copy size={18} />}
-                {copied ? "Number Copied!" : "Copy Phone Number"}
-              </button>
             </div>
-          </div>
+        </div>
         </div>
       </section>
 
