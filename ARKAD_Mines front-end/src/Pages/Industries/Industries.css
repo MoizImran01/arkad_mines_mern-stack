@@ -1,37 +1,35 @@
-/* ===== INDUSTRIES PAGE - STUNNING 3D DESIGN ===== */
+/* ===== INDUSTRIES PAGE - LIGHT THEME WITH 3D EFFECTS ===== */
 
 /* Custom Properties */
 .industries-page {
-  --primary-dark: #0a0a0f;
-  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --gold-gradient: linear-gradient(135deg, #f5af19 0%, #f12711 100%);
-  --stone-gradient: linear-gradient(135deg, #434343 0%, #1a1a1a 100%);
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --accent-gold: #d4af37;
-  --accent-emerald: #10b981;
+  --primary-light: #ffffff;
+  --secondary-light: #f9fafb;
+  --primary-green: #16a34a;
+  --primary-green-dark: #15803d;
+  --primary-green-light: #22c55e;
+  --text-dark: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #9ca3af;
+  --border-color: #e5e7eb;
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --card-shadow-hover: 0 10px 20px rgba(0, 0, 0, 0.1);
   
-  font-family: 'Outfit', 'Segoe UI', system-ui, sans-serif;
-  background: var(--primary-dark);
-  color: var(--text-primary);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--primary-light);
+  color: var(--text-dark);
   overflow-x: hidden;
 }
 
 /* ===== HERO SECTION ===== */
 .industries-hero {
-  min-height: 100vh;
+  min-height: 90vh;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   padding: 2rem;
-  background: 
-    radial-gradient(ellipse at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 50%, rgba(118, 75, 162, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 100%, rgba(212, 175, 55, 0.1) 0%, transparent 40%),
-    var(--primary-dark);
+  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  overflow: hidden;
 }
 
 .hero-background {
@@ -39,17 +37,14 @@
   inset: 0;
   perspective: 1000px;
   overflow: hidden;
+  opacity: 0.15;
 }
 
-/* 3D Floating Cubes */
+/* 3D Floating Cubes - Green Theme */
 .floating-cube {
   position: absolute;
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-dark) 100%);
+  border-radius: 12px;
   animation: float 8s ease-in-out infinite;
   transform-style: preserve-3d;
 }
@@ -77,21 +72,21 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1.25rem;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: rgba(22, 163, 74, 0.1);
+  border: 1px solid rgba(22, 163, 74, 0.2);
   border-radius: 50px;
   font-size: 0.875rem;
-  color: var(--accent-gold);
+  color: var(--primary-green);
   margin-bottom: 2rem;
-  backdrop-filter: blur(10px);
   animation: fadeInUp 0.8s ease-out;
 }
 
 .hero-title {
-  font-size: clamp(3rem, 10vw, 7rem);
-  font-weight: 800;
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  font-weight: 700;
   line-height: 1.1;
   margin-bottom: 1.5rem;
+  color: var(--text-dark);
   animation: fadeInUp 0.8s ease-out 0.2s both;
 }
 
@@ -100,7 +95,7 @@
 }
 
 .gradient-text {
-  background: var(--primary-gradient);
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-dark) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -128,20 +123,21 @@
   align-items: center;
   gap: 0.75rem;
   padding: 1rem 2rem;
-  background: var(--primary-gradient);
+  background: var(--primary-green);
   border: none;
-  border-radius: 50px;
+  border-radius: 0.5rem;
   color: white;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
 }
 
 .primary-btn:hover {
+  background: var(--primary-green-dark);
   transform: translateY(-3px);
-  box-shadow: 0 15px 50px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.4);
 }
 
 .btn-arrow {
@@ -157,20 +153,19 @@
   align-items: center;
   gap: 0.75rem;
   padding: 1rem 2rem;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 50px;
-  color: white;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  color: var(--text-dark);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
 }
 
 .secondary-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--primary-green);
+  color: var(--primary-green);
 }
 
 .play-icon {
@@ -179,9 +174,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--primary-gradient);
+  background: var(--primary-green);
   border-radius: 50%;
   font-size: 0.6rem;
+  color: white;
 }
 
 .scroll-indicator {
@@ -189,7 +185,7 @@
   bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
 .bounce {
@@ -216,7 +212,7 @@
 /* ===== STATS SECTION ===== */
 .stats-section {
   padding: 5rem 2rem;
-  background: linear-gradient(180deg, var(--primary-dark) 0%, rgba(20, 20, 30, 1) 100%);
+  background: var(--secondary-light);
 }
 
 .stats-container {
@@ -230,17 +226,17 @@
 .stat-card {
   text-align: center;
   padding: 2.5rem 1.5rem;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 24px;
-  backdrop-filter: blur(20px);
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
   transition: all 0.4s ease;
+  box-shadow: var(--card-shadow);
 }
 
 .stat-card:hover {
   transform: translateY(-10px);
-  border-color: rgba(102, 126, 234, 0.5);
-  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.2);
+  border-color: var(--primary-green);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .stat-icon {
@@ -250,18 +246,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--primary-gradient);
-  border-radius: 16px;
-  color: white;
+  background: rgba(22, 163, 74, 0.1);
+  border-radius: 12px;
+  color: var(--primary-green);
 }
 
 .stat-value {
-  font-size: 3rem;
-  font-weight: 800;
-  background: var(--gold-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary-green);
   margin-bottom: 0.5rem;
 }
 
@@ -272,10 +265,8 @@
 
 /* ===== ABOUT GRANITE SECTION ===== */
 .about-granite-section {
-  padding: 8rem 2rem;
-  background: 
-    radial-gradient(ellipse at 30% 50%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
-    linear-gradient(180deg, rgba(20, 20, 30, 1) 0%, var(--primary-dark) 100%);
+  padding: 5rem 2rem;
+  background: white;
 }
 
 .section-content {
@@ -301,8 +292,8 @@
 
 .title-accent {
   display: block;
-  font-size: 1rem;
-  color: var(--accent-gold);
+  font-size: 0.875rem;
+  color: var(--primary-green);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 3px;
@@ -311,8 +302,9 @@
 
 .title-main {
   display: block;
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: 800;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--text-dark);
 }
 
 .section-text {
@@ -325,7 +317,7 @@
 .granite-properties {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .property {
@@ -333,25 +325,27 @@
   align-items: flex-start;
   gap: 1rem;
   padding: 1.25rem;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  background: var(--secondary-light);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
   transition: all 0.3s ease;
 }
 
 .property:hover {
-  border-color: var(--accent-gold);
+  border-color: var(--primary-green);
   transform: translateX(10px);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .property svg {
-  color: var(--accent-gold);
+  color: var(--primary-green);
   flex-shrink: 0;
 }
 
 .property h4 {
   font-size: 1rem;
   margin-bottom: 0.25rem;
+  color: var(--text-dark);
 }
 
 .property p {
@@ -365,12 +359,12 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 400px;
+  min-height: 350px;
 }
 
 .rotating-stone {
-  width: 200px;
-  height: 200px;
+  width: 180px;
+  height: 180px;
   position: relative;
   transform-style: preserve-3d;
   animation: rotateStone 15s linear infinite;
@@ -383,15 +377,16 @@
 
 .stone-face {
   position: absolute;
-  width: 200px;
-  height: 200px;
-  background: linear-gradient(135deg, #3a3a3a 0%, #1a1a1a 50%, #2d2d2d 100%);
-  border: 2px solid rgba(212, 175, 55, 0.3);
+  width: 180px;
+  height: 180px;
+  background: linear-gradient(135deg, #6b7280 0%, #374151 50%, #4b5563 100%);
+  border: 2px solid rgba(22, 163, 74, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 2rem;
   backface-visibility: visible;
+  border-radius: 4px;
 }
 
 .stone-face::before {
@@ -399,33 +394,34 @@
   position: absolute;
   inset: 0;
   background: 
-    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1) 0%, transparent 30%),
-    radial-gradient(circle at 70% 60%, rgba(255,255,255,0.05) 0%, transparent 20%);
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 30%),
+    radial-gradient(circle at 70% 60%, rgba(255,255,255,0.1) 0%, transparent 20%);
 }
 
-.stone-face.front  { transform: translateZ(100px); }
-.stone-face.back   { transform: rotateY(180deg) translateZ(100px); }
-.stone-face.right  { transform: rotateY(90deg) translateZ(100px); }
-.stone-face.left   { transform: rotateY(-90deg) translateZ(100px); }
-.stone-face.top    { transform: rotateX(90deg) translateZ(100px); background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%); }
-.stone-face.bottom { transform: rotateX(-90deg) translateZ(100px); }
+.stone-face.front  { transform: translateZ(90px); }
+.stone-face.back   { transform: rotateY(180deg) translateZ(90px); }
+.stone-face.right  { transform: rotateY(90deg) translateZ(90px); }
+.stone-face.left   { transform: rotateY(-90deg) translateZ(90px); }
+.stone-face.top    { transform: rotateX(90deg) translateZ(90px); background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%); }
+.stone-face.bottom { transform: rotateX(-90deg) translateZ(90px); }
 
 /* ===== APPLICATIONS SECTION ===== */
 .applications-section {
-  padding: 8rem 2rem;
-  background: var(--primary-dark);
+  padding: 5rem 2rem;
+  background: var(--secondary-light);
 }
 
 .section-header {
   text-align: center;
   max-width: 700px;
-  margin: 0 auto 4rem;
+  margin: 0 auto 3rem;
 }
 
 .section-header h2 {
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 800;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
   margin-bottom: 1rem;
+  color: var(--text-dark);
 }
 
 .section-header p {
@@ -434,28 +430,30 @@
 }
 
 .industries-grid {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2rem;
 }
 
 .industry-card {
   position: relative;
-  padding: 2.5rem;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 24px;
+  padding: 2rem;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
   overflow: hidden;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s ease;
   cursor: pointer;
+  box-shadow: var(--card-shadow);
 }
 
 .industry-card:hover,
 .industry-card.active {
-  transform: translateY(-10px) scale(1.02);
-  border-color: rgba(102, 126, 234, 0.5);
+  transform: translateY(-8px);
+  border-color: var(--primary-green);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .card-glow {
@@ -464,7 +462,7 @@
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(102, 126, 234, 0.15) 0%, transparent 50%);
+  background: radial-gradient(circle, rgba(22, 163, 74, 0.1) 0%, transparent 50%);
   opacity: 0;
   transition: opacity 0.5s ease;
   pointer-events: none;
@@ -481,14 +479,15 @@
 }
 
 .card-icon {
-  color: var(--accent-gold);
+  color: var(--primary-green);
   margin-bottom: 1.5rem;
 }
 
 .industry-card h3 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-dark);
 }
 
 .industry-card p {
@@ -504,19 +503,19 @@
 }
 
 .application-tag {
-  padding: 0.4rem 0.8rem;
-  background: rgba(102, 126, 234, 0.2);
-  border: 1px solid rgba(102, 126, 234, 0.3);
+  padding: 0.35rem 0.75rem;
+  background: rgba(22, 163, 74, 0.1);
+  border: 1px solid rgba(22, 163, 74, 0.2);
   border-radius: 50px;
-  font-size: 0.8rem;
-  color: #a5b4fc;
+  font-size: 0.75rem;
+  color: var(--primary-green);
 }
 
 .card-background {
   position: absolute;
-  bottom: -20px;
-  right: -20px;
-  font-size: 8rem;
+  bottom: -10px;
+  right: -10px;
+  font-size: 6rem;
   opacity: 0.05;
   transition: all 0.5s ease;
 }
@@ -528,17 +527,15 @@
 
 /* ===== GRANITE TYPES SECTION ===== */
 .granite-types-section {
-  padding: 8rem 2rem;
-  background: 
-    radial-gradient(ellipse at 70% 30%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
-    linear-gradient(180deg, var(--primary-dark) 0%, rgba(15, 15, 25, 1) 100%);
+  padding: 5rem 2rem;
+  background: white;
 }
 
 .granite-carousel {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 2rem;
 }
 
@@ -548,8 +545,8 @@
 }
 
 .sample-stone {
-  width: 180px;
-  height: 180px;
+  width: 150px;
+  height: 150px;
   margin: 0 auto 1.5rem;
   border-radius: 50%;
   background: var(--granite-color);
@@ -557,25 +554,27 @@
   overflow: hidden;
   transition: all 0.4s ease;
   box-shadow: 
-    0 20px 60px rgba(0, 0, 0, 0.5),
-    inset 0 -20px 40px rgba(0, 0, 0, 0.3),
-    inset 0 20px 40px rgba(255, 255, 255, 0.1);
+    0 10px 30px rgba(0, 0, 0, 0.15),
+    inset 0 -10px 20px rgba(0, 0, 0, 0.2),
+    inset 0 10px 20px rgba(255, 255, 255, 0.1);
+  border: 3px solid var(--border-color);
 }
 
 .sample-stone:hover {
   transform: scale(1.1) rotateZ(5deg);
+  border-color: var(--primary-green);
   box-shadow: 
-    0 30px 80px rgba(0, 0, 0, 0.6),
-    inset 0 -20px 40px rgba(0, 0, 0, 0.3),
-    inset 0 20px 40px rgba(255, 255, 255, 0.15);
+    0 15px 40px rgba(0, 0, 0, 0.2),
+    inset 0 -10px 20px rgba(0, 0, 0, 0.2),
+    inset 0 10px 20px rgba(255, 255, 255, 0.15);
 }
 
 .stone-texture {
   position: absolute;
   inset: 0;
   background: 
-    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15) 0%, transparent 40%),
-    radial-gradient(circle at 70% 70%, rgba(0,0,0,0.2) 0%, transparent 40%);
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 40%),
+    radial-gradient(circle at 70% 70%, rgba(0,0,0,0.15) 0%, transparent 40%);
 }
 
 .sparkle-overlay {
@@ -604,9 +603,10 @@
 }
 
 .sample-info h4 {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
+  color: var(--text-dark);
 }
 
 .sample-info p {
@@ -616,8 +616,8 @@
 
 /* ===== TIMELINE SECTION ===== */
 .timeline-section {
-  padding: 8rem 2rem;
-  background: var(--primary-dark);
+  padding: 5rem 2rem;
+  background: var(--secondary-light);
 }
 
 .timeline {
@@ -634,12 +634,12 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background: linear-gradient(180deg, var(--accent-gold) 0%, rgba(212, 175, 55, 0.2) 100%);
+  background: linear-gradient(180deg, var(--primary-green) 0%, rgba(22, 163, 74, 0.2) 100%);
 }
 
 .timeline-item {
   position: relative;
-  padding-bottom: 3rem;
+  padding-bottom: 2.5rem;
   opacity: 0;
   transform: translateX(-30px);
   transition: all 0.6s ease var(--item-delay);
@@ -664,28 +664,31 @@
 .marker-dot {
   width: 16px;
   height: 16px;
-  background: var(--accent-gold);
+  background: var(--primary-green);
   border-radius: 50%;
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 15px rgba(22, 163, 74, 0.4);
 }
 
 .timeline-content {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
   padding: 1.5rem;
   transition: all 0.3s ease;
+  box-shadow: var(--card-shadow);
 }
 
 .timeline-content:hover {
-  border-color: var(--accent-gold);
+  border-color: var(--primary-green);
   transform: translateX(10px);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .timeline-year {
   display: inline-block;
   padding: 0.25rem 0.75rem;
-  background: var(--gold-gradient);
+  background: var(--primary-green);
+  color: white;
   border-radius: 50px;
   font-size: 0.75rem;
   font-weight: 700;
@@ -699,10 +702,8 @@
 
 /* ===== WHY GRANITE SECTION ===== */
 .why-granite-section {
-  padding: 8rem 2rem;
-  background: 
-    radial-gradient(ellipse at 20% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
-    linear-gradient(180deg, rgba(15, 15, 25, 1) 0%, var(--primary-dark) 100%);
+  padding: 5rem 2rem;
+  background: white;
 }
 
 .why-container {
@@ -718,6 +719,9 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  padding: 2rem;
+  background: var(--secondary-light);
+  border-radius: 0.5rem;
 }
 
 .comparison-item {
@@ -730,25 +734,26 @@
   width: 80px;
   font-size: 0.9rem;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .durability-bar {
   height: 12px;
-  background: var(--primary-gradient);
+  background: linear-gradient(90deg, var(--primary-green-light) 0%, var(--primary-green) 100%);
   border-radius: 6px;
   transition: width 1s ease-out;
-  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
 }
 
 .comparison-item.granite .durability-bar {
-  background: var(--gold-gradient);
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+  background: linear-gradient(90deg, var(--primary-green) 0%, var(--primary-green-dark) 100%);
 }
 
 .why-content h2 {
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 800;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
   margin-bottom: 2rem;
+  color: var(--text-dark);
 }
 
 .benefits-list {
@@ -756,7 +761,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .benefits-list li {
@@ -764,15 +769,16 @@
   align-items: flex-start;
   gap: 1rem;
   padding: 1.25rem;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  background: var(--secondary-light);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
   transition: all 0.3s ease;
 }
 
 .benefits-list li:hover {
-  border-color: var(--accent-emerald);
+  border-color: var(--primary-green);
   transform: translateX(10px);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .benefit-icon {
@@ -783,6 +789,7 @@
 .benefits-list h4 {
   font-size: 1rem;
   margin-bottom: 0.25rem;
+  color: var(--text-dark);
 }
 
 .benefits-list p {
@@ -793,24 +800,21 @@
 /* ===== CTA SECTION ===== */
 .cta-section {
   position: relative;
-  padding: 8rem 2rem;
+  padding: 5rem 2rem;
   text-align: center;
   overflow: hidden;
+  background: var(--primary-green);
 }
 
 .cta-background {
   position: absolute;
   inset: 0;
-  background: var(--primary-gradient);
-  opacity: 0.9;
 }
 
 .cta-pattern {
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(30deg, rgba(255,255,255,0.05) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,0.05) 87.5%),
-    linear-gradient(150deg, rgba(255,255,255,0.05) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,0.05) 87.5%),
     linear-gradient(30deg, rgba(255,255,255,0.05) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,0.05) 87.5%),
     linear-gradient(150deg, rgba(255,255,255,0.05) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,0.05) 87.5%);
   background-size: 80px 140px;
@@ -827,18 +831,19 @@
   z-index: 10;
   max-width: 700px;
   margin: 0 auto;
+  color: white;
 }
 
 .cta-content h2 {
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  font-weight: 800;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-weight: 700;
   margin-bottom: 1rem;
 }
 
 .cta-content p {
   font-size: 1.1rem;
   opacity: 0.9;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 
 .cta-buttons {
@@ -849,31 +854,30 @@
 }
 
 .cta-primary {
-  padding: 1rem 2.5rem;
+  padding: 1rem 2rem;
   background: white;
-  color: #667eea;
+  color: var(--primary-green);
   border: none;
-  border-radius: 50px;
+  border-radius: 0.5rem;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 .cta-primary:hover {
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .cta-secondary {
-  padding: 1rem 2.5rem;
+  padding: 1rem 2rem;
   background: transparent;
   color: white;
   border: 2px solid rgba(255, 255, 255, 0.5);
-  border-radius: 50px;
+  border-radius: 0.5rem;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -896,31 +900,32 @@
   }
   
   .granite-3d-showcase {
-    min-height: 300px;
+    min-height: 280px;
   }
   
   .rotating-stone {
-    width: 150px;
-    height: 150px;
+    width: 140px;
+    height: 140px;
   }
   
   .stone-face {
-    width: 150px;
-    height: 150px;
+    width: 140px;
+    height: 140px;
   }
   
-  .stone-face.front  { transform: translateZ(75px); }
-  .stone-face.back   { transform: rotateY(180deg) translateZ(75px); }
-  .stone-face.right  { transform: rotateY(90deg) translateZ(75px); }
-  .stone-face.left   { transform: rotateY(-90deg) translateZ(75px); }
-  .stone-face.top    { transform: rotateX(90deg) translateZ(75px); }
-  .stone-face.bottom { transform: rotateX(-90deg) translateZ(75px); }
+  .stone-face.front  { transform: translateZ(70px); }
+  .stone-face.back   { transform: rotateY(180deg) translateZ(70px); }
+  .stone-face.right  { transform: rotateY(90deg) translateZ(70px); }
+  .stone-face.left   { transform: rotateY(-90deg) translateZ(70px); }
+  .stone-face.top    { transform: rotateX(90deg) translateZ(70px); }
+  .stone-face.bottom { transform: rotateX(-90deg) translateZ(70px); }
 }
 
 @media (max-width: 768px) {
   .industries-hero {
     padding: 1rem;
     padding-top: 4rem;
+    min-height: 80vh;
   }
   
   .hero-cta {
@@ -938,8 +943,8 @@
   }
   
   .sample-stone {
-    width: 120px;
-    height: 120px;
+    width: 100px;
+    height: 100px;
   }
   
   .timeline {
@@ -969,12 +974,11 @@
   }
   
   .granite-carousel {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
   
   .sample-stone {
-    width: 150px;
-    height: 150px;
+    width: 100px;
+    height: 100px;
   }
 }
-
