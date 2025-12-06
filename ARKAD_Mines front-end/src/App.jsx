@@ -6,6 +6,7 @@ import Home from './Pages/Home/Home';
 import Products from './Pages/Products/Products';
 import AboutUs from './Pages/AboutUs/AboutUs';
 import ContactUs from './Pages/ContactUs/ContactUs';
+import Industries from './Pages/Industries/Industries';
 import ProtectedRoute from './Components/ProtectedRoute/ProtectedRoute';
 import { Routes, Route } from 'react-router-dom';
 import RequestQuote from './Pages/RequestQuote/RequestQuote';
@@ -39,6 +40,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/industries" element={<Industries />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />
           <Route
