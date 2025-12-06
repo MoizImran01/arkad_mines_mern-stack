@@ -52,25 +52,40 @@ const List = () => {
   const removeStoneItem = async (stoneID)=>{
       try{
 
-          const response = await axios.post("http://localhost:4000/api/stones/remove", {id: stoneID})
-           console.log("Stone item removed with id: ", stoneID)
+          const token = localStorage.getItem('adminToken');
+          
+          if (!token) {
+              toast.error('No authentication token found. Please login again.');
+              return;
+          }
 
-           if(response.data.success)
-           {
+          const response = await axios.post(
+              "http://localhost:4000/api/stones/remove", 
+              { id: stoneID },
+              {
+                  headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json'
+                  }
+              }
+          )
+          
+          console.log("Stone item removed with id: ", stoneID)
 
+          if(response.data.success)
+          {
               toast.success(response.data.message)
               await fetchList()
-           }
-           else
-           {
-
+          }
+          else
+          {
               toast.error(`Error removing stone with ID ${stoneID}`)
-           }
+          }
       }
       catch(error)
       {
-
           console.log(`Error removing stone with ID ${stoneID}. The error is: ${error}`)
+          toast.error(`Error removing stone with ID ${stoneID}`)
       }
   }
 

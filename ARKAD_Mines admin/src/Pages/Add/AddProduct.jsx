@@ -53,7 +53,16 @@ export const AddProduct = () => {
     formData.append("image", imageFile);
 
     try {
-      const response = await axios.post("http://localhost:4000/api/stones/add", formData);
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        toast.error('No authentication token found. Please login again.');
+        return;
+      }
+      const response = await axios.post("http://localhost:4000/api/stones/add", formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (response.data.success) {
         // Show QR code if generated - now uses Cloudinary URL directly
         if (response.data.qrCodeImage && response.data.qrCode) {

@@ -3,6 +3,8 @@ import stonesModel from "../../Models/stonesModel/stonesModel.js";
 import orderModel from "../../Models/orderModel/orderModel.js";
 import { generateQuotationPDF } from "../../Utils/pdfGenerator.js";
 import { sendQuotationEmail } from "../../Utils/emailService.js";
+import { logAudit, logError, getClientIp, normalizeRole } from "../../logger/auditLogger.js";
+import { v4 as uuidv4 } from 'uuid';
 
 const VALID_STATUSES = ["draft", "submitted", "adjustment_required"];
 
@@ -36,6 +38,10 @@ const buildUnavailableResponse = (unavailableItems) => ({
 });
 
 const createOrUpdateQuotation = async (req, res) => {
+  const clientIp = getClientIp(req);
+  // Generate quotationRequestId early for tracking (even for failed requests)
+  const quotationRequestId = uuidv4();
+  
   try {
     const {
       items,
@@ -48,6 +54,23 @@ const createOrUpdateQuotation = async (req, res) => {
     const normalizedItems = normalizeItems(items);
 
     if (!normalizedItems.length) {
+      // Log full request payload even for failed requests
+      const requestPayload = {
+        items: [],
+        notes: notes || null,
+        saveAsDraft,
+        confirmAdjustments
+      };
+      
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: saveAsDraft ? 'CREATE_QUOTATION_DRAFT' : 'REQUEST_QUOTATION',
+        status: 'FAILED_VALIDATION',
+        quotationRequestId,
+        clientIp,
+        details: `No items provided, requestPayload=${JSON.stringify(requestPayload)}`
+      });
       return res
         .status(400)
         .json({ success: false, message: "At least one item is required" });
@@ -125,10 +148,28 @@ const createOrUpdateQuotation = async (req, res) => {
     });
 
     if (unavailableItems.length && !confirmAdjustments) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: saveAsDraft ? 'CREATE_QUOTATION_DRAFT' : 'REQUEST_QUOTATION',
+        status: 'FAILED_BUSINESS_RULE',
+        quotationRequestId,
+        clientIp,
+        details: `Items unavailable or need adjustment, unavailableCount=${unavailableItems.length}`
+      });
       return res.status(409).json(buildUnavailableResponse(unavailableItems));
     }
 
     if (!preparedItems.length) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: saveAsDraft ? 'CREATE_QUOTATION_DRAFT' : 'REQUEST_QUOTATION',
+        status: 'FAILED_BUSINESS_RULE',
+        quotationRequestId,
+        clientIp,
+        details: 'No items available after adjustments'
+      });
       return res.status(400).json({
         success: false,
         message: "No items available for quotation after adjustments",
@@ -155,6 +196,15 @@ const createOrUpdateQuotation = async (req, res) => {
       });
 
       if (!quotation) {
+        logAudit({
+          userId: req.user?.id,
+          role: normalizeRole(req.user?.role),
+          action: 'UPDATE_QUOTATION',
+          status: 'FAILED_VALIDATION',
+          resourceId: quoteId,
+          clientIp,
+          details: 'Quotation draft not found or unauthorized'
+        });
         return res.status(404).json({
           success: false,
           message: "Quotation draft not found",
@@ -167,10 +217,15 @@ const createOrUpdateQuotation = async (req, res) => {
       quotation.totalEstimatedCost = totalEstimatedCost;
       quotation.validity = validity;
       quotation.adjustments = unavailableItems;
+      // Preserve quotationRequestId if updating
+      if (!quotation.quotationRequestId && !saveAsDraft) {
+        quotation.quotationRequestId = quotationRequestId;
+      }
       await quotation.save();
     } else {
       quotation = new quotationModel({
         referenceNumber: generateReferenceNumber(),
+        quotationRequestId: saveAsDraft ? null : quotationRequestId, // Only set for actual requests, not drafts
         buyer: req.user.id,
         notes,
         status,
@@ -183,9 +238,36 @@ const createOrUpdateQuotation = async (req, res) => {
       await quotation.save();
     }
 
-    console.log(
-      `[quotation] Notifying sales team: ${quotation.referenceNumber} (${quotation.status})`
-    );
+    // Build comprehensive details string with full request payload
+    const itemDetails = preparedItems.map(item => 
+      `itemId=${item.stone}, stoneName=${item.stoneName}, quantity=${item.requestedQuantity}, priceSnapshot=${item.priceSnapshot}`
+    ).join('; ');
+    
+    // Include full request payload for non-repudiation
+    const requestPayload = {
+      items: normalizedItems.map(item => ({
+        stoneId: item.stoneId,
+        quantity: item.quantity
+      })),
+      notes: notes || null,
+      saveAsDraft,
+      confirmAdjustments,
+      adjustments: unavailableItems.length > 0 ? unavailableItems : null
+    };
+    
+    const details = `itemsCount=${preparedItems.length}, items=[${itemDetails}], totalCost=${totalEstimatedCost}, status=${status}, notesLength=${notes?.length || 0}, hasAdjustments=${unavailableItems.length > 0}, requestPayload=${JSON.stringify(requestPayload)}`;
+
+    logAudit({
+      userId: req.user?.id,
+      role: normalizeRole(req.user?.role),
+      action: saveAsDraft ? 'CREATE_QUOTATION_DRAFT' : 'REQUEST_QUOTATION',
+      status: 'SUCCESS',
+      quotationRequestId: saveAsDraft ? null : quotationRequestId,
+      quotationId: quotation.referenceNumber,
+      resourceId: quotation._id.toString(),
+      clientIp,
+      details
+    });
 
     const message = saveAsDraft
       ? "Quotation saved as draft"
@@ -203,7 +285,12 @@ const createOrUpdateQuotation = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error creating quotation:", error);
+    logError(error, {
+      action: 'REQUEST_QUOTATION',
+      userId: req.user?.id,
+      quotationRequestId,
+      clientIp
+    });
     res.status(500).json({
       success: false,
       message: "Error processing quotation request",
@@ -212,12 +299,13 @@ const createOrUpdateQuotation = async (req, res) => {
 };
 
 const getMyQuotations = async (req, res) => {
+  const clientIp = getClientIp(req);
   try {
     const { status } = req.query;
     const query = { buyer: req.user.id };
 
     // Allow filtering by any valid status, including issued, approved, rejected
-    const allValidStatuses = ["draft", "submitted", "adjustment_required", "issued", "approved", "rejected"];
+    const allValidStatuses = ["draft", "submitted", "adjustment_required", "revision_requested", "issued", "approved", "rejected"];
     if (status && allValidStatuses.includes(status)) {
       query.status = status;
     }
@@ -227,9 +315,22 @@ const getMyQuotations = async (req, res) => {
       .sort({ updatedAt: -1 })
       .select("-__v");
 
+    logAudit({
+      userId: req.user?.id,
+      role: normalizeRole(req.user?.role),
+      action: 'VIEW_MY_QUOTATIONS',
+      status: 'SUCCESS',
+      clientIp,
+      details: `statusFilter=${status || 'all'}, count=${quotations.length}`
+    });
+
     res.json({ success: true, quotations });
   } catch (error) {
-    console.error("Error fetching quotations:", error);
+    logError(error, {
+      action: 'VIEW_MY_QUOTATIONS',
+      userId: req.user?.id,
+      clientIp
+    });
     res.status(500).json({
       success: false,
       message: "Error fetching quotations",
@@ -238,6 +339,7 @@ const getMyQuotations = async (req, res) => {
 };
 
 const getAllQuotations = async (req, res) => {
+  const clientIp = getClientIp(req);
   try {
     const { status } = req.query;
     const query = {};
@@ -254,9 +356,22 @@ const getAllQuotations = async (req, res) => {
       .populate("buyer", "companyName email role")
       .select("-__v");
 
+    logAudit({
+      userId: req.user?.id,
+      role: normalizeRole(req.user?.role),
+      action: 'VIEW_ALL_QUOTATIONS',
+      status: 'SUCCESS',
+      clientIp,
+      details: `statusFilter=${status || 'all'}, count=${quotations.length}`
+    });
+
     res.json({ success: true, quotations });
   } catch (error) {
-    console.error("Error fetching all quotations:", error);
+    logError(error, {
+      action: 'VIEW_ALL_QUOTATIONS',
+      userId: req.user?.id,
+      clientIp
+    });
     res.status(500).json({
       success: false,
       message: "Error fetching quotations",
@@ -265,6 +380,7 @@ const getAllQuotations = async (req, res) => {
 };
 
 const issueQuotation = async (req, res) => {
+  const clientIp = getClientIp(req);
   try {
     const { quoteId } = req.params;
     const { 
@@ -279,11 +395,30 @@ const issueQuotation = async (req, res) => {
     const quotation = await quotationModel.findById(quoteId).populate("buyer");
 
     if (!quotation) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'CREATE_QUOTATION',
+        status: 'FAILED_VALIDATION',
+        resourceId: quoteId,
+        clientIp,
+        details: 'Quotation not found'
+      });
       return res.status(404).json({ success: false, message: "Quotation not found" });
     }
 
     // Check if quotation has items
     if (!quotation.items || quotation.items.length === 0) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'CREATE_QUOTATION',
+        status: 'FAILED_VALIDATION',
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        details: 'Quotation has no items'
+      });
       return res.status(400).json({ 
         success: false, 
         message: "Quotation has no items. Cannot issue an empty quotation." 
@@ -292,6 +427,16 @@ const issueQuotation = async (req, res) => {
 
     // Ensure buyer is populated
     if (!quotation.buyer) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'CREATE_QUOTATION',
+        status: 'FAILED_VALIDATION',
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        details: 'Buyer information missing'
+      });
       return res.status(400).json({ 
         success: false, 
         message: "Buyer information is missing. Cannot issue quotation." 
@@ -301,6 +446,16 @@ const issueQuotation = async (req, res) => {
     //Validations
     const taxPercent = Number(taxPercentage);
     if (isNaN(taxPercent) || taxPercent < 0 || taxPercent > 100) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'CREATE_QUOTATION',
+        status: 'FAILED_VALIDATION',
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        details: `Invalid tax percentage: ${taxPercentage}`
+      });
       return res.status(400).json({ 
         success: false, 
         message: "Invalid tax percentage. Must be between 0 and 100." 
@@ -310,6 +465,16 @@ const issueQuotation = async (req, res) => {
     
     const shipping = Number(shippingCost);
     if (isNaN(shipping) || shipping < 0) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'CREATE_QUOTATION',
+        status: 'FAILED_VALIDATION',
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        details: `Invalid shipping cost: ${shippingCost}`
+      });
       return res.status(400).json({ 
         success: false, 
         message: "Invalid shipping cost. Must be a non-negative number." 
@@ -319,6 +484,16 @@ const issueQuotation = async (req, res) => {
     
     const discount = Number(discountAmount);
     if (isNaN(discount) || discount < 0) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'CREATE_QUOTATION',
+        status: 'FAILED_VALIDATION',
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        details: `Invalid discount amount: ${discountAmount}`
+      });
       return res.status(400).json({ 
         success: false, 
         message: "Invalid discount amount. Must be a non-negative number." 
@@ -328,6 +503,16 @@ const issueQuotation = async (req, res) => {
     
     const validity = Number(validityDays);
     if (isNaN(validity) || validity < 1 || validity > 365) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'CREATE_QUOTATION',
+        status: 'FAILED_VALIDATION',
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        details: `Invalid validity days: ${validityDays}`
+      });
       return res.status(400).json({ 
         success: false, 
         message: "Invalid validity days. Must be between 1 and 365." 
@@ -367,6 +552,16 @@ const issueQuotation = async (req, res) => {
 
     
     if (discount > subtotal) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'CREATE_QUOTATION',
+        status: 'FAILED_BUSINESS_RULE',
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        details: `Discount exceeds subtotal: discount=${discount}, subtotal=${subtotal}`
+      });
       return res.status(400).json({ 
         success: false, 
         message: `Discount amount (Rs ${discount}) cannot exceed subtotal (Rs ${subtotal}).` 
@@ -379,6 +574,16 @@ const issueQuotation = async (req, res) => {
 
     //Ensure grand total is non-negative
     if (grandTotal < 0) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'CREATE_QUOTATION',
+        status: 'FAILED_BUSINESS_RULE',
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        details: `Grand total is negative: ${grandTotal}`
+      });
       return res.status(400).json({ 
         success: false, 
         message: "Invalid pricing. Grand total cannot be negative." 
@@ -403,7 +608,18 @@ const issueQuotation = async (req, res) => {
 
     await quotation.save();
 
-    console.log(`[quotation] Quote ${quotation.referenceNumber} ISSUED by Admin.`);
+    // Log as CREATE_QUOTATION when sales rep creates/issues the final quotation
+    logAudit({
+      userId: req.user?.id,
+      role: normalizeRole(req.user?.role),
+      action: 'CREATE_QUOTATION',
+      status: 'SUCCESS',
+      quotationRequestId: quotation.quotationRequestId || null,
+      quotationId: quotation.referenceNumber,
+      resourceId: quoteId,
+      clientIp,
+      details: `customerId=${quotation.buyer._id || quotation.buyer}, lineItems=${quotation.items.length}, discount=${discount}%, grandTotal=${grandTotal}, taxPercent=${taxPercent}`
+    });
 
     // Generate PDF and send email (non-blocking - don't fail if email fails)
     let emailSent = false;
@@ -418,14 +634,23 @@ const issueQuotation = async (req, res) => {
             pdfBuffer
           );
           emailSent = true;
-          console.log(`Email sent to ${quotation.buyer.email}`);
         } catch (emailError) {
-          console.error("Error sending email (non-critical):", emailError);
+          logError(emailError, {
+            action: 'SEND_QUOTATION_EMAIL',
+            quotationId: quotation.referenceNumber,
+            userId: req.user?.id,
+            clientIp
+          });
           // Don't fail the whole operation if email fails
         }
       }
     } catch (pdfError) {
-      console.error("Error generating PDF:", pdfError);
+      logError(pdfError, {
+        action: 'GENERATE_QUOTATION_PDF',
+        quotationId: quotation.referenceNumber,
+        userId: req.user?.id,
+        clientIp
+      });
       // PDF generation is critical, but we'll still return success if quotation is saved
       // The admin can download it later
     }
@@ -439,20 +664,29 @@ const issueQuotation = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error issuing quotation:", error);
-    console.error("Error details:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    });
-    
     // If it's a validation error we threw, return it with 400 status
     if (error.message && error.message.includes("Invalid")) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'CREATE_QUOTATION',
+        status: 'FAILED_VALIDATION',
+        resourceId: req.params.quoteId,
+        clientIp,
+        details: error.message
+      });
       return res.status(400).json({ 
         success: false, 
         message: error.message 
       });
     }
+    
+    logError(error, {
+      action: 'ISSUE_QUOTATION',
+      userId: req.user?.id,
+      quotationId: req.params.quoteId,
+      clientIp
+    });
     
     // Return more detailed error in development
     const errorMessage = process.env.NODE_ENV === 'development' 
@@ -482,6 +716,16 @@ const downloadQuotation = async (req, res) => {
     const isBuyer = buyerId === req.user.id;
 
     if (!isAdmin && !isBuyer) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'DOWNLOAD_QUOTATION',
+        status: 'FAILED_AUTH',
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        details: 'Unauthorized access attempt - user not admin or buyer'
+      });
       return res.status(403).json({ message: "Unauthorized to download this quotation" });
     }
 
@@ -500,7 +744,11 @@ const downloadQuotation = async (req, res) => {
   }
 };
 
+// Approve Quotation handler
+// NOTE: All audit logs for approve/reject operations form an immutable audit trail.
+// These logs should never be modified or deleted as they record critical state changes.
 const approveQuotation = async (req, res) => {
+  const clientIp = getClientIp(req);
   try {
     const { quoteId } = req.params;
     const { comment } = req.body;
@@ -511,6 +759,15 @@ const approveQuotation = async (req, res) => {
     }).populate("buyer");
 
     if (!quotation) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'APPROVE_QUOTATION',
+        status: 'FAILED_VALIDATION',
+        resourceId: quoteId,
+        clientIp,
+        details: 'Quotation not found or unauthorized'
+      });
       return res.status(404).json({ 
         success: false, 
         message: "Quotation not found" 
@@ -519,6 +776,16 @@ const approveQuotation = async (req, res) => {
 
     // Check if quotation is in issued status
     if (quotation.status !== "issued") {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'APPROVE_QUOTATION',
+        status: 'FAILED_BUSINESS_RULE',
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        details: `Invalid status for approval: currentStatus=${quotation.status}`
+      });
       return res.status(400).json({ 
         success: false, 
         message: `Cannot approve quotation with status: ${quotation.status}. Only issued quotations can be approved.` 
@@ -528,6 +795,16 @@ const approveQuotation = async (req, res) => {
     // Check if quotation is still valid
     const now = new Date();
     if (new Date(quotation.validity.end) < now) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'APPROVE_QUOTATION',
+        status: 'FAILED_BUSINESS_RULE',
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        details: `Quotation expired: validityEnd=${quotation.validity.end}`
+      });
       return res.status(400).json({ 
         success: false, 
         message: "This quotation has expired. Please request a refreshed quote from the sales team." 
@@ -543,8 +820,6 @@ const approveQuotation = async (req, res) => {
     };
 
     await quotation.save();
-
-    console.log(`[quotation] Quote ${quotation.referenceNumber} APPROVED by buyer ${quotation.buyer?.email}`);
 
     // Create sales order draft
     const generateOrderNumber = () => {
@@ -575,7 +850,16 @@ const approveQuotation = async (req, res) => {
 
     await order.save();
 
-    console.log(`[order] Order ${order.orderNumber} created from quotation ${quotation.referenceNumber}`);
+    logAudit({
+      userId: req.user?.id,
+      role: normalizeRole(req.user?.role),
+      action: 'APPROVE_QUOTATION',
+      status: 'SUCCESS',
+      quotationId: quotation.referenceNumber,
+      resourceId: quoteId,
+      clientIp,
+      details: `oldStatus=issued, newStatus=approved, orderNumber=${order.orderNumber}, grandTotal=${quotation.financials?.grandTotal || 0}`
+    });
 
     res.json({
       success: true,
@@ -588,7 +872,12 @@ const approveQuotation = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error approving quotation:", error);
+    logError(error, {
+      action: 'APPROVE_QUOTATION',
+      userId: req.user?.id,
+      quotationId: req.params.quoteId,
+      clientIp
+    });
     res.status(500).json({ 
       success: false, 
       message: "Error processing quotation approval" 
@@ -596,7 +885,11 @@ const approveQuotation = async (req, res) => {
   }
 };
 
+// Reject Quotation handler
+// NOTE: All audit logs for approve/reject operations form an immutable audit trail.
+// These logs should never be modified or deleted as they record critical state changes.
 const rejectQuotation = async (req, res) => {
+  const clientIp = getClientIp(req);
   try {
     const { quoteId } = req.params;
     const { comment } = req.body;
@@ -607,6 +900,15 @@ const rejectQuotation = async (req, res) => {
     }).populate("buyer");
 
     if (!quotation) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'REJECT_QUOTATION',
+        status: 'FAILED_VALIDATION',
+        resourceId: quoteId,
+        clientIp,
+        details: 'Quotation not found or unauthorized'
+      });
       return res.status(404).json({ 
         success: false, 
         message: "Quotation not found" 
@@ -615,6 +917,16 @@ const rejectQuotation = async (req, res) => {
 
     // Check if quotation is in issued status
     if (quotation.status !== "issued") {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'REJECT_QUOTATION',
+        status: 'FAILED_BUSINESS_RULE',
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        details: `Invalid status for rejection: currentStatus=${quotation.status}`
+      });
       return res.status(400).json({ 
         success: false, 
         message: `Cannot reject quotation with status: ${quotation.status}. Only issued quotations can be rejected.` 
@@ -632,7 +944,16 @@ const rejectQuotation = async (req, res) => {
 
     await quotation.save();
 
-    console.log(`[quotation] Quote ${quotation.referenceNumber} REJECTED by buyer ${quotation.buyer?.email}`);
+    logAudit({
+      userId: req.user?.id,
+      role: normalizeRole(req.user?.role),
+      action: 'REJECT_QUOTATION',
+      status: 'SUCCESS',
+      quotationId: quotation.referenceNumber,
+      resourceId: quoteId,
+      clientIp,
+      details: `oldStatus=issued, newStatus=rejected, hasComment=${!!comment}`
+    });
 
     res.json({
       success: true,
@@ -641,7 +962,12 @@ const rejectQuotation = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error rejecting quotation:", error);
+    logError(error, {
+      action: 'REJECT_QUOTATION',
+      userId: req.user?.id,
+      quotationId: req.params.quoteId,
+      clientIp
+    });
     res.status(500).json({ 
       success: false, 
       message: "Error processing quotation rejection" 
@@ -650,6 +976,7 @@ const rejectQuotation = async (req, res) => {
 };
 
 const requestRevision = async (req, res) => {
+  const clientIp = getClientIp(req);
   try {
     const { quoteId } = req.params;
     const { comment } = req.body;
@@ -660,6 +987,15 @@ const requestRevision = async (req, res) => {
     }).populate("buyer");
 
     if (!quotation) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'REQUEST_QUOTATION_REVISION',
+        status: 'FAILED_VALIDATION',
+        resourceId: quoteId,
+        clientIp,
+        details: 'Quotation not found or unauthorized'
+      });
       return res.status(404).json({ 
         success: false, 
         message: "Quotation not found" 
@@ -668,6 +1004,16 @@ const requestRevision = async (req, res) => {
 
     // Check if quotation is in issued status
     if (quotation.status !== "issued") {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'REQUEST_QUOTATION_REVISION',
+        status: 'FAILED_BUSINESS_RULE',
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        details: `Invalid status for revision request: currentStatus=${quotation.status}`
+      });
       return res.status(400).json({ 
         success: false, 
         message: `Cannot request revision for quotation with status: ${quotation.status}. Only issued quotations can be revised.` 
@@ -681,7 +1027,16 @@ const requestRevision = async (req, res) => {
 
     await quotation.save();
 
-    console.log(`[quotation] Quote ${quotation.referenceNumber} - Revision requested by buyer ${quotation.buyer?.email}`);
+    logAudit({
+      userId: req.user?.id,
+      role: normalizeRole(req.user?.role),
+      action: 'REQUEST_QUOTATION_REVISION',
+      status: 'SUCCESS',
+      quotationId: quotation.referenceNumber,
+      resourceId: quoteId,
+      clientIp,
+      details: `oldStatus=issued, newStatus=revision_requested, hasComment=${!!comment}`
+    });
 
     res.json({
       success: true,
@@ -690,7 +1045,12 @@ const requestRevision = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error requesting revision:", error);
+    logError(error, {
+      action: 'REQUEST_QUOTATION_REVISION',
+      userId: req.user?.id,
+      quotationId: req.params.quoteId,
+      clientIp
+    });
     res.status(500).json({ 
       success: false, 
       message: "Error processing revision request" 
@@ -699,6 +1059,7 @@ const requestRevision = async (req, res) => {
 };
 
 const convertToSalesOrder = async (req, res) => {
+  const clientIp = getClientIp(req);
   try {
     const { quoteId } = req.params;
 
@@ -708,6 +1069,15 @@ const convertToSalesOrder = async (req, res) => {
     }).populate("buyer");
 
     if (!quotation) {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'CONVERT_TO_SALES_ORDER',
+        status: 'FAILED_VALIDATION',
+        resourceId: quoteId,
+        clientIp,
+        details: 'Quotation not found or unauthorized'
+      });
       return res.status(404).json({ 
         success: false, 
         message: "Quotation not found" 
@@ -716,6 +1086,16 @@ const convertToSalesOrder = async (req, res) => {
 
     // Check if quotation is approved
     if (quotation.status !== "approved") {
+      logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'CONVERT_TO_SALES_ORDER',
+        status: 'FAILED_BUSINESS_RULE',
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        details: `Invalid status for conversion: currentStatus=${quotation.status}`
+      });
       return res.status(400).json({ 
         success: false, 
         message: `Cannot convert quotation to sales order. Quotation status must be "approved". Current status: ${quotation.status}` 
@@ -731,7 +1111,16 @@ const convertToSalesOrder = async (req, res) => {
     // 4. Update quotation status if needed
     // 5. Return sales order details
 
-    console.log(`[quotation] Quote ${quotation.referenceNumber} - Convert to Sales Order requested by buyer ${quotation.buyer?.email}`);
+    logAudit({
+      userId: req.user?.id,
+      role: normalizeRole(req.user?.role),
+      action: 'CONVERT_TO_SALES_ORDER',
+      status: 'SUCCESS',
+      quotationId: quotation.referenceNumber,
+      resourceId: quoteId,
+      clientIp,
+      details: 'Placeholder - conversion requested but not yet implemented'
+    });
 
     res.json({
       success: true,
@@ -744,7 +1133,12 @@ const convertToSalesOrder = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error converting to sales order:", error);
+    logError(error, {
+      action: 'CONVERT_TO_SALES_ORDER',
+      userId: req.user?.id,
+      quotationId: req.params.quoteId,
+      clientIp
+    });
     res.status(500).json({ 
       success: false, 
       message: "Error processing sales order conversion" 

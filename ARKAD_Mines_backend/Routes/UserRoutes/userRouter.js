@@ -1,12 +1,24 @@
-import express from "express"
-import { loginUser, registerUser } from "../../Controllers/UserController/userController.js"
+import express from "express";
+import rateLimit from "express-rate-limit"; 
+import { loginUser, registerUser } from "../../Controllers/UserController/userController.js";
 
-const userRouter = express.Router()
+const userRouter = express.Router();
 
-//handle POST requests to /api/user/register - creates new user accounts
-userRouter.post ("/register", registerUser)
-//handle POST requests to /api/user/login - authenticates existing users
-userRouter.post("/login", loginUser)
 
+
+// Rate Limiter for authentication routes (login and register) to prevent brute-force attacks
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 5, 
+  message: { 
+    error: "Too many login or signup attempts. Please try again later." 
+  },
+  standardHeaders: true, 
+  legacyHeaders: false, 
+});
+
+
+userRouter.post("/register", authLimiter, registerUser);
+userRouter.post("/login", authLimiter, loginUser);
 
 export default userRouter;

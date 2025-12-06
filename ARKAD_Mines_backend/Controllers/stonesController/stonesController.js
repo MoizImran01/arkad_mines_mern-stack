@@ -2,17 +2,55 @@ import stonesModel from '../../Models/stonesModel/stonesModel.js';
 import QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import { uploadBuffer, deleteImage, getPublicIdFromUrl } from '../../config/cloudinary.js';
+import { logAudit, logError, getClientIp, normalizeRole } from '../../logger/auditLogger.js';
 
 //add stones item to the db - now using Cloudinary for image storage
 const addStones = async (req, res) => {
+    const clientIp = getClientIp(req);
     try {
+        // Check for multer/upload errors
+        if (req.fileError) {
+            logAudit({
+                userId: req.user?.id,
+                role: normalizeRole(req.user?.role),
+                action: 'ADD_STONE',
+                status: 'FAILED_VALIDATION',
+                clientIp,
+                details: `Upload error: ${req.fileError}`
+            });
+            return res.status(400).json({ success: false, message: `Image upload failed: ${req.fileError}` });
+        }
+        
         // req.file now contains Cloudinary response with path (URL) and filename
         if (!req.file) {
-            return res.json({ success: false, message: "Image is required" });
+            logAudit({
+                userId: req.user?.id,
+                role: normalizeRole(req.user?.role),
+                action: 'ADD_STONE',
+                status: 'FAILED_VALIDATION',
+                clientIp,
+                details: 'Image is required'
+            });
+            return res.status(400).json({ success: false, message: "Image is required" });
         }
 
-        // Cloudinary provides the full URL in req.file.path
-        const image_url = req.file.path;
+        // CloudinaryStorage provides the URL in different properties depending on version
+        // Check for secure_url, url, or path
+        const image_url = req.file.secure_url || req.file.url || req.file.path;
+        
+        if (!image_url) {
+            // Log the actual req.file structure for debugging
+            console.error('req.file structure:', JSON.stringify(req.file, null, 2));
+            logAudit({
+                userId: req.user?.id,
+                role: normalizeRole(req.user?.role),
+                action: 'ADD_STONE',
+                status: 'FAILED_VALIDATION',
+                clientIp,
+                details: `Image URL not found in req.file. Available properties: ${Object.keys(req.file || {}).join(', ')}`
+            });
+            return res.status(400).json({ success: false, message: "Image upload failed: URL not found" });
+        }
 
         const { 
             stoneName, 
@@ -69,6 +107,17 @@ const addStones = async (req, res) => {
         });
 
         await stones.save();
+        
+        logAudit({
+            userId: req.user?.id,
+            role: normalizeRole(req.user?.role),
+            action: 'ADD_STONE',
+            status: 'SUCCESS',
+            resourceId: stones._id.toString(),
+            clientIp,
+            details: `stoneName=${stoneName}, category=${category}, price=${price}, qrCode=${qrCodeId}`
+        });
+        
         res.json({ 
             success: true, 
             message: "Stone block registered successfully with QR code",
@@ -77,8 +126,27 @@ const addStones = async (req, res) => {
             qrCodeImage: qrCodeUrl
         });
     } catch (error) {
-        console.log("Error adding stone:", error);
-        res.json({ success: false, message: "Error adding stone: " + error.message });
+        logError(error, {
+            action: 'ADD_STONE',
+            userId: req.user?.id,
+            clientIp,
+            details: `Error: ${error.message}, stack: ${error.stack?.substring(0, 200)}`
+        });
+        
+        // Log audit for failed operation
+        logAudit({
+            userId: req.user?.id,
+            role: normalizeRole(req.user?.role),
+            action: 'ADD_STONE',
+            status: 'ERROR',
+            clientIp,
+            details: `Unexpected error: ${error.message}`
+        });
+        
+        res.status(500).json({ 
+            success: false, 
+            message: "Failed to add stone. Please check server logs for details." 
+        });
     }
 }
 
@@ -95,11 +163,35 @@ const listStones = async (req, res) => {
 
 //remove stones item - now deletes from Cloudinary (non-blocking for faster response)
 const removeStones = async (req, res) => {
+    const clientIp = getClientIp(req);
     try {
         const stones = await stonesModel.findById(req.body.id); 
         
+        if (!stones) {
+            logAudit({
+                userId: req.user?.id,
+                role: normalizeRole(req.user?.role),
+                action: 'REMOVE_STONE',
+                status: 'FAILED_VALIDATION',
+                resourceId: req.body.id,
+                clientIp,
+                details: 'Stone not found'
+            });
+            return res.json({ success: false, message: "Stone not found" });
+        }
+        
         // Delete from database FIRST for immediate response
         await stonesModel.findByIdAndDelete(req.body.id);
+        
+        logAudit({
+            userId: req.user?.id,
+            role: normalizeRole(req.user?.role),
+            action: 'REMOVE_STONE',
+            status: 'SUCCESS',
+            resourceId: req.body.id,
+            clientIp,
+            details: `stoneName=${stones.stoneName}, qrCode=${stones.qrCode}`
+        });
         
         // Send response immediately - don't wait for Cloudinary
         res.json({ success: true, message: "Stone Removed" });
@@ -126,17 +218,31 @@ const removeStones = async (req, res) => {
             }
         }
     } catch (error) {
-        console.log("Error removing stone:", error);
+        logError(error, {
+            action: 'REMOVE_STONE',
+            userId: req.user?.id,
+            resourceId: req.body.id,
+            clientIp
+        });
         res.json({ success: false, message: "Error removing stone" });
     }
 }
 
 // Dispatch block by scanning QR code
 const dispatchBlock = async (req, res) => {
+    const clientIp = getClientIp(req);
     try {
         const { qrCode } = req.body;
 
         if (!qrCode) {
+            logAudit({
+                userId: req.user?.id,
+                role: normalizeRole(req.user?.role),
+                action: 'DISPATCH_BLOCK',
+                status: 'FAILED_VALIDATION',
+                clientIp,
+                details: 'QR code is required'
+            });
             return res.status(400).json({
                 success: false,
                 message: "QR code is required"
@@ -147,6 +253,14 @@ const dispatchBlock = async (req, res) => {
         const block = await stonesModel.findOne({ qrCode: qrCode });
 
         if (!block) {
+            logAudit({
+                userId: req.user?.id,
+                role: normalizeRole(req.user?.role),
+                action: 'DISPATCH_BLOCK',
+                status: 'FAILED_VALIDATION',
+                clientIp,
+                details: `Block not found with QR code: ${qrCode}`
+            });
             return res.status(404).json({
                 success: false,
                 message: "Block not found with the provided QR code"
@@ -155,6 +269,15 @@ const dispatchBlock = async (req, res) => {
 
 
         if (block.status === "Dispatched") {
+            logAudit({
+                userId: req.user?.id,
+                role: normalizeRole(req.user?.role),
+                action: 'DISPATCH_BLOCK',
+                status: 'FAILED_BUSINESS_RULE',
+                resourceId: block._id.toString(),
+                clientIp,
+                details: `Block already dispatched: qrCode=${qrCode}`
+            });
             return res.status(400).json({
                 success: false,
                 message: "This block has already been dispatched"
@@ -165,6 +288,16 @@ const dispatchBlock = async (req, res) => {
         block.status = "Dispatched";
         block.stockAvailability = "Out of Stock";
         await block.save();
+
+        logAudit({
+            userId: req.user?.id,
+            role: normalizeRole(req.user?.role),
+            action: 'DISPATCH_BLOCK',
+            status: 'SUCCESS',
+            resourceId: block._id.toString(),
+            clientIp,
+            details: `oldStatus=Registered, newStatus=Dispatched, stoneName=${block.stoneName}, qrCode=${qrCode}`
+        });
 
         res.json({
             success: true,
@@ -177,7 +310,11 @@ const dispatchBlock = async (req, res) => {
             }
         });
     } catch (error) {
-        console.log("Error dispatching block:", error);
+        logError(error, {
+            action: 'DISPATCH_BLOCK',
+            userId: req.user?.id,
+            clientIp
+        });
         res.status(500).json({
             success: false,
             message: "Error dispatching block: " + error.message
@@ -187,27 +324,59 @@ const dispatchBlock = async (req, res) => {
 
 // Get block by ID
 const getStoneById = async (req, res) => {
+
+    const clientIp = getClientIp(req);
     try {
         const { id } = req.params;
 
         const stone = await stonesModel.findById(id).select('-__v');
 
         if (!stone) {
+            logAudit({
+                userId: req.user?.id || null,
+                role: req.user ? normalizeRole(req.user.role) : 'GUEST',
+                action: 'VIEW_ITEM_DETAILS',
+                status: 'FAILED_VALIDATION',
+                resourceId: id,
+                clientIp,
+                details: `Item not found: itemId=${id}`
+            });
             return res.status(404).json({
                 success: false,
                 message: "Stone block not found"
             });
         }
 
+        // Log successful view - explicitly note if QA notes were viewed
+        const hasQaNotes = stone.qaNotes && stone.qaNotes.trim().length > 0;
+        const details = hasQaNotes 
+            ? `viewed item=${id}, stoneName=${stone.stoneName}, qaNotesViewed=true, qaNotesLength=${stone.qaNotes.length}`
+            : `viewed item=${id}, stoneName=${stone.stoneName}, qaNotesViewed=false`;
+        
+        logAudit({
+            userId: req.user?.id || null,
+            role: req.user ? normalizeRole(req.user.role) : 'GUEST',
+            action: 'VIEW_ITEM_DETAILS',
+            status: 'SUCCESS',
+            resourceId: id,
+            clientIp,
+            details
+        });
+
         res.json({
             success: true,
             stone: stone
         });
     } catch (error) {
-        console.log("Error fetching stone:", error);
+        logError(error, {
+            action: 'VIEW_ITEM_DETAILS',
+            userId: req.user?.id,
+            resourceId: req.params.id,
+            clientIp
+        });
         res.status(500).json({
             success: false,
-            message: "Error fetching stone: " + error.message
+            message: "Error fetching stone"
         });
     }
 }
@@ -231,7 +400,11 @@ const getBlockByQRCode = async (req, res) => {
             block: block
         });
     } catch (error) {
-        console.log("Error fetching block:", error);
+        logError(error, {
+            action: 'VIEW_BLOCK_BY_QR',
+            userId: req.user?.id,
+            clientIp: getClientIp(req)
+        });
         res.status(500).json({
             success: false,
             message: "Error fetching block: " + error.message
@@ -359,7 +532,11 @@ const filterStones = async (req, res) => {
             stones: stones
         });
     } catch (error) {
-        console.log("Error filtering stones:", error);
+        logError(error, {
+            action: 'FILTER_STONES',
+            userId: req.user?.id,
+            clientIp: getClientIp(req)
+        });
         res.status(500).json({
             success: false,
             message: "Error filtering stones: " + error.message

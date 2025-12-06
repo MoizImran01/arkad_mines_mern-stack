@@ -27,14 +27,25 @@ const Dispatch = () => {
 
   //Function to search for block by QR code
   const searchBlock = async () => {
+
     if (!qrCode.trim()) {
       toast.error("Please enter a QR code");
+      return;
+    }
+        const token = localStorage.getItem('adminToken');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    if (!token) {
+      toast.error('No authentication token found. Please login again.');
       return;
     }
 
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:4000/api/stones/qr/${qrCode}`);
+      const response = await axios.get(
+        `http://localhost:4000/api/stones/qr/${qrCode}`,
+        { headers }
+      );
       
       if (response.data.success) {
         setBlockInfo(response.data.block);
@@ -68,10 +79,23 @@ const Dispatch = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post(
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        toast.error('Not authenticated. Please login.');
+        setLoading(false);
+        return;
+      }
+
+     const response = await axios.post(
         "http://localhost:4000/api/stones/dispatch",
-        { qrCode: qrCode }
-      );
+        { qrCode: qrCode },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+     );
 
       if (response.data.success) {
         toast.success(response.data.message);
