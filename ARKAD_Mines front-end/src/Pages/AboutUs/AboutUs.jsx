@@ -159,23 +159,15 @@ export default function AboutUs() {
           </div>
 
           <div className="hero-visual-side">
-            <div 
-              className="floating-slab-container"
-              style={{
-                transform: `perspective(1000px) rotateY(${mousePos.x * 0.3}deg) rotateX(${-mousePos.y * 0.3}deg)`
-              }}
-            >
-              <div className="granite-slab-3d">
-                <div className="slab-face slab-front">
-                  <div className="granite-texture"></div>
-                  <div className="granite-veins"></div>
-                  <div className="granite-shine"></div>
-                </div>
-                <div className="slab-face slab-back"></div>
-                <div className="slab-face slab-top"></div>
-                <div className="slab-face slab-bottom"></div>
-                <div className="slab-face slab-left"></div>
-                <div className="slab-face slab-right"></div>
+            <div className="cube-scene">
+              {/* 3D Rotating Granite Cube */}
+              <div className="granite-cube">
+                <div className="cube-face cube-front"></div>
+                <div className="cube-face cube-back"></div>
+                <div className="cube-face cube-right"></div>
+                <div className="cube-face cube-left"></div>
+                <div className="cube-face cube-top"></div>
+                <div className="cube-face cube-bottom"></div>
               </div>
               
               {/* Golden Sparkles Orbiting */}
@@ -199,7 +191,7 @@ export default function AboutUs() {
               </div>
               
               {/* Glow effect */}
-              <div className="slab-glow"></div>
+              <div className="cube-glow"></div>
             </div>
           </div>
         </div>
