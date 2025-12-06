@@ -1,18 +1,27 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { useState, useEffect, useContext } from "react"
+import { useNavigate } from "react-router-dom"
+import { Phone, Mail, MapPin, Clock, Copy, Check, Send, MessageSquare, Building, Users } from "lucide-react"
+import { StoreContext } from "../../context/StoreContext"
 import "./ContactUs.css"
 
-export default function ContactUs() {
+export default function ContactUs({ setShowLogin }) {
   const [isVisible, setIsVisible] = useState({});
-  const [hoveredCard, setHoveredCard] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const navigate = useNavigate();
+  const { token } = useContext(StoreContext);
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
+    subject: '',
     message: ''
   });
+
+  const phoneNumber = "+92 300 1234567";
 
   // Intersection Observer for animations
   useEffect(() => {
@@ -36,226 +45,235 @@ export default function ContactUs() {
 
   const contactInfo = [
     {
-      icon: "📍",
+      icon: <MapPin size={24} />,
       title: "Visit Us",
       content: "Industrial Area, Peshawar, KPK, Pakistan",
-      color: "#ef4444"
+      subtext: "Factory & Showroom"
     },
     {
-      icon: "📞",
+      icon: <Phone size={24} />,
       title: "Call Us",
-      content: "+92 300 1234567",
-      color: "#3b82f6"
+      content: phoneNumber,
+      subtext: "Mon-Sat, 9AM-6PM"
     },
     {
-      icon: "✉️",
+      icon: <Mail size={24} />,
       title: "Email Us",
       content: "info@arkadmines.com",
-      color: "#10b981"
+      subtext: "24hr Response Time"
     },
     {
-      icon: "⏰",
+      icon: <Clock size={24} />,
       title: "Business Hours",
       content: "Mon - Sat: 9AM - 6PM",
-      color: "#f59e0b"
+      subtext: "Sunday Closed"
     },
-  ]
-
-  const socialLinks = [
-    { icon: "📘", name: "Facebook", url: "#" },
-    { icon: "📸", name: "Instagram", url: "#" },
-    { icon: "🐦", name: "Twitter", url: "#" },
-    { icon: "💼", name: "LinkedIn", url: "#" },
   ];
+
+  const handleCopyNumber = () => {
+    navigator.clipboard.writeText(phoneNumber.replaceAll(' ', ''));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleQuoteClick = () => {
+    if (token) {
+      navigate('/request-quote');
+    } else {
+      setShowLoginPrompt(true);
+    }
+  };
+
+  const handleLoginClick = () => {
+    setShowLoginPrompt(false);
+    if (setShowLogin) {
+      setShowLogin(true);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!token) {
+      setShowLoginPrompt(true);
+      return;
+    }
     // Handle form submission
     console.log(formData);
   };
 
   return (
-    <div className="contact-page">
-      {/* Floating Elements */}
-      <div className="floating-elements">
-        {[...Array(15)].map((_, i) => (
-          <div 
-            key={i} 
-            className="floating-particle" 
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${4 + Math.random() * 4}s`
-            }}
-          />
-        ))}
-      </div>
-
+    <div className="contact-page-pro">
       {/* Hero Section */}
-      <section className="contact-hero">
-        <div className="hero-bg-animation">
-          <div className="wave wave-1"></div>
-          <div className="wave wave-2"></div>
-          <div className="wave wave-3"></div>
-        </div>
-        
-        <div className="hero-shapes">
-          <div className="shape shape-1"></div>
-          <div className="shape shape-2"></div>
-          <div className="shape shape-3"></div>
-          <div className="shape shape-4"></div>
-        </div>
-
-        <div className="contact-hero-content">
-          <div className="hero-badge">
-            <span className="pulse-dot"></span>
-            <span>We're here to help</span>
-          </div>
-          <h1 className="contact-hero-title">
-            <span className="title-line">Get In</span>
-            <span className="title-line highlight">Touch</span>
-          </h1>
-          <p className="contact-hero-subtitle">
-            Have questions about our granite products? Need a custom quote? 
-            Our team is ready to assist you with all your stone needs.
-          </p>
-          
-          <div className="hero-stats">
-            <div className="hero-stat">
-              <span className="stat-value">24/7</span>
-              <span className="stat-text">Support</span>
-            </div>
-            <div className="stat-divider"></div>
-            <div className="hero-stat">
-              <span className="stat-value">&lt;2hr</span>
-              <span className="stat-text">Response</span>
-            </div>
-            <div className="stat-divider"></div>
-            <div className="hero-stat">
-              <span className="stat-value">100%</span>
-              <span className="stat-text">Satisfaction</span>
+      <section className="contact-hero-pro">
+        <div className="hero-container-pro">
+          <div className="hero-content-pro">
+            <span className="hero-label">Contact Us</span>
+            <h1 className="hero-title-pro">
+              Let's Start a <span className="highlight">Conversation</span>
+            </h1>
+            <p className="hero-description-pro">
+              Have questions about our granite products or need a custom quote? 
+              Our team of experts is ready to assist you with all your stone requirements.
+            </p>
+            
+            <div className="hero-stats-pro">
+              <div className="stat-item-pro">
+                <span className="stat-number-pro">24/7</span>
+                <span className="stat-label-pro">Support Available</span>
+              </div>
+              <div className="stat-divider-pro"></div>
+              <div className="stat-item-pro">
+                <span className="stat-number-pro">&lt;2hr</span>
+                <span className="stat-label-pro">Response Time</span>
+              </div>
+              <div className="stat-divider-pro"></div>
+              <div className="stat-item-pro">
+                <span className="stat-number-pro">100%</span>
+                <span className="stat-label-pro">Satisfaction</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* 3D Phone/Contact Element */}
-        <div className="hero-3d-element">
-          <div className="phone-3d">
-            <div className="phone-body">
-              <div className="phone-screen">
-                <div className="screen-content">
-                  <span className="screen-icon">📞</span>
-                  <span className="screen-text">Call Now</span>
+          <div className="hero-visual-pro">
+            <div className="visual-card">
+              <div className="card-header">
+                <Building size={20} />
+                <span>ARKAD Mines & Minerals</span>
+              </div>
+              <div className="card-body">
+                <div className="contact-quick">
+                  <Phone size={18} />
+                  <span>{phoneNumber}</span>
+                </div>
+                <div className="contact-quick">
+                  <Mail size={18} />
+                  <span>info@arkadmines.com</span>
                 </div>
               </div>
-              <div className="phone-notch"></div>
+              <button className="card-cta" onClick={handleCopyNumber}>
+                {copied ? <Check size={18} /> : <Copy size={18} />}
+                {copied ? "Number Copied!" : "Copy Phone Number"}
+              </button>
             </div>
-            <div className="phone-glow"></div>
           </div>
         </div>
       </section>
 
-      {/* Contact Information Cards */}
-      <section className="contact-info-section animate-section" id="info">
-        <div className={`contact-info-container ${isVisible["info"] ? "visible" : ""}`}>
-          <h2 className="section-title">
-            <span className="title-icon">📬</span>
-            Contact Information
-          </h2>
-          <p className="section-subtitle">Choose your preferred way to reach us</p>
+      {/* Contact Information Section */}
+      <section className="contact-info-pro animate-section" id="info">
+        <div className={`section-container ${isVisible["info"] ? "visible" : ""}`}>
+          <div className="section-header-pro">
+            <h2>Get In Touch</h2>
+            <p>Choose your preferred method of contact</p>
+          </div>
           
-          <div className="contact-info-grid">
-            {contactInfo.map((info, index) => (
+          <div className="contact-grid-pro">
+            {contactInfo.map((info) => (
               <div 
-                key={index} 
-                className={`contact-info-card ${hoveredCard === index ? 'active' : ''}`}
-                style={{ 
-                  animationDelay: `${index * 0.15}s`,
-                  '--card-color': info.color
-                }}
-                onMouseEnter={() => setHoveredCard(index)}
-                onMouseLeave={() => setHoveredCard(null)}
+                key={info.title} 
+                className="contact-card-pro"
               >
-                <div className="card-bg-effect"></div>
-                <div className="info-icon-wrapper">
-                  <span className="info-icon">{info.icon}</span>
-                  <div className="icon-ripple"></div>
-                  <div className="icon-ripple ripple-2"></div>
+                <div className="card-icon-pro">
+                  {info.icon}
                 </div>
-                <h3 className="info-title">{info.title}</h3>
-                <p className="info-content">{info.content}</p>
-                <div className="card-shine"></div>
+                <div className="card-content-pro">
+                  <h3>{info.title}</h3>
+                  <p className="card-main-text">{info.content}</p>
+                  <span className="card-subtext">{info.subtext}</span>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Contact Form & Map Section */}
-      <section className="contact-form-section animate-section" id="form">
-        <div className={`form-container ${isVisible["form"] ? "visible" : ""}`}>
-          <div className="form-wrapper">
-            <div className="form-header">
-              <span className="form-badge">✨ Quick Response Guaranteed</span>
-              <h2>Send Us a Message</h2>
-              <p>Fill out the form and our team will get back to you within 24 hours.</p>
-            </div>
+      {/* Contact Form Section */}
+      <section className="contact-form-pro animate-section" id="form">
+        <div className={`form-section-container ${isVisible["form"] ? "visible" : ""}`}>
+          <div className="form-info-side">
+            <h2>Send Us a Message</h2>
+            <p>
+              Fill out the form and our team will get back to you within 24 hours. 
+              We're committed to providing you with the best service possible.
+            </p>
             
-            <form onSubmit={handleSubmit} className="contact-form">
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="name">
-                    <span className="label-icon">👤</span>
-                    Your Name
-                  </label>
+            <div className="form-features">
+              <div className="feature-item">
+                <MessageSquare size={20} />
+                <div>
+                  <h4>Quick Response</h4>
+                  <p>We respond to all inquiries within 24 hours</p>
+                </div>
+              </div>
+              <div className="feature-item">
+                <Users size={20} />
+                <div>
+                  <h4>Expert Team</h4>
+                  <p>Our specialists will address your specific needs</p>
+                </div>
+              </div>
+              <div className="feature-item">
+                <Building size={20} />
+                <div>
+                  <h4>Factory Direct</h4>
+                  <p>Get the best prices directly from the source</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="form-card-pro">
+            <form onSubmit={handleSubmit}>
+              <div className="form-row-pro">
+                <div className="form-group-pro">
+                  <label htmlFor="name">Full Name</label>
                   <input 
                     type="text" 
                     id="name" 
-                    placeholder="John Doe"
+                    placeholder="Enter your name"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     required
                   />
-                  <div className="input-highlight"></div>
                 </div>
-                <div className="form-group">
-                  <label htmlFor="email">
-                    <span className="label-icon">✉️</span>
-                    Email Address
-                  </label>
+                <div className="form-group-pro">
+                  <label htmlFor="email">Email Address</label>
                   <input 
                     type="email" 
                     id="email" 
-                    placeholder="john@example.com"
+                    placeholder="Enter your email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     required
                   />
-                  <div className="input-highlight"></div>
                 </div>
               </div>
               
-              <div className="form-group">
-                <label htmlFor="phone">
-                  <span className="label-icon">📱</span>
-                  Phone Number
-                </label>
-                <input 
-                  type="tel" 
-                  id="phone" 
-                  placeholder="+92 300 1234567"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                />
-                <div className="input-highlight"></div>
+              <div className="form-row-pro">
+                <div className="form-group-pro">
+                  <label htmlFor="phone">Phone Number</label>
+                  <input 
+                    type="tel" 
+                    id="phone" 
+                    placeholder="+92 XXX XXXXXXX"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  />
+                </div>
+                <div className="form-group-pro">
+                  <label htmlFor="subject">Subject</label>
+                  <input 
+                    type="text" 
+                    id="subject" 
+                    placeholder="How can we help?"
+                    value={formData.subject}
+                    onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                  />
+                </div>
               </div>
               
-              <div className="form-group">
-                <label htmlFor="message">
-                  <span className="label-icon">💬</span>
-                  Your Message
-                </label>
+              <div className="form-group-pro">
+                <label htmlFor="message">Your Message</label>
                 <textarea 
                   id="message" 
                   rows="5" 
@@ -264,112 +282,102 @@ export default function ContactUs() {
                   onChange={(e) => setFormData({...formData, message: e.target.value})}
                   required
                 ></textarea>
-                <div className="input-highlight"></div>
               </div>
               
-              <button type="submit" className="submit-btn">
-                <span className="btn-text">Send Message</span>
-                <span className="btn-icon">🚀</span>
-                <div className="btn-shine"></div>
+              <button type="submit" className="submit-btn-pro">
+                <Send size={18} />
+                Send Message
               </button>
             </form>
-          </div>
-          
-          <div className="map-wrapper">
-            <div className="map-header">
-              <h3>Find Us Here</h3>
-              <p>Visit our factory in Peshawar</p>
-            </div>
-            <div className="map-container">
-              <div className="map-placeholder">
-                <div className="map-pin">
-                  <span className="pin-icon">📍</span>
-                  <div className="pin-pulse"></div>
-                </div>
-                <div className="map-grid">
-                  {[...Array(25)].map((_, i) => (
-                    <div key={i} className="grid-cell"></div>
-                  ))}
-                </div>
-                <div className="map-label">ARKAD Mines Factory</div>
-              </div>
-            </div>
-            
-            {/* Social Links */}
-            <div className="social-section">
-              <h4>Follow Us</h4>
-              <div className="social-links">
-                {socialLinks.map((social, index) => (
-                  <a 
-                    key={index} 
-                    href={social.url} 
-                    className="social-link"
-                    title={social.name}
-                  >
-                    <span className="social-icon">{social.icon}</span>
-                  </a>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
       {/* FAQ Section */}
-      <section className="faq-section animate-section" id="faq">
-        <div className={`faq-container ${isVisible["faq"] ? "visible" : ""}`}>
-          <h2 className="section-title">
-            <span className="title-icon">❓</span>
-            Frequently Asked Questions
-          </h2>
+      <section className="faq-section-pro animate-section" id="faq">
+        <div className={`section-container ${isVisible["faq"] ? "visible" : ""}`}>
+          <div className="section-header-pro">
+            <h2>Frequently Asked Questions</h2>
+            <p>Find quick answers to common questions</p>
+          </div>
           
-          <div className="faq-grid">
-            <div className="faq-item">
-              <div className="faq-icon">🪨</div>
+          <div className="faq-grid-pro">
+            <div className="faq-item-pro">
               <h3>What types of granite do you offer?</h3>
-              <p>We offer 12+ premium varieties including Chatral, White Fantasy, Golden Tiger, and more.</p>
+              <p>We offer 12+ premium varieties including Chatral, White Fantasy, Golden Tiger, Kashmir White, and more. All stones are sourced from premium quarries.</p>
             </div>
-            <div className="faq-item">
-              <div className="faq-icon">🚚</div>
-              <h3>Do you provide delivery?</h3>
-              <p>Yes, we deliver across Pakistan with careful packaging to ensure safe transit.</p>
+            <div className="faq-item-pro">
+              <h3>Do you provide nationwide delivery?</h3>
+              <p>Yes, we deliver across Pakistan with careful packaging to ensure safe transit. Delivery times vary based on location and order size.</p>
             </div>
-            <div className="faq-item">
-              <div className="faq-icon">💰</div>
-              <h3>How can I get a quote?</h3>
-              <p>Fill out our contact form or call us directly for a customized quote.</p>
+            <div className="faq-item-pro">
+              <h3>How can I get a custom quote?</h3>
+              <p>You can request a quote through our online form, call us directly, or visit our showroom. We provide detailed quotes within 24 hours.</p>
             </div>
-            <div className="faq-item">
-              <div className="faq-icon">🔧</div>
-              <h3>Do you offer custom cutting?</h3>
-              <p>Yes, we provide precision cutting to your exact specifications.</p>
+            <div className="faq-item-pro">
+              <h3>Do you offer custom cutting services?</h3>
+              <p>Yes, we provide precision cutting to your exact specifications using state-of-the-art European machinery for perfect edges every time.</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="contact-cta">
-        <div className="cta-content">
-          <h2>Ready to Start Your Project?</h2>
-          <p>Get premium quality granite at competitive prices</p>
-          <div className="cta-buttons">
-            <Link to="/request-quote" className="cta-primary">
-              <span>Request Quote</span>
-              <span className="cta-sparkle">✨</span>
-            </Link>
-            <a href="tel:+923001234567" className="cta-secondary">
-              <span className="phone-icon">📞</span>
-              <span>Call Now</span>
-            </a>
+      <section className="cta-section-pro">
+        <div className="cta-container-pro">
+          <div className="cta-content-pro">
+            <h2>Ready to Start Your Project?</h2>
+            <p>Get premium quality granite at competitive prices. Our team is ready to help you find the perfect stone for your needs.</p>
+            <div className="cta-buttons-pro">
+              <button className="cta-primary-pro" onClick={handleQuoteClick}>
+                Request a Quote
+              </button>
+              <button className="cta-secondary-pro" onClick={handleCopyNumber}>
+                {copied ? <Check size={18} /> : <Phone size={18} />}
+                {copied ? "Copied!" : "Call Now"}
+              </button>
+            </div>
           </div>
         </div>
-        <div className="cta-decoration">
-          <div className="deco-circle"></div>
-          <div className="deco-circle"></div>
-          <div className="deco-circle"></div>
-        </div>
       </section>
+
+      {/* Login Prompt Modal */}
+      {showLoginPrompt && (
+        <div 
+          className="login-prompt-overlay-pro" 
+          onClick={() => setShowLoginPrompt(false)}
+          onKeyDown={(e) => e.key === 'Escape' && setShowLoginPrompt(false)}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div 
+            className="login-prompt-modal-pro" 
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            role="document"
+          >
+            <button className="close-prompt-pro" onClick={() => setShowLoginPrompt(false)}>
+              <span>×</span>
+            </button>
+            <div className="prompt-header-pro">
+              <div className="prompt-icon-pro">
+                <Users size={32} />
+              </div>
+              <h3>Login Required</h3>
+              <p>To request a quote, please log in or create an account first.</p>
+            </div>
+            <div className="prompt-buttons-pro">
+              <button className="prompt-login-btn-pro" onClick={handleLoginClick}>
+                Login / Register
+              </button>
+              <button className="prompt-cancel-btn-pro" onClick={() => setShowLoginPrompt(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
