@@ -258,49 +258,81 @@
 .slab-front {
   width: 280px;
   height: 350px;
-  background: linear-gradient(145deg, #8B7355 0%, #A0522D 50%, #6B4423 100%);
+  background: 
+    linear-gradient(135deg, 
+      #2d2d2d 0%, 
+      #3d3d3d 20%, 
+      #4a4a4a 40%, 
+      #3d3d3d 60%, 
+      #2d2d2d 80%, 
+      #4a4a4a 100%
+    );
   transform: translateZ(20px);
   border-radius: 8px;
-  box-shadow: inset 0 0 60px rgba(0,0,0,0.3);
+  box-shadow: 
+    inset 0 0 80px rgba(0,0,0,0.5),
+    0 30px 60px rgba(0,0,0,0.3);
+  overflow: hidden;
+  position: relative;
 }
 
-.slab-front::before {
-  content: '';
+/* Granite texture overlay */
+.granite-texture {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(ellipse 2px 2px at 20% 30%, rgba(255,215,0,0.4) 0%, transparent 100%),
+    radial-gradient(ellipse 3px 2px at 40% 60%, rgba(255,215,0,0.3) 0%, transparent 100%),
+    radial-gradient(ellipse 2px 3px at 70% 20%, rgba(255,215,0,0.5) 0%, transparent 100%),
+    radial-gradient(ellipse 2px 2px at 85% 75%, rgba(255,215,0,0.4) 0%, transparent 100%),
+    radial-gradient(ellipse 3px 3px at 15% 80%, rgba(255,215,0,0.3) 0%, transparent 100%),
+    radial-gradient(ellipse 2px 2px at 50% 45%, rgba(255,215,0,0.5) 0%, transparent 100%),
+    radial-gradient(ellipse 2px 2px at 30% 15%, rgba(255,215,0,0.4) 0%, transparent 100%),
+    radial-gradient(ellipse 3px 2px at 60% 85%, rgba(255,215,0,0.3) 0%, transparent 100%),
+    radial-gradient(ellipse 2px 2px at 90% 40%, rgba(255,215,0,0.4) 0%, transparent 100%),
+    radial-gradient(ellipse 2px 3px at 10% 55%, rgba(255,215,0,0.5) 0%, transparent 100%),
+    radial-gradient(ellipse 1px 1px at 25% 70%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(ellipse 1px 1px at 55% 25%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(ellipse 1px 1px at 75% 55%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(ellipse 1px 1px at 45% 90%, rgba(255,255,255,0.2) 0%, transparent 100%);
+  animation: textureShimmer 4s ease-in-out infinite;
+}
+
+@keyframes textureShimmer {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+/* Granite veins */
+.granite-veins {
   position: absolute;
   inset: 0;
   background: 
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 30px,
-      rgba(255,255,255,0.03) 30px,
-      rgba(255,255,255,0.03) 60px
-    ),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 40px,
-      rgba(0,0,0,0.05) 40px,
-      rgba(0,0,0,0.05) 80px
-    );
-  border-radius: 8px;
+    linear-gradient(145deg, transparent 30%, rgba(218,165,32,0.1) 50%, transparent 70%),
+    linear-gradient(225deg, transparent 40%, rgba(184,134,11,0.08) 55%, transparent 70%),
+    linear-gradient(45deg, transparent 20%, rgba(255,215,0,0.05) 40%, transparent 60%);
+  opacity: 0.8;
 }
 
-.slab-front::after {
-  content: '';
+/* Polished shine effect */
+.granite-shine {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%);
-  border-radius: 8px 8px 0 0;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.2) 0%,
+    rgba(255,255,255,0.05) 30%,
+    transparent 50%,
+    rgba(255,255,255,0.02) 70%,
+    rgba(255,255,255,0.1) 100%
+  );
+  border-radius: 8px;
 }
 
 .slab-back {
   width: 280px;
   height: 350px;
-  background: #5a3d2b;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
   transform: translateZ(-20px) rotateY(180deg);
   border-radius: 8px;
 }
@@ -308,7 +340,7 @@
 .slab-top {
   width: 280px;
   height: 40px;
-  background: linear-gradient(180deg, #9a7a5a 0%, #8B7355 100%);
+  background: linear-gradient(180deg, #4a4a4a 0%, #3d3d3d 100%);
   transform: rotateX(90deg) translateZ(-20px);
   transform-origin: top;
 }
@@ -316,7 +348,7 @@
 .slab-bottom {
   width: 280px;
   height: 40px;
-  background: #4a2d1b;
+  background: #1a1a1a;
   transform: rotateX(-90deg) translateZ(330px);
   transform-origin: bottom;
 }
@@ -324,7 +356,7 @@
 .slab-left {
   width: 40px;
   height: 350px;
-  background: linear-gradient(90deg, #6B4423 0%, #7a5533 100%);
+  background: linear-gradient(90deg, #2d2d2d 0%, #3d3d3d 100%);
   transform: rotateY(-90deg) translateZ(0);
   transform-origin: left;
 }
@@ -332,54 +364,95 @@
 .slab-right {
   width: 40px;
   height: 350px;
-  background: linear-gradient(90deg, #7a5533 0%, #6B4423 100%);
+  background: linear-gradient(90deg, #3d3d3d 0%, #2d2d2d 100%);
   transform: rotateY(90deg) translateZ(240px);
   transform-origin: right;
 }
 
+/* Golden Glow */
 .slab-glow {
   position: absolute;
-  inset: -40px;
-  background: radial-gradient(ellipse at center, rgba(22, 163, 74, 0.2) 0%, transparent 70%);
-  filter: blur(20px);
-  animation: glowPulse 3s ease-in-out infinite;
+  inset: -60px;
+  background: radial-gradient(ellipse at center, rgba(218, 165, 32, 0.25) 0%, transparent 60%);
+  filter: blur(30px);
+  animation: goldenGlow 3s ease-in-out infinite;
+  z-index: -1;
 }
 
-@keyframes glowPulse {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.1); }
+@keyframes goldenGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
 }
 
-/* Orbit Ring */
-.orbit-ring {
+/* ===== GOLDEN SPARKLES ORBITING ===== */
+.sparkle-orbit {
   position: absolute;
   width: 400px;
   height: 400px;
-  border: 1px dashed rgba(22, 163, 74, 0.3);
-  border-radius: 50%;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) rotateX(70deg);
-  animation: orbitSpin 20s linear infinite;
+  transform: translate(-50%, -50%);
+  animation: sparkleOrbit 12s linear infinite;
+  pointer-events: none;
 }
 
-@keyframes orbitSpin {
-  from { transform: translate(-50%, -50%) rotateX(70deg) rotateZ(0deg); }
-  to { transform: translate(-50%, -50%) rotateX(70deg) rotateZ(360deg); }
-}
-
-.orbit-dot {
+.sparkle-orbit-2 {
   position: absolute;
-  width: 12px;
-  height: 12px;
-  background: var(--primary);
-  border-radius: 50%;
-  box-shadow: 0 0 15px rgba(22, 163, 74, 0.6);
+  width: 320px;
+  height: 320px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: sparkleOrbit 8s linear infinite reverse;
+  pointer-events: none;
 }
 
-.dot-1 { top: 0; left: 50%; transform: translate(-50%, -50%); }
-.dot-2 { bottom: 0; left: 50%; transform: translate(-50%, 50%); }
-.dot-3 { top: 50%; right: 0; transform: translate(50%, -50%); }
+@keyframes sparkleOrbit {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.golden-sparkle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle, #FFD700 0%, #FFA500 50%, transparent 100%);
+  border-radius: 50%;
+  box-shadow: 
+    0 0 10px #FFD700,
+    0 0 20px #FFA500,
+    0 0 30px rgba(255, 215, 0, 0.5);
+  animation: sparkleGlow 2s ease-in-out infinite;
+}
+
+@keyframes sparkleGlow {
+  0%, 100% { 
+    opacity: 0.6;
+    transform: scale(0.8);
+    box-shadow: 0 0 8px #FFD700, 0 0 15px #FFA500;
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.2);
+    box-shadow: 0 0 15px #FFD700, 0 0 30px #FFA500, 0 0 45px rgba(255, 215, 0, 0.5);
+  }
+}
+
+/* Position sparkles around the orbit */
+.sparkle-1 { top: 0; left: 50%; transform: translateX(-50%); animation-delay: 0s; }
+.sparkle-2 { top: 15%; right: 15%; animation-delay: 0.25s; }
+.sparkle-3 { top: 50%; right: 0; transform: translateY(-50%); animation-delay: 0.5s; }
+.sparkle-4 { bottom: 15%; right: 15%; animation-delay: 0.75s; }
+.sparkle-5 { bottom: 0; left: 50%; transform: translateX(-50%); animation-delay: 1s; }
+.sparkle-6 { bottom: 15%; left: 15%; animation-delay: 1.25s; }
+.sparkle-7 { top: 50%; left: 0; transform: translateY(-50%); animation-delay: 1.5s; }
+.sparkle-8 { top: 15%; left: 15%; animation-delay: 1.75s; }
+
+/* Secondary orbit sparkles */
+.sparkle-a { top: 0; left: 50%; transform: translateX(-50%); animation-delay: 0.3s; width: 6px; height: 6px; }
+.sparkle-b { top: 50%; right: 0; transform: translateY(-50%); animation-delay: 0.8s; width: 6px; height: 6px; }
+.sparkle-c { bottom: 0; left: 50%; transform: translateX(-50%); animation-delay: 1.3s; width: 6px; height: 6px; }
+.sparkle-d { top: 50%; left: 0; transform: translateY(-50%); animation-delay: 1.8s; width: 6px; height: 6px; }
 
 .hero-wave {
   position: absolute;

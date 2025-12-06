@@ -166,21 +166,40 @@ export default function AboutUs() {
               }}
             >
               <div className="granite-slab-3d">
-                <div className="slab-face slab-front"></div>
+                <div className="slab-face slab-front">
+                  <div className="granite-texture"></div>
+                  <div className="granite-veins"></div>
+                  <div className="granite-shine"></div>
+                </div>
                 <div className="slab-face slab-back"></div>
                 <div className="slab-face slab-top"></div>
                 <div className="slab-face slab-bottom"></div>
                 <div className="slab-face slab-left"></div>
                 <div className="slab-face slab-right"></div>
-                <div className="slab-glow"></div>
               </div>
               
-              {/* Orbiting elements */}
-              <div className="orbit-ring">
-                <div className="orbit-dot dot-1"></div>
-                <div className="orbit-dot dot-2"></div>
-                <div className="orbit-dot dot-3"></div>
+              {/* Golden Sparkles Orbiting */}
+              <div className="sparkle-orbit">
+                <div className="golden-sparkle sparkle-1"></div>
+                <div className="golden-sparkle sparkle-2"></div>
+                <div className="golden-sparkle sparkle-3"></div>
+                <div className="golden-sparkle sparkle-4"></div>
+                <div className="golden-sparkle sparkle-5"></div>
+                <div className="golden-sparkle sparkle-6"></div>
+                <div className="golden-sparkle sparkle-7"></div>
+                <div className="golden-sparkle sparkle-8"></div>
               </div>
+              
+              {/* Secondary orbit */}
+              <div className="sparkle-orbit-2">
+                <div className="golden-sparkle sparkle-a"></div>
+                <div className="golden-sparkle sparkle-b"></div>
+                <div className="golden-sparkle sparkle-c"></div>
+                <div className="golden-sparkle sparkle-d"></div>
+              </div>
+              
+              {/* Glow effect */}
+              <div className="slab-glow"></div>
             </div>
           </div>
         </div>
