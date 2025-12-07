@@ -28,7 +28,6 @@ export default function Industries({ setShowLogin }) {
   const navigate = useNavigate();
   const { token } = useContext(StoreContext);
 
-  // Parallax scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
@@ -37,7 +36,6 @@ export default function Industries({ setShowLogin }) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Intersection Observer for animations
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -57,7 +55,6 @@ export default function Industries({ setShowLogin }) {
     return () => observer.disconnect();
   }, []);
 
-  // Counter animation
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -134,7 +131,6 @@ export default function Industries({ setShowLogin }) {
     { name: "Giallo Ornamental", origin: "Brazil", color: "#daa520", sparkle: true },
   ];
 
-  // Handle catalog button click
   const handleCatalogClick = () => {
     if (token) {
       navigate('/products');
@@ -143,7 +139,6 @@ export default function Industries({ setShowLogin }) {
     }
   };
 
-  // Handle quote button click
   const handleQuoteClick = () => {
     if (token) {
       navigate('/request-quote');
@@ -152,7 +147,6 @@ export default function Industries({ setShowLogin }) {
     }
   };
 
-  // Handle login from prompt
   const handleLoginClick = () => {
     setShowLoginPrompt(false);
     if (setShowLogin) {
@@ -171,7 +165,6 @@ export default function Industries({ setShowLogin }) {
 
   return (
     <div className="industries-page">
-      {/* Hero Section with 3D Floating Cubes */}
       <section className="industries-hero">
         <div className="hero-background">
           <div className="floating-cube cube-1" style={{ transform: `translateY(${scrollY * 0.1}px) rotateX(${scrollY * 0.05}deg) rotateY(${scrollY * 0.08}deg)` }}></div>
@@ -211,7 +204,6 @@ export default function Industries({ setShowLogin }) {
         </div>
       </section>
 
-      {/* Global Statistics */}
       <section className="stats-section" ref={statsRef}>
         <div className="stats-container">
           <div className="stat-card">
@@ -245,7 +237,6 @@ export default function Industries({ setShowLogin }) {
         </div>
       </section>
 
-      {/* What is Granite Section */}
       <section className="about-granite-section animate-on-scroll" id="about-granite">
         <div className={`section-content ${isVisible["about-granite"] ? "visible" : ""}`}>
           <div className="text-content">
@@ -297,7 +288,6 @@ export default function Industries({ setShowLogin }) {
         </div>
       </section>
 
-      {/* Industry Applications */}
       <section className="applications-section">
         <div className="section-header">
           <h2>Industry Applications</h2>
@@ -330,7 +320,6 @@ export default function Industries({ setShowLogin }) {
         </div>
       </section>
 
-      {/* Granite Types Showcase */}
       <section className="granite-types-section">
         <div className="section-header">
           <h2>World-Renowned Granite Varieties</h2>
@@ -368,7 +357,6 @@ export default function Industries({ setShowLogin }) {
         </div>
       </section>
 
-      {/* Historical Timeline */}
       <section className="timeline-section animate-on-scroll" id="timeline">
         <div className="section-header">
           <h2>A Legacy Carved in Stone</h2>
@@ -382,7 +370,6 @@ export default function Industries({ setShowLogin }) {
               className={`timeline-item-enhanced ${index % 2 === 0 ? 'left' : 'right'}`}
               style={{ "--item-delay": `${index * 0.2}s` }}
             >
-              {/* 3D Structure */}
               <div className="structure-container">
                 <div className={`structure-3d ${item.structure}`}>
                   {item.structure === 'pyramid' && (
@@ -453,7 +440,6 @@ export default function Industries({ setShowLogin }) {
                 </div>
               </div>
               
-              {/* Timeline Content */}
               <div className="timeline-connector">
                 <div className="connector-line"></div>
                 <div className="connector-dot"></div>
@@ -468,7 +454,6 @@ export default function Industries({ setShowLogin }) {
         </div>
       </section>
 
-      {/* Why Granite Section */}
       <section className="why-granite-section">
         <div className="why-container">
           <div className="why-visual">
@@ -546,7 +531,6 @@ export default function Industries({ setShowLogin }) {
         </div>
       </section>
 
-      {/* Call to Action */}
       <section className="cta-section">
         <div className="cta-background">
           <div className="cta-pattern"></div>
@@ -561,7 +545,6 @@ export default function Industries({ setShowLogin }) {
         </div>
       </section>
 
-      {/* Login Prompt Modal */}
       {showLoginPrompt && (
         <div className="login-prompt-overlay" onClick={() => setShowLoginPrompt(false)}>
           <div className="login-prompt-modal" onClick={(e) => e.stopPropagation()}>

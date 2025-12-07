@@ -24,7 +24,6 @@ export default function ContactUs({ setShowLogin }) {
 
   const phoneNumber = "+92 300 1234567";
 
-  // 3D Phone mouse tracking
   useEffect(() => {
     const handleMouseMove = (e) => {
       const x = (e.clientX / window.innerWidth - 0.5) * 20;
@@ -35,7 +34,6 @@ export default function ContactUs({ setShowLogin }) {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Intersection Observer for animations
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -113,7 +111,6 @@ export default function ContactUs({ setShowLogin }) {
     console.log(formData);
   };
 
-  // Animated Wave SVG Component
   const AnimatedWave = ({ fill = "#f9fafb", className = "" }) => (
     <svg className={className} viewBox="0 0 2880 120" preserveAspectRatio="none">
       <path 
@@ -136,7 +133,6 @@ export default function ContactUs({ setShowLogin }) {
 
   return (
     <div className="contact-page-pro">
-      {/* Hero Section */}
       <section className="contact-hero-pro">
         <div className="hero-container-pro">
           <div className="hero-content-pro">
@@ -187,15 +183,12 @@ export default function ContactUs({ setShowLogin }) {
           </div>
         </div>
         
-        {/* Animated Wave at bottom of hero */}
         <div className="hero-wave-animated">
           <AnimatedWave fill="#f9fafb" />
         </div>
       </section>
 
-      {/* Contact Information Section */}
       <section className="contact-info-pro animate-section" id="info">
-        {/* Animated Wave Top */}
         <div className="animated-wave-top">
           <AnimatedWave fill="#ffffff" />
         </div>
@@ -225,13 +218,11 @@ export default function ContactUs({ setShowLogin }) {
           </div>
         </div>
         
-        {/* Animated Wave Bottom */}
         <div className="animated-wave-bottom">
           <AnimatedWave fill="#ffffff" />
         </div>
       </section>
 
-      {/* Contact Form Section */}
       <section className="contact-form-pro animate-section" id="form">
         <div className={`form-section-container ${isVisible["form"] ? "visible" : ""}`}>
           <div className="form-info-side">
@@ -337,9 +328,7 @@ export default function ContactUs({ setShowLogin }) {
         </div>
       </section>
 
-      {/* FAQ Section */}
       <section className="faq-section-pro animate-section" id="faq">
-        {/* Animated Wave Top */}
         <div className="animated-wave-top">
           <AnimatedWave fill="#ffffff" />
         </div>
@@ -371,9 +360,7 @@ export default function ContactUs({ setShowLogin }) {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="cta-section-pro">
-        {/* Animated Wave Top */}
         <div className="animated-wave-top">
           <AnimatedWave fill="#f9fafb" />
         </div>
@@ -395,7 +382,6 @@ export default function ContactUs({ setShowLogin }) {
         </div>
       </section>
 
-      {/* Login Prompt Modal */}
       {showLoginPrompt && (
         <div 
           className="login-prompt-overlay-pro" 

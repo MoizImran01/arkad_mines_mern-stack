@@ -13,7 +13,6 @@ export default function AboutUs() {
   const statsRef = useRef(null);
   const heroRef = useRef(null);
 
-  // Mouse parallax for hero
   useEffect(() => {
     const handleMouseMove = (e) => {
       const x = (e.clientX / window.innerWidth - 0.5) * 30;
@@ -24,7 +23,6 @@ export default function AboutUs() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Intersection Observer for animations
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -44,7 +42,6 @@ export default function AboutUs() {
     return () => observer.disconnect();
   }, []);
 
-  // Counter animation
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -111,7 +108,6 @@ export default function AboutUs() {
 
   return (
     <div className="about-page-new">
-      {/* Hero Section */}
       <section className="hero-section-new" ref={heroRef}>
         <div className="hero-bg-layers">
           <div className="bg-gradient-layer"></div>
@@ -160,7 +156,6 @@ export default function AboutUs() {
 
           <div className="hero-visual-side">
             <div className="cube-scene">
-              {/* 3D Rotating Granite Cube */}
               <div className="granite-cube">
                 <div className="cube-face cube-front"></div>
                 <div className="cube-face cube-back"></div>
@@ -170,7 +165,6 @@ export default function AboutUs() {
                 <div className="cube-face cube-bottom"></div>
               </div>
               
-              {/* Golden Sparkles Orbiting */}
               <div className="sparkle-orbit">
                 <div className="golden-sparkle sparkle-1"></div>
                 <div className="golden-sparkle sparkle-2"></div>
@@ -182,7 +176,6 @@ export default function AboutUs() {
                 <div className="golden-sparkle sparkle-8"></div>
               </div>
               
-              {/* Secondary orbit */}
               <div className="sparkle-orbit-2">
                 <div className="golden-sparkle sparkle-a"></div>
                 <div className="golden-sparkle sparkle-b"></div>
@@ -190,13 +183,11 @@ export default function AboutUs() {
                 <div className="golden-sparkle sparkle-d"></div>
               </div>
               
-              {/* Glow effect */}
               <div className="cube-glow"></div>
             </div>
           </div>
         </div>
 
-        {/* Wave transition */}
         <div className="hero-wave">
           <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M0,60 C360,120 720,0 1080,60 C1260,90 1380,90 1440,60 L1440,120 L0,120 Z" fill="#f9fafb"/>
@@ -204,7 +195,6 @@ export default function AboutUs() {
         </div>
       </section>
 
-      {/* Stats Section */}
       <section className="stats-section-new" ref={statsRef}>
         <div className="stats-container-new">
           <div className="stat-card-new">
@@ -242,7 +232,6 @@ export default function AboutUs() {
         </div>
       </section>
 
-      {/* Values Section */}
       <section className="values-section-new animate-section" id="values">
         <div className={`values-wrapper ${isVisible["values"] ? "visible" : ""}`}>
           <div className="section-header-new">
@@ -267,14 +256,12 @@ export default function AboutUs() {
         </div>
       </section>
 
-      {/* Wave transition */}
       <div className="wave-divider">
         <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M0,40 C240,100 480,0 720,60 C960,120 1200,40 1440,80 L1440,120 L0,120 Z" fill="#ffffff"/>
         </svg>
       </div>
 
-      {/* Products Showcase */}
       <section className="products-section-new animate-section" id="products">
         <div className={`products-wrapper ${isVisible["products"] ? "visible" : ""}`}>
           <div className="section-header-new">
@@ -322,9 +309,7 @@ export default function AboutUs() {
         </div>
       </section>
 
-      {/* Process Section */}
       <section className="process-section-new">
-        {/* Animated Wave Top */}
         <div className="process-wave-animated">
           <svg viewBox="0 0 2880 120" preserveAspectRatio="none">
             <path fill="#ffffff">
@@ -363,9 +348,7 @@ export default function AboutUs() {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="cta-section-new">
-        {/* Animated Wave Top */}
         <div className="cta-wave-animated">
           <svg viewBox="0 0 2880 120" preserveAspectRatio="none">
             <path fill="#111827">
