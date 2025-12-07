@@ -412,7 +412,6 @@ const getBlockByQRCode = async (req, res) => {
     }
 }
 
-//Filter and search stones with advanced filtering
 const filterStones = async (req, res) => {
     try {
         const {

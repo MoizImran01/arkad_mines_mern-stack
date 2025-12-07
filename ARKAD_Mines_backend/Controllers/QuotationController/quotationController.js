@@ -537,7 +537,6 @@ const issueQuotation = async (req, res) => {
         
         item.finalUnitPrice = customPrice;
       } else {
-        //Use existing finalUnitPrice
         item.finalUnitPrice = item.finalUnitPrice || item.priceSnapshot;
       }
 
@@ -572,7 +571,6 @@ const issueQuotation = async (req, res) => {
     const taxAmount = (subtotal * taxPercent) / 100;
     const grandTotal = subtotal + taxAmount + shipping - discount;
 
-    //Ensure grand total is non-negative
     if (grandTotal < 0) {
       logAudit({
         userId: req.user?.id,

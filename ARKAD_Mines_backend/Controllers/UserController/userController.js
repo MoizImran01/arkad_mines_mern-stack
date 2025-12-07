@@ -41,7 +41,6 @@ const verifyCaptcha = async (captchaToken) => {
 };
 
 
-//handles the user login process. it validates credentials and returns auth token
 const loginUser = async (req, res) => {
 
   const { email, password, captchaToken } = req.body;
@@ -142,7 +141,6 @@ const loginUser = async (req, res) => {
 };
 
 
-//handles new user registration it validates input and creates new user account
 const registerUser = async (req, res) => {
 
   const { companyName, email, password, role, captchaToken } = req.body;
@@ -287,7 +285,6 @@ const registerUser = async (req, res) => {
   }
 };
 
-//Get all users, Admin only functionality
 const getAllUsers = async (req, res) => {
   const clientIp = getClientIp(req);
   try {
@@ -414,7 +411,6 @@ const updateUserRole = async (req, res) => {
   }
 };
 
-//Delete user, Admin only functionality
 const deleteUser = async (req, res) => {
   const clientIp = getClientIp(req);
   try {

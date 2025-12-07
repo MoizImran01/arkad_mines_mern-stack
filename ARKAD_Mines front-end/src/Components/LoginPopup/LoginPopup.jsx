@@ -5,10 +5,8 @@ import axios from "axios";
 import { StoreContext } from '../../context/StoreContext';
 import ReCAPTCHA from "react-google-recaptcha";
 
-// Google reCAPTCHA site key - Replace with your production key from https://www.google.com/recaptcha/admin
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
-//main login/signup popup component that handles user authentication
 const LoginPopup = ({ setShowLogin }) => {
     
     const [currentState, setCurrentState] = useState("Login")
@@ -122,7 +120,6 @@ const handleSubmit = async (event) => {
         setCaptchaToken(null)
     }
 
-    //handles clicking outside the modal to close it (backdrop click)
     const handleBackdropClick = (e) => {
 
         if (e.target === e.currentTarget) {

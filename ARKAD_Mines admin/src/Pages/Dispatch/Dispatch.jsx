@@ -28,7 +28,6 @@ const Dispatch = () => {
     return `${API_URL}/images/${imagePath}`;
   };
 
-  //Function to search for block by QR code
   const searchBlock = async () => {
 
     if (!qrCode.trim()) {
@@ -125,7 +124,6 @@ const Dispatch = () => {
     }
   };
 
-  //Handle camera scanning using browser's built-in QR code scanner
   const startCameraScan = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 

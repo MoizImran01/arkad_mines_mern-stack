@@ -1,7 +1,6 @@
 import { createContext, useEffect, useState } from "react";
 import axios from "axios";
 
-//Create global context for admin authentication state management
 export const AdminAuthContext = createContext(null);
 
 const AdminAuthContextProvider = (props) => {

@@ -7,10 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import ReCAPTCHA from "react-google-recaptcha";
 
-// Google reCAPTCHA site key - Replace with your production key from https://www.google.com/recaptcha/admin
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
-//Admin login component that only allows admin users to log in
 const AdminLogin = () => {
 
   const [isLoading, setIsLoading] = useState(false);
