@@ -75,7 +75,6 @@ const getQrUpload = () => {
     return _qrUpload;
 };
 
-// Middleware wrapper that lazily initializes upload
 const upload = {
     single: (fieldName) => (req, res, next) => {
         return getUpload().single(fieldName)(req, res, next);

@@ -47,7 +47,6 @@ const AdminLogin = () => {
     if (error) setError("");
   };
 
-  // Main form submission handler for admin login
   const handleSubmit = async (event) => {
 
     event.preventDefault();
@@ -62,7 +61,6 @@ const AdminLogin = () => {
     setError("");
 
     try {
-      // Make API call to backend authentication service with CAPTCHA token
       const response = await axios.post(`${url}/api/user/login`, {
         ...formData,
         captchaToken

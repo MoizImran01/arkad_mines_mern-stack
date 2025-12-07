@@ -33,7 +33,6 @@ const Users = () => {
     }
   }
 
-  // Function to update user role
   const updateUserRole = async (userId, newRole) => {
     try {
       const response = await axios.put(

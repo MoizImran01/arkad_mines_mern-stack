@@ -1,5 +1,4 @@
 import dotenv from "dotenv";
-// Load environment variables FIRST before any other imports that use them
 dotenv.config({ path: "./config.env" });
 
 import express from "express";

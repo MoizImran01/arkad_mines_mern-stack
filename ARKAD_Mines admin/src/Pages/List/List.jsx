@@ -14,7 +14,7 @@ const List = () => {
 
   const [qrModal, setQrModal] = useState({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null });
 
-  // Helper function to get image URL - handles both Cloudinary URLs and legacy local images
+  // Get image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/100x100?text=No+Image';
     // If it's already a full URL (Cloudinary), return as is

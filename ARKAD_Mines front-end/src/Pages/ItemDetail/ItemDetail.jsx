@@ -102,7 +102,7 @@ const ItemDetail = () => {
     }
   };
 
-  // Helper function to get image URL - handles both Cloudinary URLs and legacy local images
+  // Get image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/800x600?text=No+Image';
     // If it's already a full URL (Cloudinary), return as is

@@ -14,5 +14,4 @@ export const assets ={
     parcel_icon
 }
 
-// Use environment variable for API URL, fallback to localhost for development
 export const url = import.meta.env.VITE_API_URL || 'http://localhost:4000'

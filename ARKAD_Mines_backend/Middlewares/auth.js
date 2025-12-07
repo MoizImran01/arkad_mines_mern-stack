@@ -43,7 +43,6 @@ export const verifyToken = (req, res, next) => {
   }
 };
 
-//middleware factory that creates role-based authorization middleware
 export const authorizeRoles = (...allowedRoles) => {
 
   return (req, res, next) => {

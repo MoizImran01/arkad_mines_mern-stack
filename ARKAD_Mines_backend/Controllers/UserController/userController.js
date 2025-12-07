@@ -6,13 +6,10 @@ import axios from "axios";
 import { logAudit, logError, getClientIp, normalizeRole } from "../../logger/auditLogger.js";
 
 
-//creates JWT token containing user ID and role, it is used for maintaining authenticated sessions
-
 const createToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
-// Verifies Google reCAPTCHA token to prevent bot submissions
 const verifyCaptcha = async (captchaToken) => {
   try {
     const secretKey = process.env.RECAPTCHA_SECRET_KEY;
