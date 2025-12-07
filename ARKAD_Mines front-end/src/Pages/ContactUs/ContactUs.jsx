@@ -107,7 +107,6 @@ export default function ContactUs({ setShowLogin }) {
       setShowLoginPrompt(true);
       return;
     }
-    // Handle form submission
     console.log(formData);
   };
 

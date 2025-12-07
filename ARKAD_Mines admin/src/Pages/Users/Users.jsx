@@ -84,7 +84,6 @@ const Users = () => {
     }
   };
 
-  // Get role badge color
   const getRoleBadgeColor = (role) => {
     switch (role) {
       case 'admin':

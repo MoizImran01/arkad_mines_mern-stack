@@ -6,7 +6,6 @@ const userRouter = express.Router();
 
 
 
-// Rate Limiter for authentication routes (login and register) to prevent brute-force attacks
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
   max: 5, 

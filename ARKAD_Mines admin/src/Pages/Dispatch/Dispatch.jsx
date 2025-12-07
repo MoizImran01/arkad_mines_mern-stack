@@ -4,7 +4,6 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FiPackage, FiCheckCircle, FiXCircle, FiSearch, FiGrid, FiCamera, FiType } from 'react-icons/fi';
 
-// API URL from environment variable
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const Dispatch = () => {
@@ -67,7 +66,6 @@ const Dispatch = () => {
     }
   };
 
-  // Function to dispatch block
   const dispatchBlock = async () => {
     if (!blockInfo || !qrCode) {
       toast.error("No block selected");
@@ -155,7 +153,6 @@ const Dispatch = () => {
     setShowCamera(false);
   };
 
-  // Handle QR code detection from camera using HTML5 QR code scanner
   useEffect(() => {
     if (showCamera && videoRef.current) {
 

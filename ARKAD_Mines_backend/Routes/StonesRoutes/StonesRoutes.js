@@ -5,8 +5,6 @@ import { upload } from "../../config/cloudinary.js"
 import { verifyToken, authorizeRoles } from "../../Middlewares/auth.js"
 
 const stonesRouter = express.Router();
-// --- Rate Limiter Configuration ---
-// Mitigation for: "Competitors scrape detailed pricing" & "Bot database overload"
 const catalogLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, 
     max: 60, 
@@ -16,7 +14,6 @@ const catalogLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 });
-// Protected routes - require authentication
 stonesRouter.post("/add", verifyToken, authorizeRoles('admin'), (req, res, next) => {
     upload.single("image")(req, res, (err) => {
         if (err) {

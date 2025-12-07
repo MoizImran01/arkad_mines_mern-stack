@@ -4,7 +4,6 @@ import { assets } from '../../assets/assets';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
-// API URL from environment variable
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 export const AddProduct = () => {

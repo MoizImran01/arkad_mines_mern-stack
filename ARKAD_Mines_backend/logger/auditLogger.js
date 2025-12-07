@@ -5,12 +5,10 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ensure logs directory exists
 const logsDir = path.join(__dirname, '../logs');
 const auditLogPath = path.join(logsDir, 'audit.log');
 const errorLogPath = path.join(logsDir, 'error.log');
 
-// Create logs directory if it doesn't exist
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir, { recursive: true });
 }

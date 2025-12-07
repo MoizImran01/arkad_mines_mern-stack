@@ -16,7 +16,6 @@ const Navbar = ({ setShowLogin }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Determine active menu based on current path
   const getActiveMenu = () => {
     const path = location.pathname;
     if (path === '/') return 'home';

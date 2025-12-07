@@ -5,7 +5,6 @@ import { toast } from 'react-toastify';
 import { useEffect } from 'react';
 import axios from 'axios'
 
-// API URL from environment variable
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const List = () => {

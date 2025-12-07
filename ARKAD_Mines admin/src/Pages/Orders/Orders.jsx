@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { FiPackage, FiCheckCircle, FiXCircle, FiClock, FiDollarSign, FiUser, FiMapPin, FiPhone, FiCalendar, FiTruck } from 'react-icons/fi';
-// API URL from environment variable
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const Orders = () => {

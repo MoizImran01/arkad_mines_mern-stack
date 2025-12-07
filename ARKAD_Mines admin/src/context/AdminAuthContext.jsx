@@ -39,7 +39,6 @@ const AdminAuthContextProvider = (props) => {
     }
   }, [token]);
 
-  // Verify admin token with backend and check if user is admin
   const verifyAdminToken = async (tokenToVerify) => {
     try {
       const response = await axios.get(`${url}/api/admin-dashboard`, {
@@ -86,7 +85,6 @@ const AdminAuthContextProvider = (props) => {
     }
   };
 
-  // Clear all auth data and logout admin
   const logout = () => {
     setToken("");
     setAdminUser(null);
