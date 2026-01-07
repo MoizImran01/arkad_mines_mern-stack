@@ -23,7 +23,11 @@ const quotationItemSchema = new mongoose.Schema(
 const quotationSchema = new mongoose.Schema(
   {
     referenceNumber: { type: String, required: true, unique: true },
-    quotationRequestId: { type: String, unique: true, sparse: true }, // UUID for tracking quotation requests
+    
+
+    orderNumber: { type: String }, 
+
+    quotationRequestId: { type: String, unique: true, sparse: true }, 
     buyer: { type: mongoose.Schema.Types.ObjectId, ref: "user", required: true },
 
     status: {
@@ -39,7 +43,6 @@ const quotationSchema = new mongoose.Schema(
     },
 
     totalEstimatedCost: { type: Number, default: 0 },
-    
 
     financials: {
       subtotal: { type: Number, default: 0 },

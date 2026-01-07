@@ -33,7 +33,7 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["draft", "confirmed", "processing", "shipped", "delivered", "cancelled"],
+      enum: ["draft", "confirmed", "dispatched", "delivered", "cancelled"],
       default: "draft",
     },
     items: {
@@ -48,7 +48,14 @@ const orderSchema = new mongoose.Schema(
       discountAmount: { type: Number, default: 0 },
       grandTotal: { type: Number, default: 0 },
     },
-    deliveryAddress: { type: String, trim: true },
+    deliveryAddress: {
+      street: String,
+      city: String,
+      state: String,
+      zipCode: String,
+      country: String,
+      phone: String
+    },
     deliveryNotes: { type: String, trim: true },
     paymentStatus: {
       type: String,
@@ -56,7 +63,24 @@ const orderSchema = new mongoose.Schema(
       default: "pending",
     },
     paymentMethod: { type: String, trim: true },
-    notes: { type: String, trim: true },
+    courierTracking: {
+      isDispatched: { type: Boolean, default: false },
+      courierService: { type: String, trim: true }, // e.g., "TCS", "Leopards", etc.
+      trackingNumber: { type: String, trim: true },
+      dispatchedAt: { type: Date },
+      courierLink: { type: String, trim: true }, //link to courier's tracking page
+    },
+    timeline: [
+      {
+        status: { 
+          type: String, 
+          enum: ["draft", "confirmed", "dispatched", "delivered", "cancelled"],
+          required: true 
+        },
+        timestamp: { type: Date, default: Date.now },
+        notes: { type: String, trim: true },
+      }
+    ],
   },
   { timestamps: true }
 );

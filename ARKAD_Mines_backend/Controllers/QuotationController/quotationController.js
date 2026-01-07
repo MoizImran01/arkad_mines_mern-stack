@@ -742,9 +742,7 @@ const downloadQuotation = async (req, res) => {
   }
 };
 
-// Approve Quotation handler
-// NOTE: All audit logs for approve/reject operations form an immutable audit trail.
-// These logs should never be modified or deleted as they record critical state changes.
+
 const approveQuotation = async (req, res) => {
   const clientIp = getClientIp(req);
   try {
@@ -809,23 +807,24 @@ const approveQuotation = async (req, res) => {
       });
     }
 
-    // Update quotation status and buyer decision
-    quotation.status = "approved";
-    quotation.buyerDecision = {
-      decision: "approved",
-      comment: comment || "",
-      decisionDate: now,
-    };
-
-    await quotation.save();
-
-    // Create sales order draft
     const generateOrderNumber = () => {
       const random = Math.floor(Math.random() * 900) + 100;
       return `ORD-${Date.now().toString().slice(-6)}-${random}`;
     };
+    const newOrderNumber = generateOrderNumber();
 
-    const orderItems = quotation.items.map((item) => ({
+
+    quotation.status = "approved";
+    quotation.orderNumber = newOrderNumber; 
+    quotation.buyerDecision = {
+      decision: "approved",
+      comment: comment || "",
+      decisionDate: new Date(),
+    };
+
+    await quotation.save();
+
+   const orderItems = quotation.items.map((item) => ({
       stone: item.stone,
       stoneName: item.stoneName,
       unitPrice: item.finalUnitPrice || item.priceSnapshot,
@@ -837,13 +836,23 @@ const approveQuotation = async (req, res) => {
     }));
 
     const order = new orderModel({
-      orderNumber: generateOrderNumber(),
+      orderNumber: newOrderNumber, 
       quotation: quotation._id,
       buyer: quotation.buyer._id,
       status: "draft",
       items: orderItems,
       financials: quotation.financials,
       notes: `Order created from approved quotation ${quotation.referenceNumber}`,
+      timeline: [
+        {
+          status: "draft",
+          timestamp: new Date(),
+          notes: "Order created from approved quotation"
+        }
+      ],
+      courierTracking: {
+        isDispatched: false
+      }
     });
 
     await order.save();
@@ -1100,14 +1109,7 @@ const convertToSalesOrder = async (req, res) => {
       });
     }
 
-    // TODO: Implement sales order conversion logic
-    // This is a placeholder for future implementation
-    // Steps to implement:
-    // 1. Check if sales order already exists for this quotation
-    // 2. Create sales order from approved quotation
-    // 3. Link sales order to quotation
-    // 4. Update quotation status if needed
-    // 5. Return sales order details
+
 
     logAudit({
       userId: req.user?.id,

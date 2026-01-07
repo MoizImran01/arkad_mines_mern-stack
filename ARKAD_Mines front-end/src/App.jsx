@@ -2,6 +2,7 @@ import { useState } from 'react';
 import './App.css';
 import Navbar from './Components/Navbar/Navbar';
 import LoginPopup from './Components/LoginPopup/LoginPopup';
+import PlaceOrder from './Pages/PlaceOrder/PlaceOrder';
 import Home from './Pages/Home/Home';
 import Products from './Pages/Products/Products';
 import AboutUs from './Pages/AboutUs/AboutUs';
@@ -40,6 +41,14 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+  path="/place-order/:orderNumber"
+  element={
+    <ProtectedRoute setShowLogin={setShowLogin}>
+      <PlaceOrder />
+    </ProtectedRoute>
+  }
+/>
           <Route path="/industries" element={<Industries setShowLogin={setShowLogin} />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/contact" element={<ContactUs />} />

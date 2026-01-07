@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Quotations.css";
 import axios from "axios";
 import { StoreContext } from "../../context/StoreContext";
@@ -11,7 +12,6 @@ import {
   FiXCircle,
   FiEdit,
   FiDownload,
-  FiClock,
   FiShoppingCart
 } from "react-icons/fi";
 
@@ -19,6 +19,7 @@ const Quotations = () => {
   const { token, url } = useContext(StoreContext);
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const [selectedQuote, setSelectedQuote] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -26,7 +27,7 @@ const Quotations = () => {
   const [decisionComment, setDecisionComment] = useState("");
   const [showDecisionModal, setShowDecisionModal] = useState(false);
   const [decisionType, setDecisionType] = useState(null); // "approve", "reject", or "revision"
-  const [activeTab, setActiveTab] = useState("pending"); // Filter by tab: pending, approved, rejected, drafts, all
+  const [activeTab, setActiveTab] = useState("pending");
 
   const headers = useMemo(
     () => ({
@@ -40,30 +41,23 @@ const Quotations = () => {
     setRefreshing(true);
     setError(null);
     try {
-      // Fetch all quotations - we'll filter client-side by tab
-      const response = await axios.get(`${url}/api/quotes/my`, { 
-        headers
-      });
+      const response = await axios.get(`${url}/api/quotes/my`, { headers });
       if (response.data.success) {
         let quotations = response.data.quotations || [];
         
-        // Filter out expired quotations
         const now = new Date();
         quotations = quotations.filter(quote => {
-          if (!quote.validity?.end) return true; // Keep if no validity end date
+          if (!quote.validity?.end) return true;
           return new Date(quote.validity.end) >= now;
         });
         
-        // Filter by active tab
         quotations = filterQuotationsByTab(quotations, activeTab);
-        
         setQuotes(quotations);
       } else {
         setQuotes([]);
         setError(response.data.message || "Unable to load quotations");
       }
     } catch (err) {
-
       const errorMessage = err.response?.data?.error || err.response?.statusText || err.message;
       console.error("Error fetching quotations:", errorMessage);
       setError(errorMessage); 
@@ -77,7 +71,6 @@ const Quotations = () => {
   const filterQuotationsByTab = (quotations, tab) => {
     switch (tab) {
       case "pending":
-        // Submitted, Adjustment Required, Revision Requested, Issued
         return quotations.filter(q => 
           ["submitted", "adjustment_required", "revision_requested", "issued"].includes(q.status)
         );
@@ -108,7 +101,6 @@ const Quotations = () => {
     }
   };
 
-
   const openDecisionModal = (type) => {
     setDecisionType(type);
     setShowDecisionModal(true);
@@ -121,9 +113,20 @@ const Quotations = () => {
     setDecisionComment("");
   };
 
-  const handleApprove = async () => {
+  // --- RENAMED AND UNIFIED FUNCTION ---
+  const handleConvertToSalesOrder = async () => {
     if (!selectedQuote) return;
 
+    // SCENARIO 1: Quote is ALREADY Approved -> Just Redirect
+    if (selectedQuote.status === "approved") {
+      // NOTE: Since we don't have an endpoint to fetch the specific order ID yet,
+      // we check if it's attached to the quote, or fallback to the reference number.
+      const targetOrderNumber = selectedQuote.orderNumber || selectedQuote.referenceNumber;
+      navigate(`/place-order/${targetOrderNumber}`);
+      return;
+    }
+
+    // SCENARIO 2: Quote is ISSUED -> Call Approve API -> Then Redirect
     setActionLoading(true);
     try {
       const response = await axios.put(
@@ -133,10 +136,14 @@ const Quotations = () => {
       );
 
       if (response.data.success) {
-        alert("Quotation approved successfully! Sales order has been created.");
+        const orderNum = response.data.order.orderNumber;
+        
         fetchQuotes();
         setSelectedQuote(null);
         closeDecisionModal();
+        
+        // Redirect to Place Order Page
+        navigate(`/place-order/${orderNum}`);
       } else {
         alert("Failed to approve quotation: " + (response.data.message || "Unknown error"));
       }
@@ -229,51 +236,9 @@ const Quotations = () => {
       link.click();
       link.remove();
     } catch (err) {
-      const errorMessage = 
-    err.response?.data?.error || 
-    err.response?.statusText || 
-    err.message;
+      const errorMessage = err.response?.data?.error || err.response?.statusText || err.message;
       console.error("Download failed", err);
       alert(`Failed to download PDF: ${errorMessage}`);
-    }
-  };
-
-  const handleConvertToOrder = async () => {
-    if (!selectedQuote) return;
-
-    if (selectedQuote.status !== "approved") {
-      alert("Only approved quotations can be converted to sales orders.");
-      return;
-    }
-
-    const confirmConvert = window.confirm(
-      "Convert this approved quotation to a sales order?\n\n" +
-      "Note: This feature is coming soon. This is a placeholder."
-    );
-
-    if (!confirmConvert) return;
-
-    setActionLoading(true);
-    try {
-      const response = await axios.post(
-        `${url}/api/quotes/${selectedQuote._id}/convert-to-order`,
-        {},
-        { headers }
-      );
-
-      if (response.data.success) {
-        alert(response.data.message || "Sales order conversion requested. This feature is coming soon.");
-        // TODO: Navigate to orders page or refresh when implemented
-        // fetchQuotes();
-      } else {
-        alert("Failed to convert to sales order: " + (response.data.message || "Unknown error"));
-      }
-    } catch (err) {
-      console.error("Error converting to sales order:", err);
-      const errorMessage = err.response?.data?.message || "Error converting to sales order";
-      alert(errorMessage);
-    } finally {
-      setActionLoading(false);
     }
   };
 
@@ -477,6 +442,7 @@ const Quotations = () => {
 
             {selectedQuote.status === "issued" && (
               <div className="panel-section action-buttons">
+                {/* Modal Trigger */}
                 <button 
                   className="action-btn approve-btn" 
                   onClick={() => openDecisionModal("approve")}
@@ -509,9 +475,10 @@ const Quotations = () => {
 
             {selectedQuote.status === "approved" && (
               <div className="panel-section action-buttons">
+                {/* DIRECT CONVERSION CALL */}
                 <button 
                   className="action-btn convert-order-btn" 
-                  onClick={handleConvertToOrder}
+                  onClick={handleConvertToSalesOrder}
                   disabled={actionLoading}
                 >
                   <FiShoppingCart /> Convert to Sales Order
@@ -584,7 +551,8 @@ const Quotations = () => {
               <button
                 className={`btn-primary ${decisionType === "approve" ? "approve" : decisionType === "reject" ? "reject" : "revision"}`}
                 onClick={() => {
-                  if (decisionType === "approve") handleApprove();
+                  // UNIFIED CALL IN MODAL
+                  if (decisionType === "approve") handleConvertToSalesOrder();
                   else if (decisionType === "reject") handleReject();
                   else if (decisionType === "revision") handleRequestRevision();
                 }}
@@ -604,4 +572,3 @@ const Quotations = () => {
 };
 
 export default Quotations;
-

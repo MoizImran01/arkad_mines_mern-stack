@@ -18,6 +18,15 @@ import Quotations from './Pages/Quotations/Quotations'
 const App = () => {
   const { token, adminUser, loading } = useContext(AdminAuthContext);
 
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn("Loading timeout - setting loading to false");
+      }
+    }, 10000); 
+    
+    return () => clearTimeout(timeout);
+  }, [loading]);
 
   if (loading) {
     return (
@@ -32,18 +41,6 @@ const App = () => {
       </div>
     );
   }
-
-
-  React.useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn("Loading timeout - setting loading to false");
-
-      }
-    }, 10000); 
-    
-    return () => clearTimeout(timeout);
-  }, [loading]);
 
   return (
     <div>
