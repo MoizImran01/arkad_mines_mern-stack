@@ -22,36 +22,21 @@ export const verifyToken = (req, res, next) => {
 
 
   const token = authHeader.split(" ")[1];
-  
-  // Check if JWT_SECRET is configured
-  if (!process.env.JWT_SECRET) {
-    console.error("JWT_SECRET is not configured!");
-    logAudit({
-      userId: null,
-      role: 'GUEST',
-      action: 'AUTH_TOKEN_VERIFY',
-      status: 'FAILED_AUTH',
-      clientIp,
-      details: 'JWT_SECRET not configured'
-    });
-    return res.status(500).json({ message: "Server configuration error" });
-  }
-
   try {
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
     req.user = decoded; 
+
     next();
   } catch (err) {
-    const errorDetails = err.message || err.name || 'Unknown error';
-    console.error("Token verification failed:", errorDetails);
-    
     logAudit({
       userId: null,
       role: 'GUEST',
       action: 'AUTH_TOKEN_VERIFY',
       status: 'FAILED_AUTH',
       clientIp,
-      details: `Token verification failed: ${errorDetails}`
+      details: `Token verification failed: ${err.name}`
     });
 
     res.status(403).json({ message: "Invalid or expired token" });
