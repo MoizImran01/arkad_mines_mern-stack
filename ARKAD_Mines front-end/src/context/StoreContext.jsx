@@ -1,3 +1,4 @@
+
 import { createContext, useEffect, useState } from "react";
 
 //create global context for application state management
@@ -74,6 +75,8 @@ const StoreContextProvider = (props) => {
           dimensions: item.dimensions,
           image: item.image,
           stockAvailability: item.stockAvailability,
+          stockQuantity: item.stockQuantity,
+          quantityDelivered: item.quantityDelivered || 0,
           requestedQuantity: 1,
           category: item.category,
           subcategory: item.subcategory,
@@ -88,14 +91,34 @@ const StoreContextProvider = (props) => {
 
   const updateQuoteItemQuantity = (stoneId, quantity) => {
     setQuoteItems((prev) =>
-      prev.map((item) =>
-        item._id === stoneId
-          ? {
-              ...item,
-              requestedQuantity: Math.max(1, Number(quantity) || 1),
-            }
-          : item
-      )
+      prev.map((item) => {
+        if (item._id !== stoneId) return item;
+        
+
+        const currentItem = prev.find(i => i._id === stoneId);
+        const remainingQuantity = (currentItem?.stockQuantity || 0) - (currentItem?.quantityDelivered || 0);
+        const maxAllowed = remainingQuantity > 0 ? remainingQuantity : 0;
+        
+
+        let newQuantity = Number(quantity);
+        
+
+        if (isNaN(newQuantity) || newQuantity < 1) {
+          newQuantity = 1;
+        }
+        
+
+        if (maxAllowed > 0) {
+          newQuantity = Math.min(newQuantity, maxAllowed);
+        } else {
+          newQuantity = 1; 
+        }
+        
+        return {
+          ...item,
+          requestedQuantity: newQuantity,
+        };
+      })
     );
   };
 
@@ -109,6 +132,8 @@ const StoreContextProvider = (props) => {
         dimensions: item.dimensions,
         image: item.image,
         stockAvailability: item.stockAvailability,
+        stockQuantity: item.stockQuantity,
+        quantityDelivered: item.quantityDelivered || 0,
         requestedQuantity: Math.max(1, Number(item.requestedQuantity) || 1),
         category: item.category,
         subcategory: item.subcategory,

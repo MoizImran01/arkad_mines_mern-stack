@@ -11,9 +11,18 @@ const orderItemSchema = new mongoose.Schema(
     unitPrice: { type: Number, required: true },
     priceUnit: { type: String, required: true },
     quantity: { type: Number, required: true, min: 1 },
+    quantityDispatched: { type: Number, default: 0 },
     totalPrice: { type: Number, required: true },
     image: { type: String },
     dimensions: { type: String },
+    dispatchedBlocks: [{
+      blockId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "stones"
+      },
+      quantityFromBlock: Number,
+      qrCode: String
+    }]
   },
   { _id: false }
 );

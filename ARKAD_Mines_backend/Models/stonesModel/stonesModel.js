@@ -34,7 +34,12 @@ const stonesSchema = new mongoose.Schema({
         required: true 
     },
     stockQuantity: { 
-        type: Number 
+        type: Number,
+        default: 0
+    },
+    quantityDelivered: {
+        type: Number,
+        default: 0
     },
     grade: {
         type: String,
@@ -67,7 +72,16 @@ const stonesSchema = new mongoose.Schema({
         type: String,
         enum: ["Registered", "In Warehouse", "Dispatched"],
         default: "Registered"
-    }
+    },
+    dispatchHistory: [{
+        orderId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "order"
+        },
+        quantityDispatched: Number,
+        dispatchedAt: { type: Date, default: Date.now },
+        orderNumber: String
+    }]
 }, {
     timestamps: true
 });

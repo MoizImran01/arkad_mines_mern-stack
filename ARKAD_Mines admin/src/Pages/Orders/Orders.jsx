@@ -3,7 +3,7 @@ import './Orders.css'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
-import { FiPackage, FiCheckCircle, FiXCircle, FiClock, FiDollarSign, FiUser, FiMapPin, FiPhone, FiCalendar, FiTruck, FiEdit2, FiX, FiCheck } from 'react-icons/fi';
+import { FiPackage, FiCheckCircle, FiXCircle, FiClock, FiDollarSign, FiUser, FiMapPin, FiPhone, FiCalendar, FiTruck, FiEdit2, FiX, FiCheck, FiSearch, FiGrid } from 'react-icons/fi';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -63,7 +63,7 @@ const Orders = () => {
   // Update order status
   const updateOrderStatus = async (orderId) => {
     try {
-      // Validate required fields for dispatched status
+
       if (statusForm.status === 'dispatched' && (!statusForm.courierService || !statusForm.trackingNumber)) {
         toast.error("Courier service and tracking number required for dispatched status");
         return;
@@ -71,9 +71,13 @@ const Orders = () => {
 
       const token = localStorage.getItem('adminToken');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
       const response = await axios.put(
         `${API_URL}/api/orders/admin/status/${orderId}`,
-        statusForm,
+        {
+          ...statusForm,
+          dispatchedBlocks: []
+        },
         { headers }
       );
 
@@ -536,6 +540,8 @@ const Orders = () => {
                                           className="form-control"
                                         />
                                       </div>
+
+
                                     </>
                                   )}
 
@@ -681,6 +687,8 @@ const Orders = () => {
       )}
     </div>
   );
-};
 
+
+
+}
 export default Orders;
