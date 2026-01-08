@@ -11,9 +11,18 @@ const orderItemSchema = new mongoose.Schema(
     unitPrice: { type: Number, required: true },
     priceUnit: { type: String, required: true },
     quantity: { type: Number, required: true, min: 1 },
+    quantityDispatched: { type: Number, default: 0 },
     totalPrice: { type: Number, required: true },
     image: { type: String },
     dimensions: { type: String },
+    dispatchedBlocks: [{
+      blockId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "stones"
+      },
+      quantityFromBlock: Number,
+      qrCode: String
+    }]
   },
   { _id: false }
 );
@@ -59,10 +68,40 @@ const orderSchema = new mongoose.Schema(
     deliveryNotes: { type: String, trim: true },
     paymentStatus: {
       type: String,
-      enum: ["pending", "partial", "paid", "refunded"],
+      enum: ["pending", "payment_in_progress", "fully_paid", "refunded"],
       default: "pending",
     },
     paymentMethod: { type: String, trim: true },
+    totalPaid: { type: Number, default: 0 },
+    outstandingBalance: { type: Number, default: 0 },
+    paymentProofs: [
+      {
+        proofFile: { type: String }, // File path to uploaded proof
+        amountPaid: { type: Number, required: true },
+        uploadedAt: { type: Date, default: Date.now },
+        approvedAt: { type: Date },
+        approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "admin" },
+        status: { 
+          type: String, 
+          enum: ["pending", "approved", "rejected"],
+          default: "pending"
+        },
+        notes: { type: String, trim: true }
+      }
+    ],
+    paymentTimeline: [
+      {
+        action: { 
+          type: String, 
+          enum: ["payment_submitted", "payment_approved", "payment_rejected"],
+          required: true 
+        },
+        timestamp: { type: Date, default: Date.now },
+        amountPaid: { type: Number },
+        proofFile: { type: String, trim: true }, // Reference to uploaded proof file
+        notes: { type: String, trim: true }
+      }
+    ],
     courierTracking: {
       isDispatched: { type: Boolean, default: false },
       courierService: { type: String, trim: true }, // e.g., "TCS", "Leopards", etc.

@@ -1,3 +1,4 @@
+
 .request-quote-page {
   padding: 40px 0;
   display: flex;
@@ -150,6 +151,18 @@
   border-radius: 12px;
 }
 
+.item-details .stock-limit {
+  display: block;
+  margin-top: 4px;
+  color: #dc2626;
+  font-weight: 500;
+  background: #fef2f2;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  width: fit-content;
+}
+
 .item-actions {
   display: flex;
   flex-direction: column;
@@ -162,6 +175,24 @@
   border-radius: 8px;
   padding: 10px;
   font-size: 16px;
+  width: 100%;
+}
+
+.item-actions input.at-max-quantity {
+  border-color: #dc2626;
+  background-color: #fef2f2;
+}
+
+.quantity-control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.max-quantity-warning {
+  font-size: 12px;
+  color: #dc2626;
+  font-weight: 500;
 }
 
 .price-note {
@@ -247,4 +278,3 @@
     grid-template-columns: 1fr;
   }
 }
-

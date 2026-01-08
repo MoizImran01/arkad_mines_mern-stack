@@ -12,8 +12,15 @@ import orderRouter from "../Routes/OrderRoutes/OrderRoutes.js";
 const app = express();
 
 //Middlewares
-app.use(express.json());
-app.use(cors());
+// Increase payload size limit for base64 image uploads (10MB)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 ///database configuration
 connectDB().catch((e) => console.error("DB connect error:", e));

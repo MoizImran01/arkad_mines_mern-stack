@@ -1,11 +1,14 @@
+
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import "./Orders.css";
 import axios from "axios";
+import { toast } from "react-toastify";
 import { StoreContext } from "../../context/StoreContext";
 import { useNavigate } from "react-router-dom";
 import { 
   FiLoader, FiExternalLink, FiCreditCard, FiPackage, 
-  FiMapPin, FiCalendar, FiTruck, FiX, FiCheck, FiShoppingCart, FiCheckCircle 
+  FiMapPin, FiCalendar, FiTruck, FiX, FiCheck, FiShoppingCart, FiCheckCircle, FiDownload,
+  FiUser, FiMail, FiPhone, FiGlobe, FiBriefcase
 } from "react-icons/fi";
 
 const Orders = () => {
@@ -20,10 +23,16 @@ const Orders = () => {
   // Modal State
   const [trackingOrderNumber, setTrackingOrderNumber] = useState(null);
   const [trackingOrderDetails, setTrackingOrderDetails] = useState(null);
-  const [modalTab, setModalTab] = useState("tracking"); // "tracking" or "details"
+  const [modalTab, setModalTab] = useState("tracking"); // "tracking", "details", or "payment"
+  
+  // Payment Form State
+  const [paymentForm, setPaymentForm] = useState({
+    amount: "",
+    proofFile: null
+  });
+  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   
   const navigate = useNavigate();
-
 
   const ORDER_STATUSES = ["draft", "confirmed", "dispatched", "delivered", "cancelled"];
 
@@ -58,7 +67,6 @@ const Orders = () => {
 
   useEffect(() => {
     fetchOrders();
-
   }, [token]);
 
   useEffect(() => {
@@ -73,7 +81,7 @@ const Orders = () => {
     const order = orders.find(o => o.orderNumber === orderNumber);
     setTrackingOrderDetails(order);
     setTrackingOrderNumber(orderNumber);
-    setModalTab("tracking"); // Default to tracking view
+    setModalTab("tracking");
   };
 
   const closeTrackingView = () => {
@@ -89,6 +97,173 @@ const Orders = () => {
     }
   };
 
+  const handlePaymentSubmit = async (e) => {
+    e.preventDefault();
+    const amount = parseFloat(paymentForm.amount);
+    if (!isFinite(amount) || amount <= 0 || amount < 0.01) {
+      toast.error("Please enter a valid payment amount (minimum 0.01)");
+      return;
+    }
+
+    if (!paymentForm.proofFile) {
+      toast.error("Please upload a payment proof screenshot");
+      return;
+    }
+
+    const outstanding = trackingOrderDetails.outstandingBalance || 0;
+    if (amount > outstanding + 0.01) {
+      toast.error(`Amount cannot exceed outstanding balance of Rs ${outstanding.toFixed(2)}`);
+      return;
+    }
+
+    setPaymentSubmitting(true);
+    try {
+      // Compress and resize image before converting to base64
+      const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              let width = img.width;
+              let height = img.height;
+
+              const aspectRatio = width / height;
+              if (width > height) {
+                if (width > maxWidth) {
+                  width = maxWidth;
+                  height = Math.round(width / aspectRatio);
+                }
+              } else {
+                if (height > maxHeight) {
+                  height = maxHeight;
+                  width = Math.round(height * aspectRatio);
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+
+              const ctx = canvas.getContext('2d');
+              ctx.imageSmoothingEnabled = true;
+              ctx.imageSmoothingQuality = 'medium';
+              ctx.drawImage(img, 0, 0, width, height);
+
+              canvas.toBlob(
+                (blob) => {
+                  if (!blob) {
+                    reject(new Error('Failed to create blob from canvas'));
+                    return;
+                  }
+                  
+                  if (blob.size > 3 * 1024 * 1024) {
+                    const img2 = new Image();
+                    img2.onload = () => {
+                      const canvas2 = document.createElement('canvas');
+                      canvas2.width = Math.round(width * 0.8);
+                      canvas2.height = Math.round(height * 0.8);
+                      const ctx2 = canvas2.getContext('2d');
+                      ctx2.drawImage(img2, 0, 0, canvas2.width, canvas2.height);
+                      canvas2.toBlob(
+                        (blob2) => {
+                          const reader2 = new FileReader();
+                          reader2.onload = () => {
+                            const dataUrl = reader2.result;
+                            if (dataUrl && dataUrl.startsWith('data:image/')) {
+                              resolve(dataUrl);
+                            } else {
+                              reject(new Error('Invalid data URL format'));
+                            }
+                          };
+                          reader2.onerror = reject;
+                          reader2.readAsDataURL(blob2);
+                        },
+                        'image/jpeg',
+                        0.5
+                      );
+                    };
+                    img2.src = e.target.result;
+                    return;
+                  }
+                  
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const dataUrl = reader.result;
+                    if (dataUrl && dataUrl.startsWith('data:image/')) {
+                      resolve(dataUrl);
+                    } else {
+                      reject(new Error('Invalid data URL format'));
+                    }
+                  };
+                  reader.onerror = reject;
+                  reader.readAsDataURL(blob);
+                },
+                'image/jpeg',
+                quality
+              );
+            };
+            img.onerror = (error) => {
+              console.error('Image load error:', error);
+              reject(new Error('Failed to load image'));
+            };
+            img.src = e.target.result;
+          };
+          reader.onerror = (error) => {
+            console.error('FileReader error:', error);
+            reject(new Error('Failed to read file'));
+          };
+          reader.readAsDataURL(file);
+        });
+      };
+
+      let base64;
+      try {
+        base64 = await compressImage(paymentForm.proofFile);
+        if (!base64 || !base64.startsWith('data:image/')) {
+          throw new Error('Invalid image format after compression');
+        }
+      } catch (compressionError) {
+        console.error('Image compression error:', compressionError);
+        toast.error('Failed to process image. Please try a different image file.');
+        setPaymentSubmitting(false);
+        return;
+      }
+      const payload = {
+        amountPaid: parseFloat(amount.toFixed(2)),
+        address: trackingOrderDetails.deliveryAddress || {},
+        proofBase64: base64,
+        proofFileName: paymentForm.proofFile.name
+      };
+
+      const response = await axios.post(
+        `${url}/api/orders/payment/submit/${trackingOrderDetails._id}`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        toast.success("Payment proof submitted successfully! Awaiting admin verification.");
+        setPaymentForm({ amount: "", proofFile: null });
+        const updatedOrder = await axios.get(
+          `${url}/api/orders/details/${trackingOrderDetails._id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (updatedOrder.data.success) {
+          setTrackingOrderDetails(updatedOrder.data.order);
+        }
+        fetchOrders();
+      } else {
+        toast.error(response.data.message || "Failed to submit payment proof");
+      }
+    } catch (error) {
+      console.error("Error submitting payment:", error);
+      toast.error(error.response?.data?.message || "Error submitting payment proof");
+    } finally {
+      setPaymentSubmitting(false);
+    }
+  };
+
   const getStatusTimeline = (order) => {
     const timeline = [
       { status: "draft", label: "Draft", icon: <FiShoppingCart size={16}/> },
@@ -97,7 +272,6 @@ const Orders = () => {
       { status: "delivered", label: "Delivered", icon: <FiCheckCircle size={16}/> },
     ];
     
-    // Add Cancelled state only if the order is actually cancelled
     if (order.status === "cancelled") {
       timeline.push({ status: "cancelled", label: "Cancelled", icon: <FiX size={16}/> });
     }
@@ -105,7 +279,6 @@ const Orders = () => {
     return timeline;
   };
 
-  // Helper to determine if a timeline step is completed
   const isStepCompleted = (currentStatus, stepStatus) => {
     const statusOrder = ["draft", "confirmed", "dispatched", "delivered"];
     if (currentStatus === "cancelled") return false; 
@@ -114,6 +287,25 @@ const Orders = () => {
     const stepIndex = statusOrder.indexOf(stepStatus);
     
     return currentIndex >= stepIndex;
+  };
+
+  // Format address for display
+  const formatAddress = (deliveryAddress, buyer) => {
+    if (!deliveryAddress || !deliveryAddress.street) {
+      return null;
+    }
+
+    const parts = [];
+    parts.push(buyer?.companyName || "Customer");
+    
+    if (deliveryAddress.street) parts.push(deliveryAddress.street);
+    if (deliveryAddress.city) parts.push(deliveryAddress.city);
+    if (deliveryAddress.state) parts.push(deliveryAddress.state);
+    if (deliveryAddress.zipCode) parts.push(deliveryAddress.zipCode);
+    if (deliveryAddress.country) parts.push(deliveryAddress.country);
+    if (deliveryAddress.phone) parts.push(`Phone: ${deliveryAddress.phone}`);
+
+    return parts.join(", ");
   };
 
   if (!token) {
@@ -168,6 +360,7 @@ const Orders = () => {
                 <th>Date Placed</th>
                 <th>Status</th>
                 <th>Total</th>
+                <th>Outstanding Balance</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -187,8 +380,13 @@ const Orders = () => {
                   </td>
                   <td>Rs {order.financials?.grandTotal?.toLocaleString()}</td>
                   <td>
+                    <span className={`balance-badge ${order.outstandingBalance > 0 ? 'pending' : 'paid'}`}>
+                      Rs {(order.outstandingBalance || 0).toLocaleString()}
+                    </span>
+                  </td>
+                  <td>
                     <div className="action-buttons">
-                      {order.status === "draft" && (
+                      {order.status === "draft" && order.outstandingBalance > 0 && (
                         <button className="payment-btn" onClick={() => handleProceedToPayment(order)}>
                           <FiCreditCard /> Pay
                         </button>
@@ -235,6 +433,12 @@ const Orders = () => {
               >
                 Order Details
               </button>
+              <button 
+                className={`modal-tab-btn ${modalTab === "payment" ? "active" : ""}`}
+                onClick={() => setModalTab("payment")}
+              >
+                Payment
+              </button>
             </div>
 
             <div className="modal-body">
@@ -245,7 +449,6 @@ const Orders = () => {
                     <h3>Order Timeline</h3>
                     <div className="timeline">
                       {getStatusTimeline(trackingOrderDetails).map((step, index) => {
-                        // Logic to show active/completed state
                         const completed = isStepCompleted(trackingOrderDetails.status, step.status);
                         const current = trackingOrderDetails.status === step.status;
                         
@@ -257,14 +460,12 @@ const Orders = () => {
                             <div className="timeline-content">
                               <h4>{step.label}</h4>
                               
-                              {/* Status Change Notes */}
                               {trackingOrderDetails.timeline && trackingOrderDetails.timeline.find(entry => entry.status === step.status) && (
                                 <p className="status-notes">
                                   <strong>Notes:</strong> {trackingOrderDetails.timeline.find(entry => entry.status === step.status)?.notes || "N/A"}
                                 </p>
                               )}
                               
-                              {/* Courier Info appears only under 'Dispatched'*/}
                               {((step.status === "dispatched") && 
                                (trackingOrderDetails.status === "dispatched" || trackingOrderDetails.status === "delivered")) && 
                                trackingOrderDetails.courierTracking?.trackingNumber && (
@@ -286,18 +487,58 @@ const Orders = () => {
                   </div>
 
                   <div className="delivery-section">
-                    <h3><FiMapPin /> Delivery Address</h3>
-                    {trackingOrderDetails.deliveryAddress?.firstName ? (
-                      <div className="delivery-info">
-                        <p>
-                          {trackingOrderDetails.deliveryAddress.firstName} {trackingOrderDetails.deliveryAddress.lastName}<br />
-                          {trackingOrderDetails.deliveryAddress.street}<br />
-                          {trackingOrderDetails.deliveryAddress.city}, {trackingOrderDetails.deliveryAddress.country}
-                        </p>
+                    <h3><FiMapPin /> Delivery Information</h3>
+                    <div className="customer-info-grid">
+                      {/* Company/Buyer Info */}
+                      <div className="customer-info-card">
+                        <h4><FiBriefcase /> Company Details</h4>
+                        <div className="info-row">
+                          <span className="info-label">Company:</span>
+                          <span className="info-value">{trackingOrderDetails.buyer?.companyName || "N/A"}</span>
+                        </div>
+                        <div className="info-row">
+                          <span className="info-label">Email:</span>
+                          <span className="info-value">{trackingOrderDetails.buyer?.email || "N/A"}</span>
+                        </div>
                       </div>
-                    ) : (
-                      <p className="no-address">No delivery address provided.</p>
-                    )}
+
+                      {/* Delivery Address */}
+                      <div className="customer-info-card">
+                        <h4><FiMapPin /> Delivery Address</h4>
+                        {trackingOrderDetails.deliveryAddress?.street ? (
+                          <div className="address-details">
+                            <div className="info-row">
+                              <span className="info-label">Street:</span>
+                              <span className="info-value">{trackingOrderDetails.deliveryAddress.street}</span>
+                            </div>
+                            <div className="info-row">
+                              <span className="info-label">City:</span>
+                              <span className="info-value">{trackingOrderDetails.deliveryAddress.city}</span>
+                            </div>
+                            <div className="info-row">
+                              <span className="info-label">State:</span>
+                              <span className="info-value">{trackingOrderDetails.deliveryAddress.state}</span>
+                            </div>
+                            <div className="info-row">
+                              <span className="info-label">ZIP Code:</span>
+                              <span className="info-value">{trackingOrderDetails.deliveryAddress.zipCode}</span>
+                            </div>
+                            <div className="info-row">
+                              <span className="info-label">Country:</span>
+                              <span className="info-value">{trackingOrderDetails.deliveryAddress.country}</span>
+                            </div>
+                            {trackingOrderDetails.deliveryAddress.phone && (
+                              <div className="info-row">
+                                <span className="info-label">Phone:</span>
+                                <span className="info-value">{trackingOrderDetails.deliveryAddress.phone}</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="no-address">No delivery address provided for this order.</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </>
               )}
@@ -356,6 +597,179 @@ const Orders = () => {
                         <span>Rs {trackingOrderDetails.financials?.grandTotal?.toLocaleString()}</span>
                       </div>
                     </div>
+                  </div>
+                </>
+              )}
+
+              {/* TAB 3: PAYMENT VIEW */}
+              {modalTab === "payment" && (
+                <>
+                  <div className="payment-section">
+                    <h3><FiCreditCard /> Payment Information</h3>
+                    <div className="payment-details-grid">
+                      <div className="payment-detail-card">
+                        <span className="detail-label">Grand Total:</span>
+                        <span className="detail-value">Rs {trackingOrderDetails.financials?.grandTotal?.toLocaleString()}</span>
+                      </div>
+                      <div className="payment-detail-card">
+                        <span className="detail-label">Total Paid:</span>
+                        <span className="detail-value highlight-green">Rs {(trackingOrderDetails.totalPaid || 0).toLocaleString()}</span>
+                      </div>
+                      <div className="payment-detail-card">
+                        <span className="detail-label">Outstanding Balance:</span>
+                        <span className={`detail-value ${trackingOrderDetails.outstandingBalance > 0 ? 'highlight-red' : 'highlight-green'}`}>
+                          Rs {(trackingOrderDetails.outstandingBalance || 0).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {trackingOrderDetails.outstandingBalance > 0 && (
+                      <div className="payment-form-section">
+                        <h4>Submit Payment</h4>
+                        <form onSubmit={handlePaymentSubmit}>
+                          <div className="form-group">
+                            <label>Amount to Pay</label>
+                            <input 
+                              type="number" 
+                              placeholder={`Enter amount (max: Rs ${trackingOrderDetails.outstandingBalance?.toLocaleString()})`}
+                              step="0.01"
+                              max={trackingOrderDetails.outstandingBalance}
+                              value={paymentForm.amount}
+                              onChange={(e) => setPaymentForm({...paymentForm, amount: e.target.value})}
+                              className="form-input"
+                              disabled={paymentSubmitting}
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>Upload Payment Proof (Screenshot)</label>
+                            <input 
+                              type="file" 
+                              accept="image/*"
+                              onChange={(e) => setPaymentForm({...paymentForm, proofFile: e.target.files[0]})}
+                              className="form-input"
+                              disabled={paymentSubmitting}
+                            />
+                            <p className="help-text">Upload a screenshot of your bank transfer confirmation or payment receipt</p>
+                          </div>
+                          <button type="submit" className="btn-submit-payment" disabled={paymentSubmitting}>
+                            <FiCreditCard /> {paymentSubmitting ? "Submitting..." : "Submit Payment Proof"}
+                          </button>
+                        </form>
+                      </div>
+                    )}
+
+                    {/* Payment Proofs List */}
+                    {trackingOrderDetails.paymentProofs && trackingOrderDetails.paymentProofs.length > 0 && (
+                      <div className="payment-proofs-section">
+                        <h4>Payment Proofs</h4>
+                        <div className="payment-proofs-list">
+                          {trackingOrderDetails.paymentProofs.map((proof, pidx) => (
+                            <div key={pidx} className={`payment-proof-item ${proof.status}`}>
+                              <div className="proof-header">
+                                <span className={`proof-status-badge ${proof.status}`}>
+                                  {proof.status?.toUpperCase() || 'PENDING'}
+                                </span>
+                                <span className="proof-date">
+                                  {new Date(proof.uploadedAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <div className="proof-details">
+                                <p className="proof-amount">Amount: Rs {proof.amountPaid?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                {proof.status === 'rejected' && (
+                                  <div className="rejection-notice">
+                                    <strong>Rejection Reason:</strong> {proof.notes || 'N/A'}
+                                  </div>
+                                )}
+                                {proof.proofFile && (
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        const proofUrl = proof.proofFile.startsWith('http') ? proof.proofFile : `${url}/images/${proof.proofFile}`;
+                                        const response = await fetch(proofUrl);
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `payment-proof-${trackingOrderDetails.orderNumber}-${pidx + 1}.${blob.type.includes('png') ? 'png' : 'jpg'}`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        window.URL.revokeObjectURL(url);
+                                        document.body.removeChild(a);
+                                      } catch (error) {
+                                        console.error('Error downloading proof:', error);
+                                        toast.error('Failed to download payment proof');
+                                      }
+                                    }}
+                                    className="btn-download-invoice"
+                                  >
+                                    <FiDownload /> Download Proof
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {trackingOrderDetails.paymentTimeline && trackingOrderDetails.paymentTimeline.length > 0 && (
+                      <div className="payment-timeline-section">
+                        <h4>Payment Timeline</h4>
+                        <div className="payment-timeline">
+                          {trackingOrderDetails.paymentTimeline.map((entry, idx) => (
+                            <div key={idx} className="payment-timeline-entry">
+                              <div className={`timeline-indicator ${entry.action}`} />
+                              <div className="timeline-details">
+                                <strong>{entry.action?.replace(/_/g, ' ').toUpperCase()}</strong>
+                                <p className="timeline-date">{new Date(entry.timestamp).toLocaleDateString()}</p>
+                                  {entry.amountPaid !== undefined && <p className="timeline-amount">Amount: Rs {entry.amountPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}
+                                  <p className="timeline-notes">
+                                    {entry.action === 'payment_rejected' && entry.notes 
+                                      ? (entry.notes.includes('Reason:') 
+                                          ? entry.notes.split('Reason:')[1]?.trim() || 'N/A'
+                                          : entry.notes)
+                                      : (entry.notes || 'N/A')}
+                                  </p>
+                                  {entry.action === 'payment_rejected' && (
+                                    <div className="rejection-notice">
+                                      <strong>Rejection Reason:</strong> {
+                                        entry.notes && entry.notes.includes('Reason:')
+                                          ? entry.notes.split('Reason:')[1]?.trim() || 'N/A'
+                                          : (entry.notes || 'N/A')
+                                      }
+                                    </div>
+                                  )}
+                                  {entry.proofFile && (
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          const proofUrl = (entry.proofFile && entry.proofFile.toString().startsWith('http')) ? entry.proofFile : `${url}/images/${entry.proofFile}`;
+                                          const response = await fetch(proofUrl);
+                                          const blob = await response.blob();
+                                          const downloadUrl = window.URL.createObjectURL(blob);
+                                          const a = document.createElement('a');
+                                          a.href = downloadUrl;
+                                          a.download = `payment-invoice-${trackingOrderDetails.orderNumber}-${new Date(entry.timestamp).getTime()}.${blob.type.includes('png') ? 'png' : 'jpg'}`;
+                                          document.body.appendChild(a);
+                                          a.click();
+                                          window.URL.revokeObjectURL(downloadUrl);
+                                          document.body.removeChild(a);
+                                        } catch (error) {
+                                          console.error('Error downloading invoice:', error);
+                                          toast.error('Failed to download payment invoice');
+                                        }
+                                      }}
+                                      className="btn-download-invoice"
+                                    >
+                                      <FiDownload /> Download Payment Invoice
+                                    </button>
+                                  )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </>
               )}

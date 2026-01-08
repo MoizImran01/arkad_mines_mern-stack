@@ -850,6 +850,11 @@ const approveQuotation = async (req, res) => {
           notes: "Order created from approved quotation"
         }
       ],
+      totalPaid: 0,
+      outstandingBalance: quotation.financials.grandTotal,
+      paymentStatus: "pending",
+      paymentProofs: [],
+      paymentTimeline: [],
       courierTracking: {
         isDispatched: false
       }

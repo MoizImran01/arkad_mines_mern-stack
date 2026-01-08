@@ -108,7 +108,7 @@ const List = () => {
                 <b>Product Type</b>
                 <b>Dimensions</b>
                 <b>Price</b>
-                <b>Status</b>
+                <b>Available in Stock</b>
                 <b>QR Code</b>
                 <b>Action</b>
             </div>
@@ -126,8 +126,8 @@ const List = () => {
                     <p>{item.subcategory}</p>
                     <p>{item.dimensions}</p>
                     <p>Rs {item.price} {item.priceUnit}</p>
-                    <p className={`block-status ${item.status?.toLowerCase().replace(' ', '-') || 'registered'}`}>
-                      {item.status || 'Registered'}
+                    <p className="block-stock">
+                      {(item.stockQuantity || 0) - (item.quantityDelivered || 0)} pcs
                     </p>
                     <div className="qr-code-cell">
                       {item.qrCodeImage ? (

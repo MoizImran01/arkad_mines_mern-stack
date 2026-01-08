@@ -8,7 +8,7 @@ import { logAudit, logError, getClientIp, normalizeRole } from '../../logger/aud
 const addStones = async (req, res) => {
     const clientIp = getClientIp(req);
     try {
-        // Check for multer/upload errors
+
         if (req.fileError) {
             logAudit({
                 userId: req.user?.id,
@@ -21,7 +21,7 @@ const addStones = async (req, res) => {
             return res.status(400).json({ success: false, message: `Image upload failed: ${req.fileError}` });
         }
         
-        // req.file now contains Cloudinary response with path (URL) and filename
+
         if (!req.file) {
             logAudit({
                 userId: req.user?.id,
@@ -35,7 +35,7 @@ const addStones = async (req, res) => {
         }
 
         // CloudinaryStorage provides the URL in different properties depending on version
-        // Check for secure_url, url, or path
+
         const image_url = req.file.secure_url || req.file.url || req.file.path;
         
         if (!image_url) {
@@ -94,7 +94,7 @@ const addStones = async (req, res) => {
             dimensions: dimensions,
             price: Number(price),
             priceUnit: priceUnit,
-            image: image_url, // Now storing full Cloudinary URL
+            image: image_url, 
             category: category,
             subcategory: subcategory,
             stockAvailability: stockAvailability,
@@ -102,7 +102,7 @@ const addStones = async (req, res) => {
             location: location || undefined,
             qaNotes: qaNotes || undefined,
             qrCode: qrCodeId,
-            qrCodeImage: qrCodeUrl, // Now storing full Cloudinary URL
+            qrCodeImage: qrCodeUrl, 
             status: "Registered"
         });
 
@@ -153,6 +153,7 @@ const addStones = async (req, res) => {
 //list all stones
 const listStones = async (req, res) => {
     try {
+        // Show all stones (both in stock and out of stock)
         const stones = await stonesModel.find({});
         res.json({ success: true, stones_data: stones });
     } catch (error) {
@@ -193,12 +194,12 @@ const removeStones = async (req, res) => {
             details: `stoneName=${stones.stoneName}, qrCode=${stones.qrCode}`
         });
         
-        // Send response immediately - don't wait for Cloudinary
+
         res.json({ success: true, message: "Stone Removed" });
 
-        // Delete from Cloudinary in background (non-blocking)
+
         if (stones) {
-            // Delete main image from Cloudinary (async, no await)
+
             if (stones.image) {
                 const imagePublicId = getPublicIdFromUrl(stones.image);
                 if (imagePublicId) {
@@ -207,7 +208,7 @@ const removeStones = async (req, res) => {
                     });
                 }
             }
-            // Delete QR code image from Cloudinary (async, no await)
+
             if (stones.qrCodeImage) {
                 const qrPublicId = getPublicIdFromUrl(stones.qrCodeImage);
                 if (qrPublicId) {
@@ -228,86 +229,14 @@ const removeStones = async (req, res) => {
     }
 }
 
-// Dispatch block by scanning QR code
+
 const dispatchBlock = async (req, res) => {
     const clientIp = getClientIp(req);
     try {
-        const { qrCode } = req.body;
-
-        if (!qrCode) {
-            logAudit({
-                userId: req.user?.id,
-                role: normalizeRole(req.user?.role),
-                action: 'DISPATCH_BLOCK',
-                status: 'FAILED_VALIDATION',
-                clientIp,
-                details: 'QR code is required'
-            });
-            return res.status(400).json({
-                success: false,
-                message: "QR code is required"
-            });
-        }
-
-
-        const block = await stonesModel.findOne({ qrCode: qrCode });
-
-        if (!block) {
-            logAudit({
-                userId: req.user?.id,
-                role: normalizeRole(req.user?.role),
-                action: 'DISPATCH_BLOCK',
-                status: 'FAILED_VALIDATION',
-                clientIp,
-                details: `Block not found with QR code: ${qrCode}`
-            });
-            return res.status(404).json({
-                success: false,
-                message: "Block not found with the provided QR code"
-            });
-        }
-
-
-        if (block.status === "Dispatched") {
-            logAudit({
-                userId: req.user?.id,
-                role: normalizeRole(req.user?.role),
-                action: 'DISPATCH_BLOCK',
-                status: 'FAILED_BUSINESS_RULE',
-                resourceId: block._id.toString(),
-                clientIp,
-                details: `Block already dispatched: qrCode=${qrCode}`
-            });
-            return res.status(400).json({
-                success: false,
-                message: "This block has already been dispatched"
-            });
-        }
-
-
-        block.status = "Dispatched";
-        block.stockAvailability = "Out of Stock";
-        await block.save();
-
-        logAudit({
-            userId: req.user?.id,
-            role: normalizeRole(req.user?.role),
-            action: 'DISPATCH_BLOCK',
-            status: 'SUCCESS',
-            resourceId: block._id.toString(),
-            clientIp,
-            details: `oldStatus=Registered, newStatus=Dispatched, stoneName=${block.stoneName}, qrCode=${qrCode}`
-        });
-
-        res.json({
-            success: true,
-            message: "Block dispatched successfully",
-            block: {
-                id: block._id,
-                stoneName: block.stoneName,
-                dimensions: block.dimensions,
-                status: block.status
-            }
+        return res.status(400).json({
+            success: false,
+            message: "Please use the Orders page to dispatch blocks. Individual block dispatch is deprecated.",
+            code: "USE_ORDER_DISPATCH"
         });
     } catch (error) {
         logError(error, {
@@ -317,7 +246,7 @@ const dispatchBlock = async (req, res) => {
         });
         res.status(500).json({
             success: false,
-            message: "Error dispatching block: " + error.message
+            message: "Error: " + error.message
         });
     }
 }
@@ -347,7 +276,7 @@ const getStoneById = async (req, res) => {
             });
         }
 
-        // Log successful view - explicitly note if QA notes were viewed
+
         const hasQaNotes = stone.qaNotes && stone.qaNotes.trim().length > 0;
         const details = hasQaNotes 
             ? `viewed item=${id}, stoneName=${stone.stoneName}, qaNotesViewed=true, qaNotesLength=${stone.qaNotes.length}`
@@ -453,10 +382,6 @@ const filterStones = async (req, res) => {
         if (stockAvailability && stockAvailability !== 'all') {
             query.stockAvailability = stockAvailability;
         }
-
-
-        query.status = { $ne: "Dispatched" };
-
 
         if (keywords && keywords.trim()) {
             const keywordRegex = new RegExp(keywords.trim(), 'i');

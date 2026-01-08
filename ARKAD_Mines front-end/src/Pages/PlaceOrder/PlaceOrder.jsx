@@ -31,12 +31,49 @@ const PlaceOrder = () => {
         });
         if (response.data.success) {
           setOrderData(response.data.order);
+          const ord = response.data.order;
           // Extract user data from the order's buyer information
-          if (response.data.order.buyer) {
+          if (ord.buyer) {
             setUserData({
-              businessName: response.data.order.buyer.companyName || 'N/A',
-              email: response.data.order.buyer.email || 'N/A'
+              businessName: ord.buyer.companyName || 'N/A',
+              email: ord.buyer.email || 'N/A'
             });
+          }
+
+          // Check if order has any payment proofs (at least one payment exists)
+          const hasPaymentProofs = ord.paymentProofs && ord.paymentProofs.length > 0;
+          
+          // If order already has a delivery address, pre-fill it so user doesn't re-enter
+          if (ord.deliveryAddress) {
+            setAddressData({
+              street: ord.deliveryAddress.street || '',
+              city: ord.deliveryAddress.city || '',
+              state: ord.deliveryAddress.state || '',
+              zipCode: ord.deliveryAddress.zipCode || '',
+              country: ord.deliveryAddress.country || 'Pakistan',
+              phone: ord.deliveryAddress.phone || ''
+            });
+
+            // Only redirect to payment if payment proofs exist AND there's outstanding balance
+            // If no payment exists yet, user must fill shipping information first
+            if (hasPaymentProofs && (ord.outstandingBalance || ord.financials?.grandTotal) > 0) {
+              setActiveTab('summary');
+              // Auto-open payment modal after a brief delay to ensure UI is ready
+              setTimeout(() => {
+                setShowPaymentModal(true);
+              }, 100);
+            }
+            // If no payment exists, stay on information tab (default)
+          } else {
+            // No delivery address - user must fill it first
+            // Only redirect to payment if payment proofs exist AND there's outstanding balance
+            if (hasPaymentProofs && (ord.outstandingBalance || ord.financials?.grandTotal) > 0) {
+              setActiveTab('summary');
+              setTimeout(() => {
+                setShowPaymentModal(true);
+              }, 100);
+            }
+            // Otherwise stay on information tab (default)
           }
         } else {
           alert("Order not found");
@@ -59,21 +96,191 @@ const PlaceOrder = () => {
   };
 
   const handlePlaceOrder = async (event) => {
+    // Open payment modal instead of posting to a non-existent endpoint
     event.preventDefault();
-    const submissionData = { orderNumber, address: addressData };
+    setShowPaymentModal(true);
+  };
 
+  // Payment modal state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentProofFile, setPaymentProofFile] = useState(null);
+  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
+
+  const submitPaymentProof = async (e) => {
+    e.preventDefault();
+    // Parse amount with proper decimal handling
+    const numericAmount = parseFloat(paymentAmount);
+    if (!isFinite(numericAmount) || numericAmount <= 0 || numericAmount < 0.01) {
+      alert('Please enter a valid payment amount (minimum 0.01)');
+      return;
+    }
+    if (!paymentProofFile) {
+      alert('Please upload a payment proof screenshot');
+      return;
+    }
+
+    // Ensure amount does not exceed outstanding balance (with small tolerance for floating point)
+    const outstanding = orderData?.outstandingBalance ?? orderData?.financials?.grandTotal;
+    if (numericAmount > outstanding + 0.01) { // Small tolerance for floating point precision
+      alert(`Amount cannot exceed outstanding balance of Rs ${outstanding.toFixed(2)}`);
+      return;
+    }
+
+    setPaymentSubmitting(true);
     try {
-      let response = await axios.post(`${url}/api/order/confirm-payment`, submissionData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Compress and resize image before converting to base64
+      // Aggressive compression to keep payload under 5MB
+      const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              let width = img.width;
+              let height = img.height;
+
+              // Calculate new dimensions - more aggressive resizing
+              const aspectRatio = width / height;
+              if (width > height) {
+                if (width > maxWidth) {
+                  width = maxWidth;
+                  height = Math.round(width / aspectRatio);
+                }
+              } else {
+                if (height > maxHeight) {
+                  height = maxHeight;
+                  width = Math.round(height * aspectRatio);
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+
+              const ctx = canvas.getContext('2d');
+              // Use better image rendering
+              ctx.imageSmoothingEnabled = true;
+              ctx.imageSmoothingQuality = 'medium'; // Changed from 'high' to reduce processing
+              ctx.drawImage(img, 0, 0, width, height);
+
+              // Convert to base64 with compression - ensure JPEG format
+              // Use lower quality for smaller file size
+              canvas.toBlob(
+                (blob) => {
+                  if (!blob) {
+                    reject(new Error('Failed to create blob from canvas'));
+                    return;
+                  }
+                  
+                  // Check if blob is still too large (> 3MB), compress more
+                  if (blob.size > 3 * 1024 * 1024) {
+                    // Re-compress with even lower quality
+                    const img2 = new Image();
+                    img2.onload = () => {
+                      const canvas2 = document.createElement('canvas');
+                      canvas2.width = Math.round(width * 0.8);
+                      canvas2.height = Math.round(height * 0.8);
+                      const ctx2 = canvas2.getContext('2d');
+                      ctx2.drawImage(img2, 0, 0, canvas2.width, canvas2.height);
+                      canvas2.toBlob(
+                        (blob2) => {
+                          const reader2 = new FileReader();
+                          reader2.onload = () => {
+                            const dataUrl = reader2.result;
+                            if (dataUrl && dataUrl.startsWith('data:image/')) {
+                              resolve(dataUrl);
+                            } else {
+                              reject(new Error('Invalid data URL format'));
+                            }
+                          };
+                          reader2.onerror = reject;
+                          reader2.readAsDataURL(blob2);
+                        },
+                        'image/jpeg',
+                        0.5 // Even lower quality
+                      );
+                    };
+                    img2.src = e.target.result;
+                    return;
+                  }
+                  
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    // Ensure we return a valid data URI
+                    const dataUrl = reader.result;
+                    if (dataUrl && dataUrl.startsWith('data:image/')) {
+                      resolve(dataUrl);
+                    } else {
+                      reject(new Error('Invalid data URL format'));
+                    }
+                  };
+                  reader.onerror = reject;
+                  reader.readAsDataURL(blob);
+                },
+                'image/jpeg',
+                quality
+              );
+            };
+            img.onerror = (error) => {
+              console.error('Image load error:', error);
+              reject(new Error('Failed to load image'));
+            };
+            img.src = e.target.result;
+          };
+          reader.onerror = (error) => {
+            console.error('FileReader error:', error);
+            reject(new Error('Failed to read file'));
+          };
+          reader.readAsDataURL(file);
+        });
+      };
+
+      let base64;
+      try {
+        base64 = await compressImage(paymentProofFile);
+        // Validate base64 format
+        if (!base64 || !base64.startsWith('data:image/')) {
+          throw new Error('Invalid image format after compression');
+        }
+      } catch (compressionError) {
+        console.error('Image compression error:', compressionError);
+        alert('Failed to process image. Please try a different image file.');
+        setPaymentSubmitting(false);
+        return;
+      }
+
+      const payload = {
+        amountPaid: parseFloat(numericAmount.toFixed(2)), // Ensure proper decimal precision
+        address: addressData,
+        proofBase64: base64,
+        proofFileName: paymentProofFile.name
+      };
+
+      const response = await axios.post(
+        `${url}/api/orders/payment/submit/${orderData._id}`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
       if (response.data.success) {
-        window.location.replace(response.data.session_url);
+        alert('Payment proof submitted successfully. Awaiting admin verification.');
+        setShowPaymentModal(false);
+        // Optionally refresh or redirect to orders
+        navigate('/orders');
       } else {
-        alert(response.data.message || "Error placing order");
+        alert(response.data.message || 'Failed to submit payment proof');
       }
     } catch (err) {
-      alert("Inventory check failed or server error.");
+      console.error('Error submitting payment proof:', err);
+      alert(err.response?.data?.message || 'Error submitting payment proof');
+    } finally {
+      setPaymentSubmitting(false);
     }
   };
 
@@ -96,14 +303,29 @@ const PlaceOrder = () => {
 
   if (loading) return <div className="loading">Loading order details...</div>;
 
+  // Check if payment exists - if so, disable information tab
+  const hasPaymentProofs = orderData?.paymentProofs && orderData.paymentProofs.length > 0;
+
   return (
     <div className="place-order">
       <div className="tabs">
-        <div className={`tab ${activeTab === 'information' ? 'active' : ''}`}>
+        <div 
+          className={`tab ${activeTab === 'information' ? 'active' : ''} ${hasPaymentProofs ? 'disabled' : ''}`}
+          onClick={() => {
+            if (!hasPaymentProofs) {
+              setActiveTab('information');
+            }
+          }}
+          style={{ cursor: hasPaymentProofs ? 'not-allowed' : 'pointer', opacity: hasPaymentProofs ? 0.5 : 1 }}
+        >
           <span className="tab-number">1</span>
           <span>Shipping Information</span>
         </div>
-        <div className={`tab ${activeTab === 'summary' ? 'active' : ''}`}>
+        <div 
+          className={`tab ${activeTab === 'summary' ? 'active' : ''}`}
+          onClick={() => setActiveTab('summary')}
+          style={{ cursor: 'pointer' }}
+        >
           <span className="tab-number">2</span>
           <span>Review & Confirm</span>
         </div>
@@ -154,7 +376,8 @@ const PlaceOrder = () => {
                     onChange={onChangeHandler} 
                     value={addressData.city} 
                     type='text' 
-                    placeholder='City' 
+                    placeholder='City'
+                    disabled={orderData?.paymentProofs && orderData.paymentProofs.length > 0}
                   />
                 </div>
                 <div className="form-group">
@@ -165,6 +388,7 @@ const PlaceOrder = () => {
                     onChange={onChangeHandler} 
                     value={addressData.state}
                     className="form-select"
+                    disabled={orderData?.paymentProofs && orderData.paymentProofs.length > 0}
                   >
                     <option value="">Select Province</option>
                     <option value="Sindh">Sindh</option>
@@ -186,7 +410,8 @@ const PlaceOrder = () => {
                     onChange={onChangeHandler} 
                     value={addressData.zipCode} 
                     type='text' 
-                    placeholder='Postal code' 
+                    placeholder='Postal code'
+                    disabled={orderData?.paymentProofs && orderData.paymentProofs.length > 0}
                   />
                 </div>
                 <div className="form-group">
@@ -210,7 +435,8 @@ const PlaceOrder = () => {
                   onChange={onChangeHandler} 
                   value={addressData.phone} 
                   type='text' 
-                  placeholder='+92 300 1234567' 
+                  placeholder='+92 300 1234567'
+                  disabled={orderData?.paymentProofs && orderData.paymentProofs.length > 0}
                 />
               </div>
 
@@ -218,9 +444,23 @@ const PlaceOrder = () => {
                 <button type="button" className="btn-back" onClick={() => navigate("/quotations")}>
                   Back
                 </button>
-                <button type="submit" className="btn-primary">
-                  Continue to Review
-                </button>
+                {!(orderData?.paymentProofs && orderData.paymentProofs.length > 0) && (
+                  <button type="submit" className="btn-primary">
+                    Continue to Review
+                  </button>
+                )}
+                {orderData?.paymentProofs && orderData.paymentProofs.length > 0 && (
+                  <button 
+                    type="button" 
+                    className="btn-primary"
+                    onClick={() => {
+                      setActiveTab('summary');
+                      setShowPaymentModal(true);
+                    }}
+                  >
+                    Proceed to Payment
+                  </button>
+                )}
               </div>
             </form>
           </div>
@@ -277,8 +517,8 @@ const PlaceOrder = () => {
                   <span>- PKR {orderData.financials.discountAmount.toLocaleString()}</span>
                 </div>
                 <div className="summary-row total">
-                  <span>Total Amount</span>
-                  <span>PKR {orderData.financials.grandTotal.toLocaleString()}</span>
+                  <span>Outstanding Balance</span>
+                  <span>PKR {(orderData.outstandingBalance ?? orderData.financials.grandTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
             </div>
@@ -310,6 +550,84 @@ const PlaceOrder = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
+          <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="payment-modal-header">
+              <h3><FiCreditCard /> Submit Payment Proof</h3>
+              <button className="modal-close-btn" onClick={() => setShowPaymentModal(false)} disabled={paymentSubmitting}>×</button>
+            </div>
+            
+            <div className="payment-modal-body">
+              <p className="payment-modal-subtitle">Please attach a screenshot of your bank transfer and enter the exact amount paid.</p>
+
+              <form onSubmit={submitPaymentProof} className="payment-form">
+                <div className="payment-info-card">
+                  <div className="info-row">
+                    <span className="info-label">Outstanding Balance:</span>
+                    <span className="info-value highlight">PKR {(orderData?.outstandingBalance ?? orderData?.financials?.grandTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Amount Paid (PKR)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    max={orderData?.outstandingBalance || orderData?.financials?.grandTotal}
+                    min="0.01"
+                    placeholder="0.00"
+                    required
+                    className="payment-amount-input"
+                  />
+                  <p className="help-text">Enter the exact amount you transferred (decimals allowed)</p>
+                </div>
+
+                <div className="form-group">
+                  <label>Payment Proof (Screenshot)</label>
+                  <div className="file-upload-wrapper">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setPaymentProofFile(e.target.files[0])}
+                      required
+                      className="file-input"
+                      id="payment-proof-input"
+                    />
+                    <label htmlFor="payment-proof-input" className="file-upload-label">
+                      {paymentProofFile ? paymentProofFile.name : 'Choose file or drag here'}
+                    </label>
+                  </div>
+                  <p className="help-text">Upload a clear screenshot of your bank transfer confirmation</p>
+                </div>
+
+                {addressData.street && (
+                  <div className="form-group">
+                    <label>Delivery Address</label>
+                    <div className="address-preview">
+                      <p><strong>{addressData.street}</strong></p>
+                      <p>{addressData.city}, {addressData.state} {addressData.zipCode}</p>
+                      <p>{addressData.country}</p>
+                      <p>{addressData.phone}</p>
+                    </div>
+                  </div>
+                )}
+              </form>
+            </div>
+
+            <div className="payment-modal-footer">
+              <button type="button" className="btn-back" onClick={() => setShowPaymentModal(false)} disabled={paymentSubmitting}>Cancel</button>
+              <button type="submit" className="btn-primary" onClick={submitPaymentProof} disabled={paymentSubmitting}>
+                {paymentSubmitting ? 'Submitting...' : 'Submit Payment Proof'}
+              </button>
             </div>
           </div>
         </div>

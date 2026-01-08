@@ -224,15 +224,21 @@ const ItemDetail = () => {
             </div>
 
             <div className="item-actions">
-              <button
-                className="primary-btn"
-                onClick={() => {
-                  addItemToQuote(stone);
-                  navigate('/request-quote');
-                }}
-              >
-                Request Quote
-              </button>
+              {(stone.stockQuantity || 0) - (stone.quantityDelivered || 0) > 0 ? (
+                <button
+                  className="primary-btn"
+                  onClick={() => {
+                    addItemToQuote(stone);
+                    navigate('/request-quote');
+                  }}
+                >
+                  Request Quote
+                </button>
+              ) : (
+                <button className="primary-btn disabled" disabled>
+                  Out of Stock
+                </button>
+              )}
             </div>
           </div>
         </div>

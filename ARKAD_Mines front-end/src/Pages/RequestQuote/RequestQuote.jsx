@@ -30,6 +30,7 @@ const RequestQuote = () => {
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [unavailableItems, setUnavailableItems] = useState([]);
+  const [exceededMaxItems, setExceededMaxItems] = useState({}); // Track items that tried to exceed max
   const navigate = useNavigate();
 
   const headers = useMemo(
@@ -64,7 +65,6 @@ const RequestQuote = () => {
   };
 
  const handleServerError = (error) => {
-
     if (error.response?.data?.code === "ITEMS_UNAVAILABLE") {
       setUnavailableItems(error.response.data.unavailableItems || []);
       setFeedback({
@@ -234,47 +234,85 @@ const RequestQuote = () => {
             </div>
           ) : (
             <div className="quote-items-list">
-              {quoteItems.map((item) => (
-                <div key={item._id} className="quote-item">
-                  <div className="item-details">
-                    <img
-                      src={getImageUrl(item.image)}
-                      alt={item.stoneName}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src =
-                          "https://via.placeholder.com/80x80?text=No+Image";
-                      }}
-                    />
-                    <div>
-                      <h3>{item.stoneName}</h3>
-                      <p>{item.dimensions}</p>
-                      <small>{item.stockAvailability}</small>
+              {quoteItems.map((item) => {
+                const remainingQuantity = (item.stockQuantity || 0) - (item.quantityDelivered || 0);
+                const maxQuantity = remainingQuantity > 0 ? remainingQuantity : 0;
+                
+                const handleQuantityInput = (newValue) => {
+                  const numValue = Number(newValue);
+                  if (numValue > maxQuantity && maxQuantity > 0) {
+                    // User tried to exceed max
+                    setExceededMaxItems(prev => ({
+                      ...prev,
+                      [item._id]: true
+                    }));
+                  } else {
+                    // Clear the exceeded flag
+                    setExceededMaxItems(prev => ({
+                      ...prev,
+                      [item._id]: false
+                    }));
+                  }
+                  handleQuantityChange(item._id, newValue);
+                };
+                
+                return (
+                  <div key={item._id} className="quote-item">
+                    <div className="item-details">
+                      <img
+                        src={getImageUrl(item.image)}
+                        alt={item.stoneName}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src =
+                            "https://via.placeholder.com/80x80?text=No+Image";
+                        }}
+                      />
+                      <div>
+                        <h3>{item.stoneName}</h3>
+                        <p>{item.dimensions}</p>
+                        <small>{item.stockAvailability}</small>
+                    
+                      </div>
+                    </div>
+
+                    <div className="item-actions">
+                      <label>Quantity needed</label>
+                      <div className="quantity-control">
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.requestedQuantity}
+                          onChange={(e) =>
+                            handleQuantityInput(e.target.value)
+                          }
+                          className={exceededMaxItems[item._id] ? "exceed-max-quantity" : ""}
+                          disabled={maxQuantity <= 0}
+                        />
+                        {maxQuantity <= 0 && (
+                          <span className="max-quantity-warning">
+                            Out of stock
+                          </span>
+                        )}
+                        {exceededMaxItems[item._id] && maxQuantity > 0 && (
+                          <span className="max-quantity-warning">
+                            Max quantity available reached
+                          </span>
+                        )}
+                      </div>
+                      <span className="price-note">
+                        Rs {item.price}/{item.priceUnit}
+                      </span>
+                      <button
+                        className="link-btn"
+                        onClick={() => removeItemFromQuote(item._id)}
+                      >
+                        Remove
+                      </button>
                     </div>
                   </div>
-
-                  <div className="item-actions">
-                    <label>Quantity needed</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.requestedQuantity}
-                      onChange={(e) =>
-                        handleQuantityChange(item._id, e.target.value)
-                      }
-                    />
-                    <span className="price-note">
-                      Rs {item.price}/{item.priceUnit}
-                    </span>
-                    <button
-                      className="link-btn"
-                      onClick={() => removeItemFromQuote(item._id)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               <div className="continue-browsing">
                 <button
                   className="secondary-btn"
@@ -324,4 +362,3 @@ const RequestQuote = () => {
 };
 
 export default RequestQuote;
-

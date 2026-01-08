@@ -426,15 +426,21 @@ const Products = () => {
                     </div>
                   </div>
                   <div className="product-actions" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      className="request-btn"
-                      onClick={() => {
-                        addItemToQuote(product);
-                        navigate('/request-quote');
-                      }}
-                    >
-                      Request Quote
-                    </button>
+                    {(product.stockQuantity || 0) - (product.quantityDelivered || 0) > 0 ? (
+                      <button
+                        className="request-btn"
+                        onClick={() => {
+                          addItemToQuote(product);
+                          navigate('/request-quote');
+                        }}
+                      >
+                        Request Quote
+                      </button>
+                    ) : (
+                      <button className="request-btn disabled" disabled>
+                        Out of Stock
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

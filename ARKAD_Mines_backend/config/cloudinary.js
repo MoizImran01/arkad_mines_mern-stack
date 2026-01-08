@@ -11,12 +11,25 @@ let isConfigured = false;
 
 const configureCloudinary = () => {
     if (!isConfigured) {
+        const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+        const apiKey = process.env.CLOUDINARY_API_KEY;
+        const apiSecret = process.env.CLOUDINARY_API_SECRET;
+        
+        if (!cloudName || !apiKey || !apiSecret) {
+            console.error('Cloudinary configuration missing! Check config.env for:');
+            console.error('CLOUDINARY_CLOUD_NAME:', cloudName ? '✓' : '✗ MISSING');
+            console.error('CLOUDINARY_API_KEY:', apiKey ? '✓' : '✗ MISSING');
+            console.error('CLOUDINARY_API_SECRET:', apiSecret ? '✓' : '✗ MISSING');
+            throw new Error('Cloudinary configuration is incomplete. Please check your config.env file.');
+        }
+        
         cloudinary.config({
-            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-            api_key: process.env.CLOUDINARY_API_KEY,
-            api_secret: process.env.CLOUDINARY_API_SECRET
+            cloud_name: cloudName,
+            api_key: apiKey,
+            api_secret: apiSecret
         });
         isConfigured = true;
+        console.log('Cloudinary configured successfully');
     }
 };
 
@@ -113,4 +126,5 @@ const getPublicIdFromUrl = (url) => {
     return matches ? matches[1] : null;
 };
 
-export { cloudinary, cloudinaryPackage, upload, qrUpload, uploadBuffer, deleteImage, getPublicIdFromUrl };
+// Export configureCloudinary so it can be called explicitly when needed
+export { cloudinary, cloudinaryPackage, upload, qrUpload, uploadBuffer, deleteImage, getPublicIdFromUrl, configureCloudinary };
