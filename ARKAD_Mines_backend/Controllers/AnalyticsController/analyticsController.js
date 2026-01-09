@@ -3,6 +3,11 @@ import quotationModel from "../../Models/quotationModel/quotationModel.js";
 import stonesModel from "../../Models/stonesModel/stonesModel.js";
 import userModel from "../../Models/Users/userModel.js";
 
+// Helper function to round to 2 decimal places
+const roundToTwoDecimals = (value) => {
+  return Math.round((value || 0) * 100) / 100;
+};
+
 export const getAnalytics = async (req, res) => {
   try {
     // Get date range (default: last 12 months)
@@ -214,7 +219,7 @@ export const getAnalytics = async (req, res) => {
       }
     ]);
 
-    const totalRevenue = actualRevenueAggregation[0]?.totalRevenue || 0;
+    const totalRevenue = roundToTwoDecimals(actualRevenueAggregation[0]?.totalRevenue || 0);
 
     // Forecasted Revenue - From ALL confirmed/dispatched/delivered orders (regardless of payment)
     const forecastedRevenueAggregation = await orderModel.aggregate([
@@ -232,14 +237,12 @@ export const getAnalytics = async (req, res) => {
       }
     ]);
 
-    const forecastedRevenue = forecastedRevenueAggregation[0]?.totalRevenue || 0;
+    const forecastedRevenue = roundToTwoDecimals(forecastedRevenueAggregation[0]?.totalRevenue || 0);
 
-    // Pending Revenue - Orders awaiting payment
+    // Pending Revenue - Sum of outstanding balance from all orders
     const pendingRevenueAggregation = await orderModel.aggregate([
       {
         $match: {
-          status: { $in: ["confirmed", "dispatched", "delivered"] },
-          paymentStatus: { $in: ["pending", "payment_in_progress"] },
           createdAt: { $gte: startDate, $lte: endDate }
         }
       },
@@ -251,7 +254,7 @@ export const getAnalytics = async (req, res) => {
       }
     ]);
 
-    const pendingRevenue = pendingRevenueAggregation[0]?.totalRevenue || 0;
+    const pendingPayments = roundToTwoDecimals(pendingRevenueAggregation[0]?.totalRevenue || 0);
 
     // 9. Conversion Rate (Quotations to Orders)
     const approvedQuotations = await quotationModel.countDocuments({
@@ -335,6 +338,37 @@ export const getAnalytics = async (req, res) => {
       ? (((recentOrdersCount - previousOrdersCount) / previousOrdersCount) * 100).toFixed(2)
       : recentOrdersCount > 0 ? 100 : 0;
 
+    // Round all revenue values in the response
+    const roundedTopClients = topClients.map(client => ({
+      ...client,
+      totalPurchases: roundToTwoDecimals(client.totalPurchases || 0)
+    }));
+
+    const roundedMostSoldStones = mostSoldStones.map(stone => ({
+      ...stone,
+      totalRevenue: roundToTwoDecimals(stone.totalRevenue || 0)
+    }));
+
+    const roundedMonthlySales = monthlySales.map(sale => ({
+      ...sale,
+      totalSales: roundToTwoDecimals(sale.totalSales || 0)
+    }));
+
+    const roundedCategorySales = categorySales.map(category => ({
+      ...category,
+      totalRevenue: roundToTwoDecimals(category.totalRevenue || 0)
+    }));
+
+    const roundedPaymentStatusOverview = paymentStatusOverview.map(payment => ({
+      ...payment,
+      totalAmount: roundToTwoDecimals(payment.totalAmount || 0)
+    }));
+
+    const roundedWeeklySalesPattern = weeklySalesPattern.map(week => ({
+      ...week,
+      totalSales: roundToTwoDecimals(week.totalSales || 0)
+    }));
+
     res.status(200).json({
       success: true,
       data: {
@@ -345,18 +379,18 @@ export const getAnalytics = async (req, res) => {
           totalStones,
           totalRevenue,
           forecastedRevenue,
-          pendingRevenue,
+          pendingPayments,
           conversionRate: parseFloat(conversionRate),
           orderGrowth: parseFloat(orderGrowth)
         },
-        topClients,
-        mostSoldStones,
-        monthlySales,
+        topClients: roundedTopClients,
+        mostSoldStones: roundedMostSoldStones,
+        monthlySales: roundedMonthlySales,
         orderStatusDistribution,
         quotationStatusDistribution,
-        categorySales,
-        paymentStatusOverview,
-        weeklySalesPattern,
+        categorySales: roundedCategorySales,
+        paymentStatusOverview: roundedPaymentStatusOverview,
+        weeklySalesPattern: roundedWeeklySalesPattern,
         stockStatus
       }
     });

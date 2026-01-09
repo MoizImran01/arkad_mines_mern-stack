@@ -6,6 +6,11 @@ import { sendQuotationEmail } from "../../Utils/emailService.js";
 import { logAudit, logError, getClientIp, normalizeRole } from "../../logger/auditLogger.js";
 import { v4 as uuidv4 } from 'uuid';
 
+// Helper function to round to 2 decimal places
+const roundToTwoDecimals = (value) => {
+  return Math.round((value || 0) * 100) / 100;
+};
+
 const VALID_STATUSES = ["draft", "submitted", "adjustment_required"];
 
 const generateReferenceNumber = () => {
@@ -851,7 +856,7 @@ const approveQuotation = async (req, res) => {
         }
       ],
       totalPaid: 0,
-      outstandingBalance: quotation.financials.grandTotal,
+      outstandingBalance: roundToTwoDecimals(quotation.financials.grandTotal),
       paymentStatus: "pending",
       paymentProofs: [],
       paymentTimeline: [],

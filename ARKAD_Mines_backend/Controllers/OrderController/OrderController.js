@@ -2,6 +2,11 @@ import orderModel from "../../Models/orderModel/orderModel.js";
 import stonesModel from "../../Models/stonesModel/stonesModel.js";
 import { cloudinary, configureCloudinary } from '../../config/cloudinary.js';
 
+// Helper function to round to 2 decimal places
+const roundToTwoDecimals = (value) => {
+  return Math.round((value || 0) * 100) / 100;
+};
+
 // Get order details by order number for the logged-in user for a single order
 const getOrderDetails = async (req, res) => {
   try {
@@ -354,23 +359,26 @@ const submitPaymentProof = async (req, res) => {
     }
 
     // Parse and validate numeric amount (allow decimals)
-    const numericAmount = parseFloat(amountPaid);
+    const numericAmount = roundToTwoDecimals(parseFloat(amountPaid));
     if (!isFinite(numericAmount)) {
       return res.status(400).json({ success: false, message: 'Invalid amountPaid value' });
     }
 
+    // Round outstanding balance for comparison
+    const roundedOutstandingBalance = roundToTwoDecimals(order.outstandingBalance);
+
     // Check if amount paid exceeds outstanding balance
-    if (numericAmount > order.outstandingBalance) {
+    if (numericAmount > roundedOutstandingBalance) {
       return res.status(400).json({
         success: false,
-        message: `Amount paid cannot exceed outstanding balance of Rs ${order.outstandingBalance}`
+        message: `Amount paid cannot exceed outstanding balance of Rs ${roundedOutstandingBalance.toFixed(2)}`
       });
     }
 
     // Add payment proof (store numeric amount and cloudinary URL)
     order.paymentProofs.push({
       proofFile: proofFileUrl,
-      amountPaid: numericAmount,
+      amountPaid: roundToTwoDecimals(numericAmount),
       status: "pending"
     });
 
@@ -379,7 +387,7 @@ const submitPaymentProof = async (req, res) => {
       action: "payment_submitted",
       amountPaid: numericAmount,
       proofFile: proofFileUrl,
-      notes: `Payment of Rs ${numericAmount} submitted for verification`
+      notes: `Payment of Rs ${numericAmount.toFixed(2)} submitted for verification`
     });
 
     // Update payment status to payment_in_progress if it was pending
@@ -434,11 +442,14 @@ const approvePayment = async (req, res) => {
     paymentProof.approvedBy = adminId;
     paymentProof.notes = notes || "";
 
-    // Update totalPaid
-    order.totalPaid += paymentProof.amountPaid;
+    // Round payment amount to 2 decimal places
+    const roundedAmountPaid = roundToTwoDecimals(paymentProof.amountPaid);
 
-    // Calculate outstanding balance
-    order.outstandingBalance = order.financials.grandTotal - order.totalPaid;
+    // Update totalPaid (round to 2 decimal places)
+    order.totalPaid = roundToTwoDecimals(order.totalPaid + roundedAmountPaid);
+
+    // Calculate outstanding balance (round to 2 decimal places)
+    order.outstandingBalance = roundToTwoDecimals(order.financials.grandTotal - order.totalPaid);
 
     // Update payment status if fully paid
     if (order.outstandingBalance <= 0) {
@@ -493,8 +504,8 @@ const approvePayment = async (req, res) => {
     // Update payment timeline
     order.paymentTimeline.push({
       action: "payment_approved",
-      amountPaid: paymentProof.amountPaid,
-      notes: notes || `Payment of Rs ${paymentProof.amountPaid} approved by admin`
+      amountPaid: roundedAmountPaid,
+      notes: notes || `Payment of Rs ${roundedAmountPaid.toFixed(2)} approved by admin`
     });
 
     await order.save();

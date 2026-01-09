@@ -16,8 +16,8 @@ const formatNumber = (num) => {
 };
 
 const formatCurrency = (num) => {
-  if (num === undefined || num === null) return 'PKR 0';
-  return 'PKR ' + num.toLocaleString('en-PK', { maximumFractionDigits: 0 });
+  if (num === undefined || num === null) return 'PKR 0.00';
+  return 'PKR ' + num.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
 // Improved Bar Chart with better sizing
@@ -481,6 +481,7 @@ const Analytics = () => {
       
       if (response.data.success) {
         setAnalytics(response.data.data);
+        console.log(response.data.data);
       } else {
         toast.error('Failed to fetch analytics');
       }
@@ -498,7 +499,7 @@ const Analytics = () => {
     
     const { summary, topClients, mostSoldStones, monthlySales, orderStatusDistribution, 
             quotationStatusDistribution, paymentStatusOverview } = analytics;
-    
+
     let csv = [];
     
     // Summary Section
@@ -506,8 +507,7 @@ const Analytics = () => {
     csv.push(`Generated on: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
     csv.push('');
     csv.push('=== SUMMARY ===');
-    csv.push(`Paid Revenue,${formatCurrency(summary?.totalRevenue)}`);
-    csv.push(`Forecasted Revenue,${formatCurrency(summary?.forecastedRevenue)}`);
+    csv.push(`Total Revenue,${formatCurrency(summary?.forecastedRevenue)}`);
     csv.push(`Pending Payments,${formatCurrency(summary?.pendingPayments)}`);
     csv.push(`Total Orders,${summary?.totalOrders || 0}`);
     csv.push(`Total Quotations,${summary?.totalQuotations || 0}`);
@@ -519,7 +519,7 @@ const Analytics = () => {
     csv.push('=== TOP CLIENTS BY REVENUE ===');
     csv.push('Rank,Client Name,Email,Total Orders,Total Spent');
     (topClients || []).forEach((client, index) => {
-      csv.push(`${index + 1},${client.name || 'N/A'},${client.email || 'N/A'},${client.orderCount || 0},${formatCurrency(client.totalSpent)}`);
+      csv.push(`${index + 1},${client.companyName || 'N/A'},${client.email || 'N/A'},${client.orderCount || 0},${formatCurrency(client.totalSpent)}`);
     });
     csv.push('');
     
@@ -664,8 +664,8 @@ const Analytics = () => {
             
             <h2>Summary Overview</h2>
             <div>
-              <div class="summary-box"><h4>Paid Revenue</h4><p>${formatCurrency(analytics?.summary?.totalRevenue)}</p></div>
-              <div class="summary-box"><h4>Forecasted Revenue</h4><p>${formatCurrency(analytics?.summary?.forecastedRevenue)}</p></div>
+
+              <div class="summary-box"><h4>Total Revenue</h4><p>${formatCurrency(analytics?.summary?.forecastedRevenue)}</p></div>
               <div class="summary-box"><h4>Pending Payments</h4><p>${formatCurrency(analytics?.summary?.pendingPayments)}</p></div>
               <div class="summary-box"><h4>Total Orders</h4><p>${analytics?.summary?.totalOrders || 0}</p></div>
               <div class="summary-box"><h4>Total Quotations</h4><p>${analytics?.summary?.totalQuotations || 0}</p></div>
@@ -678,7 +678,7 @@ const Analytics = () => {
               ${(analytics?.topClients || []).map((client, i) => `
                 <tr>
                   <td>#${i + 1}</td>
-                  <td>${client.name || 'N/A'}</td>
+                  <td>${client.companyName || 'N/A'}</td>
                   <td>${client.email || 'N/A'}</td>
                   <td>${client.orderCount || 0}</td>
                   <td>${formatCurrency(client.totalSpent)}</td>
@@ -820,28 +820,20 @@ const Analytics = () => {
         <div className="summary-card revenue clickable" onClick={() => navigate('/orders')} title="View Orders">
           <div className="card-icon">💵</div>
           <div className="card-content">
-            <h3>Paid Revenue</h3>
+            <h3>Total Revenue</h3>
             <p className="card-value">{formatCurrency(summary?.totalRevenue)}</p>
             <span className="card-label">Fully paid orders only</span>
           </div>
           <span className="card-link-hint">View Orders →</span>
         </div>
 
-        <div className="summary-card forecasted clickable" onClick={() => navigate('/orders')} title="View Orders">
-          <div className="card-icon">📈</div>
-          <div className="card-content">
-            <h3>Forecasted Revenue</h3>
-            <p className="card-value">{formatCurrency(summary?.forecastedRevenue)}</p>
-            <span className="card-label">All active orders</span>
-          </div>
-          <span className="card-link-hint">View Orders →</span>
-        </div>
+
 
         <div className="summary-card pending clickable" onClick={() => navigate('/orders')} title="View Orders">
           <div className="card-icon">⏳</div>
           <div className="card-content">
             <h3>Pending Payments</h3>
-            <p className="card-value">{formatCurrency(summary?.pendingRevenue)}</p>
+            <p className="card-value">{formatCurrency(summary?.pendingPayments)}</p>
             <span className="card-label">Awaiting payment</span>
           </div>
           <span className="card-link-hint">View Orders →</span>
