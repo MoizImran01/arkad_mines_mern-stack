@@ -9,14 +9,43 @@ import adminRouter from "../Routes/AdminRoutes/adminRouter.js";
 import stonesRouter from "../Routes/StonesRoutes/StonesRoutes.js";
 import quoteRouter from "../Routes/QuoteRoutes/quoteRouter.js";
 import orderRouter from "../Routes/OrderRoutes/OrderRoutes.js";
+
 const app = express();
 
-//Middlewares
-// Increase payload size limit for base64 image uploads (10MB)
+// --- 1. SETUP ALLOWED ORIGINS ---
+// Parse the CLIENT_URL env variable (which is "url1,url2") into an array
+const configuredOrigins = process.env.CLIENT_URL 
+  ? process.env.CLIENT_URL.split(',') 
+  : [];
+
+// Default local origins for development
+const localOrigins = [
+  'http://localhost:5173', 
+  'http://localhost:3000', 
+  'http://localhost:5174',
+  'http://localhost:4000'
+];
+
+// Combine them into one list
+const allowedOrigins = [...configuredOrigins, ...localOrigins];
+
+// --- 2. MIDDLEWARES ---
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin is in our allowed list
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('Blocked by CORS:', origin); // Log blocked attempts for debugging
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -24,7 +53,6 @@ app.use(cors({
 
 ///database configuration
 connectDB().catch((e) => console.error("DB connect error:", e));
-
 
 app.use("/images", express.static("uploads"));
 
@@ -35,12 +63,9 @@ app.use("/api/stones", stonesRouter);
 app.use("/api/quotes", quoteRouter);
 app.use("/api/orders", orderRouter);
 
-
 app.get("/", (req, res) => res.status(200).send(" Server running successfully"));
 
-
 export default app;
-
 
 if (!process.env.VERCEL) {
   const port = process.env.PORT || 4000;
