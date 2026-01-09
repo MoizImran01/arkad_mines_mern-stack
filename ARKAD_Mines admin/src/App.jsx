@@ -14,6 +14,7 @@ import { AdminAuthContext } from './context/AdminAuthContext'
 import Users from './Pages/Users/Users'
 import Dispatch from './Pages/Dispatch/Dispatch'
 import Quotations from './Pages/Quotations/Quotations'
+import Analytics from './Pages/Analytics/Analytics'
 
 const App = () => {
   const { token, adminUser, loading } = useContext(AdminAuthContext);
@@ -131,6 +132,19 @@ const App = () => {
               <div className="app-content">
                 <Siderbar/>
                 <Quotations/>
+              </div>
+            </>
+          </ProtectedRoute>
+        }/>
+        
+        <Route path="/analytics" element={
+          <ProtectedRoute>
+            <>
+              <Navbar/>
+              <hr/>
+              <div className="app-content">
+                <Siderbar/>
+                <Analytics/>
               </div>
             </>
           </ProtectedRoute>

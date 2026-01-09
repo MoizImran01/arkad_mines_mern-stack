@@ -2,7 +2,7 @@ import React from 'react';
 import './Sidebar.css';
 import { assets } from '../../assets/assets';
 import { NavLink } from 'react-router-dom';
-import { FiUser, FiPackage, FiFileText } from 'react-icons/fi';
+import { FiUser, FiPackage, FiFileText, FiBarChart2 } from 'react-icons/fi';
 
 const Siderbar = () => {
   return (
@@ -36,6 +36,11 @@ const Siderbar = () => {
         <NavLink to='/quotes' className="sidebar-option">
           <FiFileText className="sidebar-icon" />
           <p>Quotes</p>
+        </NavLink>
+
+        <NavLink to='/analytics' className="sidebar-option">
+          <FiBarChart2 className="sidebar-icon" />
+          <p>Analytics</p>
         </NavLink>
       </div>
     </div>
