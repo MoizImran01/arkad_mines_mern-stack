@@ -565,13 +565,31 @@ const Analytics = () => {
       {/* Summary Cards */}
       <div className="summary-grid">
         <div className="summary-card revenue clickable" onClick={() => navigate('/orders')} title="View Orders">
-          <div className="card-icon">💰</div>
+          <div className="card-icon">💵</div>
           <div className="card-content">
-            <h3>Total Revenue</h3>
+            <h3>Paid Revenue</h3>
             <p className="card-value">{formatCurrency(summary?.totalRevenue)}</p>
-            <span className={`growth-badge ${summary?.orderGrowth >= 0 ? 'positive' : 'negative'}`}>
-              {summary?.orderGrowth >= 0 ? '↑' : '↓'} {Math.abs(summary?.orderGrowth || 0)}% vs last month
-            </span>
+            <span className="card-label">Fully paid orders only</span>
+          </div>
+          <span className="card-link-hint">View Orders →</span>
+        </div>
+
+        <div className="summary-card forecasted clickable" onClick={() => navigate('/orders')} title="View Orders">
+          <div className="card-icon">📈</div>
+          <div className="card-content">
+            <h3>Forecasted Revenue</h3>
+            <p className="card-value">{formatCurrency(summary?.forecastedRevenue)}</p>
+            <span className="card-label">All active orders</span>
+          </div>
+          <span className="card-link-hint">View Orders →</span>
+        </div>
+
+        <div className="summary-card pending clickable" onClick={() => navigate('/orders')} title="View Orders">
+          <div className="card-icon">⏳</div>
+          <div className="card-content">
+            <h3>Pending Payments</h3>
+            <p className="card-value">{formatCurrency(summary?.pendingRevenue)}</p>
+            <span className="card-label">Awaiting payment</span>
           </div>
           <span className="card-link-hint">View Orders →</span>
         </div>

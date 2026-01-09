@@ -197,10 +197,12 @@ export const getAnalytics = async (req, res) => {
 
     const totalStones = await stonesModel.countDocuments();
 
-    const revenueAggregation = await orderModel.aggregate([
+    // Actual Revenue - Only from FULLY PAID orders
+    const actualRevenueAggregation = await orderModel.aggregate([
       {
         $match: {
-          status: { $in: ["confirmed", "processing", "shipped", "delivered"] },
+          status: { $in: ["confirmed", "dispatched", "delivered"] },
+          paymentStatus: "fully_paid",
           createdAt: { $gte: startDate, $lte: endDate }
         }
       },
@@ -212,7 +214,44 @@ export const getAnalytics = async (req, res) => {
       }
     ]);
 
-    const totalRevenue = revenueAggregation[0]?.totalRevenue || 0;
+    const totalRevenue = actualRevenueAggregation[0]?.totalRevenue || 0;
+
+    // Forecasted Revenue - From ALL confirmed/dispatched/delivered orders (regardless of payment)
+    const forecastedRevenueAggregation = await orderModel.aggregate([
+      {
+        $match: {
+          status: { $in: ["confirmed", "dispatched", "delivered"] },
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$financials.grandTotal" }
+        }
+      }
+    ]);
+
+    const forecastedRevenue = forecastedRevenueAggregation[0]?.totalRevenue || 0;
+
+    // Pending Revenue - Orders awaiting payment
+    const pendingRevenueAggregation = await orderModel.aggregate([
+      {
+        $match: {
+          status: { $in: ["confirmed", "dispatched", "delivered"] },
+          paymentStatus: { $in: ["pending", "payment_in_progress"] },
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$outstandingBalance" }
+        }
+      }
+    ]);
+
+    const pendingRevenue = pendingRevenueAggregation[0]?.totalRevenue || 0;
 
     // 9. Conversion Rate (Quotations to Orders)
     const approvedQuotations = await quotationModel.countDocuments({
@@ -305,6 +344,8 @@ export const getAnalytics = async (req, res) => {
           totalCustomers,
           totalStones,
           totalRevenue,
+          forecastedRevenue,
+          pendingRevenue,
           conversionRate: parseFloat(conversionRate),
           orderGrowth: parseFloat(orderGrowth)
         },
