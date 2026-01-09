@@ -659,58 +659,7 @@ const Orders = () => {
                     )}
 
                     {/* Payment Proofs List */}
-                    {trackingOrderDetails.paymentProofs && trackingOrderDetails.paymentProofs.length > 0 && (
-                      <div className="payment-proofs-section">
-                        <h4>Payment Proofs</h4>
-                        <div className="payment-proofs-list">
-                          {trackingOrderDetails.paymentProofs.map((proof, pidx) => (
-                            <div key={pidx} className={`payment-proof-item ${proof.status}`}>
-                              <div className="proof-header">
-                                <span className={`proof-status-badge ${proof.status}`}>
-                                  {proof.status?.toUpperCase() || 'PENDING'}
-                                </span>
-                                <span className="proof-date">
-                                  {new Date(proof.uploadedAt).toLocaleDateString()}
-                                </span>
-                              </div>
-                              <div className="proof-details">
-                                <p className="proof-amount">Amount: Rs {proof.amountPaid?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                                {proof.status === 'rejected' && (
-                                  <div className="rejection-notice">
-                                    <strong>Rejection Reason:</strong> {proof.notes || 'N/A'}
-                                  </div>
-                                )}
-                                {proof.proofFile && (
-                                  <button
-                                    onClick={async () => {
-                                      try {
-                                        const proofUrl = proof.proofFile.startsWith('http') ? proof.proofFile : `${url}/images/${proof.proofFile}`;
-                                        const response = await fetch(proofUrl);
-                                        const blob = await response.blob();
-                                        const url = window.URL.createObjectURL(blob);
-                                        const a = document.createElement('a');
-                                        a.href = url;
-                                        a.download = `payment-proof-${trackingOrderDetails.orderNumber}-${pidx + 1}.${blob.type.includes('png') ? 'png' : 'jpg'}`;
-                                        document.body.appendChild(a);
-                                        a.click();
-                                        window.URL.revokeObjectURL(url);
-                                        document.body.removeChild(a);
-                                      } catch (error) {
-                                        console.error('Error downloading proof:', error);
-                                        toast.error('Failed to download payment proof');
-                                      }
-                                    }}
-                                    className="btn-download-invoice"
-                                  >
-                                    <FiDownload /> Download Proof
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                   
 
                     {trackingOrderDetails.paymentTimeline && trackingOrderDetails.paymentTimeline.length > 0 && (
                       <div className="payment-timeline-section">

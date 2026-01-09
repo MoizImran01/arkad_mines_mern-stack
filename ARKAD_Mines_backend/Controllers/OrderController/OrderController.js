@@ -448,6 +448,39 @@ const approvePayment = async (req, res) => {
       if (order.status === "draft") {
         order.status = "confirmed";
         
+        // Deduct stock for each item in the order (same logic as manual confirmation)
+        if (order.items && order.items.length > 0) {
+          // Populate items if not already populated
+          await order.populate("items.stone");
+          
+          // Deduct stock for each item in the order
+          for (const item of order.items) {
+            // Get stone ID - handle both populated (object with _id) and unpopulated (ObjectId) cases
+            const stoneId = item.stone?._id || item.stone;
+            const stone = await stonesModel.findById(stoneId);
+            if (stone) {
+              const quantityToDeduct = item.quantity || 1;
+              
+              // Check if enough stock is available
+              const remainingBeforeDeduct = stone.stockQuantity - (stone.quantityDelivered || 0);
+              if (remainingBeforeDeduct < quantityToDeduct) {
+                // Log warning but don't block confirmation (stock check should have been done earlier)
+                console.warn(`Warning: Not enough stock available for ${stone.stoneName}. Need ${quantityToDeduct}, but only ${remainingBeforeDeduct} available.`);
+              } else {
+                stone.quantityDelivered = (stone.quantityDelivered || 0) + quantityToDeduct;
+                
+                // Update stock availability based on remaining quantity
+                const remainingQuantity = stone.stockQuantity - stone.quantityDelivered;
+                if (remainingQuantity <= 0) {
+                  stone.stockAvailability = "Out of Stock";
+                }
+
+                await stone.save();
+              }
+            }
+          }
+        }
+        
         // Add to order timeline
         order.timeline.push({
           status: "confirmed",

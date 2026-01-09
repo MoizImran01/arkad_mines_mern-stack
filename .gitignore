@@ -26,3 +26,4 @@ npm-debug.log*
 # Local environment overrides (optional)
 *.local
 
+ARKAD_Mines_backend/logs/

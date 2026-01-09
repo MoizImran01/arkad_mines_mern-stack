@@ -3,17 +3,20 @@ import './Orders.css'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
-import { FiPackage, FiCheckCircle, FiXCircle, FiClock, FiDollarSign, FiUser, FiMapPin, FiPhone, FiCalendar, FiTruck, FiEdit2, FiX, FiCheck, FiSearch, FiGrid, FiDownload } from 'react-icons/fi';
+import {
+  FiPackage, FiCheckCircle, FiXCircle, FiClock, FiDollarSign,
+  FiUser, FiMapPin, FiPhone, FiCalendar, FiTruck, FiEdit2,
+  FiX, FiCheck, FiDownload, FiFileText, FiHome, FiBox
+} from 'react-icons/fi'
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000"
 
 const Orders = () => {
-
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedOrder, setExpandedOrder] = useState(null);
-  const [editingStatus, setEditingStatus] = useState(null);
-  const [statusModalOrder, setStatusModalOrder] = useState(null);
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [expandedOrder, setExpandedOrder] = useState(null)
+  const [editingStatus, setEditingStatus] = useState(null)
+  const [statusModalOrder, setStatusModalOrder] = useState(null)
   const [statusForm, setStatusForm] = useState({
     status: '',
     paymentStatus: '',
@@ -21,65 +24,70 @@ const Orders = () => {
     trackingNumber: '',
     courierLink: '',
     notes: ''
-  });
-  const [rejectModal, setRejectModal] = useState({ show: false, orderId: null, proofIndex: null, reason: '' });
-
-  // Payment status options
-  const paymentStatusOptions = [
-    { value: 'pending', label: 'Pending', color: '#fbbf24' },
-    { value: 'payment_in_progress', label: 'Payment In Progress', color: '#93c5fd' },
-    { value: 'fully_paid', label: 'Fully Paid', color: '#86efac' }
-  ];
+  })
+  const [rejectModal, setRejectModal] = useState({ 
+    show: false, 
+    orderId: null, 
+    proofIndex: null, 
+    reason: '' 
+  })
 
   // Status options for order model
   const statusOptions = [
-    { value: 'draft', label: 'Draft', icon: <FiEdit2 className="status-icon draft" />, color: '#6b7280' },
-    { value: 'confirmed', label: 'Confirmed', icon: <FiCheckCircle className="status-icon confirmed" />, color: '#3b82f6' },
-    { value: 'dispatched', label: 'Dispatched', icon: <FiTruck className="status-icon dispatched" />, color: '#8b5cf6' },
-    { value: 'delivered', label: 'Delivered', icon: <FiCheckCircle className="status-icon delivered" />, color: '#10b981' },
-    { value: 'cancelled', label: 'Cancelled', icon: <FiXCircle className="status-icon cancelled" />, color: '#ef4444' }
-  ];
+    { value: 'draft', label: 'Draft', color: '#6b7280' },
+    { value: 'confirmed', label: 'Confirmed', color: '#3b82f6' },
+    { value: 'dispatched', label: 'Dispatched', color: '#8b5cf6' },
+    { value: 'delivered', label: 'Delivered', color: '#10b981' },
+    { value: 'cancelled', label: 'Cancelled', color: '#ef4444' }
+  ]
+
+  // Payment status options
+  const paymentStatusOptions = [
+    { value: 'pending', label: 'Pending', color: '#f59e0b' },
+    { value: 'payment_in_progress', label: 'Payment In Progress', color: '#3b82f6' },
+    { value: 'fully_paid', label: 'Fully Paid', color: '#10b981' }
+  ]
 
   // Get image URL
   const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://via.placeholder.com/50?text=No+Image';
+    if (!imagePath) return 'https://via.placeholder.com/50?text=No+Image'
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return imagePath;
+      return imagePath
     }
-    return `${API_URL}/images/${imagePath}`;
-  };
+    return `${API_URL}/images/${imagePath}`
+  }
 
   // Fetch all orders from backend
   const fetchAllOrders = async () => {
     try {
-      setLoading(true);
-      const token = localStorage.getItem('adminToken');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const response = await axios.get(`${API_URL}/api/orders/admin/all`, { headers });
+      setLoading(true)
+      const token = localStorage.getItem('adminToken')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const response = await axios.get(`${API_URL}/api/orders/admin/all`, { headers })
+      
       if (response.data.success) {
-        setOrders(response.data.orders);
+        setOrders(response.data.orders)
       } else {
-        toast.error("Error occurred displaying orders");
+        toast.error("Error loading orders")
       }
     } catch (error) {
-      console.error("Error fetching orders:", error);
-      toast.error("Failed to load orders");
+      console.error("Error fetching orders:", error)
+      toast.error("Failed to load orders")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   // Update order status
   const updateOrderStatus = async (orderId) => {
     try {
-
       if (statusForm.status === 'dispatched' && (!statusForm.courierService || !statusForm.trackingNumber)) {
-        toast.error("Courier service and tracking number required for dispatched status");
-        return;
+        toast.error("Courier service and tracking number required for dispatched status")
+        return
       }
 
-      const token = localStorage.getItem('adminToken');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const token = localStorage.getItem('adminToken')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
       const response = await axios.put(
         `${API_URL}/api/orders/admin/status/${orderId}`,
@@ -88,11 +96,11 @@ const Orders = () => {
           dispatchedBlocks: []
         },
         { headers }
-      );
+      )
 
       if (response.data.success) {
-        toast.success(`Order status updated to ${statusForm.status}`);
-        setEditingStatus(null);
+        toast.success(`Order status updated to ${statusForm.status}`)
+        setEditingStatus(null)
         setStatusForm({
           status: '',
           paymentStatus: '',
@@ -100,27 +108,27 @@ const Orders = () => {
           trackingNumber: '',
           courierLink: '',
           notes: ''
-        });
-        fetchAllOrders();
+        })
+        fetchAllOrders()
       } else {
-        toast.error(response.data.message || "Failed to update order status");
+        toast.error(response.data.message || "Failed to update order status")
       }
     } catch (error) {
-      console.error("Error updating order status:", error);
-      toast.error(error.response?.data?.message || "Error updating order status");
+      console.error("Error updating order status:", error)
+      toast.error(error.response?.data?.message || "Error updating order status")
     }
-  };
+  }
 
   // Update payment status
   const updatePaymentStatus = async (orderId) => {
     try {
       if (!statusForm.paymentStatus) {
-        toast.error("Please select a payment status");
-        return;
+        toast.error("Please select a payment status")
+        return
       }
 
-      const token = localStorage.getItem('adminToken');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const token = localStorage.getItem('adminToken')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
       const response = await axios.put(
         `${API_URL}/api/orders/admin/payment-status/${orderId}`,
@@ -129,11 +137,11 @@ const Orders = () => {
           notes: statusForm.notes || ''
         },
         { headers }
-      );
+      )
 
       if (response.data.success) {
-        toast.success(`Payment status updated to ${statusForm.paymentStatus}`);
-        setStatusModalOrder(null);
+        toast.success(`Payment status updated to ${statusForm.paymentStatus}`)
+        setStatusModalOrder(null)
         setStatusForm({
           status: '',
           paymentStatus: '',
@@ -141,23 +149,71 @@ const Orders = () => {
           trackingNumber: '',
           courierLink: '',
           notes: ''
-        });
-        fetchAllOrders();
+        })
+        fetchAllOrders()
       } else {
-        toast.error(response.data.message || "Failed to update payment status");
+        toast.error(response.data.message || "Failed to update payment status")
       }
     } catch (error) {
-      console.error("Error updating payment status:", error);
-      toast.error(error.response?.data?.message || "Error updating payment status");
+      console.error("Error updating payment status:", error)
+      toast.error(error.response?.data?.message || "Error updating payment status")
     }
-  };
+  }
 
+  // Approve a payment proof
+  const approvePayment = async (orderId, proofIndex) => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const response = await axios.put(
+        `${API_URL}/api/orders/admin/payment/approve/${orderId}/${proofIndex}`,
+        { notes: 'Approved by admin' },
+        { headers }
+      )
+      
+      if (response.data.success) {
+        toast.success('Payment approved')
+        fetchAllOrders()
+      } else {
+        toast.error(response.data.message || 'Failed to approve payment')
+      }
+    } catch (err) {
+      console.error('Error approving payment:', err)
+      toast.error(err.response?.data?.message || 'Error approving payment')
+    }
+  }
+
+  // Reject a payment proof
+  const rejectPayment = async (orderId, proofIndex, rejectionReason) => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const response = await axios.put(
+        `${API_URL}/api/orders/admin/payment/reject/${orderId}/${proofIndex}`,
+        { rejectionReason: rejectionReason || '', notes: rejectionReason || '' },
+        { headers }
+      )
+      
+      if (response.data.success) {
+        toast.success('Payment rejected')
+        setRejectModal({ show: false, orderId: null, proofIndex: null, reason: '' })
+        fetchAllOrders()
+      } else {
+        toast.error(response.data.message || 'Failed to reject payment')
+      }
+    } catch (err) {
+      console.error('Error rejecting payment:', err)
+      toast.error(err.response?.data?.message || 'Error rejecting payment')
+    }
+  }
+
+  // Helper functions
   const toggleOrderExpand = (orderId) => {
-    setExpandedOrder(expandedOrder === orderId ? null : orderId);
-  };
+    setExpandedOrder(expandedOrder === orderId ? null : orderId)
+  }
 
   const openStatusModal = (order) => {
-    setStatusModalOrder(order._id);
+    setStatusModalOrder(order._id)
     setStatusForm({
       status: order.status,
       paymentStatus: order.paymentStatus,
@@ -165,101 +221,63 @@ const Orders = () => {
       trackingNumber: order.courierTracking?.trackingNumber || '',
       courierLink: order.courierTracking?.courierLink || '',
       notes: ''
-    });
-  };
+    })
+  }
 
   const closeStatusModal = () => {
-    setStatusModalOrder(null);
+    setStatusModalOrder(null)
     setStatusForm({
       status: '',
       courierService: '',
       trackingNumber: '',
       courierLink: '',
       notes: ''
-    });
-  };
+    })
+  }
 
   const startEditingStatus = (order) => {
-    setEditingStatus(order._id);
+    setEditingStatus(order._id)
     setStatusForm({
       status: order.status,
       courierService: order.courierTracking?.courierService || '',
       trackingNumber: order.courierTracking?.trackingNumber || '',
       courierLink: order.courierTracking?.courierLink || '',
       notes: ''
-    });
-  };
+    })
+  }
 
   const cancelEditingStatus = () => {
-    setEditingStatus(null);
+    setEditingStatus(null)
     setStatusForm({
       status: '',
       courierService: '',
       trackingNumber: '',
       courierLink: '',
       notes: ''
-    });
-  };
-
-  const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
-
-  useEffect(() => {
-    fetchAllOrders();
-  }, []);
-
-  // Approve a payment proof (admin)
-  const approvePayment = async (orderId, proofIndex) => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const response = await axios.put(`${API_URL}/api/orders/admin/payment/approve/${orderId}/${proofIndex}`, { notes: 'Approved by admin' }, { headers });
-      if (response.data.success) {
-        toast.success('Payment approved');
-        fetchAllOrders();
-      } else {
-        toast.error(response.data.message || 'Failed to approve payment');
-      }
-    } catch (err) {
-      console.error('Error approving payment:', err);
-      toast.error(err.response?.data?.message || 'Error approving payment');
-    }
-  };
-
-  const rejectPayment = async (orderId, proofIndex, rejectionReason) => {
-    try {
-      const token = localStorage.getItem('adminToken');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const response = await axios.put(
-        `${API_URL}/api/orders/admin/payment/reject/${orderId}/${proofIndex}`, 
-        { rejectionReason: rejectionReason || '', notes: rejectionReason || '' }, 
-        { headers }
-      );
-      if (response.data.success) {
-        toast.success('Payment rejected');
-        setRejectModal({ show: false, orderId: null, proofIndex: null, reason: '' });
-        fetchAllOrders();
-      } else {
-        toast.error(response.data.message || 'Failed to reject payment');
-      }
-    } catch (err) {
-      console.error('Error rejecting payment:', err);
-      toast.error(err.response?.data?.message || 'Error rejecting payment');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <p>Loading orders...</p>
-      </div>
-    );
+    })
   }
 
-  //calculate stats e.g how many orders have been confirmed, dispatched, delivered, cancelled
+  const formatDate = (dateString) => {
+    const options = { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    }
+    return new Date(dateString).toLocaleDateString(undefined, options)
+  }
+
+  const formatCurrency = (amount) => {
+    return `Rs ${(amount || 0).toLocaleString()}`
+  }
+
+  // Initialize
+  useEffect(() => {
+    fetchAllOrders()
+  }, [])
+
+  // Calculate stats
   const stats = {
     total: orders.length,
     draft: orders.filter(o => o.status === 'draft').length,
@@ -270,12 +288,22 @@ const Orders = () => {
     revenue: orders.reduce((sum, order) => {
       return (order.status === "dispatched" || order.status === "confirmed" || order.status === "delivered") 
         ? sum + (order.financials?.grandTotal || 0) 
-        : sum;
+        : sum
     }, 0)
-  };
+  }
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading orders...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="orders-admin-container">
+      {/* Header */}
       <div className="orders-header">
         <h1><FiPackage className="header-icon" /> Orders Management</h1>
         <p>Manage and track all customer orders</p>
@@ -330,10 +358,10 @@ const Orders = () => {
         </div>
         <div className="stat-card">
           <div className="stat-icon revenue">
-            <FiDollarSign />
+PKR
           </div>
           <div className="stat-info">
-            <h3>Rs {stats.revenue.toLocaleString()}</h3>
+            <h3>{formatCurrency(stats.revenue)}</h3>
             <p>Total Revenue</p>
           </div>
         </div>
@@ -349,8 +377,8 @@ const Orders = () => {
                 <th>Customer</th>
                 <th>Items</th>
                 <th>Total</th>
-                <th>Outstanding Balance</th>
-                <th>Payment Status</th>
+                <th>Balance</th>
+                <th>Payment</th>
                 <th>Date</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -369,20 +397,29 @@ const Orders = () => {
               ) : (
                 orders.map(order => (
                   <React.Fragment key={order._id}>
-                    <tr className="order-row" onClick={() => toggleOrderExpand(order._id)}>
+                    <tr 
+                      className="order-row" 
+                      onClick={() => toggleOrderExpand(order._id)}
+                    >
                       <td className="order-id">#{order.orderNumber}</td>
                       <td className="customer-info">
                         <div className="customer-name">
                           <FiUser className="info-icon" />
                           {order.buyer?.companyName || 'Unknown'}
                         </div>
-                        <div className="customer-email">{order.buyer?.email}</div>
+                        <div className="customer-email">
+                          {order.buyer?.email}
+                        </div>
                       </td>
-                      <td className="items-count">{order.items?.length || 0} items</td>
-                      <td className="order-total">Rs {(order.financials?.grandTotal || 0).toLocaleString()}</td>
+                      <td className="items-count">
+                        {order.items?.length || 0} items
+                      </td>
+                      <td className="order-total">
+                        {formatCurrency(order.financials?.grandTotal)}
+                      </td>
                       <td className="outstanding-balance">
                         <span className={`balance-badge ${order.outstandingBalance > 0 ? 'pending' : 'paid'}`}>
-                          Rs {(order.outstandingBalance || 0).toLocaleString()}
+                          {formatCurrency(order.outstandingBalance)}
                         </span>
                       </td>
                       <td className="payment-status">
@@ -398,13 +435,12 @@ const Orders = () => {
                         <div 
                           className={`status-badge status-${order.status} clickable`}
                           onClick={(e) => {
-                            e.stopPropagation();
-                            openStatusModal(order);
+                            e.stopPropagation()
+                            openStatusModal(order)
                           }}
                           title="Click to edit status"
                         >
-                          {statusOptions.find(s => s.value === order.status)?.icon}
-                          {statusOptions.find(s => s.value === order.status)?.label}
+                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                         </div>
                       </td>
                       <td className="order-actions" onClick={(e) => e.stopPropagation()}>
@@ -427,16 +463,19 @@ const Orders = () => {
                               <h4><FiUser className="section-icon" /> Customer Information</h4>
                               <div className="details-grid">
                                 <div>
-                                  <span className="detail-label">Company:</span>
+                                  <span className="detail-label">Company</span>
                                   <span>{order.buyer?.companyName || 'N/A'}</span>
                                 </div>
                                 <div>
-                                  <span className="detail-label">Email:</span>
+                                  <span className="detail-label">Email</span>
                                   <span>{order.buyer?.email || 'N/A'}</span>
                                 </div>
                                 <div>
-                                  <span className="detail-label">Phone:</span>
-                                  <span><FiPhone className="info-icon" /> {order.deliveryAddress.phone || 'N/A'}</span>
+                                  <span className="detail-label">Phone</span>
+                                  <span>
+                                    <FiPhone className="info-icon" />
+                                    {order.deliveryAddress?.phone || 'N/A'}
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -446,11 +485,15 @@ const Orders = () => {
                               <h4><FiMapPin className="section-icon" /> Delivery Address</h4>
                               {order.deliveryAddress ? (
                                 <div className="address-details">
-                                  <p>{order.deliveryAddress.firstName} {order.deliveryAddress.lastName}</p>
+                                  <p><strong>{order.deliveryAddress.firstName} {order.deliveryAddress.lastName}</strong></p>
                                   <p>{order.deliveryAddress.street}</p>
-                                  <p>{order.deliveryAddress.city}, {order.deliveryAddress.state} {order.deliveryAddress.zipCode}</p>
-                                  <p>{order.deliveryAddress.country}</p>
-                                  {order.deliveryNotes && <p className="delivery-notes"><strong>Notes:</strong> {order.deliveryNotes}</p>}
+                                  <p>{order.deliveryAddress.city}, {order.deliveryAddress.state}</p>
+                                  <p>{order.deliveryAddress.country} - {order.deliveryAddress.zipCode}</p>
+                                  {order.deliveryNotes && (
+                                    <p className="delivery-notes">
+                                      <strong>Notes:</strong> {order.deliveryNotes}
+                                    </p>
+                                  )}
                                 </div>
                               ) : (
                                 <p className="no-address">No delivery address provided</p>
@@ -459,7 +502,7 @@ const Orders = () => {
 
                             {/* Order Items */}
                             <div className="details-section">
-                              <h4><FiPackage className="section-icon" /> Order Items ({order.items?.length || 0})</h4>
+                              <h4><FiBox className="section-icon" /> Order Items ({order.items?.length || 0})</h4>
                               <div className="order-items">
                                 {order.items?.map((item, idx) => (
                                   <div key={idx} className="order-item">
@@ -468,8 +511,8 @@ const Orders = () => {
                                         src={getImageUrl(item.image)} 
                                         alt={item.stoneName}
                                         onError={(e) => {
-                                          e.target.onerror = null; 
-                                          e.target.src = 'https://via.placeholder.com/50';
+                                          e.target.onerror = null
+                                          e.target.src = 'https://via.placeholder.com/50'
                                         }}
                                       />
                                     </div>
@@ -478,191 +521,204 @@ const Orders = () => {
                                       {item.dimensions && <p>{item.dimensions}</p>}
                                     </div>
                                     <div className="item-quantity">
-                                      <span>{item.quantity} × Rs {item.unitPrice?.toLocaleString()}</span>
+                                      {item.quantity} × {formatCurrency(item.unitPrice)}
                                     </div>
                                     <div className="item-total">
-                                      Rs {(item.totalPrice || item.quantity * item.unitPrice).toLocaleString()}
+                                      {formatCurrency(item.totalPrice || item.quantity * item.unitPrice)}
                                     </div>
                                   </div>
                                 ))}
                               </div>
                             </div>
 
-                            {/* Financial Summary */}
+                            {/* Order Summary */}
                             <div className="details-section">
-                              <h4>Order Summary</h4>
+                              <h4><FiFileText className="section-icon" /> Order Summary</h4>
                               <div className="summary-details">
                                 <div className="summary-row">
                                   <span>Subtotal:</span>
-                                  <span>Rs {(order.financials?.subtotal || 0).toLocaleString()}</span>
+                                  <span>{formatCurrency(order.financials?.subtotal)}</span>
                                 </div>
                                 {order.financials?.taxPercentage > 0 && (
                                   <div className="summary-row">
                                     <span>Tax ({order.financials.taxPercentage}%):</span>
-                                    <span>Rs {(order.financials.taxAmount || 0).toLocaleString()}</span>
+                                    <span>{formatCurrency(order.financials.taxAmount)}</span>
                                   </div>
                                 )}
                                 {order.financials?.shippingCost > 0 && (
                                   <div className="summary-row">
                                     <span>Shipping:</span>
-                                    <span>Rs {(order.financials.shippingCost || 0).toLocaleString()}</span>
+                                    <span>{formatCurrency(order.financials.shippingCost)}</span>
                                   </div>
                                 )}
                                 {order.financials?.discountAmount > 0 && (
                                   <div className="summary-row discount">
                                     <span>Discount:</span>
-                                    <span>- Rs {(order.financials.discountAmount || 0).toLocaleString()}</span>
+                                    <span>- {formatCurrency(order.financials.discountAmount)}</span>
                                   </div>
                                 )}
                                 <div className="summary-row total">
                                   <span>Grand Total:</span>
-                                  <span>Rs {(order.financials?.grandTotal || 0).toLocaleString()}</span>
+                                  <span>{formatCurrency(order.financials?.grandTotal)}</span>
                                 </div>
+                                {order.outstandingBalance > 0 && (
+                                  <div className="summary-row">
+                                    <span>Outstanding Balance:</span>
+                                    <span className="highlight-red">{formatCurrency(order.outstandingBalance)}</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
 
-                            {/* Payment Timeline & Proofs Side-by-Side */}
-                            <div className="payment-timeline-proofs-grid">
-                              {/* Payment Timeline Section */}
-                              {(order.paymentTimeline && order.paymentTimeline.length > 0) && (
-                                <div className="payment-timeline-section">
-                                  <h4><FiClock className="section-icon" /> Payment Timeline</h4>
-                                  <div className="timeline">
-                                    {order.paymentTimeline?.map((entry, idx) => (
-                                      <div key={idx} className="timeline-entry">
-                                        <div className={`timeline-dot payment-${entry.action}`} />
-                                        <div className="timeline-content">
-                                          <strong>{entry.action?.replace(/_/g, ' ').toUpperCase()}</strong>
-                                          <p>{formatDate(entry.timestamp)}</p>
-                                          {entry.amountPaid && <p className="timeline-amount">Amount: Rs {entry.amountPaid.toLocaleString()}</p>}
-                                          {entry.notes && <p className="timeline-notes">{entry.notes}</p>}
-                                          {entry.proofFile && (
-                                            <div className="proof-actions">
-                                              <button
-                                                onClick={async () => {
-                                                  try {
-                                                    const proofUrl = getImageUrl(entry.proofFile);
-                                                    const response = await fetch(proofUrl);
-                                                    const blob = await response.blob();
-                                                    const downloadUrl = window.URL.createObjectURL(blob);
-                                                    const a = document.createElement('a');
-                                                    a.href = downloadUrl;
-                                                    a.download = `payment-invoice-${order.orderNumber}-${new Date(entry.timestamp).getTime()}.${blob.type.includes('png') ? 'png' : 'jpg'}`;
-                                                    document.body.appendChild(a);
-                                                    a.click();
-                                                    window.URL.revokeObjectURL(downloadUrl);
-                                                    document.body.removeChild(a);
-                                                  } catch (error) {
-                                                    console.error('Error downloading invoice:', error);
-                                                    toast.error('Failed to download payment invoice');
-                                                  }
-                                                }}
-                                                className="btn-download-invoice"
-                                              >
-                                                <FiDownload /> Download Invoice
-                                              </button>
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
+                            {/* Payment Timeline */}
+                            {order.paymentTimeline && order.paymentTimeline.length > 0 && (
+                              <div className="payment-timeline-section">
+                                <h4> Payment Timeline</h4>
+                                <div className="timeline">
+                                  {order.paymentTimeline.map((entry, idx) => {
+                                    // Find corresponding payment proof if any
+                                    const proofIndex = order.paymentProofs?.findIndex(p => 
+                                      p.proofFile === entry.proofFile || 
+                                      p.uploadedAt === entry.timestamp
+                                    )
+                                    
+                                    const proof = proofIndex !== -1 ? order.paymentProofs[proofIndex] : null
 
-                              {/* Payment Proofs Section */}
-                              {(order.paymentProofs && order.paymentProofs.length > 0) && (
-                                <div className="payment-proofs-section">
-                                  <h4><FiDollarSign className="section-icon" /> Payment Proofs</h4>
-                                  <div className="payment-proofs-list">
-                                    {order.paymentProofs.map((proof, pidx) => (
-                                      <div key={pidx} className="proof-item">
-                                        <div className="proof-header">
-                                          <span className={`proof-status ${proof.status || 'pending'}`}>
-                                            {proof.status?.toUpperCase() || 'PENDING'}
-                                          </span>
-                                          {proof.uploadedAt && (
-                                            <span className="proof-date">{formatDate(proof.uploadedAt)}</span>
-                                          )}
-                                        </div>
-                                        
-                                        {proof.amountPaid && (
-                                          <div className="proof-amount">
-                                            Amount: Rs {proof.amountPaid.toLocaleString()}
+                                    return (
+                                      <div key={idx} className="timeline-entry">
+                                        <div className={`timeline-dot payment-${entry.action?.replace('payment_', '')}`} />
+                                        <div className="timeline-content">
+                                          <div className="timeline-header">
+                                            <div>
+                                              <strong>
+                                                {entry.action?.replace(/_/g, ' ').toUpperCase()}
+                                              </strong>
+                                              <p>{formatDate(entry.timestamp)}</p>
+                                              {entry.amountPaid && (
+                                                <p className="timeline-amount">
+                                                  Amount: {formatCurrency(entry.amountPaid)}
+                                                </p>
+                                              )}
+                                              {entry.notes && (
+                                                <p className="timeline-notes">{entry.notes}</p>
+                                              )}
+                                            </div>
+                                            {proof && (
+                                              <span className={`proof-status ${proof.status}`}>
+                                                {proof.status?.toUpperCase()}
+                                              </span>
+                                            )}
                                           </div>
-                                        )}
-                                        
-                                        <div className="proof-actions">
-                                          {proof.proofFile && (
-                                            <button
-                                              onClick={async () => {
-                                                try {
-                                                  const proofUrl = getImageUrl(proof.proofFile);
-                                                  const response = await fetch(proofUrl);
-                                                  const blob = await response.blob();
-                                                  const downloadUrl = window.URL.createObjectURL(blob);
-                                                  const a = document.createElement('a');
-                                                  a.href = downloadUrl;
-                                                  a.download = `payment-proof-${order.orderNumber}-${pidx + 1}.${blob.type.includes('png') ? 'png' : 'jpg'}`;
-                                                  document.body.appendChild(a);
-                                                  a.click();
-                                                  window.URL.revokeObjectURL(downloadUrl);
-                                                  document.body.removeChild(a);
-                                                } catch (error) {
-                                                  console.error('Error downloading proof:', error);
-                                                  toast.error('Failed to download payment proof');
-                                                }
-                                              }}
-                                              className="btn-download-invoice"
-                                            >
-                                              <FiDownload /> Download Proof
-                                            </button>
-                                          )}
-                                          
-                                          {proof.status === 'pending' && (
-                                            <>
+
+                                          {/* Action buttons for pending payments */}
+                                          {entry.action === 'payment_submitted' && proof?.status === 'pending' && (
+                                            <div className="proof-actions">
+                                              {entry.proofFile && (
+                                                <button
+                                                  onClick={async () => {
+                                                    try {
+                                                      const proofUrl = getImageUrl(entry.proofFile)
+                                                      const response = await fetch(proofUrl)
+                                                      const blob = await response.blob()
+                                                      const downloadUrl = window.URL.createObjectURL(blob)
+                                                      const a = document.createElement('a')
+                                                      a.href = downloadUrl
+                                                      a.download = `payment-proof-${order.orderNumber}-${idx + 1}.${blob.type.includes('png') ? 'png' : 'jpg'}`
+                                                      document.body.appendChild(a)
+                                                      a.click()
+                                                      window.URL.revokeObjectURL(downloadUrl)
+                                                      document.body.removeChild(a)
+                                                    } catch (error) {
+                                                      console.error('Error downloading proof:', error)
+                                                      toast.error('Failed to download payment proof')
+                                                    }
+                                                  }}
+                                                  className="btn-download-invoice"
+                                                >
+                                                  <FiDownload size={14} /> View Proof
+                                                </button>
+                                              )}
                                               <button 
                                                 className="btn-approve" 
-                                                onClick={() => approvePayment(order._id, pidx)}
+                                                onClick={() => approvePayment(order._id, proofIndex)}
                                               >
-                                                <FiCheck /> Approve
+                                                <FiCheck size={14} /> Approve
                                               </button>
                                               <button 
                                                 className="btn-reject" 
                                                 onClick={() => {
-                                                  setRejectModal({ show: true, orderId: order._id, proofIndex: pidx, reason: '' });
+                                                  setRejectModal({ 
+                                                    show: true, 
+                                                    orderId: order._id, 
+                                                    proofIndex: proofIndex, 
+                                                    reason: '' 
+                                                  })
                                                 }}
                                               >
-                                                <FiX /> Reject
+                                                <FiX size={14} /> Reject
                                               </button>
-                                            </>
+                                            </div>
                                           )}
-                                          
-                                          {proof.status === 'rejected' && proof.notes && (
+
+                                          {/* Rejection reason */}
+                                          {proof?.status === 'rejected' && proof.notes && (
                                             <div className="rejection-reason">
-                                              <strong>Rejection Reason:</strong> {proof.notes || 'N/A'}
+                                              <strong>Rejection Reason:</strong> {proof.notes}
+                                            </div>
+                                          )}
+
+                                          {/* Download button for approved payments */}
+                                          {entry.action === 'payment_approved' && entry.proofFile && (
+                                            <div className="proof-actions">
+                                              <button
+                                                onClick={async () => {
+                                                  try {
+                                                    const proofUrl = getImageUrl(entry.proofFile)
+                                                    const response = await fetch(proofUrl)
+                                                    const blob = await response.blob()
+                                                    const downloadUrl = window.URL.createObjectURL(blob)
+                                                    const a = document.createElement('a')
+                                                    a.href = downloadUrl
+                                                    a.download = `invoice-${order.orderNumber}-${idx + 1}.${blob.type.includes('png') ? 'png' : 'jpg'}`
+                                                    document.body.appendChild(a)
+                                                    a.click()
+                                                    window.URL.revokeObjectURL(downloadUrl)
+                                                    document.body.removeChild(a)
+                                                  } catch (error) {
+                                                    console.error('Error downloading invoice:', error)
+                                                    toast.error('Failed to download invoice')
+                                                  }
+                                                }}
+                                                className="btn-download-invoice"
+                                              >
+                                                <FiDownload size={14} /> Download Invoice
+                                              </button>
                                             </div>
                                           )}
                                         </div>
                                       </div>
-                                    ))}
-                                  </div>
+                                    )
+                                  })}
                                 </div>
-                              )}
-                            </div>
+                              </div>
+                            )}
 
-                            {/* Order Timeline - Below the payment sections */}
-                            {(order.timeline && order.timeline.length > 0) && (
+                            {/* Order Timeline */}
+                            {order.timeline && order.timeline.length > 0 && (
                               <div className="order-timeline-section">
-                                <h4><FiCalendar className="section-icon" /> Order Timeline</h4>
+                                <h4><FiClock className="section-icon" /> Order Timeline</h4>
                                 <div className="timeline">
-                                  {order.timeline?.map((entry, idx) => (
+                                  {order.timeline.map((entry, idx) => (
                                     <div key={idx} className="timeline-entry">
                                       <div className={`timeline-dot status-${entry.status}`} />
                                       <div className="timeline-content">
-                                        <strong>{entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}</strong>
+                                        <strong>
+                                          {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
+                                        </strong>
                                         <p>{formatDate(entry.timestamp)}</p>
-                                        {entry.notes && <p className="timeline-notes">{entry.notes}</p>}
+                                        {entry.notes && (
+                                          <p className="timeline-notes">{entry.notes}</p>
+                                        )}
                                       </div>
                                     </div>
                                   ))}
@@ -670,36 +726,41 @@ const Orders = () => {
                               </div>
                             )}
 
-                            {/* Courier Tracking Info (if dispatched) */}
+                            {/* Courier Tracking */}
                             {order.status === 'dispatched' && order.courierTracking?.isDispatched && (
                               <div className="details-section courier-section">
                                 <h4><FiTruck className="section-icon" /> Courier Tracking</h4>
                                 <div className="courier-details">
                                   <div>
-                                    <span className="detail-label">Courier Service:</span>
+                                    <span className="detail-label">Courier Service</span>
                                     <span>{order.courierTracking.courierService}</span>
                                   </div>
                                   <div>
-                                    <span className="detail-label">Tracking Number:</span>
+                                    <span className="detail-label">Tracking Number</span>
                                     <span>{order.courierTracking.trackingNumber}</span>
                                   </div>
                                   {order.courierTracking.courierLink && (
                                     <div>
-                                      <span className="detail-label">Tracking Link:</span>
-                                      <a href={order.courierTracking.courierLink} target="_blank" rel="noopener noreferrer" className="courier-link">
-                                        Track on Courier Website →
+                                      <span className="detail-label">Tracking Link</span>
+                                      <a 
+                                        href={order.courierTracking.courierLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="courier-link"
+                                      >
+                                        Track Package →
                                       </a>
                                     </div>
                                   )}
                                   <div>
-                                    <span className="detail-label">Dispatched:</span>
+                                    <span className="detail-label">Dispatched At</span>
                                     <span>{formatDate(order.courierTracking.dispatchedAt)}</span>
                                   </div>
                                 </div>
                               </div>
                             )}
 
-                            {/* Status Update Section */}
+                            {/* Status Update */}
                             <div className="details-section status-update-section">
                               <h4>Update Order Status</h4>
                               {editingStatus === order._id ? (
@@ -730,6 +791,7 @@ const Orders = () => {
                                           value={statusForm.courierService}
                                           onChange={(e) => setStatusForm({...statusForm, courierService: e.target.value})}
                                           className="form-control"
+                                          required
                                         />
                                       </div>
                                       <div className="form-group">
@@ -740,6 +802,7 @@ const Orders = () => {
                                           value={statusForm.trackingNumber}
                                           onChange={(e) => setStatusForm({...statusForm, trackingNumber: e.target.value})}
                                           className="form-control"
+                                          required
                                         />
                                       </div>
                                       <div className="form-group">
@@ -771,7 +834,7 @@ const Orders = () => {
                                       className="btn btn-save"
                                       onClick={() => updateOrderStatus(order._id)}
                                     >
-                                      <FiCheck /> Save
+                                      <FiCheck /> Save Changes
                                     </button>
                                     <button 
                                       className="btn btn-cancel"
@@ -808,7 +871,9 @@ const Orders = () => {
           <div className="status-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Update Order Status</h3>
-              <button className="close-btn" onClick={closeStatusModal}><FiX size={20} /></button>
+              <button className="close-btn" onClick={closeStatusModal}>
+                <FiX size={20} />
+              </button>
             </div>
             
             <div className="modal-body">
@@ -829,13 +894,21 @@ const Orders = () => {
               </div>
 
               <div className="form-group">
-                <label>Payment Status (Read-only)</label>
-                <div className="payment-status-display">
-                  <span className={`payment-badge payment-${statusForm.paymentStatus || 'pending'}`}>
-                    {paymentStatusOptions.find(opt => opt.value === statusForm.paymentStatus)?.label || 'Pending'}
-                  </span>
-                  <p className="help-text">Payment status is automatically updated based on payment proofs</p>
-                </div>
+                <label>Payment Status</label>
+                <select 
+                  value={statusForm.paymentStatus}
+                  onChange={(e) => setStatusForm({...statusForm, paymentStatus: e.target.value})}
+                  className="form-control"
+                >
+                  {paymentStatusOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="help-text">
+                  Payment status will be updated immediately
+                </p>
               </div>
 
               {statusForm.status === 'dispatched' && (
@@ -848,6 +921,7 @@ const Orders = () => {
                       value={statusForm.courierService}
                       onChange={(e) => setStatusForm({...statusForm, courierService: e.target.value})}
                       className="form-control"
+                      required
                     />
                   </div>
                   <div className="form-group">
@@ -858,6 +932,7 @@ const Orders = () => {
                       value={statusForm.trackingNumber}
                       onChange={(e) => setStatusForm({...statusForm, trackingNumber: e.target.value})}
                       className="form-control"
+                      required
                     />
                   </div>
                   <div className="form-group">
@@ -880,7 +955,7 @@ const Orders = () => {
                   value={statusForm.notes}
                   onChange={(e) => setStatusForm({...statusForm, notes: e.target.value})}
                   className="form-control"
-                  rows="2"
+                  rows="3"
                 />
               </div>
             </div>
@@ -895,11 +970,11 @@ const Orders = () => {
               <button 
                 className="btn btn-save"
                 onClick={() => {
-                  updateOrderStatus(statusModalOrder);
-                  closeStatusModal();
+                  updateOrderStatus(statusModalOrder)
+                  closeStatusModal()
                 }}
               >
-                <FiCheck /> Save
+                <FiCheck /> Save Changes
               </button>
             </div>
           </div>
@@ -912,20 +987,27 @@ const Orders = () => {
           <div className="status-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Reject Payment Proof</h3>
-              <button className="close-btn" onClick={() => setRejectModal({ show: false, orderId: null, proofIndex: null, reason: '' })}><FiX size={20} /></button>
+              <button 
+                className="close-btn" 
+                onClick={() => setRejectModal({ show: false, orderId: null, proofIndex: null, reason: '' })}
+              >
+                <FiX size={20} />
+              </button>
             </div>
             
             <div className="modal-body">
               <div className="form-group">
                 <label>Rejection Reason (Optional)</label>
                 <textarea 
-                  placeholder="Enter reason for rejection (leave blank for N/A)"
+                  placeholder="Enter reason for rejection (this will be shown to the client)"
                   value={rejectModal.reason}
                   onChange={(e) => setRejectModal({...rejectModal, reason: e.target.value})}
                   className="form-control"
                   rows="4"
                 />
-                <p className="help-text">This reason will be displayed to the client when they track their order</p>
+                <p className="help-text">
+                  This reason will be displayed to the client when they track their order
+                </p>
               </div>
             </div>
 
@@ -939,17 +1021,17 @@ const Orders = () => {
               <button 
                 className="btn btn-save"
                 onClick={() => {
-                  rejectPayment(rejectModal.orderId, rejectModal.proofIndex, rejectModal.reason);
+                  rejectPayment(rejectModal.orderId, rejectModal.proofIndex, rejectModal.reason)
                 }}
               >
-                <FiCheck /> Reject Payment
+                <FiX /> Reject Payment
               </button>
             </div>
           </div>
         </div>
       )}
     </div>
-  );
+  )
 }
 
-export default Orders;
+export default Orders
