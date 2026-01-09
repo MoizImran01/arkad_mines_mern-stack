@@ -438,28 +438,34 @@ const ChartCard = ({ title, description, children, expandedContent }) => {
 const Analytics = () => {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [exportModal, setExportModal] = useState({ show: false, type: null });
   const { token } = useContext(AdminAuthContext);
   const navigate = useNavigate();
 
-  // Green-themed color palette
-  const pieColors = ['#536438', '#73df58', '#2d8659', '#9bc930', '#17a2b8', '#6b8245', '#ffc107', '#28a745'];
+  // High-contrast color palette for pie charts
+  const pieColors = ['#2d8659', '#e74c3c', '#3498db', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'];
+  
+  // Distinct status colors with high contrast
   const statusColors = {
-    draft: '#6c757d',
-    confirmed: '#2d8659',
-    processing: '#ffc107',
-    shipped: '#17a2b8',
-    delivered: '#28a745',
-    cancelled: '#dc3545',
-    submitted: '#6b8245',
-    adjustment_required: '#ff9800',
-    revision_requested: '#9bc930',
-    issued: '#536438',
-    approved: '#28a745',
-    rejected: '#dc3545',
-    pending: '#ffc107',
-    partial: '#17a2b8',
-    paid: '#28a745',
-    refunded: '#dc3545'
+    draft: '#95a5a6',
+    confirmed: '#3498db',
+    processing: '#f39c12',
+    shipped: '#9b59b6',
+    dispatched: '#9b59b6',
+    delivered: '#27ae60',
+    cancelled: '#e74c3c',
+    submitted: '#3498db',
+    adjustment_required: '#e67e22',
+    revision_requested: '#f39c12',
+    issued: '#1abc9c',
+    approved: '#27ae60',
+    rejected: '#e74c3c',
+    pending: '#f1c40f',
+    payment_in_progress: '#3498db',
+    fully_paid: '#27ae60',
+    partial: '#e67e22',
+    paid: '#27ae60',
+    refunded: '#e74c3c'
   };
 
   useEffect(() => {
@@ -484,6 +490,202 @@ const Analytics = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Generate CSV data
+  const generateCSVData = () => {
+    if (!analytics) return '';
+    
+    const { summary, topClients, mostSoldStones, monthlySales, orderStatusDistribution, 
+            quotationStatusDistribution, paymentStatusOverview } = analytics;
+    
+    let csv = [];
+    
+    // Summary Section
+    csv.push('ARKAD MINES - ANALYTICS REPORT');
+    csv.push(`Generated on: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
+    csv.push('');
+    csv.push('=== SUMMARY ===');
+    csv.push(`Paid Revenue,${formatCurrency(summary?.totalRevenue)}`);
+    csv.push(`Forecasted Revenue,${formatCurrency(summary?.forecastedRevenue)}`);
+    csv.push(`Pending Payments,${formatCurrency(summary?.pendingPayments)}`);
+    csv.push(`Total Orders,${summary?.totalOrders || 0}`);
+    csv.push(`Total Quotations,${summary?.totalQuotations || 0}`);
+    csv.push(`Total Customers,${summary?.totalCustomers || 0}`);
+    csv.push(`Total Stones,${summary?.totalStones || 0}`);
+    csv.push('');
+    
+    // Top Clients
+    csv.push('=== TOP CLIENTS BY REVENUE ===');
+    csv.push('Rank,Client Name,Email,Total Orders,Total Spent');
+    (topClients || []).forEach((client, index) => {
+      csv.push(`${index + 1},${client.name || 'N/A'},${client.email || 'N/A'},${client.orderCount || 0},${formatCurrency(client.totalSpent)}`);
+    });
+    csv.push('');
+    
+    // Best Selling Stones
+    csv.push('=== BEST SELLING STONES ===');
+    csv.push('Rank,Stone Name,Quantity Sold,Revenue,Order Count');
+    (mostSoldStones || []).forEach((stone, index) => {
+      csv.push(`${index + 1},${stone.stoneName},${stone.totalQuantity || 0},${formatCurrency(stone.totalRevenue)},${stone.orderCount || 0}`);
+    });
+    csv.push('');
+    
+    // Monthly Sales
+    csv.push('=== MONTHLY SALES ===');
+    csv.push('Month,Year,Revenue,Orders');
+    (monthlySales || []).forEach(sale => {
+      csv.push(`${sale._id?.month || 'N/A'},${sale._id?.year || 'N/A'},${formatCurrency(sale.totalSales)},${sale.orderCount || 0}`);
+    });
+    csv.push('');
+    
+    // Order Status
+    csv.push('=== ORDER STATUS DISTRIBUTION ===');
+    csv.push('Status,Count');
+    (orderStatusDistribution || []).forEach(item => {
+      csv.push(`${item._id || 'Unknown'},${item.count || 0}`);
+    });
+    csv.push('');
+    
+    // Quotation Status
+    csv.push('=== QUOTATION STATUS DISTRIBUTION ===');
+    csv.push('Status,Count');
+    (quotationStatusDistribution || []).forEach(item => {
+      csv.push(`${item._id || 'Unknown'},${item.count || 0}`);
+    });
+    csv.push('');
+    
+    // Payment Status
+    csv.push('=== PAYMENT STATUS OVERVIEW ===');
+    csv.push('Status,Count,Total Amount');
+    (paymentStatusOverview || []).forEach(item => {
+      csv.push(`${item._id || 'Unknown'},${item.count || 0},${formatCurrency(item.totalAmount)}`);
+    });
+    
+    return csv.join('\n');
+  };
+
+  // Export as CSV
+  const exportCSV = () => {
+    const csvContent = generateCSVData();
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `arkad_analytics_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('CSV exported successfully!');
+  };
+
+  // Export as PDF
+  const exportPDF = () => {
+    const printContent = document.getElementById('analytics-print-area');
+    const printWindow = window.open('', '_blank');
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>ARKAD Mines Analytics Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+            h1 { color: #2d8659; border-bottom: 3px solid #2d8659; padding-bottom: 10px; }
+            h2 { color: #536438; margin-top: 30px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+            h3 { color: #6b8245; margin-top: 20px; }
+            .summary-box { display: inline-block; background: #f8f9fa; padding: 15px 25px; margin: 10px; border-radius: 8px; border-left: 4px solid #2d8659; }
+            .summary-box h4 { margin: 0; color: #666; font-size: 12px; text-transform: uppercase; }
+            .summary-box p { margin: 5px 0 0; font-size: 24px; font-weight: bold; color: #2d8659; }
+            table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+            th { background: #2d8659; color: white; padding: 12px; text-align: left; }
+            td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+            tr:nth-child(even) { background: #f9f9f9; }
+            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; text-align: center; }
+            .generated { color: #888; font-size: 12px; margin-bottom: 20px; }
+            @media print { .no-print { display: none; } }
+          </style>
+        </head>
+        <body>
+          <h1>ARKAD Mines Analytics Report</h1>
+          <p class="generated">Generated on: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          
+          <h2>Summary Overview</h2>
+          <div>
+            <div class="summary-box"><h4>Paid Revenue</h4><p>${formatCurrency(analytics?.summary?.totalRevenue)}</p></div>
+            <div class="summary-box"><h4>Forecasted Revenue</h4><p>${formatCurrency(analytics?.summary?.forecastedRevenue)}</p></div>
+            <div class="summary-box"><h4>Pending Payments</h4><p>${formatCurrency(analytics?.summary?.pendingPayments)}</p></div>
+            <div class="summary-box"><h4>Total Orders</h4><p>${analytics?.summary?.totalOrders || 0}</p></div>
+            <div class="summary-box"><h4>Total Quotations</h4><p>${analytics?.summary?.totalQuotations || 0}</p></div>
+            <div class="summary-box"><h4>Total Customers</h4><p>${analytics?.summary?.totalCustomers || 0}</p></div>
+          </div>
+          
+          <h2>Top Clients by Revenue</h2>
+          <table>
+            <tr><th>Rank</th><th>Client Name</th><th>Email</th><th>Orders</th><th>Total Spent</th></tr>
+            ${(analytics?.topClients || []).map((client, i) => `
+              <tr>
+                <td>#${i + 1}</td>
+                <td>${client.name || 'N/A'}</td>
+                <td>${client.email || 'N/A'}</td>
+                <td>${client.orderCount || 0}</td>
+                <td>${formatCurrency(client.totalSpent)}</td>
+              </tr>
+            `).join('')}
+          </table>
+          
+          <h2>Best Selling Stones</h2>
+          <table>
+            <tr><th>Rank</th><th>Stone Name</th><th>Qty Sold</th><th>Revenue</th><th>Orders</th></tr>
+            ${(analytics?.mostSoldStones || []).map((stone, i) => `
+              <tr>
+                <td>#${i + 1}</td>
+                <td>${stone.stoneName}</td>
+                <td>${stone.totalQuantity?.toLocaleString() || 0}</td>
+                <td>${formatCurrency(stone.totalRevenue)}</td>
+                <td>${stone.orderCount || 0}</td>
+              </tr>
+            `).join('')}
+          </table>
+          
+          <h2>Order Status Distribution</h2>
+          <table>
+            <tr><th>Status</th><th>Count</th></tr>
+            ${(analytics?.orderStatusDistribution || []).map(item => `
+              <tr><td>${item._id || 'Unknown'}</td><td>${item.count}</td></tr>
+            `).join('')}
+          </table>
+          
+          <h2>Payment Status Overview</h2>
+          <table>
+            <tr><th>Status</th><th>Count</th><th>Total Amount</th></tr>
+            ${(analytics?.paymentStatusOverview || []).map(item => `
+              <tr>
+                <td>${item._id || 'Unknown'}</td>
+                <td>${item.count}</td>
+                <td>${formatCurrency(item.totalAmount)}</td>
+              </tr>
+            `).join('')}
+          </table>
+          
+          <div class="footer">
+            <p>ARKAD Mines - Business Analytics Report</p>
+            <p>This report was automatically generated from the ARKAD Mines Admin Dashboard</p>
+          </div>
+          
+          <script>window.onload = function() { window.print(); }</script>
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    toast.success('PDF export opened in new window');
+  };
+
+  // Get CSV preview
+  const getCSVPreview = () => {
+    const csvData = generateCSVData();
+    return csvData.split('\n').slice(0, 35).join('\n') + '\n... (more data below)';
   };
 
   if (loading) {
@@ -818,6 +1020,52 @@ const Analytics = () => {
           </table>
         </div>
       </div>
+
+      {/* Export Section */}
+      <div className="export-section">
+        <h3>Export Analytics Data</h3>
+        <p className="export-description">Download your analytics data for reporting or further analysis</p>
+        <div className="export-buttons">
+          <button className="export-btn pdf-btn" onClick={exportPDF}>
+            <span className="export-icon">📄</span>
+            <div className="export-btn-content">
+              <span className="export-btn-title">Export as PDF</span>
+              <span className="export-btn-subtitle">Formatted report for printing</span>
+            </div>
+          </button>
+          <button className="export-btn csv-btn" onClick={() => setExportModal({ show: true, type: 'csv' })}>
+            <span className="export-icon">📊</span>
+            <div className="export-btn-content">
+              <span className="export-btn-title">Export as CSV</span>
+              <span className="export-btn-subtitle">Raw data for spreadsheets</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* CSV Preview Modal */}
+      {exportModal.show && exportModal.type === 'csv' && (
+        <div className="modal-overlay" onClick={() => setExportModal({ show: false, type: null })}>
+          <div className="modal-content export-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>📊 CSV Export Preview</h3>
+              <button className="modal-close" onClick={() => setExportModal({ show: false, type: null })}>×</button>
+            </div>
+            <div className="csv-preview-container">
+              <pre className="csv-preview">{getCSVPreview()}</pre>
+            </div>
+            <div className="modal-footer">
+              <p className="preview-note">This is a preview of the first 35 lines. The full export contains all your analytics data.</p>
+              <div className="modal-actions">
+                <button className="cancel-btn" onClick={() => setExportModal({ show: false, type: null })}>Cancel</button>
+                <button className="confirm-btn" onClick={() => { exportCSV(); setExportModal({ show: false, type: null }); }}>
+                  Download CSV
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
