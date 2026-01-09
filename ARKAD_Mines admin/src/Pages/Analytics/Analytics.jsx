@@ -565,20 +565,6 @@ const Analytics = () => {
     return csv.join('\n');
   };
 
-  // Export as CSV
-  const exportCSV = () => {
-    const csvContent = generateCSVData();
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `arkad_analytics_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('CSV exported successfully!');
-  };
 
   // Export as PDF
   const exportPDF = () => {
@@ -1076,13 +1062,7 @@ const Analytics = () => {
               <span className="export-btn-subtitle">Formatted report for printing</span>
             </div>
           </button>
-          <button className="export-btn csv-btn" onClick={() => setExportModal({ show: true, type: 'csv' })}>
-            <span className="export-icon">📊</span>
-            <div className="export-btn-content">
-              <span className="export-btn-title">Export as CSV</span>
-              <span className="export-btn-subtitle">Raw data for spreadsheets</span>
-            </div>
-          </button>
+   
         </div>
       </div>
 
