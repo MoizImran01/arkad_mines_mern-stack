@@ -582,7 +582,6 @@ const Analytics = () => {
 
   // Export as PDF
   const exportPDF = () => {
-    const printContent = document.getElementById('analytics-print-area');
     const printWindow = window.open('', '_blank');
     
     printWindow.document.write(`
@@ -590,7 +589,7 @@ const Analytics = () => {
         <head>
           <title>ARKAD Mines Analytics Report</title>
           <style>
-            body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+            body { font-family: Arial, sans-serif; padding: 20px; color: #333; margin: 0; }
             h1 { color: #2d8659; border-bottom: 3px solid #2d8659; padding-bottom: 10px; }
             h2 { color: #536438; margin-top: 30px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
             h3 { color: #6b8245; margin-top: 20px; }
@@ -603,83 +602,135 @@ const Analytics = () => {
             tr:nth-child(even) { background: #f9f9f9; }
             .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; text-align: center; }
             .generated { color: #888; font-size: 12px; margin-bottom: 20px; }
-            @media print { .no-print { display: none; } }
+            .action-bar { 
+              position: fixed; 
+              top: 0; 
+              left: 0; 
+              right: 0; 
+              background: linear-gradient(135deg, #2d8659 0%, #1e5c3d 100%); 
+              padding: 15px 30px; 
+              display: flex; 
+              justify-content: space-between; 
+              align-items: center;
+              box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+              z-index: 1000;
+            }
+            .action-bar h3 { color: white; margin: 0; font-size: 18px; }
+            .action-buttons { display: flex; gap: 12px; }
+            .btn { 
+              padding: 10px 24px; 
+              border: none; 
+              border-radius: 6px; 
+              font-size: 14px; 
+              font-weight: 600; 
+              cursor: pointer; 
+              transition: all 0.2s ease;
+            }
+            .btn-print { 
+              background: white; 
+              color: #2d8659; 
+            }
+            .btn-print:hover { 
+              background: #f0f0f0; 
+              transform: translateY(-2px);
+            }
+            .btn-close { 
+              background: rgba(255,255,255,0.2); 
+              color: white; 
+              border: 1px solid rgba(255,255,255,0.3);
+            }
+            .btn-close:hover { 
+              background: rgba(255,255,255,0.3); 
+            }
+            .report-content { margin-top: 80px; padding: 20px; }
+            @media print { 
+              .action-bar { display: none !important; } 
+              .report-content { margin-top: 0; }
+            }
           </style>
         </head>
         <body>
-          <h1>ARKAD Mines Analytics Report</h1>
-          <p class="generated">Generated on: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-          
-          <h2>Summary Overview</h2>
-          <div>
-            <div class="summary-box"><h4>Paid Revenue</h4><p>${formatCurrency(analytics?.summary?.totalRevenue)}</p></div>
-            <div class="summary-box"><h4>Forecasted Revenue</h4><p>${formatCurrency(analytics?.summary?.forecastedRevenue)}</p></div>
-            <div class="summary-box"><h4>Pending Payments</h4><p>${formatCurrency(analytics?.summary?.pendingPayments)}</p></div>
-            <div class="summary-box"><h4>Total Orders</h4><p>${analytics?.summary?.totalOrders || 0}</p></div>
-            <div class="summary-box"><h4>Total Quotations</h4><p>${analytics?.summary?.totalQuotations || 0}</p></div>
-            <div class="summary-box"><h4>Total Customers</h4><p>${analytics?.summary?.totalCustomers || 0}</p></div>
+          <div class="action-bar">
+            <h3>📄 Analytics Report Preview</h3>
+            <div class="action-buttons">
+              <button class="btn btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+              <button class="btn btn-close" onclick="window.close()">✕ Close</button>
+            </div>
           </div>
           
-          <h2>Top Clients by Revenue</h2>
-          <table>
-            <tr><th>Rank</th><th>Client Name</th><th>Email</th><th>Orders</th><th>Total Spent</th></tr>
-            ${(analytics?.topClients || []).map((client, i) => `
-              <tr>
-                <td>#${i + 1}</td>
-                <td>${client.name || 'N/A'}</td>
-                <td>${client.email || 'N/A'}</td>
-                <td>${client.orderCount || 0}</td>
-                <td>${formatCurrency(client.totalSpent)}</td>
-              </tr>
-            `).join('')}
-          </table>
-          
-          <h2>Best Selling Stones</h2>
-          <table>
-            <tr><th>Rank</th><th>Stone Name</th><th>Qty Sold</th><th>Revenue</th><th>Orders</th></tr>
-            ${(analytics?.mostSoldStones || []).map((stone, i) => `
-              <tr>
-                <td>#${i + 1}</td>
-                <td>${stone.stoneName}</td>
-                <td>${stone.totalQuantity?.toLocaleString() || 0}</td>
-                <td>${formatCurrency(stone.totalRevenue)}</td>
-                <td>${stone.orderCount || 0}</td>
-              </tr>
-            `).join('')}
-          </table>
-          
-          <h2>Order Status Distribution</h2>
-          <table>
-            <tr><th>Status</th><th>Count</th></tr>
-            ${(analytics?.orderStatusDistribution || []).map(item => `
-              <tr><td>${item._id || 'Unknown'}</td><td>${item.count}</td></tr>
-            `).join('')}
-          </table>
-          
-          <h2>Payment Status Overview</h2>
-          <table>
-            <tr><th>Status</th><th>Count</th><th>Total Amount</th></tr>
-            ${(analytics?.paymentStatusOverview || []).map(item => `
-              <tr>
-                <td>${item._id || 'Unknown'}</td>
-                <td>${item.count}</td>
-                <td>${formatCurrency(item.totalAmount)}</td>
-              </tr>
-            `).join('')}
-          </table>
-          
-          <div class="footer">
-            <p>ARKAD Mines - Business Analytics Report</p>
-            <p>This report was automatically generated from the ARKAD Mines Admin Dashboard</p>
+          <div class="report-content">
+            <h1>ARKAD Mines Analytics Report</h1>
+            <p class="generated">Generated on: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            
+            <h2>Summary Overview</h2>
+            <div>
+              <div class="summary-box"><h4>Paid Revenue</h4><p>${formatCurrency(analytics?.summary?.totalRevenue)}</p></div>
+              <div class="summary-box"><h4>Forecasted Revenue</h4><p>${formatCurrency(analytics?.summary?.forecastedRevenue)}</p></div>
+              <div class="summary-box"><h4>Pending Payments</h4><p>${formatCurrency(analytics?.summary?.pendingPayments)}</p></div>
+              <div class="summary-box"><h4>Total Orders</h4><p>${analytics?.summary?.totalOrders || 0}</p></div>
+              <div class="summary-box"><h4>Total Quotations</h4><p>${analytics?.summary?.totalQuotations || 0}</p></div>
+              <div class="summary-box"><h4>Total Customers</h4><p>${analytics?.summary?.totalCustomers || 0}</p></div>
+            </div>
+            
+            <h2>Top Clients by Revenue</h2>
+            <table>
+              <tr><th>Rank</th><th>Client Name</th><th>Email</th><th>Orders</th><th>Total Spent</th></tr>
+              ${(analytics?.topClients || []).map((client, i) => `
+                <tr>
+                  <td>#${i + 1}</td>
+                  <td>${client.name || 'N/A'}</td>
+                  <td>${client.email || 'N/A'}</td>
+                  <td>${client.orderCount || 0}</td>
+                  <td>${formatCurrency(client.totalSpent)}</td>
+                </tr>
+              `).join('')}
+            </table>
+            
+            <h2>Best Selling Stones</h2>
+            <table>
+              <tr><th>Rank</th><th>Stone Name</th><th>Qty Sold</th><th>Revenue</th><th>Orders</th></tr>
+              ${(analytics?.mostSoldStones || []).map((stone, i) => `
+                <tr>
+                  <td>#${i + 1}</td>
+                  <td>${stone.stoneName}</td>
+                  <td>${stone.totalQuantity?.toLocaleString() || 0}</td>
+                  <td>${formatCurrency(stone.totalRevenue)}</td>
+                  <td>${stone.orderCount || 0}</td>
+                </tr>
+              `).join('')}
+            </table>
+            
+            <h2>Order Status Distribution</h2>
+            <table>
+              <tr><th>Status</th><th>Count</th></tr>
+              ${(analytics?.orderStatusDistribution || []).map(item => `
+                <tr><td>${item._id || 'Unknown'}</td><td>${item.count}</td></tr>
+              `).join('')}
+            </table>
+            
+            <h2>Payment Status Overview</h2>
+            <table>
+              <tr><th>Status</th><th>Count</th><th>Total Amount</th></tr>
+              ${(analytics?.paymentStatusOverview || []).map(item => `
+                <tr>
+                  <td>${item._id || 'Unknown'}</td>
+                  <td>${item.count}</td>
+                  <td>${formatCurrency(item.totalAmount)}</td>
+                </tr>
+              `).join('')}
+            </table>
+            
+            <div class="footer">
+              <p>ARKAD Mines - Business Analytics Report</p>
+              <p>This report was automatically generated from the ARKAD Mines Admin Dashboard</p>
+            </div>
           </div>
-          
-          <script>window.onload = function() { window.print(); }</script>
         </body>
       </html>
     `);
     
     printWindow.document.close();
-    toast.success('PDF export opened in new window');
+    toast.success('Report preview opened - use buttons to print or close');
   };
 
   // Get CSV preview
