@@ -22,6 +22,5 @@ export const sendQuotationEmail = async (toEmail, quotationRef, pdfBuffer) => {
       },
     ],
   };
-
   await transporter.sendMail(mailOptions);
 };

@@ -2,9 +2,9 @@ import quotationModel from "../../Models/quotationModel/quotationModel.js";
 import stonesModel from "../../Models/stonesModel/stonesModel.js";
 import orderModel from "../../Models/orderModel/orderModel.js";
 import { generateQuotationPDF } from "../../Utils/pdfGenerator.js";
-import { sendQuotationEmail } from "../../Utils/emailService.js";
-import { logAudit, logError, getClientIp, normalizeRole } from "../../logger/auditLogger.js";
+import { logAudit, logError, getClientIp, normalizeRole, getUserAgent } from "../../logger/auditLogger.js";
 import { v4 as uuidv4 } from 'uuid';
+import mongoose from "mongoose";
 
 // Helper function to round to 2 decimal places
 const roundToTwoDecimals = (value) => {
@@ -305,6 +305,7 @@ const createOrUpdateQuotation = async (req, res) => {
 
 const getMyQuotations = async (req, res) => {
   const clientIp = getClientIp(req);
+  const userAgent = getUserAgent(req);
   try {
     const { status } = req.query;
     const query = { buyer: req.user.id };
@@ -320,21 +321,28 @@ const getMyQuotations = async (req, res) => {
       .sort({ updatedAt: -1 })
       .select("-__v");
 
-    logAudit({
+    await logAudit({
       userId: req.user?.id,
       role: normalizeRole(req.user?.role),
       action: 'VIEW_MY_QUOTATIONS',
       status: 'SUCCESS',
       clientIp,
-      details: `statusFilter=${status || 'all'}, count=${quotations.length}`
+      userAgent,
+      requestPayload: {
+        method: req.method,
+        path: req.path,
+        query: req.query,
+      },
+      details: `Buyer accessed their quotations: statusFilter=${status || 'all'}, count=${quotations.length}`
     });
 
     res.json({ success: true, quotations });
   } catch (error) {
-    logError(error, {
+    await logError(error, {
       action: 'VIEW_MY_QUOTATIONS',
       userId: req.user?.id,
-      clientIp
+      clientIp,
+      userAgent
     });
     res.status(500).json({
       success: false,
@@ -345,6 +353,7 @@ const getMyQuotations = async (req, res) => {
 
 const getAllQuotations = async (req, res) => {
   const clientIp = getClientIp(req);
+  const userAgent = getUserAgent(req);
   try {
     const { status } = req.query;
     const query = {};
@@ -361,21 +370,28 @@ const getAllQuotations = async (req, res) => {
       .populate("buyer", "companyName email role")
       .select("-__v");
 
-    logAudit({
+    await logAudit({
       userId: req.user?.id,
       role: normalizeRole(req.user?.role),
       action: 'VIEW_ALL_QUOTATIONS',
       status: 'SUCCESS',
       clientIp,
-      details: `statusFilter=${status || 'all'}, count=${quotations.length}`
+      userAgent,
+      requestPayload: {
+        method: req.method,
+        path: req.path,
+        query: req.query,
+      },
+      details: `Admin/Sales Rep accessed all quotations: statusFilter=${status || 'all'}, count=${quotations.length}`
     });
 
     res.json({ success: true, quotations });
   } catch (error) {
-    logError(error, {
+    await logError(error, {
       action: 'VIEW_ALL_QUOTATIONS',
       userId: req.user?.id,
-      clientIp
+      clientIp,
+      userAgent
     });
     res.status(500).json({
       success: false,
@@ -624,35 +640,17 @@ const issueQuotation = async (req, res) => {
       details: `customerId=${quotation.buyer._id || quotation.buyer}, lineItems=${quotation.items.length}, discount=${discount}%, grandTotal=${grandTotal}, taxPercent=${taxPercent}`
     });
 
-    // Generate PDF and send email (non-blocking - don't fail if email fails)
-    let emailSent = false;
+    
     try {
       const pdfBuffer = await generateQuotationPDF(quotation);
-
-      if (quotation.buyer && quotation.buyer.email) {
-        try {
-          await sendQuotationEmail(
-            quotation.buyer.email, 
-            quotation.referenceNumber, 
-            pdfBuffer
-          );
-          emailSent = true;
-        } catch (emailError) {
-          logError(emailError, {
-            action: 'SEND_QUOTATION_EMAIL',
-            quotationId: quotation.referenceNumber,
-            userId: req.user?.id,
-            clientIp
-          });
-          // Don't fail the whole operation if email fails
-        }
-      }
+      
     } catch (pdfError) {
-      logError(pdfError, {
+      await logError(pdfError, {
         action: 'GENERATE_QUOTATION_PDF',
         quotationId: quotation.referenceNumber,
         userId: req.user?.id,
-        clientIp
+        clientIp,
+        userAgent: getUserAgent(req)
       });
       // PDF generation is critical, but we'll still return success if quotation is saved
       // The admin can download it later
@@ -660,9 +658,7 @@ const issueQuotation = async (req, res) => {
 
     res.json({
       success: true,
-      message: emailSent 
-        ? "Quotation issued and emailed to customer." 
-        : "Quotation issued successfully. Email notification may have failed.",
+      message: "Quotation issued successfully.",
       quotation,
     });
 
@@ -750,65 +746,81 @@ const downloadQuotation = async (req, res) => {
 
 const approveQuotation = async (req, res) => {
   const clientIp = getClientIp(req);
+  const userAgent = req.headers['user-agent'] || 'Unknown';
   try {
     const { quoteId } = req.params;
     const { comment } = req.body;
 
+    
     const quotation = await quotationModel.findOne({
-      _id: quoteId,
-      buyer: req.user.id,
+      _id: mongoose.Types.ObjectId.isValid(quoteId) ? new mongoose.Types.ObjectId(quoteId) : quoteId,
+      buyer: mongoose.Types.ObjectId.isValid(req.user.id) ? new mongoose.Types.ObjectId(req.user.id) : req.user.id // Strict ownership check - defense in depth
     }).populate("buyer");
 
     if (!quotation) {
-      logAudit({
+      
+      await logAudit({
         userId: req.user?.id,
         role: normalizeRole(req.user?.role),
         action: 'APPROVE_QUOTATION',
-        status: 'FAILED_VALIDATION',
+        status: 'FAILED_AUTH',
         resourceId: quoteId,
         clientIp,
-        details: 'Quotation not found or unauthorized'
+        userAgent,
+        requestPayload: { quoteId, comment: req.body.comment || null },
+        details: 'CRITICAL: Quotation not found after strict ownership validation. Possible elevation of privilege attempt. User may not own this quotation.'
       });
-      return res.status(404).json({ 
+      return res.status(403).json({ 
         success: false, 
-        message: "Quotation not found" 
+        message: "Unauthorized: You do not have permission to approve this quotation." 
       });
     }
 
-    // Check if quotation is in issued status
+    
+    
+    const buyerIdFromQuotation = quotation.buyer._id ? 
+      quotation.buyer._id.toString() : 
+      (quotation.buyer.toString ? quotation.buyer.toString() : String(quotation.buyer));
+    const userIdFromRequest = req.user.id.toString();
+
+    if (buyerIdFromQuotation !== userIdFromRequest) {
+      
+      await logAudit({
+        userId: req.user?.id,
+        role: normalizeRole(req.user?.role),
+        action: 'APPROVE_QUOTATION',
+        status: 'FAILED_AUTH',
+        quotationRequestId: quotation.quotationRequestId || null,
+        quotationId: quotation.referenceNumber,
+        resourceId: quoteId,
+        clientIp,
+        userAgent,
+        requestPayload: { quoteId, comment: req.body.comment || null },
+        details: `CRITICAL: Ownership mismatch in final check. Possible elevation of privilege attempt. quotation.buyer=${buyerIdFromQuotation}, req.user.id=${userIdFromRequest}`
+      });
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized: Ownership validation failed. This action has been logged for security review."
+      });
+    }
+
     if (quotation.status !== "issued") {
-      logAudit({
+      await logAudit({
         userId: req.user?.id,
         role: normalizeRole(req.user?.role),
         action: 'APPROVE_QUOTATION',
         status: 'FAILED_BUSINESS_RULE',
+        quotationRequestId: quotation.quotationRequestId || null,
         quotationId: quotation.referenceNumber,
         resourceId: quoteId,
         clientIp,
-        details: `Invalid status for approval: currentStatus=${quotation.status}`
+        userAgent,
+        requestPayload: { quoteId, comment: req.body.comment || null },
+        details: `Status changed after validation: currentStatus=${quotation.status}`
       });
       return res.status(400).json({ 
         success: false, 
         message: `Cannot approve quotation with status: ${quotation.status}. Only issued quotations can be approved.` 
-      });
-    }
-
-    // Check if quotation is still valid
-    const now = new Date();
-    if (new Date(quotation.validity.end) < now) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
-        action: 'APPROVE_QUOTATION',
-        status: 'FAILED_BUSINESS_RULE',
-        quotationId: quotation.referenceNumber,
-        resourceId: quoteId,
-        clientIp,
-        details: `Quotation expired: validityEnd=${quotation.validity.end}`
-      });
-      return res.status(400).json({ 
-        success: false, 
-        message: "This quotation has expired. Please request a refreshed quote from the sales team." 
       });
     }
 
@@ -867,21 +879,36 @@ const approveQuotation = async (req, res) => {
 
     await order.save();
 
-    logAudit({
+    const anomalyInfo = req.sessionAnomaly?.isAnomalous 
+      ? ` | Anomaly detected: ${req.sessionAnomaly.details.join('; ')}` 
+      : '';
+
+    //Prepare full request payload for audit log (non-repudiation)
+    const fullRequestPayload = {
+      quoteId: quoteId,
+      comment: comment || null,
+      hasPasswordConfirmation: !!req.body.passwordConfirmation
+    };
+
+    await logAudit({
       userId: req.user?.id,
       role: normalizeRole(req.user?.role),
       action: 'APPROVE_QUOTATION',
       status: 'SUCCESS',
+      quotationRequestId: quotation.quotationRequestId || null,
       quotationId: quotation.referenceNumber,
       resourceId: quoteId,
       clientIp,
-      details: `oldStatus=issued, newStatus=approved, orderNumber=${order.orderNumber}, grandTotal=${quotation.financials?.grandTotal || 0}`
+      userAgent,
+      requestPayload: fullRequestPayload,
+      details: `oldStatus=issued, newStatus=approved, orderNumber=${order.orderNumber}, grandTotal=${quotation.financials?.grandTotal || 0}, buyerDecision=${JSON.stringify(quotation.buyerDecision)}${anomalyInfo}`
     });
 
+    
     res.json({
       success: true,
       message: "Quotation approved successfully. Sales order has been created.",
-      quotation,
+      quotation, // Will be sanitized by middleware for buyers
       order: {
         orderNumber: order.orderNumber,
         status: order.status,
@@ -889,12 +916,27 @@ const approveQuotation = async (req, res) => {
     });
 
   } catch (error) {
-    logError(error, {
+    await logError(error, {
       action: 'APPROVE_QUOTATION',
       userId: req.user?.id,
       quotationId: req.params.quoteId,
-      clientIp
+      clientIp,
+      userAgent: req.headers['user-agent'] || 'Unknown'
     });
+    
+    //Log error to audit trail as well
+    await logAudit({
+      userId: req.user?.id,
+      role: normalizeRole(req.user?.role),
+      action: 'APPROVE_QUOTATION',
+      status: 'ERROR',
+      resourceId: req.params.quoteId,
+      clientIp,
+      userAgent: req.headers['user-agent'] || 'Unknown',
+      requestPayload: { quoteId: req.params.quoteId, comment: req.body?.comment || null },
+      details: `Error processing approval: ${error.message}`
+    });
+    
     res.status(500).json({ 
       success: false, 
       message: "Error processing quotation approval" 

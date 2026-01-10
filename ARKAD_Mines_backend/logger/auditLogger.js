@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'url';
+import AuditLog from '../Models/AuditLog/auditLogModel.js';
 
 // --- REMOVED FS (File System) imports to prevent crashes on Vercel ---
 // import fs from 'fs';
@@ -6,9 +7,17 @@ import { fileURLToPath } from 'url';
 
 /**
  * Centralized audit logging system for security and compliance.
- * MODIFIED FOR VERCEL: Now logs to Console (Standard Output) instead of a physical file.
+ * IMMUTABLE AUDIT TRAIL: All logs are stored in database and cannot be modified or deleted.
+ * These logs form a non-repudiation trail for security-critical actions.
+ * 
+ * Data integrity is protected by:
+ * - HTTPS/TLS encryption in transit (prevents tampering during transmission)
+ * - Database-level immutability constraints (prevents modification/deletion)
+ * - Server-side validation and authorization
+ * 
+ * For Vercel/deployment: Database storage ensures logs persist across deployments.
  */
-export const logAudit = ({
+export const logAudit = async ({
   userId = null,
   role = null,
   action,
@@ -17,28 +26,65 @@ export const logAudit = ({
   quotationId = null,
   status,
   clientIp = null,
+  userAgent = null,
+  requestPayload = null, // Full request payload for non-repudiation
   details = null
 }) => {
   try {
+    // Sanitize request payload to remove sensitive information before logging
+    let sanitizedPayload = null;
+    if (requestPayload) {
+      sanitizedPayload = { ...requestPayload };
+      // Remove password fields (don't log actual passwords)
+      if (sanitizedPayload.passwordConfirmation) {
+        sanitizedPayload.passwordConfirmation = '[REDACTED]';
+      }
+      if (sanitizedPayload.password) {
+        sanitizedPayload.password = '[REDACTED]';
+      }
+    }
+
     const auditEntry = {
-      timestamp: new Date().toISOString(),
-      userId,
+      timestamp: new Date(),
+      userId: userId ? (typeof userId === 'string' ? userId : userId.toString()) : null,
       role: role ? role.toUpperCase() : null,
       action,
-      resourceId,
+      resourceId: resourceId ? (typeof resourceId === 'string' ? resourceId : resourceId.toString()) : null,
       quotationRequestId,
       quotationId,
       status,
       clientIp,
+      userAgent: userAgent ? userAgent.substring(0, 500) : null, // Limit length for storage
+      requestPayload: sanitizedPayload, // Store sanitized request payload
       details
     };
 
-    // FIX: Use console.log instead of fs.appendFileSync
-    // Vercel captures this automatically in the "Runtime Logs" tab.
-    console.log('[AUDIT LOG]:', JSON.stringify(auditEntry));
+    // Store in database for immutable audit trail (non-repudiation)
+    try {
+      const auditLog = new AuditLog(auditEntry);
+      await auditLog.save();
+      
+      // Also log to console for immediate visibility (Vercel/deployment logs)
+      console.log('[AUDIT LOG]:', JSON.stringify({
+        ...auditEntry,
+        timestamp: auditEntry.timestamp.toISOString()
+      }));
+    } catch (dbError) {
+      // If database save fails, still log to console as fallback
+      console.error('[AUDIT LOG DB ERROR]:', dbError.message);
+      console.log('[AUDIT LOG FALLBACK]:', JSON.stringify({
+        ...auditEntry,
+        timestamp: auditEntry.timestamp.toISOString()
+      }));
+      
+      // In production, you might want to alert administrators about audit log failures
+      // For now, we log to console as fallback to ensure we don't lose audit information
+    }
     
   } catch (error) {
+    // Even if audit logging fails completely, log the error
     console.error('[AUDIT LOGGER ERROR] Failed to log audit entry:', error.message);
+    console.error('[AUDIT LOGGER ERROR] Stack:', error.stack);
   }
 };
 
@@ -72,6 +118,13 @@ export const getClientIp = (req) => {
          req.connection?.remoteAddress ||
          req.socket?.remoteAddress ||
          null;
+};
+
+/**
+ * Helper function to get user agent from request
+ */
+export const getUserAgent = (req) => {
+  return req.headers['user-agent'] || 'Unknown';
 };
 
 /**
