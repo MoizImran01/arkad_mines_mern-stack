@@ -1,10 +1,43 @@
 import orderModel from "../../Models/orderModel/orderModel.js";
 import stonesModel from "../../Models/stonesModel/stonesModel.js";
-import { cloudinary, configureCloudinary } from '../../config/cloudinary.js';
+import { cloudinary, configureCloudinary, generateSignedUrl } from '../../config/cloudinary.js';
+import { logAudit, logError, getClientIp, normalizeRole, getUserAgent } from '../../logger/auditLogger.js';
 
 // Helper function to round to 2 decimal places
 const roundToTwoDecimals = (value) => {
   return Math.round((value || 0) * 100) / 100;
+};
+
+// Helper function to generate signed URLs for payment proofs in an order object
+const generateSignedUrlsForPaymentProofs = (order) => {
+  if (!order) return order;
+  
+  // Convert to plain object if it's a Mongoose document
+  const orderObj = order.toObject ? order.toObject() : order;
+  
+  // Generate signed URLs for payment proofs
+  if (orderObj.paymentProofs && Array.isArray(orderObj.paymentProofs)) {
+    orderObj.paymentProofs = orderObj.paymentProofs.map(proof => {
+      if (proof.proofFile) {
+        // Generate signed URL that expires in 1 hour (3600 seconds)
+        proof.proofFile = generateSignedUrl(proof.proofFile, 3600);
+      }
+      return proof;
+    });
+  }
+  
+  // Also update payment timeline proof file URLs
+  if (orderObj.paymentTimeline && Array.isArray(orderObj.paymentTimeline)) {
+    orderObj.paymentTimeline = orderObj.paymentTimeline.map(timeline => {
+      if (timeline.proofFile) {
+        // Generate signed URL that expires in 1 hour (3600 seconds)
+        timeline.proofFile = generateSignedUrl(timeline.proofFile, 3600);
+      }
+      return timeline;
+    });
+  }
+  
+  return orderObj;
 };
 
 // Get order details by order number for the logged-in user for a single order
@@ -250,10 +283,14 @@ const updateOrderStatus = async (req, res) => {
 };
 
 // Submit payment proof by client
+// SECURITY: All payment processing logic is enforced server-side only
+// - outstandingBalance and totalPaid are calculated ONLY after admin approval (in approvePayment)
+// - paymentStatus is managed server-side only (clients cannot set it directly - see rejectClientPaymentStatus middleware)
+// - Clients can only submit payment proofs with amountPaid; all other fields are server-calculated
 const submitPaymentProof = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { amountPaid } = req.body;
+    const { amountPaid } = req.body; // Only accept amountPaid from client; paymentStatus is rejected by middleware
 
     // Handle proof upload coming as base64 string (from client) - upload to Cloudinary
     let proofFileUrl = null;
@@ -265,6 +302,8 @@ const submitPaymentProof = async (req, res) => {
         configureCloudinary();
         
         // Cloudinary accepts data URI format directly
+        // Store payment proof in secure cloud storage with tamper-evident metadata
+        const timestamp = new Date().toISOString();
         const uploadRes = await cloudinary.uploader.upload(base64, {
           folder: 'arkad_mines/payment_proofs',
           resource_type: 'image',
@@ -272,30 +311,34 @@ const submitPaymentProof = async (req, res) => {
           transformation: [
             { quality: 'auto:good' },
             { fetch_format: 'auto' }
-          ]
+          ],
+          // Tamper-evident metadata: Store orderId and upload timestamp
+          context: {
+            orderId: orderId || 'unknown',
+            uploadedAt: timestamp,
+            uploadedBy: req.user?.id?.toString() || 'unknown'
+          },
+          // Add tags for better organization and security
+          tags: ['payment_proof', 'secure', orderId || 'unknown']
         });
         proofFileUrl = uploadRes.secure_url;
       } catch (uploadErr) {
-        console.error('Cloudinary upload error:', uploadErr);
-        console.error('Error details:', {
-          message: uploadErr.message,
-          http_code: uploadErr.http_code,
-          name: uploadErr.name,
-          error: uploadErr
+        // Log detailed error securely (for developers only)
+        const clientIp = getClientIp(req);
+        const userAgent = getUserAgent(req);
+        
+        logError(uploadErr, {
+          action: 'CLOUDINARY_UPLOAD_ERROR',
+          userId: req.user?.id || null,
+          orderId: orderId,
+          clientIp,
+          details: `Error uploading payment proof to Cloudinary for order ${orderId}`
         });
         
-        // Check if it's a configuration error
-        if (uploadErr.message && uploadErr.message.includes('api_key')) {
-          console.error('Cloudinary configuration error - check CLOUDINARY_API_KEY in config.env');
-          return res.status(500).json({ 
-            success: false, 
-            message: 'Cloudinary configuration error. Please check server configuration.' 
-          });
-        }
-        
+        // Return generic error message to client (never expose internal errors)
         return res.status(500).json({ 
           success: false, 
-          message: `Failed to upload proof to Cloudinary: ${uploadErr.message || 'Unknown error'}` 
+          message: 'An error occurred while uploading your payment proof. Please try again.' 
         });
       }
     }
@@ -327,9 +370,50 @@ const submitPaymentProof = async (req, res) => {
 
     const order = await orderModel.findById(orderId);
     if (!order) {
+      const clientIp = getClientIp(req);
+      const userAgent = getUserAgent(req);
+      
+      await logAudit({
+        userId: req.user?.id || null,
+        role: normalizeRole(req.user?.role),
+        action: 'PAYMENT_SUBMISSION_FAILED',
+        status: 'FAILED_VALIDATION',
+        resourceId: orderId,
+        clientIp,
+        userAgent,
+        requestPayload: { orderId, amountPaid },
+        details: `Order not found for payment submission: orderId=${orderId}`
+      });
+
       return res.status(404).json({
         success: false,
         message: "Order not found"
+      });
+    }
+
+    // Server-side ownership validation: Ensure authenticated user owns the order
+    const userId = req.user?.id;
+    const buyerId = order.buyer ? (typeof order.buyer === 'object' ? order.buyer.toString() : String(order.buyer)) : null;
+    
+    if (!userId || !buyerId || buyerId !== userId.toString()) {
+      const clientIp = getClientIp(req);
+      const userAgent = getUserAgent(req);
+      
+      await logAudit({
+        userId: userId || null,
+        role: normalizeRole(req.user?.role),
+        action: 'PAYMENT_OWNERSHIP_VALIDATION_FAILED',
+        status: 'FAILED_AUTH',
+        resourceId: orderId,
+        clientIp,
+        userAgent,
+        requestPayload: { orderId, amountPaid },
+        details: `Unauthorized payment attempt: User ${userId} attempted to submit payment for order ${order.orderNumber} owned by buyer ${buyerId}`
+      });
+
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized: You do not have permission to submit payment for this order"
       });
     }
 
@@ -367,11 +451,27 @@ const submitPaymentProof = async (req, res) => {
     // Round outstanding balance for comparison
     const roundedOutstandingBalance = roundToTwoDecimals(order.outstandingBalance);
 
-    // Check if amount paid exceeds outstanding balance
-    if (numericAmount > roundedOutstandingBalance) {
+    // Server-side validation: Check if amount paid exceeds outstanding balance (with small tolerance for floating-point precision)
+    const FLOATING_POINT_TOLERANCE = 0.01; // Small tolerance for floating-point precision errors
+    if (numericAmount > roundedOutstandingBalance + FLOATING_POINT_TOLERANCE) {
+      const clientIp = getClientIp(req);
+      const userAgent = getUserAgent(req);
+      
+      await logAudit({
+        userId: userId,
+        role: normalizeRole(req.user?.role),
+        action: 'PAYMENT_AMOUNT_VALIDATION_FAILED',
+        status: 'FAILED_VALIDATION',
+        resourceId: orderId,
+        clientIp,
+        userAgent,
+        requestPayload: { orderId, amountPaid: numericAmount, outstandingBalance: roundedOutstandingBalance },
+        details: `Payment amount validation failed: Amount ${numericAmount.toFixed(2)} exceeds outstanding balance ${roundedOutstandingBalance.toFixed(2)} for order ${order.orderNumber}`
+      });
+
       return res.status(400).json({
         success: false,
-        message: `Amount paid cannot exceed outstanding balance of Rs ${roundedOutstandingBalance.toFixed(2)}`
+        message: `Amount paid (Rs ${numericAmount.toFixed(2)}) cannot exceed outstanding balance of Rs ${roundedOutstandingBalance.toFixed(2)}`
       });
     }
 
@@ -390,37 +490,109 @@ const submitPaymentProof = async (req, res) => {
       notes: `Payment of Rs ${numericAmount.toFixed(2)} submitted for verification`
     });
 
-    // Update payment status to payment_in_progress if it was pending
+    // Server-side logic: Update payment status to payment_in_progress if it was pending
+    // NOTE: This is server-side logic only - clients cannot set paymentStatus directly (blocked by rejectClientPaymentStatus middleware)
     if (order.paymentStatus === "pending") {
       order.paymentStatus = "payment_in_progress";
     }
+    
+    // SECURITY: Do NOT calculate outstandingBalance or totalPaid here - these are calculated ONLY after admin approval
 
     await order.save();
+
+    const clientIp = getClientIp(req);
+    const userAgent = getUserAgent(req);
+
+    // Immutable audit log for payment submission with all required fields
+    await logAudit({
+      userId: userId || null,
+      role: normalizeRole(req.user?.role),
+      action: 'PAYMENT_SUBMITTED',
+      status: 'SUCCESS',
+      resourceId: orderId,
+      clientIp,
+      userAgent,
+      requestPayload: { 
+        orderId, 
+        orderNumber: order.orderNumber,
+        amountPaid: numericAmount,
+        proofFileUrl: proofFileUrl,
+        timestamp: new Date().toISOString()
+      },
+      details: `Payment proof submitted: Rs ${numericAmount.toFixed(2)} for order ${order.orderNumber}, proofFile: ${proofFileUrl}${req.paymentAnomaly?.detected ? ` | Anomalies: ${req.paymentAnomaly.details.join('; ')}` : ''}`
+    });
+
+    // Generate signed URLs for payment proofs (access control)
+    const orderWithSignedUrls = generateSignedUrlsForPaymentProofs(order);
 
     res.json({
       success: true,
       message: "Payment proof submitted successfully. Awaiting admin approval.",
-      order
+      order: orderWithSignedUrls
     });
 
   } catch (error) {
-    console.error("Error submitting payment proof:", error);
+    const clientIp = getClientIp(req);
+    const userAgent = getUserAgent(req);
+
+    await logAudit({
+      userId: req.user?.id || null,
+      role: normalizeRole(req.user?.role),
+      action: 'PAYMENT_SUBMISSION_ERROR',
+      status: 'ERROR',
+      resourceId: req.params.orderId,
+      clientIp,
+      userAgent,
+      requestPayload: { orderId: req.params.orderId, amountPaid: req.body?.amountPaid },
+      details: `Error submitting payment proof: ${error.message}`
+    });
+
+    // Log detailed error securely (for developers only)
+    logError(error, {
+      action: 'PAYMENT_SUBMISSION_ERROR',
+      userId: req.user?.id || null,
+      orderId: req.params.orderId,
+      clientIp,
+      details: `Error submitting payment proof for order ${req.params.orderId}`
+    });
+
+    // Return generic error message to client (never expose internal errors, stack traces, or file paths)
     res.status(500).json({
       success: false,
-      message: "Server error while submitting payment proof"
+      message: "An error occurred while processing your payment. Please try again."
     });
   }
 };
 
 // Approve payment by admin
+// SECURITY: This endpoint is protected by authorizeRoles('admin') middleware (admin-only)
+// - Calculates outstandingBalance and totalPaid server-side ONLY after admin approval
+// - Updates paymentStatus to "fully_paid" ONLY if outstandingBalance <= 0 (server-side logic)
+// - All payment state changes are validated on the server against business rules
 const approvePayment = async (req, res) => {
+  const clientIp = getClientIp(req);
+  const userAgent = getUserAgent(req);
+  const adminId = req.user.id;
+  const adminRole = normalizeRole(req.user.role);
+  
   try {
     const { orderId, proofIndex } = req.params;
     const { notes } = req.body;
-    const adminId = req.user.id; // Assuming authenticated admin
 
     const order = await orderModel.findById(orderId);
     if (!order) {
+      await logAudit({
+        userId: adminId,
+        role: adminRole,
+        action: 'PAYMENT_APPROVAL_FAILED',
+        status: 'FAILED_VALIDATION',
+        resourceId: orderId,
+        clientIp,
+        userAgent,
+        requestPayload: { orderId, proofIndex, notes },
+        details: `Payment approval failed: Order not found for orderId=${orderId}, proofIndex=${proofIndex}`
+      });
+
       return res.status(404).json({
         success: false,
         message: "Order not found"
@@ -428,6 +600,18 @@ const approvePayment = async (req, res) => {
     }
 
     if (!order.paymentProofs[proofIndex]) {
+      await logAudit({
+        userId: adminId,
+        role: adminRole,
+        action: 'PAYMENT_APPROVAL_FAILED',
+        status: 'FAILED_VALIDATION',
+        resourceId: orderId,
+        clientIp,
+        userAgent,
+        requestPayload: { orderId, proofIndex, notes },
+        details: `Payment approval failed: Payment proof not found for orderId=${orderId}, proofIndex=${proofIndex}`
+      });
+
       return res.status(404).json({
         success: false,
         message: "Payment proof not found"
@@ -442,16 +626,17 @@ const approvePayment = async (req, res) => {
     paymentProof.approvedBy = adminId;
     paymentProof.notes = notes || "";
 
+    // SECURITY: Server-side calculation of payment balances - ONLY done after admin approval
     // Round payment amount to 2 decimal places
     const roundedAmountPaid = roundToTwoDecimals(paymentProof.amountPaid);
 
-    // Update totalPaid (round to 2 decimal places)
+    // Update totalPaid (round to 2 decimal places) - calculated server-side only
     order.totalPaid = roundToTwoDecimals(order.totalPaid + roundedAmountPaid);
 
-    // Calculate outstanding balance (round to 2 decimal places)
+    // Calculate outstanding balance (round to 2 decimal places) - calculated server-side only
     order.outstandingBalance = roundToTwoDecimals(order.financials.grandTotal - order.totalPaid);
 
-    // Update payment status if fully paid
+    // Server-side logic: Update payment status if fully paid (validated against business rules)
     if (order.outstandingBalance <= 0) {
       order.paymentStatus = "fully_paid";
 
@@ -510,29 +695,93 @@ const approvePayment = async (req, res) => {
 
     await order.save();
 
+    // Log payment approval action with admin ID and timestamp
+    const approvalTimestamp = new Date();
+    await logAudit({
+      userId: adminId,
+      role: adminRole,
+      action: 'PAYMENT_APPROVED',
+      status: 'SUCCESS',
+      resourceId: orderId,
+      clientIp,
+      userAgent,
+      requestPayload: { 
+        orderId, 
+        orderNumber: order.orderNumber,
+        proofIndex,
+        amountPaid: roundedAmountPaid,
+        approvedBy: adminId,
+        approvedAt: approvalTimestamp.toISOString(),
+        notes: notes || null
+      },
+      details: `Payment approved by admin ${adminId} at ${approvalTimestamp.toISOString()}: Order ${order.orderNumber}, Amount Rs ${roundedAmountPaid.toFixed(2)}, Proof Index ${proofIndex}`
+    });
+
+    // Generate signed URLs for payment proofs (access control)
+    const orderWithSignedUrls = generateSignedUrlsForPaymentProofs(order);
+
     res.json({
       success: true,
       message: "Payment approved successfully",
-      order
+      order: orderWithSignedUrls
     });
 
   } catch (error) {
-    console.error("Error approving payment:", error);
+    await logAudit({
+      userId: adminId,
+      role: adminRole,
+      action: 'PAYMENT_APPROVAL_ERROR',
+      status: 'ERROR',
+      resourceId: req.params.orderId,
+      clientIp,
+      userAgent,
+      requestPayload: { orderId: req.params.orderId, proofIndex: req.params.proofIndex },
+      details: `Error approving payment: ${error.message}`
+    });
+
+    // Log detailed error securely (for developers only)
+    logError(error, {
+      action: 'PAYMENT_APPROVAL_ERROR',
+      userId: adminId,
+      orderId: req.params.orderId,
+      proofIndex: req.params.proofIndex,
+      clientIp,
+      details: `Error approving payment for order ${req.params.orderId}, proofIndex ${req.params.proofIndex}`
+    });
+
+    // Return generic error message to client (never expose internal errors, stack traces, or file paths)
     res.status(500).json({
       success: false,
-      message: "Server error while approving payment"
+      message: "An error occurred while processing your payment approval. Please try again."
     });
   }
 };
 
 // Reject payment by admin
 const rejectPayment = async (req, res) => {
+  const clientIp = getClientIp(req);
+  const userAgent = getUserAgent(req);
+  const adminId = req.user.id;
+  const adminRole = normalizeRole(req.user.role);
+  
   try {
     const { orderId, proofIndex } = req.params;
     const { notes, rejectionReason } = req.body;
 
     const order = await orderModel.findById(orderId);
     if (!order) {
+      await logAudit({
+        userId: adminId,
+        role: adminRole,
+        action: 'PAYMENT_REJECTION_FAILED',
+        status: 'FAILED_VALIDATION',
+        resourceId: orderId,
+        clientIp,
+        userAgent,
+        requestPayload: { orderId, proofIndex, notes, rejectionReason },
+        details: `Payment rejection failed: Order not found for orderId=${orderId}, proofIndex=${proofIndex}`
+      });
+
       return res.status(404).json({
         success: false,
         message: "Order not found"
@@ -540,6 +789,18 @@ const rejectPayment = async (req, res) => {
     }
 
     if (!order.paymentProofs[proofIndex]) {
+      await logAudit({
+        userId: adminId,
+        role: adminRole,
+        action: 'PAYMENT_REJECTION_FAILED',
+        status: 'FAILED_VALIDATION',
+        resourceId: orderId,
+        clientIp,
+        userAgent,
+        requestPayload: { orderId, proofIndex, notes, rejectionReason },
+        details: `Payment rejection failed: Payment proof not found for orderId=${orderId}, proofIndex=${proofIndex}`
+      });
+
       return res.status(404).json({
         success: false,
         message: "Payment proof not found"
@@ -561,26 +822,76 @@ const rejectPayment = async (req, res) => {
 
     await order.save();
 
+    // Log payment rejection action with admin ID and timestamp
+    const rejectionTimestamp = new Date();
+    await logAudit({
+      userId: adminId,
+      role: adminRole,
+      action: 'PAYMENT_REJECTED',
+      status: 'SUCCESS',
+      resourceId: orderId,
+      clientIp,
+      userAgent,
+      requestPayload: { 
+        orderId, 
+        orderNumber: order.orderNumber,
+        proofIndex,
+        amountPaid: paymentProof.amountPaid,
+        rejectedBy: adminId,
+        rejectedAt: rejectionTimestamp.toISOString(),
+        rejectionReason: rejectionReason || notes || null
+      },
+      details: `Payment rejected by admin ${adminId} at ${rejectionTimestamp.toISOString()}: Order ${order.orderNumber}, Amount Rs ${paymentProof.amountPaid.toFixed(2)}, Proof Index ${proofIndex}, Reason: ${rejectionReason || notes || 'N/A'}`
+    });
+
+    // Generate signed URLs for payment proofs (access control)
+    const orderWithSignedUrls = generateSignedUrlsForPaymentProofs(order);
+
     res.json({
       success: true,
       message: "Payment rejected successfully",
-      order
+      order: orderWithSignedUrls
     });
 
   } catch (error) {
-    console.error("Error rejecting payment:", error);
+    await logAudit({
+      userId: adminId,
+      role: adminRole,
+      action: 'PAYMENT_REJECTION_ERROR',
+      status: 'ERROR',
+      resourceId: req.params.orderId,
+      clientIp,
+      userAgent,
+      requestPayload: { orderId: req.params.orderId, proofIndex: req.params.proofIndex },
+      details: `Error rejecting payment: ${error.message}`
+    });
+
+    // Log detailed error securely (for developers only)
+    logError(error, {
+      action: 'PAYMENT_REJECTION_ERROR',
+      userId: adminId,
+      orderId: req.params.orderId,
+      proofIndex: req.params.proofIndex,
+      clientIp,
+      details: `Error rejecting payment for order ${req.params.orderId}, proofIndex ${req.params.proofIndex}`
+    });
+
+    // Return generic error message to client (never expose internal errors, stack traces, or file paths)
     res.status(500).json({
       success: false,
-      message: "Server error while rejecting payment"
+      message: "An error occurred while processing your payment rejection. Please try again."
     });
   }
 };
 
 // Get order details with all payment information (for both client and admin)
 const getOrderDetailsWithPayment = async (req, res) => {
+  const clientIp = getClientIp(req);
+  const userAgent = getUserAgent(req);
+  const userId = req.user?.id;
+  
   try {
     const { orderId } = req.params;
-    const userId = req.user.id;
     const isAdmin = req.user.role === "admin";
 
     let query = { _id: orderId };
@@ -599,22 +910,42 @@ const getOrderDetailsWithPayment = async (req, res) => {
       });
     }
 
+    // Generate signed, expiring URLs for payment proofs (access control)
+    const orderWithSignedUrls = generateSignedUrlsForPaymentProofs(order);
+
     res.json({
       success: true,
-      order
+      order: orderWithSignedUrls
     });
 
   } catch (error) {
-    console.error("Error fetching order details:", error);
+    // Log detailed error securely (for developers only)
+    logError(error, {
+      action: 'GET_ORDER_DETAILS_WITH_PAYMENT_ERROR',
+      userId: userId || null,
+      orderId: req.params.orderId,
+      clientIp,
+      details: `Error fetching order details with payment for order ${req.params.orderId}`
+    });
+
+    // Return generic error message to client (never expose internal errors, stack traces, or file paths)
     res.status(500).json({
       success: false,
-      message: "Server error while retrieving order"
+      message: "An error occurred while retrieving your order. Please try again."
     });
   }
 };
 
 // Update payment status by admin
+// SECURITY: This endpoint is protected by authorizeRoles('admin') middleware (admin-only)
+// - Allows admins to manually update payment status for administrative purposes
+// - All state changes are validated on the server against business rules
+// - NOTE: For normal payment flow, use approvePayment/rejectPayment endpoints which calculate balances correctly
 const updatePaymentStatus = async (req, res) => {
+  const clientIp = getClientIp(req);
+  const userAgent = getUserAgent(req);
+  const adminId = req.user?.id;
+  
   try {
     const { orderId } = req.params;
     const { paymentStatus, notes } = req.body;
@@ -653,10 +984,19 @@ const updatePaymentStatus = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error updating payment status:", error);
+    // Log detailed error securely (for developers only)
+    logError(error, {
+      action: 'UPDATE_PAYMENT_STATUS_ERROR',
+      userId: adminId || null,
+      orderId: req.params.orderId,
+      clientIp,
+      details: `Error updating payment status for order ${req.params.orderId}`
+    });
+
+    // Return generic error message to client (never expose internal errors, stack traces, or file paths)
     res.status(500).json({
       success: false,
-      message: "Server error while updating payment status"
+      message: "An error occurred while processing your payment status update. Please try again."
     });
   }
 };

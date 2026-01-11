@@ -1,16 +1,11 @@
 import axios from "axios";
 import { getClientIp, getUserAgent, logAudit, normalizeRole } from "../logger/auditLogger.js";
-import { RateLimitTracking } from "./rateLimiting.js";
+import { RateLimitTracking, getRateLimitTracking, cleanOldRequests } from "./rateLimiting.js";
 
-/**
- * CAPTCHA Challenge Middleware
- * Requires CAPTCHA verification after certain number of approval requests
- * Prevents automated attacks and bot-driven DoS
- */
+//CAPTCHA Challenge Middleware
+//Requires CAPTCHA verification after certain number of approval requests
+//Prevents automated attacks and bot-driven DoS
 
-/**
- * Verify CAPTCHA token with Google reCAPTCHA
- */
 const verifyCaptcha = async (captchaToken) => {
   try {
     const secretKey = process.env.RECAPTCHA_SECRET_KEY;
@@ -42,10 +37,8 @@ const verifyCaptcha = async (captchaToken) => {
   }
 };
 
-/**
- * CAPTCHA Challenge Middleware
- * Requires CAPTCHA after 3 approval requests from same source (user or IP)
- */
+//CAPTCHA Challenge Middleware
+//Requires CAPTCHA after 3 approval requests from same source (user or IP)
 export const requireCaptchaChallenge = async (req, res, next) => {
   const userId = req.user?.id;
   const clientIp = getClientIp(req);
@@ -54,30 +47,38 @@ export const requireCaptchaChallenge = async (req, res, next) => {
   const { captchaToken } = req.body;
 
   try {
-    // Check if CAPTCHA is required for this user
+    // Use same tracking mechanism as rate limiters to ensure consistency
+    // Also clean old requests to get accurate count
     let tracking = null;
     if (userId) {
-      tracking = await RateLimitTracking.findOne({
-        identifier: userId.toString(),
-        type: 'user',
-        endpoint
-      });
+      tracking = await getRateLimitTracking(userId.toString(), 'user', endpoint);
+      const windowMs = 60 * 60 * 1000; // 1 hour (same as rate limiter)
+      await cleanOldRequests(tracking, windowMs);
     }
 
-    // Also check IP-based tracking
+    //IP-based tracking
     let ipTracking = null;
     if (clientIp) {
-      ipTracking = await RateLimitTracking.findOne({
-        identifier: clientIp,
-        type: 'ip',
-        endpoint
-      });
+      ipTracking = await getRateLimitTracking(clientIp, 'ip', endpoint);
+      const windowMs = 60 * 60 * 1000; // 1 hour (same as rate limiter)
+      await cleanOldRequests(ipTracking, windowMs);
     }
 
-    const captchaRequired = (tracking && tracking.captchaRequired) || 
-                            (ipTracking && ipTracking.captchaRequired);
+    // Check if CAPTCHA is required based on current request count (after cleaning old requests)
+    // CAPTCHA should only be required AFTER 3 requests, so we check the actual count
+    // rather than relying solely on the captchaRequired flag (which might be stale)
+    const requestThreshold = 3;
+    const userRequestCount = tracking?.requestCount || 0;
+    const ipRequestCount = ipTracking?.requestCount || 0;
+    
+    // CAPTCHA is required if:
+    // 1. The captchaRequired flag is set AND user count > threshold, OR
+    // 2. The user count exceeds the threshold (even if flag is not set yet)
+    // NOTE: Only check user count, not IP count, to avoid triggering CAPTCHA for new users on shared IPs (e.g., localhost)
+    const captchaRequired = (tracking && tracking.captchaRequired && userRequestCount > requestThreshold) ||
+                            (userRequestCount > requestThreshold);
 
-    // If CAPTCHA is required but not provided
+    //CAPTCHA is required but not provided
     if (captchaRequired && !captchaToken) {
       await logAudit({
         userId: userId || null,
@@ -91,7 +92,7 @@ export const requireCaptchaChallenge = async (req, res, next) => {
           path: req.path,
           endpoint
         },
-        details: `CAPTCHA required but not provided. User requests: ${tracking?.requestCount || 0}, IP requests: ${ipTracking?.requestCount || 0}`
+        details: `CAPTCHA required but not provided. User requests: ${tracking?.requestCount || 0} (threshold: ${requestThreshold})`
       });
 
       return res.status(403).json({
@@ -102,12 +103,11 @@ export const requireCaptchaChallenge = async (req, res, next) => {
       });
     }
 
-    // If CAPTCHA is provided, verify it
     if (captchaToken) {
       const isCaptchaValid = await verifyCaptcha(captchaToken);
 
       if (!isCaptchaValid) {
-        // Increment failed CAPTCHA attempts
+        
         if (tracking) {
           tracking.captchaAttempts = (tracking.captchaAttempts || 0) + 1;
           await tracking.save();
@@ -140,10 +140,10 @@ export const requireCaptchaChallenge = async (req, res, next) => {
         });
       }
 
-      // CAPTCHA verified successfully - reset attempts
+      
       if (tracking) {
         tracking.captchaAttempts = 0;
-        tracking.captchaRequired = false; // Clear requirement after successful verification
+        tracking.captchaRequired = false; 
         await tracking.save();
       }
       if (ipTracking) {
@@ -153,38 +153,21 @@ export const requireCaptchaChallenge = async (req, res, next) => {
       }
     }
 
-    // Check if CAPTCHA should be required (after 3 requests)
-    const requestThreshold = 3;
-    if (!captchaRequired) {
-      const userRequestCount = tracking?.requestCount || 0;
-      const ipRequestCount = ipTracking?.requestCount || 0;
-
-      if (userRequestCount >= requestThreshold || ipRequestCount >= requestThreshold) {
-        // Require CAPTCHA for future requests
-        if (tracking) {
-          tracking.captchaRequired = true;
-          await tracking.save();
-        }
-        if (ipTracking) {
-          ipTracking.captchaRequired = true;
-          await ipTracking.save();
-        }
-
-        await logAudit({
-          userId: userId || null,
-          role: normalizeRole(req.user?.role),
-          action: 'CAPTCHA_REQUIREMENT_SET',
-          status: 'SUCCESS',
-          clientIp,
-          userAgent,
-          details: `CAPTCHA requirement set after ${Math.max(userRequestCount, ipRequestCount)} requests`
-        });
+    // If CAPTCHA is required (from the check above), set the flag if not already set
+    if (captchaRequired) {
+      if (tracking && !tracking.captchaRequired && userRequestCount > requestThreshold) {
+        tracking.captchaRequired = true;
+        await tracking.save();
+      }
+      if (ipTracking && !ipTracking.captchaRequired && ipRequestCount > requestThreshold) {
+        ipTracking.captchaRequired = true;
+        await ipTracking.save();
       }
     }
 
     next();
   } catch (error) {
-    // If CAPTCHA check fails, log but allow request (fail open)
+    //CAPTCHA check fails, log but allow request (fail open)
     await logAudit({
       userId: userId || null,
       role: normalizeRole(req.user?.role),

@@ -264,5 +264,5 @@ export const approvalPerIPLimiter = async (req, res, next) => {
   }
 };
 
-export { RateLimitTracking };
+export { RateLimitTracking, getRateLimitTracking, cleanOldRequests };
 

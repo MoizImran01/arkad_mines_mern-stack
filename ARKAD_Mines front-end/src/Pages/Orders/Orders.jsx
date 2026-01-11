@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   FiLoader, FiExternalLink, FiCreditCard, FiPackage, 
   FiMapPin, FiCalendar, FiTruck, FiX, FiCheck, FiShoppingCart, FiCheckCircle, FiDownload,
-  FiUser, FiMail, FiPhone, FiGlobe, FiBriefcase
+  FiUser, FiMail, FiPhone, FiGlobe, FiBriefcase, FiLock, FiAlertTriangle
 } from "react-icons/fi";
 
 const Orders = () => {
@@ -31,6 +31,11 @@ const Orders = () => {
     proofFile: null
   });
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
+  
+  // MFA Modal State
+  const [showMfaModal, setShowMfaModal] = useState(false);
+  const [mfaPassword, setMfaPassword] = useState("");
+  const [pendingPayment, setPendingPayment] = useState(null);
   
   const navigate = useNavigate();
 
@@ -117,9 +122,9 @@ const Orders = () => {
     }
 
     setPaymentSubmitting(true);
-    try {
-      // Compress and resize image before converting to base64
-      const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
+    
+    // Compress and resize image before converting to base64
+    const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = (e) => {
@@ -217,10 +222,11 @@ const Orders = () => {
         });
       };
 
-      let base64;
+    let compressedBase64 = null;
+    try {
       try {
-        base64 = await compressImage(paymentForm.proofFile);
-        if (!base64 || !base64.startsWith('data:image/')) {
+        compressedBase64 = await compressImage(paymentForm.proofFile);
+        if (!compressedBase64 || !compressedBase64.startsWith('data:image/')) {
           throw new Error('Invalid image format after compression');
         }
       } catch (compressionError) {
@@ -229,10 +235,11 @@ const Orders = () => {
         setPaymentSubmitting(false);
         return;
       }
+      
       const payload = {
         amountPaid: parseFloat(amount.toFixed(2)),
         address: trackingOrderDetails.deliveryAddress || {},
-        proofBase64: base64,
+        proofBase64: compressedBase64,
         proofFileName: paymentForm.proofFile.name
       };
 
@@ -258,7 +265,101 @@ const Orders = () => {
       }
     } catch (error) {
       console.error("Error submitting payment:", error);
+      console.log("Error response data:", error.response?.data);
+      console.log("Error status:", error.response?.status);
+      
+      // Check if MFA is required (401 status or requiresMFA flag)
+      if (error.response?.status === 401 && error.response?.data?.requiresMFA === true) {
+        console.log("MFA required - showing modal");
+        
+        // Use already-compressed base64 if available, otherwise compress again
+        let base64ToUse = compressedBase64;
+        if (!base64ToUse) {
+          try {
+            base64ToUse = await compressImage(paymentForm.proofFile);
+          } catch (compressionError) {
+            console.error('Error compressing image for MFA:', compressionError);
+            toast.error('Failed to process image. Please try again.');
+            setPaymentSubmitting(false);
+            return;
+          }
+        }
+        
+        setPendingPayment({
+          orderId: trackingOrderDetails._id,
+          amountPaid: parseFloat(amount.toFixed(2)),
+          address: trackingOrderDetails.deliveryAddress || {},
+          proofBase64: base64ToUse,
+          proofFileName: paymentForm.proofFile.name
+        });
+        
+        console.log("Setting showMfaModal to true");
+        setShowMfaModal(true);
+        setPaymentSubmitting(false);
+        return;
+      }
+      
       toast.error(error.response?.data?.message || "Error submitting payment proof");
+      setPaymentSubmitting(false);
+    }
+  };
+
+  const handleMfaSubmit = async (e) => {
+    e.preventDefault();
+    if (!mfaPassword.trim()) {
+      toast.error("Please enter your password to confirm this payment submission.");
+      return;
+    }
+
+    if (!pendingPayment) {
+      toast.error("Error: Payment data not found. Please try again.");
+      setShowMfaModal(false);
+      setMfaPassword("");
+      setPendingPayment(null);
+      return;
+    }
+
+    setPaymentSubmitting(true);
+
+    try {
+      const payload = {
+        ...pendingPayment,
+        passwordConfirmation: mfaPassword
+      };
+
+      const response = await axios.post(
+        `${url}/api/orders/payment/submit/${pendingPayment.orderId}`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        toast.success("Payment proof submitted successfully! Awaiting admin verification.");
+        setPaymentForm({ amount: "", proofFile: null });
+        setShowMfaModal(false);
+        setMfaPassword("");
+        setPendingPayment(null);
+        
+        const updatedOrder = await axios.get(
+          `${url}/api/orders/details/${pendingPayment.orderId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (updatedOrder.data.success) {
+          setTrackingOrderDetails(updatedOrder.data.order);
+        }
+        fetchOrders();
+      } else {
+        toast.error(response.data.message || "Failed to submit payment proof");
+      }
+    } catch (error) {
+      console.error("Error submitting payment with MFA:", error);
+      
+      if (error.response?.data?.requiresMFA === true || error.response?.status === 401) {
+        toast.error("Invalid password. Please check your password and try again.");
+        setMfaPassword("");
+      } else {
+        toast.error(error.response?.data?.message || "Error submitting payment proof");
+      }
     } finally {
       setPaymentSubmitting(false);
     }
@@ -722,6 +823,81 @@ const Orders = () => {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MFA Modal */}
+      {showMfaModal && (
+        <div className="modal-overlay" onClick={() => {
+          setShowMfaModal(false);
+          setMfaPassword("");
+          setPendingPayment(null);
+        }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                Multi-Factor Authentication Required
+              </h3>
+              <button onClick={() => {
+                setShowMfaModal(false);
+                setMfaPassword("");
+                setPendingPayment(null);
+              }}>
+                <FiX />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
+                <FiAlertTriangle style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                For security purposes, please confirm your password to submit this payment.
+              </p>
+              <form onSubmit={handleMfaSubmit}>
+                <div className="form-group">
+                  <label htmlFor="mfa-password">Enter Your Password:</label>
+                  <input
+                    id="mfa-password"
+                    type="password"
+                    value={mfaPassword}
+                    onChange={(e) => setMfaPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    autoFocus
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      marginTop: '8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button 
+                    type="button"
+                    className="btn-secondary" 
+                    onClick={() => {
+                      setShowMfaModal(false);
+                      setMfaPassword("");
+                      setPendingPayment(null);
+                    }}
+                    disabled={paymentSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={paymentSubmitting || !mfaPassword.trim()}
+                    style={{ backgroundColor: '#2d8659' }}
+                  >
+                    {paymentSubmitting ? "Submitting..." : "Confirm & Submit Payment"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
