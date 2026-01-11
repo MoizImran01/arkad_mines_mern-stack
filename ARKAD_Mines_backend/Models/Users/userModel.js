@@ -25,6 +25,22 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ["admin", "employee", "customer"], 
     default: "customer" 
+  },
+  failedLoginAttempts: {
+    type: Number,
+    default: 0
+  },
+  accountLockedUntil: {
+    type: Date,
+    default: null
+  },
+  lastLoginIp: {
+    type: String,
+    default: null
+  },
+  lastLoginAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true 

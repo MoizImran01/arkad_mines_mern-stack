@@ -49,7 +49,7 @@ const loginUser = async (req, res) => {
     if (captchaToken) {
       const isCaptchaValid = await verifyCaptcha(captchaToken);
       if (!isCaptchaValid) {
-        logAudit({
+        await logAudit({
           userId: null,
           role: 'GUEST',
           action: 'LOGIN_FAILED',
@@ -67,7 +67,7 @@ const loginUser = async (req, res) => {
     const user = await userModel.findOne({ email });
 
     if (!user) {
-      logAudit({
+      await logAudit({
         userId: null,
         role: 'GUEST',
         action: 'LOGIN_FAILED',
@@ -81,17 +81,58 @@ const loginUser = async (req, res) => {
       });
     }
 
+    if (user.accountLockedUntil && user.accountLockedUntil > new Date()) {
+      const lockoutMinutes = Math.ceil((user.accountLockedUntil - new Date()) / (1000 * 60));
+      await logAudit({
+        userId: user._id.toString(),
+        role: normalizeRole(user.role),
+        action: 'LOGIN_BLOCKED',
+        status: 'FAILED_AUTH',
+        clientIp,
+        details: `Account locked due to multiple failed login attempts. Unlocks in ${lockoutMinutes} minutes`
+      });
+      return res.status(403).json({
+        success: false,
+        message: `Account locked due to multiple failed login attempts. Please try again in ${lockoutMinutes} minute${lockoutMinutes === 1 ? '' : 's'}.`
+      });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      logAudit({
+      const MAX_FAILED_ATTEMPTS = 5;
+      const LOCKOUT_DURATION_MS = 30 * 60 * 1000;
+
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+
+      if (user.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
+        user.accountLockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
+        await user.save();
+
+        await logAudit({
+          userId: user._id.toString(),
+          role: normalizeRole(user.role),
+          action: 'ACCOUNT_LOCKED',
+          status: 'FAILED_AUTH',
+          clientIp,
+          details: `Account locked after ${MAX_FAILED_ATTEMPTS} failed login attempts. Unlocks in ${LOCKOUT_DURATION_MS / 1000 / 60} minutes`
+        });
+
+        return res.status(403).json({
+          success: false,
+          message: `Account locked due to multiple failed login attempts. Please try again in ${LOCKOUT_DURATION_MS / 1000 / 60} minutes.`
+        });
+      } else {
+        await user.save();
+      }
+
+      await logAudit({
         userId: user._id.toString(),
         role: normalizeRole(user.role),
         action: 'LOGIN_FAILED',
         status: 'FAILED_AUTH',
         clientIp,
-        details: `Invalid password for userId=${user._id}, email=${email}`
+        details: `Invalid password for userId=${user._id}, email=${email}. Failed attempts: ${user.failedLoginAttempts}/${MAX_FAILED_ATTEMPTS}`
       });
       return res.status(401).json({ 
         success: false, 
@@ -99,10 +140,15 @@ const loginUser = async (req, res) => {
       });
     }
 
+    user.failedLoginAttempts = 0;
+    user.accountLockedUntil = null;
+    user.lastLoginIp = clientIp;
+    user.lastLoginAt = new Date();
+    await user.save();
 
     const token = createToken(user._id, user.role);
 
-    logAudit({
+    await logAudit({
       userId: user._id.toString(),
       role: normalizeRole(user.role),
       action: 'LOGIN_SUCCESS',
@@ -112,15 +158,15 @@ const loginUser = async (req, res) => {
     });
 
     res.json({ 
-  success: true, 
-  token,
-  user: {
-    id: user._id,
-    companyName: user.companyName,
-    email: user.email,
-    role: user.role
-  }
-});
+      success: true, 
+      token,
+      user: {
+        id: user._id,
+        companyName: user.companyName,
+        email: user.email,
+        role: user.role
+      }
+    });
 
   } catch (error) {
 

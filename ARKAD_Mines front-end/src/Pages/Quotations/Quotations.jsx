@@ -1,8 +1,9 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Quotations.css";
 import axios from "axios";
 import { StoreContext } from "../../context/StoreContext";
+import ReCAPTCHA from "react-google-recaptcha";
 import { 
   FiAlertTriangle, 
   FiFileText, 
@@ -12,8 +13,11 @@ import {
   FiXCircle,
   FiEdit,
   FiDownload,
-  FiShoppingCart
+  FiShoppingCart,
+  FiLock
 } from "react-icons/fi";
+
+const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
 const Quotations = () => {
   const { token, url } = useContext(StoreContext);
@@ -28,6 +32,14 @@ const Quotations = () => {
   const [showDecisionModal, setShowDecisionModal] = useState(false);
   const [decisionType, setDecisionType] = useState(null); // "approve", "reject", or "revision"
   const [activeTab, setActiveTab] = useState("pending");
+  const [showReauthModal, setShowReauthModal] = useState(false);
+  const [reauthPassword, setReauthPassword] = useState("");
+  const [pendingApproval, setPendingApproval] = useState(null); // Store approval request data when re-auth needed
+  const [showCaptchaModal, setShowCaptchaModal] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const [captchaPassword, setCaptchaPassword] = useState(""); // Password for CAPTCHA + re-auth flow
+  const [pendingCaptchaApproval, setPendingCaptchaApproval] = useState(null); // Store approval request data when CAPTCHA needed
+  const recaptchaRef = useRef(null);
 
   const headers = useMemo(
     () => ({
@@ -114,7 +126,7 @@ const Quotations = () => {
   };
 
   // --- RENAMED AND UNIFIED FUNCTION ---
-  const handleConvertToSalesOrder = async () => {
+  const handleConvertToSalesOrder = async (passwordForReauth = null) => {
     if (!selectedQuote) return;
 
     // SCENARIO 1: Quote is ALREADY Approved -> Just Redirect
@@ -129,14 +141,28 @@ const Quotations = () => {
     // SCENARIO 2: Quote is ISSUED -> Call Approve API -> Then Redirect
     setActionLoading(true);
     try {
+      const requestBody = { comment: decisionComment };
+      
+      //Include password if re-authentication is being provided
+      if (passwordForReauth) {
+        requestBody.passwordConfirmation = passwordForReauth;
+      }
+
       const response = await axios.put(
         `${url}/api/quotes/${selectedQuote._id}/approve`,
-        { comment: decisionComment },
+        requestBody,
         { headers }
       );
 
       if (response.data.success) {
         const orderNum = response.data.order.orderNumber;
+        
+        
+        if (showReauthModal) {
+          setShowReauthModal(false);
+          setReauthPassword("");
+          setPendingApproval(null);
+        }
         
         fetchQuotes();
         setSelectedQuote(null);
@@ -149,8 +175,198 @@ const Quotations = () => {
       }
     } catch (err) {
       console.error("Error approving quotation:", err);
-      const errorMessage = err.response?.data?.error || err.response?.statusText || err.message;
+      
+      // Check if CAPTCHA is required
+      if (err.response?.data?.requiresCaptcha === true) {
+        // Store the pending approval request
+        setPendingCaptchaApproval({
+          quoteId: selectedQuote._id,
+          comment: decisionComment
+        });
+        // Show CAPTCHA modal
+        setShowCaptchaModal(true);
+        setActionLoading(false);
+        return;
+      }
+      
+      // Check if re-authentication is required
+      if (err.response?.data?.requiresReauth === true) {
+        // Store the pending approval request
+        setPendingApproval({
+          quoteId: selectedQuote._id,
+          comment: decisionComment
+        });
+
+        setShowReauthModal(true);
+        setActionLoading(false);
+        return;
+      }
+      
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.response?.statusText || err.message;
       alert(`Failed to approve: ${errorMessage}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Handle CAPTCHA completion
+  const handleCaptchaChange = (token) => {
+    setCaptchaToken(token);
+  };
+
+  // Handle CAPTCHA expiration
+  const handleCaptchaExpired = () => {
+    setCaptchaToken(null);
+  };
+
+  // Handle CAPTCHA submission
+  const handleCaptchaSubmit = async (e) => {
+    e.preventDefault();
+    if (!captchaToken) {
+      alert("Please complete the CAPTCHA verification.");
+      return;
+    }
+    if (!captchaPassword.trim()) {
+      alert("Please enter your password to confirm this action.");
+      return;
+    }
+
+    // Ensure we have a selected quote (use pendingCaptchaApproval if selectedQuote is null)
+    const quoteToApprove = selectedQuote || (pendingCaptchaApproval ? quotes.find(q => q._id === pendingCaptchaApproval.quoteId) : null);
+    const commentToUse = decisionComment || (pendingCaptchaApproval ? pendingCaptchaApproval.comment : "");
+
+    if (!quoteToApprove) {
+      alert("Error: Quotation not found. Please try again.");
+      setShowCaptchaModal(false);
+      setCaptchaToken(null);
+      setCaptchaPassword("");
+      recaptchaRef.current?.reset();
+      setPendingCaptchaApproval(null);
+      return;
+    }
+
+    setActionLoading(true);
+    
+    try {
+      const requestBody = { 
+        comment: commentToUse,
+        captchaToken: captchaToken,
+        passwordConfirmation: captchaPassword // Include password for re-auth
+      };
+
+      const response = await axios.put(
+        `${url}/api/quotes/${quoteToApprove._id}/approve`,
+        requestBody,
+        { headers }
+      );
+
+      if (response.data.success) {
+        const orderNum = response.data.order.orderNumber;
+        
+        // Close CAPTCHA modal
+        setShowCaptchaModal(false);
+        setCaptchaToken(null);
+        setCaptchaPassword("");
+        recaptchaRef.current?.reset();
+        setPendingCaptchaApproval(null);
+        
+        fetchQuotes();
+        setSelectedQuote(null);
+        closeDecisionModal();
+        
+        // Redirect to Place Order Page
+        navigate(`/place-order/${orderNum}`);
+      } else {
+        alert("Failed to approve quotation: " + (response.data.message || "Unknown error"));
+        recaptchaRef.current?.reset();
+        setCaptchaToken(null);
+      }
+    } catch (err) {
+      console.error("Error approving quotation with CAPTCHA:", err);
+      
+      // If still requires CAPTCHA, reset and show error
+      if (err.response?.data?.requiresCaptcha === true) {
+        alert("CAPTCHA verification failed. Please try again.");
+        recaptchaRef.current?.reset();
+        setCaptchaToken(null);
+      } else {
+        const errorMessage = err.response?.data?.error || err.response?.data?.message || err.response?.statusText || err.message;
+        alert(`Failed to approve: ${errorMessage}`);
+        recaptchaRef.current?.reset();
+        setCaptchaToken(null);
+      }
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReauthSubmit = async (e) => {
+    e.preventDefault();
+    if (!reauthPassword.trim()) {
+      alert("Please enter your password to confirm this action.");
+      return;
+    }
+
+    // Ensure we have a selected quote (use pendingApproval if selectedQuote is null)
+    const quoteToApprove = selectedQuote || (pendingApproval ? quotes.find(q => q._id === pendingApproval.quoteId) : null);
+    const commentToUse = decisionComment || (pendingApproval ? pendingApproval.comment : "");
+
+    if (!quoteToApprove) {
+      alert("Error: Quotation not found. Please try again.");
+      setShowReauthModal(false);
+      setReauthPassword("");
+      setPendingApproval(null);
+      return;
+    }
+
+    setActionLoading(true);
+    
+    try {
+      const requestBody = { 
+        comment: commentToUse,
+        passwordConfirmation: reauthPassword // Explicitly include password
+      };
+
+      console.log("Sending approval request with password:", { 
+        quoteId: quoteToApprove._id, 
+        hasPassword: !!reauthPassword,
+        passwordLength: reauthPassword.length 
+      });
+
+      const response = await axios.put(
+        `${url}/api/quotes/${quoteToApprove._id}/approve`,
+        requestBody,
+        { headers }
+      );
+
+      if (response.data.success) {
+        const orderNum = response.data.order.orderNumber;
+        
+        // Close re-auth modal
+        setShowReauthModal(false);
+        setReauthPassword("");
+        setPendingApproval(null);
+        
+        fetchQuotes();
+        setSelectedQuote(null);
+        closeDecisionModal();
+        
+        // Redirect to Place Order Page
+        navigate(`/place-order/${orderNum}`);
+      } else {
+        alert("Failed to approve quotation: " + (response.data.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Error approving quotation with re-auth:", err);
+      
+      // If still requires re-auth, show error
+      if (err.response?.data?.requiresReauth === true) {
+        alert("Re-authentication failed. Please check your password and try again.");
+        setReauthPassword(""); // Clear password field
+      } else {
+        const errorMessage = err.response?.data?.error || err.response?.data?.message || err.response?.statusText || err.message;
+        alert(`Failed to approve: ${errorMessage}`);
+      }
     } finally {
       setActionLoading(false);
     }
@@ -563,6 +779,174 @@ const Quotations = () => {
                   decisionType === "reject" ? "Reject" :
                   "Request Revision"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CAPTCHA Modal */}
+      {showCaptchaModal && (
+        <div className="modal-overlay" onClick={() => {
+          setShowCaptchaModal(false);
+          setCaptchaToken(null);
+          setCaptchaPassword("");
+          recaptchaRef.current?.reset();
+          setPendingCaptchaApproval(null);
+        }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                CAPTCHA Verification Required
+              </h3>
+              <button onClick={() => {
+                setShowCaptchaModal(false);
+                setCaptchaToken(null);
+                setCaptchaPassword("");
+                recaptchaRef.current?.reset();
+                setPendingCaptchaApproval(null);
+              }}>
+                <FiX />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
+                <FiAlertTriangle style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                For security purposes, please complete the CAPTCHA verification and enter your password to approve this quotation.
+              </p>
+              <form onSubmit={handleCaptchaSubmit}>
+                <div className="form-group" style={{ marginBottom: '20px' }}>
+                  <label style={{ marginBottom: '10px', display: 'block' }}>CAPTCHA Verification:</label>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                    <ReCAPTCHA
+                      ref={recaptchaRef}
+                      sitekey={RECAPTCHA_SITE_KEY}
+                      onChange={handleCaptchaChange}
+                      onExpired={handleCaptchaExpired}
+                      theme="light"
+                    />
+                  </div>
+                </div>
+                <div className="form-group" style={{ marginBottom: '20px' }}>
+                  <label htmlFor="captcha-password">Enter Your Password:</label>
+                  <input
+                    id="captcha-password"
+                    type="password"
+                    value={captchaPassword}
+                    onChange={(e) => setCaptchaPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    autoFocus
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      marginTop: '8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button 
+                    type="button"
+                    className="btn-secondary" 
+                    onClick={() => {
+                      setShowCaptchaModal(false);
+                      setCaptchaToken(null);
+                      setCaptchaPassword("");
+                      recaptchaRef.current?.reset();
+                      setPendingCaptchaApproval(null);
+                    }}
+                    disabled={actionLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={actionLoading || !captchaToken || !captchaPassword.trim()}
+                    style={{ backgroundColor: '#2d8659' }}
+                  >
+                    {actionLoading ? "Verifying..." : "Confirm & Approve"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Re-authentication Modal */}
+      {showReauthModal && (
+        <div className="modal-overlay" onClick={() => {
+          setShowReauthModal(false);
+          setReauthPassword("");
+          setPendingApproval(null);
+        }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                Re-authentication Required
+              </h3>
+              <button onClick={() => {
+                setShowReauthModal(false);
+                setReauthPassword("");
+                setPendingApproval(null);
+              }}>
+                <FiX />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
+                <FiAlertTriangle style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                For security purposes, please confirm your password to approve this quotation.
+              </p>
+              <form onSubmit={handleReauthSubmit}>
+                <div className="form-group">
+                  <label htmlFor="reauth-password">Enter Your Password:</label>
+                  <input
+                    id="reauth-password"
+                    type="password"
+                    value={reauthPassword}
+                    onChange={(e) => setReauthPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    autoFocus
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      marginTop: '8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button 
+                    type="button"
+                    className="btn-secondary" 
+                    onClick={() => {
+                      setShowReauthModal(false);
+                      setReauthPassword("");
+                      setPendingApproval(null);
+                    }}
+                    disabled={actionLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={actionLoading || !reauthPassword.trim()}
+                    style={{ backgroundColor: '#2d8659' }}
+                  >
+                    {actionLoading ? "Verifying..." : "Confirm & Approve"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

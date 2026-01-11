@@ -4,6 +4,7 @@ dotenv.config({ path: "./config.env" });
 import express from "express";
 import cors from "cors";
 import { connectDB } from "../config/db.js";
+import { securityHeaders, enforceHTTPS } from "../Middlewares/securityHeaders.js";
 import userRouter from "../Routes/UserRoutes/userRouter.js";
 import adminRouter from "../Routes/AdminRoutes/adminRouter.js";
 import stonesRouter from "../Routes/StonesRoutes/StonesRoutes.js";
@@ -30,6 +31,14 @@ const localOrigins = [
 const allowedOrigins = [...configuredOrigins, ...localOrigins];
 
 // --- 2. MIDDLEWARES ---
+// Security headers must be applied early, before other middleware
+// Apply security headers to all routes (HTTPS enforcement, HSTS, CSP, etc.)
+app.use(securityHeaders);
+
+// Enforce HTTPS in production (can be disabled for local development)
+// Uncomment the line below for production deployment to redirect HTTP to HTTPS
+// app.use(enforceHTTPS);
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 

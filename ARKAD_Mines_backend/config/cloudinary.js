@@ -126,5 +126,44 @@ const getPublicIdFromUrl = (url) => {
     return matches ? matches[1] : null;
 };
 
+/**
+ * Generate a signed, expiring URL for a Cloudinary resource
+ * @param {string} url - The Cloudinary URL or public ID
+ * @param {number} expiresInSeconds - Time until expiration in seconds (default: 3600 = 1 hour)
+ * @returns {string} Signed URL that expires after the specified time
+ */
+const generateSignedUrl = (url, expiresInSeconds = 3600) => {
+    if (!url) return null;
+    
+    configureCloudinary();
+    
+    try {
+        // Extract public ID from URL if a full URL is provided
+        let publicId = url;
+        if (url.includes('cloudinary.com')) {
+            publicId = getPublicIdFromUrl(url);
+            if (!publicId) {
+                console.error('Failed to extract public ID from URL:', url);
+                return url; // Return original URL if extraction fails
+            }
+        }
+        
+        // Calculate expiration timestamp (current time + expiresInSeconds)
+        const expiresAt = Math.floor(Date.now() / 1000) + expiresInSeconds;
+        
+        // Generate signed URL with expiration
+        const signedUrl = cloudinary.url(publicId, {
+            sign_url: true,
+            expires_at: expiresAt,
+            secure: true
+        });
+        
+        return signedUrl;
+    } catch (error) {
+        console.error('Error generating signed URL:', error);
+        return url; // Return original URL if signing fails
+    }
+};
+
 // Export configureCloudinary so it can be called explicitly when needed
-export { cloudinary, cloudinaryPackage, upload, qrUpload, uploadBuffer, deleteImage, getPublicIdFromUrl, configureCloudinary };
+export { cloudinary, cloudinaryPackage, upload, qrUpload, uploadBuffer, deleteImage, getPublicIdFromUrl, configureCloudinary, generateSignedUrl };
