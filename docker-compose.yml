@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  #MongoDB Database Service
+  mongo:
+    image: mongo:latest
+    container_name: arkad_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db 
+
+  #Backend API Service
+  backend:
+    build: "./ARKAD_Mines_backend"
+    container_name: arkad_backend
+    ports:
+      - "4000:4000"
+    volumes:
+      - "./ARKAD_Mines_backend:/app" 
+      - /app/node_modules
+    environment:
+      - PORT=4000
+      
+      - MONGO_URI=mongodb://mongo:27017/arkad_db 
+      - JWT_SECRET=your_secret_here
+    depends_on:
+      - mongo
+
+  #User Frontend Service
+  frontend:
+    build: "./ARKAD_Mines front-end" 
+    container_name: arkad_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - "./ARKAD_Mines front-end:/app"
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:4000
+
+  #Admin Frontend Service
+  admin:
+    build: "./ARKAD_Mines admin"
+    container_name: arkad_admin
+    ports:
+      - "5174:5173"
+    volumes:
+      - "./ARKAD_Mines admin:/app"
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:4000
+
+volumes:
+  mongo-data:

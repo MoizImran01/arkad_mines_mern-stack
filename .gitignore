@@ -27,3 +27,4 @@ npm-debug.log*
 *.local
 
 ARKAD_Mines_backend/logs/
+ARKAD_Mines_backend/uploads/
