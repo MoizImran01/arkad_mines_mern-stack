@@ -1,15 +1,18 @@
 
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState, useRef } from "react";
 import "./Orders.css";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { StoreContext } from "../../context/StoreContext";
 import { useNavigate } from "react-router-dom";
+import ReCAPTCHA from "react-google-recaptcha";
 import { 
   FiLoader, FiExternalLink, FiCreditCard, FiPackage, 
   FiMapPin, FiCalendar, FiTruck, FiX, FiCheck, FiShoppingCart, FiCheckCircle, FiDownload,
   FiUser, FiMail, FiPhone, FiGlobe, FiBriefcase, FiLock, FiAlertTriangle
 } from "react-icons/fi";
+
+const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
 const Orders = () => {
   const { token, url, replaceQuoteItems, setActiveQuoteId } = useContext(StoreContext);
@@ -36,6 +39,12 @@ const Orders = () => {
   const [showMfaModal, setShowMfaModal] = useState(false);
   const [mfaPassword, setMfaPassword] = useState("");
   const [pendingPayment, setPendingPayment] = useState(null);
+  
+  // CAPTCHA Modal State
+  const [showCaptchaModal, setShowCaptchaModal] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const [captchaPassword, setCaptchaPassword] = useState("");
+  const recaptchaRef = useRef(null);
   
   const navigate = useNavigate();
 
@@ -268,13 +277,65 @@ const Orders = () => {
       console.log("Error response data:", error.response?.data);
       console.log("Error status:", error.response?.status);
       
-      // Check if MFA is required (401 status or requiresMFA flag)
-      if (error.response?.status === 401 && error.response?.data?.requiresMFA === true) {
-        console.log("MFA required - showing modal");
+      // Check if CAPTCHA is required - check both flag and message
+      const requiresCaptcha = error.response?.data?.requiresCaptcha === true || 
+                              (error.response?.data?.message && error.response.data.message.toLowerCase().includes('captcha'));
+      
+      if (requiresCaptcha) {
+        console.log("CAPTCHA required - showing modal", { 
+          requiresCaptchaFlag: error.response?.data?.requiresCaptcha,
+          message: error.response?.data?.message 
+        });
         
         // Use already-compressed base64 if available, otherwise compress again
         let base64ToUse = compressedBase64;
-        if (!base64ToUse) {
+        if (!base64ToUse && paymentForm.proofFile) {
+          try {
+            base64ToUse = await compressImage(paymentForm.proofFile);
+          } catch (compressionError) {
+            console.error('Error compressing image for CAPTCHA:', compressionError);
+            toast.error('Failed to process image. Please try again.');
+            setPaymentSubmitting(false);
+            return;
+          }
+        }
+        
+        const pendingData = {
+          orderId: trackingOrderDetails._id,
+          amountPaid: parseFloat(amount.toFixed(2)),
+          address: trackingOrderDetails.deliveryAddress || {},
+          proofBase64: base64ToUse,
+          proofFileName: paymentForm.proofFile?.name
+        };
+        
+        console.log("Setting pending payment data:", pendingData);
+        setPendingPayment(pendingData);
+        
+        console.log("Setting showCaptchaModal to true");
+        setShowCaptchaModal(true);
+        setPaymentSubmitting(false);
+        return;
+      }
+      
+      // Check if MFA is required - check both flag and message
+      const requiresMFA = error.response?.data?.requiresMFA === true || 
+                         error.response?.data?.requiresReauth === true ||
+                         (error.response?.data?.message && (
+                           error.response.data.message.toLowerCase().includes('re-authentication') ||
+                           error.response.data.message.toLowerCase().includes('password') ||
+                           error.response.data.message.toLowerCase().includes('confirm this action')
+                         ));
+      
+      if (requiresMFA) {
+        console.log("MFA required - showing modal", { 
+          requiresMFAFlag: error.response?.data?.requiresMFA,
+          requiresReauthFlag: error.response?.data?.requiresReauth,
+          message: error.response?.data?.message 
+        });
+        
+        // Use already-compressed base64 if available, otherwise compress again
+        let base64ToUse = compressedBase64;
+        if (!base64ToUse && paymentForm.proofFile) {
           try {
             base64ToUse = await compressImage(paymentForm.proofFile);
           } catch (compressionError) {
@@ -285,13 +346,16 @@ const Orders = () => {
           }
         }
         
-        setPendingPayment({
+        const pendingData = {
           orderId: trackingOrderDetails._id,
           amountPaid: parseFloat(amount.toFixed(2)),
           address: trackingOrderDetails.deliveryAddress || {},
           proofBase64: base64ToUse,
-          proofFileName: paymentForm.proofFile.name
-        });
+          proofFileName: paymentForm.proofFile?.name
+        };
+        
+        console.log("Setting pending payment data:", pendingData);
+        setPendingPayment(pendingData);
         
         console.log("Setting showMfaModal to true");
         setShowMfaModal(true);
@@ -299,7 +363,96 @@ const Orders = () => {
         return;
       }
       
-      toast.error(error.response?.data?.message || "Error submitting payment proof");
+      // Only show toast if neither CAPTCHA nor MFA is required
+      if (!requiresCaptcha && !requiresMFA) {
+        toast.error(error.response?.data?.message || "Error submitting payment proof");
+      }
+      setPaymentSubmitting(false);
+    }
+  };
+
+  const handleCaptchaChange = (token) => {
+    setCaptchaToken(token);
+  };
+
+  const handleCaptchaExpired = () => {
+    setCaptchaToken(null);
+  };
+
+  const handleCaptchaSubmit = async (e) => {
+    e.preventDefault();
+    if (!captchaToken) {
+      toast.error("Please complete the CAPTCHA verification.");
+      return;
+    }
+    if (!captchaPassword.trim()) {
+      toast.error("Please enter your password to confirm this payment submission.");
+      return;
+    }
+
+    if (!pendingPayment) {
+      toast.error("Error: Payment data not found. Please try again.");
+      setShowCaptchaModal(false);
+      setCaptchaToken(null);
+      setCaptchaPassword("");
+      recaptchaRef.current?.reset();
+      setPendingPayment(null);
+      return;
+    }
+
+    setPaymentSubmitting(true);
+
+    try {
+      const payload = {
+        ...pendingPayment,
+        captchaToken: captchaToken,
+        passwordConfirmation: captchaPassword
+      };
+
+      const response = await axios.post(
+        `${url}/api/orders/payment/submit/${pendingPayment.orderId}`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        toast.success("Payment proof submitted successfully! Awaiting admin verification.");
+        setPaymentForm({ amount: "", proofFile: null });
+        setShowCaptchaModal(false);
+        setCaptchaToken(null);
+        setCaptchaPassword("");
+        recaptchaRef.current?.reset();
+        setPendingPayment(null);
+        
+        const updatedOrder = await axios.get(
+          `${url}/api/orders/details/${pendingPayment.orderId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (updatedOrder.data.success) {
+          setTrackingOrderDetails(updatedOrder.data.order);
+        }
+        fetchOrders();
+      } else {
+        toast.error(response.data.message || "Failed to submit payment proof");
+        recaptchaRef.current?.reset();
+        setCaptchaToken(null);
+      }
+    } catch (error) {
+      console.error("Error submitting payment with CAPTCHA:", error);
+      
+      if (error.response?.data?.requiresCaptcha === true) {
+        toast.error("CAPTCHA verification failed. Please try again.");
+        recaptchaRef.current?.reset();
+        setCaptchaToken(null);
+      } else if (error.response?.data?.requiresMFA === true || error.response?.status === 401) {
+        toast.error("Invalid password. Please check your password and try again.");
+        setCaptchaPassword("");
+      } else {
+        toast.error(error.response?.data?.message || "Error submitting payment proof");
+        recaptchaRef.current?.reset();
+        setCaptchaToken(null);
+      }
+    } finally {
       setPaymentSubmitting(false);
     }
   };
@@ -823,6 +976,99 @@ const Orders = () => {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CAPTCHA Modal */}
+      {showCaptchaModal && (
+        <div className="modal-overlay" onClick={() => {
+          setShowCaptchaModal(false);
+          setCaptchaToken(null);
+          setCaptchaPassword("");
+          recaptchaRef.current?.reset();
+          setPendingPayment(null);
+        }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                CAPTCHA Verification Required
+              </h3>
+              <button onClick={() => {
+                setShowCaptchaModal(false);
+                setCaptchaToken(null);
+                setCaptchaPassword("");
+                recaptchaRef.current?.reset();
+                setPendingPayment(null);
+              }}>
+                <FiX />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
+                <FiAlertTriangle style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                For security purposes, please complete the CAPTCHA verification and enter your password to submit this payment.
+              </p>
+              <form onSubmit={handleCaptchaSubmit}>
+                <div className="form-group" style={{ marginBottom: '20px' }}>
+                  <label style={{ marginBottom: '10px', display: 'block' }}>CAPTCHA Verification:</label>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                    <ReCAPTCHA
+                      ref={recaptchaRef}
+                      sitekey={RECAPTCHA_SITE_KEY}
+                      onChange={handleCaptchaChange}
+                      onExpired={handleCaptchaExpired}
+                      theme="light"
+                    />
+                  </div>
+                </div>
+                <div className="form-group" style={{ marginBottom: '20px' }}>
+                  <label htmlFor="captcha-password">Enter Your Password:</label>
+                  <input
+                    id="captcha-password"
+                    type="password"
+                    value={captchaPassword}
+                    onChange={(e) => setCaptchaPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    autoFocus
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      marginTop: '8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button 
+                    type="button"
+                    className="btn-secondary" 
+                    onClick={() => {
+                      setShowCaptchaModal(false);
+                      setCaptchaToken(null);
+                      setCaptchaPassword("");
+                      recaptchaRef.current?.reset();
+                      setPendingPayment(null);
+                    }}
+                    disabled={paymentSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={paymentSubmitting || !captchaToken || !captchaPassword.trim()}
+                    style={{ backgroundColor: '#2d8659' }}
+                  >
+                    {paymentSubmitting ? "Submitting..." : "Confirm & Submit Payment"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

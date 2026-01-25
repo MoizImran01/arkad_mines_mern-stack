@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { AdminAuthContext } from '../../context/AdminAuthContext';
+import { FiLock, FiX, FiAlertTriangle } from 'react-icons/fi';
 import './Analytics.css';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -439,6 +440,8 @@ const Analytics = () => {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [exportModal, setExportModal] = useState({ show: false, type: null });
+  const [showMFAModal, setShowMFAModal] = useState(false);
+  const [mfaPassword, setMfaPassword] = useState("");
   const { token } = useContext(AdminAuthContext);
   const navigate = useNavigate();
 
@@ -472,25 +475,102 @@ const Analytics = () => {
     fetchAnalytics();
   }, [token]);
 
-  const fetchAnalytics = async () => {
+  useEffect(() => {
+    if (showMFAModal) {
+      console.log("MFA Modal is now visible:", showMFAModal);
+    }
+  }, [showMFAModal]);
+
+  const fetchAnalytics = async (passwordConfirmation = null) => {
     try {
       setLoading(true);
+      const params = {};
+      if (passwordConfirmation && typeof passwordConfirmation === 'string') {
+        params.passwordConfirmation = passwordConfirmation;
+      }
       const response = await axios.get(`${API_URL}/api/analytics`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        params
       });
       
       if (response.data.success) {
         setAnalytics(response.data.data);
+        if (showMFAModal) {
+          setShowMFAModal(false);
+          setMfaPassword("");
+        }
         console.log(response.data.data);
       } else {
         toast.error('Failed to fetch analytics');
       }
     } catch (error) {
       console.error('Error fetching analytics:', error);
-      toast.error(error.response?.data?.message || 'Error fetching analytics');
+      console.log("Error response data:", error.response?.data);
+      console.log("Error status:", error.response?.status);
+      
+      if (error.response?.status === 429) {
+        toast.error('Rate limit exceeded. Please wait 1 hour or restart the server to test MFA.');
+        setLoading(false);
+        return;
+      }
+      
+      const responseData = error.response?.data || {};
+      const requiresMFA = responseData.requiresMFA === true || 
+                         responseData.requiresReauth === true ||
+                         (responseData.message && (
+                           responseData.message.toLowerCase().includes('re-authentication') ||
+                           responseData.message.toLowerCase().includes('password') ||
+                           responseData.message.toLowerCase().includes('confirm this action')
+                         ));
+      
+      console.log("Error check:", {
+        status: error.response?.status,
+        requiresMFAFlag: responseData.requiresMFA,
+        requiresReauthFlag: responseData.requiresReauth,
+        message: responseData.message,
+        hasPassword: !!passwordConfirmation,
+        passwordConfirmation: passwordConfirmation,
+        requiresMFA: requiresMFA,
+        fullResponse: responseData
+      });
+      
+      const hasPasswordProvided = passwordConfirmation && typeof passwordConfirmation === 'string' && passwordConfirmation.trim().length > 0;
+      
+      if (requiresMFA && !hasPasswordProvided) {
+        console.log("MFA required - showing modal, hasPasswordProvided:", hasPasswordProvided);
+        setShowMFAModal(true);
+        setLoading(false);
+        return;
+      } else if (requiresMFA && hasPasswordProvided) {
+        toast.error("Invalid password. Re-authentication failed.");
+        setMfaPassword("");
+        setLoading(false);
+        return;
+      }
+      
+      if (error.response?.status === 401 && !hasPasswordProvided) {
+        console.log("401 without explicit MFA flag - showing modal anyway");
+        setShowMFAModal(true);
+        setLoading(false);
+        return;
+      }
+      
+      if (!requiresMFA && error.response?.status !== 401) {
+        toast.error(responseData.message || 'Error fetching analytics');
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMFASubmit = async (e) => {
+    e.preventDefault();
+    if (!mfaPassword.trim()) {
+      toast.error("Please enter your password to confirm this action.");
+      return;
+    }
+    setLoading(true);
+    await fetchAnalytics(mfaPassword);
   };
 
   // Generate CSV data
@@ -566,8 +646,15 @@ const Analytics = () => {
   };
 
 
-  // Export as PDF
-  const exportPDF = () => {
+  const exportPDF = async () => {
+    try {
+      await axios.post(`${API_URL}/api/analytics/export/pdf`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (error) {
+      console.error("Error logging PDF export:", error);
+    }
+    
     const printWindow = window.open('', '_blank');
     
     printWindow.document.write(`
@@ -725,31 +812,110 @@ const Analytics = () => {
     return csvData.split('\n').slice(0, 35).join('\n') + '\n... (more data below)';
   };
 
-  if (loading) {
+  if (loading && !showMFAModal) {
     return (
-      <div className="analytics-container">
-        <div className="analytics-loading">
-          <div className="loading-spinner"></div>
-          <p>Loading analytics data...</p>
+      <>
+        {showMFAModal && (
+          <div className="modal-overlay" style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => {
+            setShowMFAModal(false);
+            setMfaPassword("");
+          }}>
+            <div className="modal-content" style={{ zIndex: 10001, position: 'relative', backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '500px', width: '90%', maxHeight: '90vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>
+                  <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                  Multi-Factor Authentication Required
+                </h3>
+                <button onClick={() => {
+                  setShowMFAModal(false);
+                  setMfaPassword("");
+                }}>
+                  <FiX />
+                </button>
+              </div>
+              <div className="modal-body">
+                <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
+                  <FiAlertTriangle style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                  For security purposes, please confirm your password to access analytics.
+                </p>
+                <form onSubmit={handleMFASubmit}>
+                  <div className="form-group">
+                    <label htmlFor="mfa-password">Enter Your Password:</label>
+                    <input
+                      id="mfa-password"
+                      type="password"
+                      value={mfaPassword}
+                      onChange={(e) => setMfaPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      autoFocus
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        marginTop: '8px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '14px'
+                      }}
+                    />
+                  </div>
+                  <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                    <button 
+                      type="button"
+                      className="btn-secondary" 
+                      onClick={() => {
+                        setShowMFAModal(false);
+                        setMfaPassword("");
+                      }}
+                      disabled={loading}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn-primary"
+                      disabled={loading || !mfaPassword.trim()}
+                      style={{ backgroundColor: '#2d8659' }}
+                    >
+                      {loading ? "Verifying..." : "Confirm & Access Analytics"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="analytics-container">
+          <div className="analytics-loading">
+            <div className="loading-spinner"></div>
+            <p>Loading analytics data...</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
-  if (!analytics) {
+  if (!analytics && !showMFAModal) {
     return (
       <div className="analytics-container">
         <div className="analytics-error">
           <p>Failed to load analytics data</p>
-          <button onClick={fetchAnalytics} className="retry-btn">Retry</button>
+          <button onClick={() => fetchAnalytics()} className="retry-btn">Retry</button>
         </div>
       </div>
     );
   }
 
-  const { summary, topClients, mostSoldStones, monthlySales, orderStatusDistribution, 
-          quotationStatusDistribution, categorySales, paymentStatusOverview, 
-          weeklySalesPattern, stockStatus } = analytics;
+  const summary = analytics?.summary || {};
+  const topClients = analytics?.topClients || [];
+  const mostSoldStones = analytics?.mostSoldStones || [];
+  const monthlySales = analytics?.monthlySales || [];
+  const orderStatusDistribution = analytics?.orderStatusDistribution || [];
+  const quotationStatusDistribution = analytics?.quotationStatusDistribution || [];
+  const categorySales = analytics?.categorySales || [];
+  const paymentStatusOverview = analytics?.paymentStatusOverview || [];
+  const weeklySalesPattern = analytics?.weeklySalesPattern || [];
+  const stockStatus = analytics?.stockStatus || [];
 
   // Transform data for charts
   const orderStatusData = orderStatusDistribution?.map(item => ({
@@ -792,6 +958,80 @@ const Analytics = () => {
   };
 
   return (
+    <>
+      {/* MFA Modal - Render first so it appears on top */}
+      {showMFAModal && (
+        <div className="modal-overlay" style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => {
+          setShowMFAModal(false);
+          setMfaPassword("");
+        }}>
+          <div className="modal-content" style={{ zIndex: 10001, position: 'relative', backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '500px', width: '90%', maxHeight: '90vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                Multi-Factor Authentication Required
+              </h3>
+              <button onClick={() => {
+                setShowMFAModal(false);
+                setMfaPassword("");
+              }}>
+                <FiX />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
+                <FiAlertTriangle style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                For security purposes, please confirm your password to access analytics.
+              </p>
+              <form onSubmit={handleMFASubmit}>
+                <div className="form-group">
+                  <label htmlFor="mfa-password">Enter Your Password:</label>
+                  <input
+                    id="mfa-password"
+                    type="password"
+                    value={mfaPassword}
+                    onChange={(e) => setMfaPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    autoFocus
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      marginTop: '8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button 
+                    type="button"
+                    className="btn-secondary" 
+                    onClick={() => {
+                      setShowMFAModal(false);
+                      setMfaPassword("");
+                    }}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={loading || !mfaPassword.trim()}
+                    style={{ backgroundColor: '#2d8659' }}
+                  >
+                    {loading ? "Verifying..." : "Confirm & Access Analytics"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {analytics && !showMFAModal && (
     <div className="analytics-container">
       <div className="analytics-header">
         <h1>Business Analytics</h1>
@@ -1089,7 +1329,10 @@ const Analytics = () => {
           </div>
         </div>
       )}
+
     </div>
+      )}
+    </>
   );
 };
 

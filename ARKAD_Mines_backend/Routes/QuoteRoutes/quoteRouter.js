@@ -1,5 +1,4 @@
 import express from "express";
-import rateLimit from "express-rate-limit"; 
 import {
   createOrUpdateQuotation,
   getMyQuotations,
@@ -12,86 +11,130 @@ import {
   convertToSalesOrder
 } from "../../Controllers/QuotationController/quotationController.js";
 import { verifyToken, authorizeRoles } from "../../Middlewares/auth.js";
-import { requireReauth } from "../../Middlewares/reauth.js";
-import { detectAnomalies } from "../../Middlewares/anomalyDetection.js";
-import { validateQuotationOwnership, validateQuotationStatus } from "../../Middlewares/ownershipValidation.js";
-import { sanitizeQuotationResponse } from "../../Middlewares/responseSanitization.js";
+import { createRateLimiter } from "../../Middlewares/genericRateLimiting.js";
+import { createReauthMiddleware } from "../../Middlewares/genericReauth.js";
+import { createCaptchaChallenge } from "../../Middlewares/genericCaptchaChallenge.js";
+import { createRequestQueue } from "../../Middlewares/genericRequestQueue.js";
+import { createOwnershipValidator } from "../../Middlewares/genericOwnershipValidation.js";
+import { validateQuotationStatus } from "../../Middlewares/quotationStatusValidation.js";
 import { wafProtection } from "../../Middlewares/waf.js";
-import { approvalPerUserLimiter, approvalPerIPLimiter } from "../../Middlewares/rateLimiting.js";
-import { requireCaptchaChallenge } from "../../Middlewares/captchaChallenge.js";
-import { requestThrottling } from "../../Middlewares/requestThrottling.js";
-import { requirePermission, verifyStrictOwnership } from "../../Middlewares/rbac.js";
+import { detectAnomalies } from "../../Middlewares/anomalyDetection.js";
+import { requirePermission } from "../../Middlewares/rbac.js";
+import quotationModel from "../../Models/quotationModel/quotationModel.js";
 
 const quoteRouter = express.Router();
 
-
-// 1. Limiter for Creating/Updating Quotations
-const createQuoteLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, 
-  max: 10, 
-  message: { error: "Too many quote requests created, please try again later." }
+const createQuoteRateLimiter = createRateLimiter({
+  endpoint: '/api/quotes',
+  windowMs: 60 * 60 * 1000,
+  maxRequests: 10,
+  actionName: 'CREATE_QUOTATION',
+  actionType: 'QUOTATION_RATE_LIMIT_EXCEEDED'
 });
 
-// 2. Limiter for PDF Downloads
-
-const pdfDownloadLimiter = rateLimit({
+const pdfDownloadRateLimiter = createRateLimiter({
+  endpoint: '/api/quotes/:quoteId/download',
   windowMs: 15 * 60 * 1000,
-  max: 5, 
-  message: { error: "Download limit exceeded. Please wait before downloading again." }
+  maxRequests: 5,
+  actionName: 'PDF_DOWNLOAD',
+  actionType: 'PDF_DOWNLOAD_RATE_LIMIT_EXCEEDED'
 });
 
-// 3. Limiter for accepting/rejecting/requesting revision/converting quotations
+const actionRateLimiter = createRateLimiter({
+  endpoint: '/api/quotes/:quoteId/action',
+  windowMs: 1 * 60 * 1000,
+  maxRequests: 10,
+  actionName: 'QUOTATION_ACTION',
+  actionType: 'QUOTATION_ACTION_RATE_LIMIT_EXCEEDED'
+});
 
-const actionLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, 
-  max: 10, 
-  message: { error: "Too many actions. Please slow down." }
+const approvalRateLimiter = createRateLimiter({
+  endpoint: '/api/quotes/:quoteId/approve',
+  windowMs: 60 * 60 * 1000,
+  maxRequests: 5,
+  actionName: 'APPROVE_QUOTATION',
+  actionType: 'APPROVE_QUOTATION_RATE_LIMIT_EXCEEDED',
+  enableCaptcha: true,
+  captchaThreshold: 3
+});
+
+const requireQuotationReauth = createReauthMiddleware({
+  actionName: 'APPROVE_QUOTATION_REAUTH',
+  actionType: 'REAUTH_REQUIRED',
+  passwordField: 'passwordConfirmation',
+  responseFlag: 'requiresReauth',
+  getResourceId: (req) => req.params.quoteId,
+  getAdditionalContext: (req) => ({
+    quotationRequestId: req.validatedQuotation?.quotationRequestId || null,
+    quotationId: req.validatedQuotation?.referenceNumber || null
+  })
+});
+
+const requireQuotationCaptcha = createCaptchaChallenge({
+  endpoint: '/api/quotes',
+  windowMs: 60 * 60 * 1000,
+  requestThreshold: 3,
+  actionName: 'CAPTCHA_REQUIRED'
+});
+
+const quotationThrottling = createRequestQueue({
+  endpoint: '/api/quotes/:quoteId/approve',
+  maxConcurrent: 5,
+  timeoutMs: 60000,
+  actionName: 'QUOTATION_THROTTLING',
+  shouldApply: (req) => req.path.includes('/approve'),
+  getResourceId: (req) => req.params.quoteId
+});
+
+const validateQuotationOwnership = createOwnershipValidator({
+  model: quotationModel,
+  ownerField: 'buyer',
+  paramName: 'quoteId',
+  actionName: 'VALIDATE_QUOTATION_OWNERSHIP',
+  selectFields: '_id buyer status referenceNumber validity orderNumber buyerDecision quotationRequestId',
+  getAdditionalContext: (req) => ({
+    quotationRequestId: req.validatedQuotation?.quotationRequestId || null,
+    quotationId: req.validatedQuotation?.referenceNumber || null
+  }),
+  onSuccess: (resource, req) => {
+    if (!req.validatedQuotation) {
+      req.validatedQuotation = {};
+    }
+    req.validatedQuotation.id = resource._id;
+    req.validatedQuotation.buyerId = resource.buyer;
+    req.validatedQuotation.status = resource.status;
+    req.validatedQuotation.referenceNumber = resource.referenceNumber;
+    req.validatedQuotation.validity = resource.validity;
+    req.validatedQuotation.orderNumber = resource.orderNumber;
+    req.validatedQuotation.buyerDecision = resource.buyerDecision;
+    req.validatedQuotation.quotationRequestId = resource.quotationRequestId || null;
+  }
 });
 
 
-//filters sensitive data based on user role
-quoteRouter.use(sanitizeQuotationResponse);
-
-quoteRouter.post("/", verifyToken, createQuoteLimiter, createOrUpdateQuotation);
+quoteRouter.post("/", verifyToken, createQuoteRateLimiter.userLimiter, createQuoteRateLimiter.ipLimiter, createOrUpdateQuotation);
 quoteRouter.get("/my", verifyToken, getMyQuotations);
 quoteRouter.get("/admin", verifyToken, authorizeRoles("admin"), getAllQuotations);
 quoteRouter.put("/:quoteId/issue", verifyToken, authorizeRoles("admin"), issueQuotation);
-quoteRouter.get("/:quoteId/download", verifyToken, pdfDownloadLimiter, downloadQuotation);
-
-
-// Approve quotation route with comprehensive Elevation of Privilege mitigations:
-// 1. verifyToken - ensures user is authenticated
-// 2. requirePermission('canApproveQuotation') - RBAC check (only BUYER role can approve)
-// 3. wafProtection - Web Application Firewall filters malicious traffic
-// 4. requestThrottling - Queue management and throttling
-// 5. approvalPerUserLimiter - Per-user rate limiting (5/hour)
-// 6. approvalPerIPLimiter - Per-IP rate limiting (10/hour)
-// 7. requireCaptchaChallenge - CAPTCHA after 3 requests
-// 8. actionLimiter - General rate limiting (backup)
-// 9. detectAnomalies - Monitors IP/device changes
-// 10. verifyStrictOwnership - STRICT ownership verification (req.user.id === quotation.buyer._id)
-// 11. validateQuotationOwnership - Additional ownership validation (defense in depth)
-// 12. validateQuotationStatus - Validates status is "issued" and not expired
-// 13. requireReauth - Requires password confirmation for high-impact action
-// 14. approveQuotation - Final defense-in-depth ownership check in controller
+quoteRouter.get("/:quoteId/download", verifyToken, pdfDownloadRateLimiter.userLimiter, pdfDownloadRateLimiter.ipLimiter, downloadQuotation);
 quoteRouter.put("/:quoteId/approve", 
-  verifyToken,                          // Authentication
-  requirePermission('canApproveQuotation'), // RBAC: Only BUYER role can approve
-  wafProtection,                        // Filter malicious traffic
-  requestThrottling,                    // Request throttling
-  approvalPerUserLimiter,               // Per-user rate limit (5/hour)
-  approvalPerIPLimiter,                 // Per-IP rate limit (10/hour)
-  requireCaptchaChallenge,              // CAPTCHA after 3 requests
-  actionLimiter,                        // General rate limiting (backup)
-  detectAnomalies,                      // Anomaly detection
-  verifyStrictOwnership,                // STRICT ownership verification (req.user.id === quotation.buyer._id)
-  validateQuotationOwnership,           // Additional ownership validation (defense in depth)
-  validateQuotationStatus,              // Status validation
-  requireReauth,                        // Re-authentication
-  approveQuotation                      // Final ownership check in controller
+  verifyToken,
+  requirePermission('canApproveQuotation'),
+  wafProtection,
+  quotationThrottling,
+  requireQuotationCaptcha,
+  approvalRateLimiter.userLimiter,
+  approvalRateLimiter.ipLimiter,
+  actionRateLimiter.userLimiter,
+  actionRateLimiter.ipLimiter,
+  detectAnomalies,
+  validateQuotationOwnership,
+  validateQuotationStatus,
+  requireQuotationReauth,
+  approveQuotation
 );
-quoteRouter.put("/:quoteId/reject", verifyToken, actionLimiter, rejectQuotation);
-quoteRouter.put("/:quoteId/request-revision", verifyToken, actionLimiter, requestRevision);
-quoteRouter.post("/:quoteId/convert-to-order", verifyToken, actionLimiter, convertToSalesOrder);
+quoteRouter.put("/:quoteId/reject", verifyToken, actionRateLimiter.userLimiter, actionRateLimiter.ipLimiter, rejectQuotation);
+quoteRouter.put("/:quoteId/request-revision", verifyToken, actionRateLimiter.userLimiter, actionRateLimiter.ipLimiter, requestRevision);
+quoteRouter.post("/:quoteId/convert-to-order", verifyToken, actionRateLimiter.userLimiter, actionRateLimiter.ipLimiter, convertToSalesOrder);
 
 export default quoteRouter;

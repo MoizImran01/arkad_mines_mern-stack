@@ -11,18 +11,50 @@ import {
   updatePaymentStatus
 } from '../../Controllers/OrderController/OrderController.js';
 import { verifyToken, authorizeRoles } from '../../Middlewares/auth.js';
-import { requireMFAForPayment } from '../../Middlewares/paymentMFA.js';
-import { detectPaymentAnomalies } from '../../Middlewares/paymentAnomalyDetection.js';
-import { enforceHTTPS } from '../../Middlewares/securityHeaders.js';
+import { createRateLimiter } from '../../Middlewares/genericRateLimiting.js';
+import { createReauthMiddleware } from '../../Middlewares/genericReauth.js';
+import { createCaptchaChallenge } from '../../Middlewares/genericCaptchaChallenge.js';
+import { createRequestQueue } from '../../Middlewares/genericRequestQueue.js';
 import { wafProtection } from '../../Middlewares/waf.js';
-import { paymentPerUserLimiter, paymentPerIPLimiter } from '../../Middlewares/paymentRateLimiting.js';
+import { detectPaymentAnomalies } from '../../Middlewares/paymentAnomalyDetection.js';
 import { validatePaymentFileSize, validatePaymentImageDimensions } from '../../Middlewares/paymentFileValidation.js';
-import { queuePaymentProcessing } from '../../Middlewares/paymentProcessingQueue.js';
 import { rejectClientPaymentStatus } from '../../Middlewares/paymentStatusValidation.js';
+import { enforceHTTPS } from '../../Middlewares/securityHeaders.js';
 
 const orderRouter = express.Router();
 
-// Route to get all orders for the logged-in user (Dashboard)
+const paymentRateLimiter = createRateLimiter({
+  endpoint: '/api/orders/payment/submit/:orderId',
+  windowMs: 24 * 60 * 60 * 1000,
+  maxRequests: 10,
+  actionName: 'PAYMENT_SUBMISSION',
+  actionType: 'PAYMENT_RATE_LIMIT_EXCEEDED',
+  enableCaptcha: false
+});
+
+const requirePaymentMFA = createReauthMiddleware({
+  actionName: 'PAYMENT_MFA',
+  actionType: 'PAYMENT_MFA_REQUIRED',
+  passwordField: 'passwordConfirmation',
+  responseFlag: 'requiresMFA',
+  getResourceId: (req) => req.params.orderId
+});
+
+const paymentProcessingQueue = createRequestQueue({
+  endpoint: '/api/orders/payment/submit/:orderId',
+  maxConcurrent: 3,
+  timeoutMs: 30000,
+  actionName: 'PAYMENT_PROCESSING',
+  getResourceId: (req) => req.params.orderId
+});
+
+const requirePaymentCaptcha = createCaptchaChallenge({
+  endpoint: '/api/orders/payment/submit',
+  windowMs: 24 * 60 * 60 * 1000,
+  requestThreshold: 3,
+  actionName: 'PAYMENT_CAPTCHA_REQUIRED'
+});
+
 orderRouter.get('/my', verifyToken, getUserOrders);
 
 // Route to get specific order details by order number
@@ -31,32 +63,19 @@ orderRouter.get('/status/:orderNumber', verifyToken, getOrderDetails);
 // Route to get order details with payment information
 orderRouter.get('/details/:orderId', verifyToken, getOrderDetailsWithPayment);
 
-// Client side - Submit payment proof (handled in controller; uploads to Cloudinary)
-// Security and performance layers (applied in order):
-// 1. enforceHTTPS - Enforce HTTPS/TLS for payment data in transit
-// 2. verifyToken - Authentication
-// 3. wafProtection - Web Application Firewall filters malicious traffic
-// 4. paymentPerUserLimiter - Per-user rate limiting (max 10 submissions per day)
-// 5. paymentPerIPLimiter - Per-IP rate limiting (max 20 submissions per day)
-// 6. validatePaymentFileSize - File size validation (max 5MB)
-// 7. validatePaymentImageDimensions - Image dimension validation placeholder
-// 8. queuePaymentProcessing - Queue image processing to prevent resource exhaustion (max 3 concurrent, 30s timeout)
-// 9. rejectClientPaymentStatus - Reject any client attempts to set paymentStatus directly
-// 10. requireMFAForPayment - Multi-factor authentication (password confirmation)
-// 11. detectPaymentAnomalies - Anomaly detection (rapid submissions, unusual amounts, IP changes)
-// 12. submitPaymentProof - Payment submission handler (server-side logic only, no client-submitted paymentStatus)
 orderRouter.post('/payment/submit/:orderId', 
-  enforceHTTPS, 
-  verifyToken, 
-  wafProtection, 
-  paymentPerUserLimiter, 
-  paymentPerIPLimiter, 
-  validatePaymentFileSize, 
-  validatePaymentImageDimensions, 
-  queuePaymentProcessing, 
-  rejectClientPaymentStatus, 
-  requireMFAForPayment, 
-  detectPaymentAnomalies, 
+  enforceHTTPS,
+  verifyToken,
+  wafProtection,
+  requirePaymentCaptcha,
+  paymentRateLimiter.userLimiter,
+  paymentRateLimiter.ipLimiter,
+  validatePaymentFileSize,
+  validatePaymentImageDimensions,
+  paymentProcessingQueue,
+  rejectClientPaymentStatus,
+  requirePaymentMFA,
+  detectPaymentAnomalies,
   submitPaymentProof
 );
 
