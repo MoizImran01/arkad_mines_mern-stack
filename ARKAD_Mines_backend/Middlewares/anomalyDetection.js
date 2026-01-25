@@ -72,7 +72,7 @@ export const detectAnomalies = async (req, res, next) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);
   const userId = req.user?.id;
-  const quoteId = req.params.quoteId;
+  const quoteId = req.params.quoteId || req.analyticsAnomalyContext?.resourceId;
 
   if (!userId) {
     // Skip anomaly detection if user is not authenticated
@@ -132,9 +132,13 @@ export const detectAnomalies = async (req, res, next) => {
       : Infinity;
     
     // If multiple approvals within 60 seconds, flag as potential anomaly
-    if (timeSinceLastActivity < 60 && req.path.includes('/approve')) {
+    // Or rapid analytics access within 10 seconds
+    if (req.path.includes('/approve') && timeSinceLastActivity < 60) {
       isAnomalous = true;
       anomalyDetails.push(`Rapid approval activity detected: ${timeSinceLastActivity.toFixed(1)}s since last activity`);
+    } else if (req.path.includes('/analytics') && timeSinceLastActivity < 10) {
+      isAnomalous = true;
+      anomalyDetails.push(`Rapid analytics access: ${timeSinceLastActivity.toFixed(1)}s since last request`);
     }
 
     // Update session activity
@@ -145,17 +149,24 @@ export const detectAnomalies = async (req, res, next) => {
 
     // Log anomaly if detected
     if (isAnomalous) {
+      const actionName = req.analyticsAnomalyContext?.actionPrefix 
+        ? `${req.analyticsAnomalyContext.actionPrefix}_ANOMALY_DETECTED`
+        : 'ANOMALY_DETECTED';
+      const resourceId = req.analyticsAnomalyContext?.resourceId || quoteId;
+
       await logAudit({
         userId,
         role: normalizeRole(req.user?.role),
-        action: 'ANOMALY_DETECTED',
+        action: actionName,
         status: 'WARNING',
-        resourceId: quoteId,
+        resourceId,
         quotationRequestId: req.validatedQuotation?.quotationRequestId || null,
         quotationId: req.validatedQuotation?.referenceNumber || null,
         clientIp: currentIp,
         userAgent: truncatedUserAgent,
-        requestPayload: { quoteId, comment: req.body?.comment || null },
+        requestPayload: req.analyticsAnomalyContext 
+          ? { path: req.path }
+          : { quoteId, comment: req.body?.comment || null },
         details: `Anomalous activity detected: ${anomalyDetails.join('; ')}`
       });
       
@@ -178,14 +189,18 @@ export const detectAnomalies = async (req, res, next) => {
     await logAudit({
       userId,
       role: normalizeRole(req.user?.role),
-      action: 'ANOMALY_DETECTION_ERROR',
+      action: req.analyticsAnomalyContext?.actionPrefix 
+        ? `${req.analyticsAnomalyContext.actionPrefix}_ANOMALY_DETECTION_ERROR`
+        : 'ANOMALY_DETECTION_ERROR',
       status: 'ERROR',
-      resourceId: req.params.quoteId,
+      resourceId: req.analyticsAnomalyContext?.resourceId || req.params.quoteId,
       quotationRequestId: req.validatedQuotation?.quotationRequestId || null,
       quotationId: req.validatedQuotation?.referenceNumber || null,
       clientIp,
       userAgent: getUserAgent(req),
-      requestPayload: { quoteId: req.params.quoteId, comment: req.body?.comment || null },
+      requestPayload: req.analyticsAnomalyContext 
+        ? { path: req.path }
+        : { quoteId: req.params.quoteId, comment: req.body?.comment || null },
       details: `Error in anomaly detection: ${error.message}`
     });
     

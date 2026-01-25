@@ -1,9 +1,12 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import { StoreContext } from '../../context/StoreContext';
 import './PlaceOrder.css';
 import axios from "axios";
 import { useNavigate, useParams } from 'react-router-dom';
-import { FiPackage, FiCreditCard, FiMapPin, FiShoppingBag, FiEdit2, FiArrowLeft, FiLock, FiAlertTriangle, FiX } from "react-icons/fi";
+import ReCAPTCHA from "react-google-recaptcha";
+import { FiPackage, FiCreditCard, FiMapPin, FiShoppingBag, FiEdit2, FiArrowLeft, FiLock, FiX, FiAlertTriangle } from "react-icons/fi";
+
+const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
 const PlaceOrder = () => {
   const { orderNumber } = useParams();
@@ -107,6 +110,12 @@ const PlaceOrder = () => {
   const [paymentProofFile, setPaymentProofFile] = useState(null);
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   
+  // CAPTCHA Modal State
+  const [showCaptchaModal, setShowCaptchaModal] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const [captchaPassword, setCaptchaPassword] = useState("");
+  const recaptchaRef = useRef(null);
+  
   // MFA Modal State
   const [showMfaModal, setShowMfaModal] = useState(false);
   const [mfaPassword, setMfaPassword] = useState("");
@@ -133,10 +142,12 @@ const PlaceOrder = () => {
     }
 
     setPaymentSubmitting(true);
+    let base64 = null;
     
-    // Compress and resize image before converting to base64
-    // Aggressive compression to keep payload under 5MB
-    const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
+    try {
+      // Compress and resize image before converting to base64
+      // Aggressive compression to keep payload under 5MB
+      const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = (e) => {
@@ -241,12 +252,10 @@ const PlaceOrder = () => {
         });
       };
 
-    let compressedBase64 = null;
-    try {
       try {
-        compressedBase64 = await compressImage(paymentProofFile);
+        base64 = await compressImage(paymentProofFile);
         // Validate base64 format
-        if (!compressedBase64 || !compressedBase64.startsWith('data:image/')) {
+        if (!base64 || !base64.startsWith('data:image/')) {
           throw new Error('Invalid image format after compression');
         }
       } catch (compressionError) {
@@ -259,7 +268,7 @@ const PlaceOrder = () => {
       const payload = {
         amountPaid: parseFloat(numericAmount.toFixed(2)), // Ensure proper decimal precision
         address: addressData,
-        proofBase64: compressedBase64,
+        proofBase64: base64,
         proofFileName: paymentProofFile.name
       };
 
@@ -284,18 +293,177 @@ const PlaceOrder = () => {
       }
     } catch (err) {
       console.error('Error submitting payment proof:', err);
-      console.log('Error response data:', err.response?.data);
-      console.log('Error status:', err.response?.status);
+      console.log("Error response data:", err.response?.data);
+      console.log("Error status:", err.response?.status);
       
-      // Check if MFA is required (401 status or requiresMFA flag)
-      if (err.response?.status === 401 && err.response?.data?.requiresMFA === true) {
-        console.log('MFA required - showing modal');
+      // Check if CAPTCHA is required - check both flag and message
+      const requiresCaptcha = err.response?.data?.requiresCaptcha === true || 
+                              (err.response?.data?.message && err.response.data.message.toLowerCase().includes('captcha'));
+      
+      if (requiresCaptcha) {
+        console.log("CAPTCHA required - showing modal");
         
-        // Use already-compressed base64 if available, otherwise compress again
-        let base64ToUse = compressedBase64;
-        if (!base64ToUse) {
+        // Close payment modal first
+        setShowPaymentModal(false);
+        
+        // If base64 is not available, try to compress again
+        if (!base64 && paymentProofFile) {
           try {
-            base64ToUse = await compressImage(paymentProofFile);
+            const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
+              return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                  const img = new Image();
+                  img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const aspectRatio = width / height;
+                    if (width > height) {
+                      if (width > maxWidth) {
+                        width = maxWidth;
+                        height = Math.round(width / aspectRatio);
+                      }
+                    } else {
+                      if (height > maxHeight) {
+                        height = maxHeight;
+                        width = Math.round(height * aspectRatio);
+                      }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'medium';
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob(
+                      (blob) => {
+                        if (!blob) {
+                          reject(new Error('Failed to create blob'));
+                          return;
+                        }
+                        const reader2 = new FileReader();
+                        reader2.onload = () => {
+                          const dataUrl = reader2.result;
+                          if (dataUrl && dataUrl.startsWith('data:image/')) {
+                            resolve(dataUrl);
+                          } else {
+                            reject(new Error('Invalid data URL format'));
+                          }
+                        };
+                        reader2.onerror = reject;
+                        reader2.readAsDataURL(blob);
+                      },
+                      'image/jpeg',
+                      quality
+                    );
+                  };
+                  img.onerror = reject;
+                  img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+              });
+            };
+            base64 = await compressImage(paymentProofFile);
+          } catch (compressionError) {
+            console.error('Error compressing image for CAPTCHA:', compressionError);
+            alert('Failed to process image. Please try again.');
+            setPaymentSubmitting(false);
+            return;
+          }
+        }
+        
+        // Store payment data for retry
+        const pendingData = {
+          orderId: orderData._id,
+          amountPaid: parseFloat(numericAmount.toFixed(2)),
+          address: addressData,
+          proofBase64: base64,
+          proofFileName: paymentProofFile.name
+        };
+        
+        setPendingPayment(pendingData);
+        setShowCaptchaModal(true);
+        setPaymentSubmitting(false);
+        return;
+      }
+      
+      // Check if MFA is required - check both flag and message
+      const requiresMFA = err.response?.data?.requiresMFA === true || 
+                         err.response?.data?.requiresReauth === true ||
+                         (err.response?.data?.message && (
+                           err.response.data.message.toLowerCase().includes('re-authentication') ||
+                           err.response.data.message.toLowerCase().includes('password') ||
+                           err.response.data.message.toLowerCase().includes('confirm this action')
+                         ));
+      
+      if (requiresMFA) {
+        console.log("MFA required - showing modal");
+        
+        // Close payment modal first
+        setShowPaymentModal(false);
+        
+        // If base64 is not available, try to compress again
+        if (!base64 && paymentProofFile) {
+          try {
+            const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
+              return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                  const img = new Image();
+                  img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const aspectRatio = width / height;
+                    if (width > height) {
+                      if (width > maxWidth) {
+                        width = maxWidth;
+                        height = Math.round(width / aspectRatio);
+                      }
+                    } else {
+                      if (height > maxHeight) {
+                        height = maxHeight;
+                        width = Math.round(height * aspectRatio);
+                      }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'medium';
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob(
+                      (blob) => {
+                        if (!blob) {
+                          reject(new Error('Failed to create blob'));
+                          return;
+                        }
+                        const reader2 = new FileReader();
+                        reader2.onload = () => {
+                          const dataUrl = reader2.result;
+                          if (dataUrl && dataUrl.startsWith('data:image/')) {
+                            resolve(dataUrl);
+                          } else {
+                            reject(new Error('Invalid data URL format'));
+                          }
+                        };
+                        reader2.onerror = reject;
+                        reader2.readAsDataURL(blob);
+                      },
+                      'image/jpeg',
+                      quality
+                    );
+                  };
+                  img.onerror = reject;
+                  img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+              });
+            };
+            base64 = await compressImage(paymentProofFile);
           } catch (compressionError) {
             console.error('Error compressing image for MFA:', compressionError);
             alert('Failed to process image. Please try again.');
@@ -304,21 +472,103 @@ const PlaceOrder = () => {
           }
         }
         
-        setPendingPayment({
+        // Store payment data for retry
+        const pendingData = {
           orderId: orderData._id,
           amountPaid: parseFloat(numericAmount.toFixed(2)),
           address: addressData,
-          proofBase64: base64ToUse,
+          proofBase64: base64,
           proofFileName: paymentProofFile.name
-        });
+        };
         
-        console.log('Setting showMfaModal to true');
+        setPendingPayment(pendingData);
         setShowMfaModal(true);
         setPaymentSubmitting(false);
         return;
       }
       
-      alert(err.response?.data?.message || 'Error submitting payment proof');
+      // Only show alert if neither CAPTCHA nor MFA is required
+      if (!requiresCaptcha && !requiresMFA) {
+        alert(err.response?.data?.message || 'Error submitting payment proof');
+      }
+      setPaymentSubmitting(false);
+    }
+  };
+  
+  const handleCaptchaChange = (token) => {
+    setCaptchaToken(token);
+  };
+
+  const handleCaptchaExpired = () => {
+    setCaptchaToken(null);
+  };
+
+  const handleCaptchaSubmit = async (e) => {
+    e.preventDefault();
+    if (!captchaToken) {
+      alert("Please complete the CAPTCHA verification.");
+      return;
+    }
+    if (!captchaPassword.trim()) {
+      alert("Please enter your password to confirm this payment submission.");
+      return;
+    }
+
+    if (!pendingPayment) {
+      alert("Error: Payment data not found. Please try again.");
+      setShowCaptchaModal(false);
+      setCaptchaToken(null);
+      setCaptchaPassword("");
+      recaptchaRef.current?.reset();
+      setPendingPayment(null);
+      return;
+    }
+
+    setPaymentSubmitting(true);
+
+    try {
+      const payload = {
+        ...pendingPayment,
+        captchaToken: captchaToken,
+        passwordConfirmation: captchaPassword
+      };
+
+      const response = await axios.post(
+        `${url}/api/orders/payment/submit/${pendingPayment.orderId}`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        alert('Payment proof submitted successfully. Awaiting admin verification.');
+        setShowCaptchaModal(false);
+        setCaptchaToken(null);
+        setCaptchaPassword("");
+        recaptchaRef.current?.reset();
+        setPendingPayment(null);
+        setShowPaymentModal(false);
+        navigate('/orders');
+      } else {
+        alert(response.data.message || "Failed to submit payment proof");
+        recaptchaRef.current?.reset();
+        setCaptchaToken(null);
+      }
+    } catch (error) {
+      console.error("Error submitting payment with CAPTCHA:", error);
+      
+      if (error.response?.data?.requiresCaptcha === true) {
+        alert("CAPTCHA verification failed. Please try again.");
+        recaptchaRef.current?.reset();
+        setCaptchaToken(null);
+      } else if (error.response?.data?.requiresMFA === true || error.response?.status === 401) {
+        alert("Invalid password. Please check your password and try again.");
+        setCaptchaPassword("");
+      } else {
+        alert(error.response?.data?.message || "Error submitting payment proof");
+        recaptchaRef.current?.reset();
+        setCaptchaToken(null);
+      }
+    } finally {
       setPaymentSubmitting(false);
     }
   };
@@ -349,32 +599,27 @@ const PlaceOrder = () => {
       const response = await axios.post(
         `${url}/api/orders/payment/submit/${pendingPayment.orderId}`,
         payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data.success) {
         alert('Payment proof submitted successfully. Awaiting admin verification.');
-        setShowPaymentModal(false);
         setShowMfaModal(false);
         setMfaPassword("");
         setPendingPayment(null);
+        setShowPaymentModal(false);
         navigate('/orders');
       } else {
-        alert(response.data.message || 'Failed to submit payment proof');
+        alert(response.data.message || "Failed to submit payment proof");
       }
     } catch (error) {
-      console.error('Error submitting payment with MFA:', error);
+      console.error("Error submitting payment with MFA:", error);
       
       if (error.response?.data?.requiresMFA === true || error.response?.status === 401) {
-        alert('Invalid password. Please check your password and try again.');
+        alert("Invalid password. Please check your password and try again.");
         setMfaPassword("");
       } else {
-        alert(error.response?.data?.message || 'Error submitting payment proof');
+        alert(error.response?.data?.message || "Error submitting payment proof");
       }
     } finally {
       setPaymentSubmitting(false);
@@ -652,9 +897,177 @@ const PlaceOrder = () => {
         </div>
       )}
 
+      {/* CAPTCHA Modal */}
+      {showCaptchaModal && (
+        <div className="modal-overlay" style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)' }} onClick={() => {
+          setShowCaptchaModal(false);
+          setCaptchaToken(null);
+          setCaptchaPassword("");
+          recaptchaRef.current?.reset();
+          setPendingPayment(null);
+        }}>
+          <div className="modal-content" style={{ zIndex: 10001, position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                CAPTCHA Verification Required
+              </h3>
+              <button onClick={() => {
+                setShowCaptchaModal(false);
+                setCaptchaToken(null);
+                setCaptchaPassword("");
+                recaptchaRef.current?.reset();
+                setPendingPayment(null);
+              }}>
+                <FiX />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
+                <FiAlertTriangle style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                For security purposes, please complete the CAPTCHA verification and enter your password to submit this payment.
+              </p>
+              <form onSubmit={handleCaptchaSubmit}>
+                <div className="form-group" style={{ marginBottom: '20px' }}>
+                  <label style={{ marginBottom: '10px', display: 'block' }}>CAPTCHA Verification:</label>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                    <ReCAPTCHA
+                      ref={recaptchaRef}
+                      sitekey={RECAPTCHA_SITE_KEY}
+                      onChange={handleCaptchaChange}
+                      onExpired={handleCaptchaExpired}
+                      theme="light"
+                    />
+                  </div>
+                </div>
+                <div className="form-group" style={{ marginBottom: '20px' }}>
+                  <label htmlFor="captcha-password">Enter Your Password:</label>
+                  <input
+                    id="captcha-password"
+                    type="password"
+                    value={captchaPassword}
+                    onChange={(e) => setCaptchaPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    autoFocus
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      marginTop: '8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button 
+                    type="button"
+                    className="btn-secondary" 
+                    onClick={() => {
+                      setShowCaptchaModal(false);
+                      setCaptchaToken(null);
+                      setCaptchaPassword("");
+                      recaptchaRef.current?.reset();
+                      setPendingPayment(null);
+                    }}
+                    disabled={paymentSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={paymentSubmitting || !captchaToken || !captchaPassword.trim()}
+                    style={{ backgroundColor: '#2d8659' }}
+                  >
+                    {paymentSubmitting ? "Submitting..." : "Confirm & Submit Payment"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MFA Modal */}
+      {showMfaModal && (
+        <div className="modal-overlay" style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)' }} onClick={() => {
+          setShowMfaModal(false);
+          setMfaPassword("");
+          setPendingPayment(null);
+        }}>
+          <div className="modal-content" style={{ zIndex: 10001, position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                Multi-Factor Authentication Required
+              </h3>
+              <button onClick={() => {
+                setShowMfaModal(false);
+                setMfaPassword("");
+                setPendingPayment(null);
+              }}>
+                <FiX />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
+                <FiAlertTriangle style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                For security purposes, please confirm your password to submit this payment.
+              </p>
+              <form onSubmit={handleMfaSubmit}>
+                <div className="form-group">
+                  <label htmlFor="mfa-password">Enter Your Password:</label>
+                  <input
+                    id="mfa-password"
+                    type="password"
+                    value={mfaPassword}
+                    onChange={(e) => setMfaPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    autoFocus
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      marginTop: '8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button 
+                    type="button"
+                    className="btn-secondary" 
+                    onClick={() => {
+                      setShowMfaModal(false);
+                      setMfaPassword("");
+                      setPendingPayment(null);
+                    }}
+                    disabled={paymentSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={paymentSubmitting || !mfaPassword.trim()}
+                    style={{ backgroundColor: '#2d8659' }}
+                  >
+                    {paymentSubmitting ? "Submitting..." : "Confirm & Submit Payment"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Payment Modal */}
-      {showPaymentModal && (
-        <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
+      {showPaymentModal && !showCaptchaModal && !showMfaModal && (
+        <div className="modal-overlay" style={{ zIndex: 9999 }} onClick={() => setShowPaymentModal(false)}>
           <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
             <div className="payment-modal-header">
               <h3><FiCreditCard /> Submit Payment Proof</h3>
@@ -725,72 +1138,6 @@ const PlaceOrder = () => {
               <button type="submit" className="btn-primary" onClick={submitPaymentProof} disabled={paymentSubmitting}>
                 {paymentSubmitting ? 'Submitting...' : 'Submit Payment Proof'}
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MFA Modal */}
-      {showMfaModal && (
-        <div className="modal-overlay" onClick={() => {
-          setShowMfaModal(false);
-          setMfaPassword("");
-          setPendingPayment(null);
-        }}>
-          <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="payment-modal-header">
-              <h3>
-                <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                Multi-Factor Authentication Required
-              </h3>
-              <button className="modal-close-btn" onClick={() => {
-                setShowMfaModal(false);
-                setMfaPassword("");
-                setPendingPayment(null);
-              }} disabled={paymentSubmitting}>×</button>
-            </div>
-            <div className="payment-modal-body">
-              <p style={{ color: '#e74c3c', marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
-                <FiAlertTriangle style={{ marginRight: '8px' }} />
-                For security purposes, please confirm your password to submit this payment.
-              </p>
-              <form onSubmit={handleMfaSubmit} className="payment-form">
-                <div className="form-group">
-                  <label htmlFor="mfa-password">Enter Your Password:</label>
-                  <input
-                    id="mfa-password"
-                    type="password"
-                    value={mfaPassword}
-                    onChange={(e) => setMfaPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    autoFocus
-                    required
-                    className="payment-amount-input"
-                  />
-                </div>
-                <div className="payment-modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                  <button 
-                    type="button"
-                    className="btn-back" 
-                    onClick={() => {
-                      setShowMfaModal(false);
-                      setMfaPassword("");
-                      setPendingPayment(null);
-                    }}
-                    disabled={paymentSubmitting}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={paymentSubmitting || !mfaPassword.trim()}
-                    style={{ backgroundColor: '#2d8659' }}
-                  >
-                    {paymentSubmitting ? "Submitting..." : "Confirm & Submit Payment"}
-                  </button>
-                </div>
-              </form>
             </div>
           </div>
         </div>

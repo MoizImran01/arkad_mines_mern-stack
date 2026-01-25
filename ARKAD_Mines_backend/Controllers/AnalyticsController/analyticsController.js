@@ -2,6 +2,9 @@ import orderModel from "../../Models/orderModel/orderModel.js";
 import quotationModel from "../../Models/quotationModel/quotationModel.js";
 import stonesModel from "../../Models/stonesModel/stonesModel.js";
 import userModel from "../../Models/Users/userModel.js";
+import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../../logger/auditLogger.js";
+import { analyticsDTO } from "../../Utils/DTOs/analyticsDTO.js";
+import { getCachedAnalytics, setCachedAnalytics, generateCacheKey } from "../../Utils/analyticsCache.js";
 
 // Helper function to round to 2 decimal places
 const roundToTwoDecimals = (value) => {
@@ -9,13 +12,54 @@ const roundToTwoDecimals = (value) => {
 };
 
 export const getAnalytics = async (req, res) => {
+  const queryStartTime = Date.now();
+  
+  if (!req.verifiedAdminRole) {
+    await logAudit({
+      userId: req.user?.id || null,
+      role: normalizeRole(req.user?.role),
+      action: 'ANALYTICS_UNAUTHORIZED_ACCESS',
+      status: 'FAILED_AUTH',
+      resourceId: 'analytics-dashboard',
+      clientIp: getClientIp(req),
+      userAgent: getUserAgent(req),
+      details: 'Controller-level authorization check failed: Admin role not verified'
+    });
+
+    return res.status(403).json({
+      success: false,
+      message: "Access denied: Admin privileges required"
+    });
+  }
+
   try {
-    // Get date range (default: last 12 months)
+    const cacheKey = generateCacheKey(req);
+    const cached = getCachedAnalytics(cacheKey);
+    if (cached) {
+      return res.status(200).json({
+        success: true,
+        data: cached,
+        cached: true
+      });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const skip = (page - 1) * limit;
+
     const endDate = new Date();
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - 12);
 
     // 1. Top Clients by Purchase Value
+    const adminUserId = req.user?.id;
+    if (!adminUserId) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied: Admin authentication required"
+      });
+    }
+
     const topClients = await orderModel.aggregate([
       {
         $match: {
@@ -369,37 +413,193 @@ export const getAnalytics = async (req, res) => {
       totalSales: roundToTwoDecimals(week.totalSales || 0)
     }));
 
+    const dataCategories = [
+      'summary',
+      'topClients',
+      'mostSoldStones',
+      'monthlySales',
+      'orderStatusDistribution',
+      'quotationStatusDistribution',
+      'categorySales',
+      'paymentStatusOverview',
+      'weeklySalesPattern',
+      'stockStatus'
+    ];
+
+    await logAudit({
+      userId: req.user?.id || null,
+      role: normalizeRole(req.user?.role),
+      action: 'ANALYTICS_ACCESS',
+      status: 'SUCCESS',
+      resourceId: 'analytics-dashboard',
+      clientIp: getClientIp(req),
+      userAgent: getUserAgent(req),
+      requestPayload: {
+        method: req.method,
+        path: req.path,
+        dataCategoriesAccessed: dataCategories,
+        queryParams: req.query
+      },
+      details: `Analytics dashboard accessed. Data categories: ${dataCategories.join(', ')}`
+    });
+
+    const rawData = {
+      summary: {
+        totalOrders,
+        totalQuotations,
+        totalCustomers,
+        totalStones,
+        totalRevenue,
+        forecastedRevenue,
+        pendingPayments,
+        conversionRate: parseFloat(conversionRate),
+        orderGrowth: parseFloat(orderGrowth)
+      },
+      topClients: roundedTopClients,
+      mostSoldStones: roundedMostSoldStones,
+      monthlySales: roundedMonthlySales,
+      orderStatusDistribution,
+      quotationStatusDistribution,
+      categorySales: roundedCategorySales,
+      paymentStatusOverview: roundedPaymentStatusOverview,
+      weeklySalesPattern: roundedWeeklySalesPattern,
+      stockStatus
+    };
+
+    const sanitizedData = analyticsDTO(rawData);
+    setCachedAnalytics(cacheKey, sanitizedData);
+
+    const queryTime = Date.now() - queryStartTime;
+    if (queryTime > 5000) {
+      await logAudit({
+        userId: req.user?.id || null,
+        role: normalizeRole(req.user?.role),
+        action: 'ANALYTICS_SLOW_QUERY',
+        status: 'WARNING',
+        resourceId: 'analytics-dashboard',
+        clientIp: getClientIp(req),
+        userAgent: getUserAgent(req),
+        details: `Slow analytics query detected: ${queryTime}ms`
+      });
+    }
+
     res.status(200).json({
       success: true,
-      data: {
-        summary: {
-          totalOrders,
-          totalQuotations,
-          totalCustomers,
-          totalStones,
-          totalRevenue,
-          forecastedRevenue,
-          pendingPayments,
-          conversionRate: parseFloat(conversionRate),
-          orderGrowth: parseFloat(orderGrowth)
-        },
-        topClients: roundedTopClients,
-        mostSoldStones: roundedMostSoldStones,
-        monthlySales: roundedMonthlySales,
-        orderStatusDistribution,
-        quotationStatusDistribution,
-        categorySales: roundedCategorySales,
-        paymentStatusOverview: roundedPaymentStatusOverview,
-        weeklySalesPattern: roundedWeeklySalesPattern,
-        stockStatus
-      }
+      data: sanitizedData,
+      pagination: {
+        page,
+        limit,
+        hasMore: false
+      },
+      queryTime: `${queryTime}ms`
     });
   } catch (error) {
     console.error("Analytics error:", error);
+    
+    await logAudit({
+      userId: req.user?.id || null,
+      role: normalizeRole(req.user?.role),
+      action: 'ANALYTICS_ACCESS',
+      status: 'ERROR',
+      resourceId: 'analytics-dashboard',
+      clientIp: getClientIp(req),
+      userAgent: getUserAgent(req),
+      details: `Error accessing analytics: ${error.message}`
+    });
+    
     res.status(500).json({
       success: false,
       message: "Error fetching analytics data",
       error: error.message
+    });
+  }
+};
+
+export const exportAnalyticsPDF = async (req, res) => {
+  if (!req.verifiedAdminRole) {
+    await logAudit({
+      userId: req.user?.id || null,
+      role: normalizeRole(req.user?.role),
+      action: 'ANALYTICS_PDF_EXPORT_UNAUTHORIZED',
+      status: 'FAILED_AUTH',
+      resourceId: 'analytics-dashboard',
+      clientIp: getClientIp(req),
+      userAgent: getUserAgent(req),
+      details: 'PDF export unauthorized: Admin role not verified'
+    });
+
+    return res.status(403).json({
+      success: false,
+      message: "Access denied: Admin privileges required"
+    });
+  }
+
+  try {
+    const clientIp = getClientIp(req);
+    const userAgent = getUserAgent(req);
+    const adminId = req.user?.id;
+    
+    const isHTTPS = req.secure || 
+                    req.headers['x-forwarded-proto'] === 'https' || 
+                    req.headers['x-forwarded-proto'] === 'https, http';
+    
+    if (process.env.NODE_ENV === 'production' && !isHTTPS) {
+      await logAudit({
+        userId: adminId,
+        role: normalizeRole(req.user?.role),
+        action: 'ANALYTICS_PDF_EXPORT',
+        status: 'FAILED_VALIDATION',
+        resourceId: 'analytics-dashboard',
+        clientIp,
+        userAgent,
+        details: `PDF export blocked: HTTPS required`
+      });
+      
+      return res.status(403).json({
+        success: false,
+        message: "Secure channel (HTTPS) required for analytics exports"
+      });
+    }
+    
+    await logAudit({
+      userId: adminId,
+      role: normalizeRole(req.user?.role),
+      action: 'ANALYTICS_PDF_EXPORT',
+      status: 'SUCCESS',
+      resourceId: 'analytics-dashboard',
+      clientIp,
+      userAgent,
+      requestPayload: {
+        method: req.method,
+        path: req.path,
+        exportType: 'PDF',
+        timestamp: new Date().toISOString(),
+        secureChannel: isHTTPS
+      },
+      details: `Analytics PDF export initiated by admin ${adminId} via ${isHTTPS ? 'HTTPS' : 'HTTP'}`
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "PDF export logged. Export functionality handled client-side."
+    });
+  } catch (error) {
+    console.error("PDF export logging error:", error);
+    
+    await logAudit({
+      userId: req.user?.id || null,
+      role: normalizeRole(req.user?.role),
+      action: 'ANALYTICS_PDF_EXPORT',
+      status: 'ERROR',
+      resourceId: 'analytics-dashboard',
+      clientIp: getClientIp(req),
+      userAgent: getUserAgent(req),
+      details: `Error logging PDF export: ${error.message}`
+    });
+    
+    res.status(500).json({
+      success: false,
+      message: "Error logging PDF export"
     });
   }
 };
