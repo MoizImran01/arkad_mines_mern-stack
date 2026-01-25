@@ -61,8 +61,7 @@ const Navbar = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
-        const clearedAt = response.data.clearedAt || new Date().toISOString();
-        setNotifications((prev) => prev.map((n) => ({ ...n, clearedAt })));
+        setNotifications([]);
         toast.success("Notifications cleared");
       }
     } catch (error) {
