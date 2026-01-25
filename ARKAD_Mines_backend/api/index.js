@@ -8,6 +8,7 @@ import userRouter from "../Routes/UserRoutes/userRouter.js";
 import adminRouter from "../Routes/AdminRoutes/adminRouter.js";
 import stonesRouter from "../Routes/StonesRoutes/StonesRoutes.js";
 import quoteRouter from "../Routes/QuoteRoutes/quoteRouter.js";
+import notificationRouter from "../Routes/NotificationRoutes/notificationRouter.js";
 import orderRouter from "../Routes/OrderRoutes/OrderRoutes.js";
 
 const app = express();
@@ -77,6 +78,7 @@ app.use("/api/user", userRouter);
 app.use("/api", adminRouter);
 app.use("/api/stones", stonesRouter);
 app.use("/api/quotes", quoteRouter);
+app.use("/api/notifications", notificationRouter);
 app.use("/api/orders", orderRouter);
 
 app.get("/", (req, res) => res.status(200).send(" Server running successfully"));

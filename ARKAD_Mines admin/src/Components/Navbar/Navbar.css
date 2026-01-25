@@ -75,3 +75,226 @@
     transform: translateY(0);
 }
 
+.notification-wrapper {
+    position: relative;
+}
+
+.notification-btn {
+    position: relative;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    color: #1a2a2a;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.notification-btn:hover {
+    background: #e6ffd3;
+    border-color: #2d8659;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #dc2626;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 999px;
+}
+
+.notifications-panel {
+    position: absolute;
+    right: 0;
+    top: 48px;
+    width: 320px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.notifications-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.notifications-header h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a2a2a;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.notification-link {
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: #2d8659;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.notifications-list {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.notification-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: #1a2a2a;
+}
+
+.notification-message {
+    font-size: 12px;
+    color: #4b5563;
+    margin-top: 4px;
+}
+
+.notification-meta {
+    margin-top: 6px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.notification-cleared {
+    background: #f3f4f6;
+    color: #6b7280;
+    padding: 2px 6px;
+    border-radius: 999px;
+}
+
+.notifications-empty {
+    padding: 16px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.notification-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.notification-modal {
+    background: white;
+    width: 90%;
+    max-width: 900px;
+    max-height: 85vh;
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.notification-modal-header {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.notification-modal-header h3 {
+    font-size: 18px;
+    color: #1a2a2a;
+}
+
+.notification-modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.notification-modal-content {
+    padding: 16px 20px;
+    overflow-y: auto;
+    display: grid;
+    gap: 20px;
+}
+
+.notification-modal-section h4 {
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #1a2a2a;
+}
+
+.notification-summary-table {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.summary-row {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1fr 1fr;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 12px;
+}
+
+.summary-row.summary-header {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+}
+
+.status-pill {
+    text-transform: capitalize;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    background: #e5e7eb;
+    color: #374151;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-fully_paid {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-payment_in_progress {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.status-pending {
+    background: #fef9c3;
+    color: #92400e;
+}
+

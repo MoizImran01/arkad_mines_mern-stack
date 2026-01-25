@@ -2,6 +2,7 @@ import orderModel from "../../Models/orderModel/orderModel.js";
 import stonesModel from "../../Models/stonesModel/stonesModel.js";
 import { cloudinary, configureCloudinary, generateSignedUrl } from '../../config/cloudinary.js';
 import { logAudit, logError, getClientIp, normalizeRole, getUserAgent } from '../../logger/auditLogger.js';
+import { createNotification } from "../NotificationController/notificationController.js";
 
 // Helper function to round to 2 decimal places
 const roundToTwoDecimals = (value) => {
@@ -500,6 +501,17 @@ const submitPaymentProof = async (req, res) => {
 
     await order.save();
 
+    await createNotification({
+      recipientType: "admin",
+      title: "Payment proof submitted",
+      message: `${order.orderNumber} - ${numericAmount.toFixed(2)} submitted by ${req.user?.companyName || "client"}`,
+      type: "payment_submitted",
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      paymentStatus: order.paymentStatus,
+      amount: numericAmount,
+    });
+
     const clientIp = getClientIp(req);
     const userAgent = getUserAgent(req);
 
@@ -695,6 +707,29 @@ const approvePayment = async (req, res) => {
 
     await order.save();
 
+    await createNotification({
+      recipientType: "admin",
+      title: "Payment approved",
+      message: `${order.orderNumber} - ${roundedAmountPaid.toFixed(2)} approved`,
+      type: "payment_approved",
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      paymentStatus: order.paymentStatus,
+      amount: roundedAmountPaid,
+    });
+
+    await createNotification({
+      recipientType: "user",
+      recipientId: order.buyer,
+      title: "Payment approved",
+      message: `Your payment for order ${order.orderNumber} was approved.`,
+      type: "payment_approved",
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      paymentStatus: order.paymentStatus,
+      amount: roundedAmountPaid,
+    });
+
     // Log payment approval action with admin ID and timestamp
     const approvalTimestamp = new Date();
     await logAudit({
@@ -821,6 +856,29 @@ const rejectPayment = async (req, res) => {
     });
 
     await order.save();
+
+    await createNotification({
+      recipientType: "admin",
+      title: "Payment rejected",
+      message: `${order.orderNumber} - ${paymentProof.amountPaid.toFixed(2)} rejected`,
+      type: "payment_rejected",
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      paymentStatus: order.paymentStatus,
+      amount: paymentProof.amountPaid,
+    });
+
+    await createNotification({
+      recipientType: "user",
+      recipientId: order.buyer,
+      title: "Payment rejected",
+      message: `Your payment for order ${order.orderNumber} was rejected.`,
+      type: "payment_rejected",
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      paymentStatus: order.paymentStatus,
+      amount: paymentProof.amountPaid,
+    });
 
     // Log payment rejection action with admin ID and timestamp
     const rejectionTimestamp = new Date();
@@ -976,6 +1034,29 @@ const updatePaymentStatus = async (req, res) => {
     });
 
     await order.save();
+
+    await createNotification({
+      recipientType: "admin",
+      title: "Payment status updated",
+      message: `${order.orderNumber} - status ${paymentStatus}`,
+      type: "payment_status_updated",
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      paymentStatus,
+      amount: order.financials?.grandTotal,
+    });
+
+    await createNotification({
+      recipientType: "user",
+      recipientId: order.buyer,
+      title: "Payment status updated",
+      message: `Order ${order.orderNumber} payment status is now ${paymentStatus}.`,
+      type: "payment_status_updated",
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      paymentStatus,
+      amount: order.financials?.grandTotal,
+    });
 
     res.json({
       success: true,

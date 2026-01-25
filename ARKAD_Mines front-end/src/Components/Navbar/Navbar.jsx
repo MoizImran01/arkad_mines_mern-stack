@@ -1,11 +1,12 @@
-import React, { useState, useContext } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
 import './Navbar.css';
 import logoimg from '../../assets/logo.png';
 import dashboard from '../../assets/dashboard.png'
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { StoreContext } from '../../context/StoreContext';
 import { assets } from '../../assets/assets.js';
-import { FiFileText } from 'react-icons/fi';
+import { FiBell, FiFileText } from 'react-icons/fi';
+import axios from 'axios';
 
 
 const Navbar = ({ setShowLogin }) => {
@@ -15,6 +16,10 @@ const Navbar = ({ setShowLogin }) => {
   const { token, logout } = useContext(StoreContext);
   const navigate = useNavigate();
   const location = useLocation();
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const notificationRef = useRef(null);
 
   const getActiveMenu = () => {
     const path = location.pathname;
@@ -35,6 +40,64 @@ const Navbar = ({ setShowLogin }) => {
   const handleNavClick = () => {
     setIsMenuOpen(false); 
   };
+
+  const fetchNotifications = async () => {
+    if (!token) return;
+    try {
+      setLoadingNotifications(true);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/notifications`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setNotifications(response.data.notifications || []);
+      }
+    } catch (error) {
+      console.error("Client notifications error:", error);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  const clearNotifications = async () => {
+    if (!token) return;
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/notifications/clear`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        const clearedAt = response.data.clearedAt || new Date().toISOString();
+        setNotifications((prev) => prev.map((n) => ({ ...n, clearedAt })));
+      }
+    } catch (error) {
+      console.error("Client clear notifications error:", error);
+    }
+  };
+
+  const formatTime = (date) => {
+    if (!date) return "";
+    const diff = Date.now() - new Date(date).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return "just now";
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [token]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <header className="navbar-container">
@@ -92,7 +155,40 @@ const Navbar = ({ setShowLogin }) => {
           </button>
         ) : (
 
-          <div className='nav-profile'>
+          <>
+            <div className="client-notification-wrapper" ref={notificationRef}>
+              <button className="client-notification-btn" onClick={() => setShowNotifications(!showNotifications)}>
+                <FiBell />
+                {notifications.length > 0 && (
+                  <span className="client-notification-badge">{notifications.length}</span>
+                )}
+              </button>
+              {showNotifications && (
+                <div className="client-notifications-panel">
+                  <div className="client-notifications-header">
+                    <h4>Payment Updates</h4>
+                    <button className="client-notification-link" onClick={clearNotifications}>Clear</button>
+                  </div>
+                  <div className="client-notifications-list">
+                    {loadingNotifications && <p className="client-notifications-empty">Loading...</p>}
+                    {!loadingNotifications && notifications.length === 0 && (
+                      <p className="client-notifications-empty">No updates yet</p>
+                    )}
+                    {notifications.map((notification) => (
+                      <div key={notification._id} className="client-notification-item">
+                        <div className="client-notification-title">{notification.title}</div>
+                        <div className="client-notification-message">{notification.message}</div>
+                        <div className="client-notification-meta">
+                          <span>{formatTime(notification.createdAt)}</span>
+                          {notification.clearedAt && <span className="client-notification-cleared">Cleared</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className='nav-profile'>
             <img src={assets.profile_icon} alt="Profile" className="profile-img" />
             <ul className="nav-dropdown">
               <li onClick={() => navigate('/dashboard')} className="dropdown-item">
@@ -120,6 +216,7 @@ const Navbar = ({ setShowLogin }) => {
               </li>
             </ul>
           </div>
+          </>
         )}
 
 
