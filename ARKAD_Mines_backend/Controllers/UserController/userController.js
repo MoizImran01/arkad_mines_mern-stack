@@ -39,13 +39,15 @@ const verifyCaptcha = async (captchaToken) => {
 
 
 const loginUser = async (req, res) => {
-
   const { email, password, captchaToken } = req.body;
   const clientIp = getClientIp(req);
 
-  try 
-  {
-    // Verify CAPTCHA first to block bots early
+  try {
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ success: false, message: "Invalid email format" });
+    }
+    const safeEmail = email.toLowerCase().trim();
+
     if (captchaToken) {
       const isCaptchaValid = await verifyCaptcha(captchaToken);
       if (!isCaptchaValid) {
@@ -55,7 +57,7 @@ const loginUser = async (req, res) => {
           action: 'LOGIN_FAILED',
           status: 'FAILED_VALIDATION',
           clientIp,
-          details: `CAPTCHA verification failed for email=${email}`
+          details: `CAPTCHA verification failed for email=${safeEmail}`
         });
         return res.status(400).json({
           success: false,
@@ -63,8 +65,7 @@ const loginUser = async (req, res) => {
         });
       }
     }
-
-    const user = await userModel.findOne({ email });
+    const user = await userModel.findOne({ email: safeEmail });
 
     if (!user) {
       await logAudit({
@@ -185,12 +186,14 @@ const loginUser = async (req, res) => {
 
 
 const registerUser = async (req, res) => {
-
   const { companyName, email, password, role, captchaToken } = req.body;
   const clientIp = getClientIp(req);
 
   try {
-    // Verify CAPTCHA first to block bots early
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ success: false, message: "Invalid email format" });
+    }
+    const safeEmail = email.toLowerCase().trim();
     if (captchaToken) {
       const isCaptchaValid = await verifyCaptcha(captchaToken);
       if (!isCaptchaValid) {
@@ -200,7 +203,7 @@ const registerUser = async (req, res) => {
           action: 'REGISTER_FAILED',
           status: 'FAILED_VALIDATION',
           clientIp,
-          details: `CAPTCHA verification failed for email=${email}`
+          details: `CAPTCHA verification failed for email=${safeEmail}`
         });
         return res.status(400).json({
           success: false,
@@ -209,7 +212,8 @@ const registerUser = async (req, res) => {
       }
     }
 
-    const exists = await userModel.findOne({ email });
+
+    const exists = await userModel.findOne({ email: safeEmail });
     if (exists) {
       logAudit({
         userId: null,
@@ -365,6 +369,10 @@ const updateUserRole = async (req, res) => {
   const clientIp = getClientIp(req);
   try {
     const { userId } = req.params;
+    if (!userId || !validator.isMongoId(String(userId))) {
+         return res.status(400).json({ success: false, message: "Invalid User ID" });
+    }
+    
     const { role } = req.body;
 
 
@@ -458,6 +466,10 @@ const deleteUser = async (req, res) => {
   const clientIp = getClientIp(req);
   try {
     const { userId } = req.params;
+
+    if (!userId || !validator.isMongoId(String(userId))) {
+         return res.status(400).json({ success: false, message: "Invalid User ID" });
+    }
 
 
     if (req.user.id === userId) {
