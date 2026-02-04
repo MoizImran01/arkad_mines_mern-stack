@@ -38,31 +38,23 @@ export const getNotifications = async (req, res) => {
   try {
     const { role, id } = req.user;
     
-    // Validate role against whitelist to prevent NoSQL injection
-    const allowedRoles = ["admin", "user"];
+    // Sanitize and validate inputs to prevent NoSQL injection
     const safe_role = String(role || '').trim();
-    if (!allowedRoles.includes(safe_role)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid role"
-      });
-    }
     
-    // Construct query safely based on validated role
-    let query;
+    // Construct query explicitly to prevent injection
+    let query = {};
     if (safe_role === "admin") {
-      query = { recipientType: "admin" };
+      query.recipientType = "admin";
     } else {
-      // Validate and convert to ObjectId to prevent NoSQL injection
-      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      // Validate ObjectId format before using in query
+      if (!id || !mongoose.Types.ObjectId.isValid(String(id))) {
         return res.status(400).json({
           success: false,
-          message: "Invalid user ID"
+          message: "Invalid user ID format"
         });
       }
-      // Convert to ObjectId instance for safe query construction
-      const safe_user_id = new mongoose.Types.ObjectId(id);
-      query = { recipientType: "user", recipientId: safe_user_id };
+      query.recipientType = "user";
+      query.recipientId = new mongoose.Types.ObjectId(String(id));
     }
 
     const notifications = await notificationModel
@@ -84,31 +76,23 @@ export const clearNotifications = async (req, res) => {
   try {
     const { role, id } = req.user;
     
-    // Validate role against whitelist to prevent NoSQL injection
-    const allowedRoles = ["admin", "user"];
+    // Sanitize and validate inputs to prevent NoSQL injection
     const safe_role = String(role || '').trim();
-    if (!allowedRoles.includes(safe_role)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid role"
-      });
-    }
     
-    // Construct query safely based on validated role
-    let query;
+    // Construct query explicitly to prevent injection
+    let query = {};
     if (safe_role === "admin") {
-      query = { recipientType: "admin" };
+      query.recipientType = "admin";
     } else {
-      // Validate and convert to ObjectId to prevent NoSQL injection
-      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      // Validate ObjectId format before using in query
+      if (!id || !mongoose.Types.ObjectId.isValid(String(id))) {
         return res.status(400).json({
           success: false,
-          message: "Invalid user ID"
+          message: "Invalid user ID format"
         });
       }
-      // Convert to ObjectId instance for safe query construction
-      const safe_user_id = new mongoose.Types.ObjectId(id);
-      query = { recipientType: "user", recipientId: safe_user_id };
+      query.recipientType = "user";
+      query.recipientId = new mongoose.Types.ObjectId(String(id));
     }
 
     const clearedAt = new Date();
