@@ -105,10 +105,14 @@ export const wafProtection = async (req, res, next) => {
       });
     }
 
+    // Sanitize inputs to prevent NoSQL injection
+    const safe_ip_address = String(clientIp || '').trim();
+    const safe_endpoint = String(req.path || '').trim();
+
     const failedAttempts = await RateLimitTracking.findOne({
-      identifier: clientIp,
+      identifier: safe_ip_address,
       type: 'ip',
-      endpoint: req.path,
+      endpoint: safe_endpoint,
       captchaAttempts: { $gte: 5 }
     });
 

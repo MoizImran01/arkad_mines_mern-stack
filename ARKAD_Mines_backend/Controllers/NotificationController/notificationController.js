@@ -3,7 +3,31 @@ import orderModel from "../../Models/orderModel/orderModel.js";
 
 export const createNotification = async (payload) => {
   try {
-    await notificationModel.create(payload);
+    const { 
+      recipientType, 
+      recipientId, 
+      title, 
+      message, 
+      type, 
+      orderId, 
+      orderNumber, 
+      paymentStatus, 
+      amount 
+    } = payload;
+
+
+    await notificationModel.create({
+      recipientType,
+      recipientId,
+      title,
+      message,
+      type,
+      orderId,
+      orderNumber,
+      paymentStatus,
+      amount
+    });
+
   } catch (error) {
     console.error("Notification create error:", error);
   }
@@ -12,10 +36,13 @@ export const createNotification = async (payload) => {
 export const getNotifications = async (req, res) => {
   try {
     const { role, id } = req.user;
+    
+    const safe_user_id = String(id); 
+
     const query =
       role === "admin"
         ? { recipientType: "admin" }
-        : { recipientType: "user", recipientId: id };
+        : { recipientType: "user", recipientId: safe_user_id };
 
     const notifications = await notificationModel
       .find(query)
@@ -35,10 +62,14 @@ export const getNotifications = async (req, res) => {
 export const clearNotifications = async (req, res) => {
   try {
     const { role, id } = req.user;
+    
+
+    const safe_user_id = String(id);
+
     const query =
       role === "admin"
         ? { recipientType: "admin" }
-        : { recipientType: "user", recipientId: id };
+        : { recipientType: "user", recipientId: safe_user_id };
 
     const clearedAt = new Date();
 

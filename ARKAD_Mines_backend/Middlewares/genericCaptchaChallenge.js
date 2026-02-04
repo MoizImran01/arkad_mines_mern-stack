@@ -29,11 +29,16 @@ export const createCaptchaChallenge = ({
   actionName = 'CAPTCHA_REQUIRED'
 }) => {
   return async (req, res, next) => {
-    const identifier = req.user?.id || getClientIp(req);
-    const type = req.user?.id ? 'user' : 'ip';
+    const rawIdentifier = req.user?.id || getClientIp(req);
+    const rawType = req.user?.id ? 'user' : 'ip';
     const clientIp = getClientIp(req);
     const userAgent = getUserAgent(req);
-    const normalizedEndpoint = endpoint;
+    const rawEndpoint = endpoint;
+
+    // Sanitize inputs to prevent NoSQL injection
+    const identifier = String(rawIdentifier || '').trim();
+    const type = rawType === 'user' ? 'user' : 'ip';
+    const normalizedEndpoint = String(rawEndpoint || '').trim();
 
     try {
       let tracking = await RateLimitTracking.findOne({
@@ -48,8 +53,8 @@ export const createCaptchaChallenge = ({
         tracking = await RateLimitTracking.findOneAndUpdate(
           { identifier, type, endpoint: normalizedEndpoint },
           {
-            identifier,
-            type,
+            identifier: identifier,
+            type: type,
             endpoint: normalizedEndpoint,
             requestCount: 1,
             windowStart: new Date(),

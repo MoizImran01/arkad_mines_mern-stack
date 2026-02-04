@@ -63,7 +63,7 @@ orderRouter.get('/status/:orderNumber', verifyToken, getOrderDetails);
 // Route to get order details with payment information
 orderRouter.get('/details/:orderId', verifyToken, getOrderDetailsWithPayment);
 
-orderRouter.post('/payment/submit/:orderId', 
+orderRouter.post('/payment/submit/:orderId',
   enforceHTTPS,
   verifyToken,
   wafProtection,
