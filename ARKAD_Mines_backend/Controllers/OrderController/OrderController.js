@@ -3,7 +3,6 @@ import stonesModel from "../../Models/stonesModel/stonesModel.js";
 import { cloudinary, configureCloudinary, generateSignedUrl } from '../../config/cloudinary.js';
 import { logAudit, logError, getClientIp, normalizeRole, getUserAgent } from '../../logger/auditLogger.js';
 import { createNotification } from "../NotificationController/notificationController.js";
-import mongoose from "mongoose";
 
 // Helper function to round to 2 decimal places
 const roundToTwoDecimals = (value) => {
@@ -47,27 +46,10 @@ const getOrderDetails = async (req, res) => {
   try {
     const { orderNumber } = req.params;
 
-    // Sanitize and validate inputs to prevent NoSQL injection
-    const safeOrderNumber = String(orderNumber || '').trim();
-    if (!safeOrderNumber) {
-      return res.status(400).json({
-        success: false,
-        message: "Order number is required"
-      });
-    }
-
-    const userId = req.user?.id;
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID"
-      });
-    }
-    const safeUserId = String(userId).trim();
 
     const order = await orderModel.findOne({ 
-      orderNumber: safeOrderNumber,
-      buyer: safeUserId 
+      orderNumber: orderNumber,
+      buyer: req.user.id 
     }).populate("buyer", "companyName email");
 
     if (!order) {
@@ -93,27 +75,13 @@ const getOrderDetails = async (req, res) => {
 //Get all orders for the logged-in user
 const getUserOrders = async (req, res) => {
   try {
-    // Sanitize and validate inputs to prevent NoSQL injection
-    const userId = req.user?.id;
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID"
-      });
-    }
-    const safeUserId = String(userId).trim();
+    const userId = req.user.id; 
+    const { status } = req.query; 
 
-    const { status } = req.query;
-    const safeStatus = status ? String(status).trim() : null;
-
-    const query = { buyer: safeUserId };
+    const query = { buyer: userId };
     
-    // Validate status against allowed enum values if provided
-    if (safeStatus) {
-      const allowedStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
-      if (allowedStatuses.includes(safeStatus)) {
-        query.status = safeStatus;
-      }
+    if (status) {
+      query.status = status;
     }
     
     const orders = await orderModel.find(query)

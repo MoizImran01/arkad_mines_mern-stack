@@ -3,7 +3,6 @@ import QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import { uploadBuffer, deleteImage, getPublicIdFromUrl } from '../../config/cloudinary.js';
 import { logAudit, logError, getClientIp, normalizeRole } from '../../logger/auditLogger.js';
-import mongoose from "mongoose";
 
 //add stones item to the db - now using Cloudinary for image storage
 const addStones = async (req, res) => {
@@ -259,16 +258,7 @@ const getStoneById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Sanitize and validate inputs to prevent NoSQL injection
-        if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid stone ID"
-            });
-        }
-        const safeId = String(id).trim();
-
-        const stone = await stonesModel.findById(safeId).select('-__v');
+        const stone = await stonesModel.findById(id).select('-__v');
 
         if (!stone) {
             logAudit({
@@ -325,16 +315,7 @@ const getBlockByQRCode = async (req, res) => {
     try {
         const { qrCode } = req.params;
 
-        // Sanitize inputs to prevent NoSQL injection
-        const safeQrCode = String(qrCode || '').trim();
-        if (!safeQrCode) {
-            return res.status(400).json({
-                success: false,
-                message: "QR code is required"
-            });
-        }
-
-        const block = await stonesModel.findOne({ qrCode: safeQrCode }).select('-__v');
+        const block = await stonesModel.findOne({ qrCode: qrCode }).select('-__v');
 
         if (!block) {
             return res.status(404).json({

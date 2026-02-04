@@ -38,20 +38,30 @@ export const getNotifications = async (req, res) => {
   try {
     const { role, id } = req.user;
     
-    // Sanitize and validate inputs to prevent NoSQL injection
+    // Validate role against whitelist to prevent NoSQL injection
+    const allowedRoles = ["admin", "user"];
     const safe_role = String(role || '').trim();
+    if (!allowedRoles.includes(safe_role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role"
+      });
+    }
     
+    // Construct query safely based on validated role
     let query;
     if (safe_role === "admin") {
       query = { recipientType: "admin" };
     } else {
+      // Validate and convert to ObjectId to prevent NoSQL injection
       if (!id || !mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({
           success: false,
           message: "Invalid user ID"
         });
       }
-      const safe_user_id = String(id).trim();
+      // Convert to ObjectId instance for safe query construction
+      const safe_user_id = new mongoose.Types.ObjectId(id);
       query = { recipientType: "user", recipientId: safe_user_id };
     }
 
@@ -74,21 +84,30 @@ export const clearNotifications = async (req, res) => {
   try {
     const { role, id } = req.user;
     
-    // Sanitize and validate inputs to prevent NoSQL injection
+    // Validate role against whitelist to prevent NoSQL injection
+    const allowedRoles = ["admin", "user"];
     const safe_role = String(role || '').trim();
+    if (!allowedRoles.includes(safe_role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role"
+      });
+    }
     
+    // Construct query safely based on validated role
     let query;
     if (safe_role === "admin") {
       query = { recipientType: "admin" };
     } else {
-
+      // Validate and convert to ObjectId to prevent NoSQL injection
       if (!id || !mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({
           success: false,
           message: "Invalid user ID"
         });
       }
-      const safe_user_id = String(id).trim();
+      // Convert to ObjectId instance for safe query construction
+      const safe_user_id = new mongoose.Types.ObjectId(id);
       query = { recipientType: "user", recipientId: safe_user_id };
     }
 

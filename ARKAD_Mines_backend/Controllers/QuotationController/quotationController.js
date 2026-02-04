@@ -56,16 +56,6 @@ const createOrUpdateQuotation = async (req, res) => {
       quoteId,
     } = req.body;
 
-    // Sanitize and validate inputs to prevent NoSQL injection
-    const userId = req.user?.id;
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID"
-      });
-    }
-    const safeUserId = String(userId).trim();
-
     const normalizedItems = normalizeItems(items);
 
     if (!normalizedItems.length) {
@@ -78,7 +68,7 @@ const createOrUpdateQuotation = async (req, res) => {
       };
       
       logAudit({
-        userId: safeUserId,
+        userId: req.user?.id,
         role: normalizeRole(req.user?.role),
         action: saveAsDraft ? 'CREATE_QUOTATION_DRAFT' : 'REQUEST_QUOTATION',
         status: 'FAILED_VALIDATION',
@@ -91,19 +81,7 @@ const createOrUpdateQuotation = async (req, res) => {
         .json({ success: false, message: "At least one item is required" });
     }
 
-    // Validate and sanitize stoneIds to prevent NoSQL injection
-    const stoneIds = normalizedItems
-      .map((item) => item.stoneId)
-      .filter((id) => id && mongoose.Types.ObjectId.isValid(id))
-      .map((id) => String(id).trim());
-    
-    if (stoneIds.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid stone IDs provided"
-      });
-    }
-
+    const stoneIds = normalizedItems.map((item) => item.stoneId);
     const stones = await stonesModel.find({ _id: { $in: stoneIds } });
 
     const unavailableItems = [];
@@ -217,18 +195,9 @@ const createOrUpdateQuotation = async (req, res) => {
 
     let quotation;
     if (quoteId) {
-      // Validate quoteId to prevent NoSQL injection
-      if (!mongoose.Types.ObjectId.isValid(quoteId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid quotation ID"
-        });
-      }
-      const safeQuoteId = String(quoteId).trim();
-
       quotation = await quotationModel.findOne({
-        _id: safeQuoteId,
-        buyer: safeUserId,
+        _id: quoteId,
+        buyer: req.user.id,
       });
 
       if (!quotation) {
@@ -262,7 +231,7 @@ const createOrUpdateQuotation = async (req, res) => {
       quotation = new quotationModel({
         referenceNumber: generateReferenceNumber(),
         quotationRequestId: saveAsDraft ? null : quotationRequestId, // Only set for actual requests, not drafts
-        buyer: safeUserId,
+        buyer: req.user.id,
         notes,
         status,
         items: preparedItems,
@@ -1153,27 +1122,9 @@ const convertToSalesOrder = async (req, res) => {
   try {
     const { quoteId } = req.params;
 
-    // Sanitize and validate inputs to prevent NoSQL injection
-    if (!quoteId || !mongoose.Types.ObjectId.isValid(quoteId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid quotation ID"
-      });
-    }
-    const safeQuoteId = String(quoteId).trim();
-
-    const userId = req.user?.id;
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID"
-      });
-    }
-    const safeUserId = String(userId).trim();
-
     const quotation = await quotationModel.findOne({
-      _id: safeQuoteId,
-      buyer: safeUserId,
+      _id: quoteId,
+      buyer: req.user.id,
     }).populate("buyer");
 
     if (!quotation) {
