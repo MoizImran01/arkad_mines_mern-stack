@@ -117,7 +117,7 @@ const List = () => {
             {list.map((item, index) => {
               return (
 
-                <div key={index} className="list-row-wrapper">
+                <div key={item._id} className="list-row-wrapper">
                   <div className="list-table-format">
 
                     <img src={getImageUrl(item.image)} alt={item.stoneName} />
@@ -181,7 +181,7 @@ const List = () => {
                 />
               </div>
               <div className="qr-modal-uuid-container">
-                <label className="qr-modal-uuid-label">QR Code UUID:</label>
+              <span className="qr-modal-uuid-label">QR Code UUID:</span>
                 <div className="qr-modal-uuid-box">
                   <code className="qr-modal-uuid-text">{qrModal.qrCodeId}</code>
                   <button 

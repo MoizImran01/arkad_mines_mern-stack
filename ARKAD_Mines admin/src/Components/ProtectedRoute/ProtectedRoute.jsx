@@ -21,7 +21,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
 
-  if (!token || !adminUser || adminUser.role !== 'admin') {
+  if (!token || adminUser?.role !== 'admin') {
     return <Navigate to="/login" replace />;
   }
 

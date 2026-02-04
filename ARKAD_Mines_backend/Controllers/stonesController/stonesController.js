@@ -482,5 +482,5 @@ const filterStones = async (req, res) => {
         });
     }
 }
-//end of stonesController
+
 export { addStones, listStones, removeStones, dispatchBlock, getStoneById, getBlockByQRCode, filterStones };

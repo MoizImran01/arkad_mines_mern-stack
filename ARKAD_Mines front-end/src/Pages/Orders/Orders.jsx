@@ -9,7 +9,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { 
   FiLoader, FiExternalLink, FiCreditCard, FiPackage, 
   FiMapPin, FiCalendar, FiTruck, FiX, FiCheck, FiShoppingCart, FiCheckCircle, FiDownload,
-  FiUser, FiMail, FiPhone, FiGlobe, FiBriefcase, FiLock, FiAlertTriangle
+  FiBriefcase, FiLock, FiAlertTriangle
 } from "react-icons/fi";
 
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";

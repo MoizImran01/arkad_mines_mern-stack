@@ -108,7 +108,7 @@ export const AddProduct = () => {
         <div className="add-img-upload flex-col">
           <p className='upload-image'>Upload Stone Image</p>
           <label htmlFor="image">
-            <img src={imagePreview || assets.upload_area} alt="Upload stone product image" />
+          <img src={imagePreview || assets.upload_area} alt="Stone product preview" />
           </label>
           <input
             type="file"
@@ -261,10 +261,25 @@ export const AddProduct = () => {
         <button type='submit' className='add-product-btn'>Register Block</button>
       </form>
 
-      {/* QR Code Display Modal */}
-      {showQRCode && qrCodeImage && qrCodeId && (
-        <div className="qr-code-modal" onClick={() => setShowQRCode(false)}>
-          <div className="qr-code-content" onClick={(e) => e.stopPropagation()}>
+{/* QR Code Display Modal */}
+{showQRCode && qrCodeImage && qrCodeId && (
+        <div 
+          className="qr-code-modal" 
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowQRCode(false);
+            }
+          }}
+
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+              setShowQRCode(false);
+            }
+          }}
+        >
+          <div className="qr-code-content">
             <h3>Block Registered Successfully!</h3>
             <p>QR Code Generated - Print this label and attach to the block</p>
             <div className="qr-code-image-container">
