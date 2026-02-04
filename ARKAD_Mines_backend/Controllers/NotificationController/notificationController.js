@@ -37,10 +37,12 @@ export const getNotifications = async (req, res) => {
   try {
     const { role, id } = req.user;
     
-    const safe_user_id = String(id); 
+    // Sanitize inputs to prevent NoSQL injection
+    const safe_user_id = String(id || '').trim();
+    const safe_role = String(role || '').trim();
 
     const query =
-      role === "admin"
+      safe_role === "admin"
         ? { recipientType: "admin" }
         : { recipientType: "user", recipientId: safe_user_id };
 
@@ -63,11 +65,12 @@ export const clearNotifications = async (req, res) => {
   try {
     const { role, id } = req.user;
     
-
-    const safe_user_id = String(id);
+    // Sanitize inputs to prevent NoSQL injection
+    const safe_user_id = String(id || '').trim();
+    const safe_role = String(role || '').trim();
 
     const query =
-      role === "admin"
+      safe_role === "admin"
         ? { recipientType: "admin" }
         : { recipientType: "user", recipientId: safe_user_id };
 
