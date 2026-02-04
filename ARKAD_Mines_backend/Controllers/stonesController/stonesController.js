@@ -312,11 +312,13 @@ const getStoneById = async (req, res) => {
 }
 
 // Get block by QR code
+// Get block by QR code
 const getBlockByQRCode = async (req, res) => {
     try {
         const { qrCode } = req.params;
+        const safeQrCode = String(qrCode);
 
-        const block = await stonesModel.findOne({ qrCode: qrCode }).select('-__v');
+        const block = await stonesModel.findOne({ qrCode: safeQrCode }).select('-__v');
 
         if (!block) {
             return res.status(404).json({
