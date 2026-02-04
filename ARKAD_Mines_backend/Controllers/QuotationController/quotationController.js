@@ -376,7 +376,7 @@ const getAllQuotations = async (req, res) => {
     const validStatuses = ["draft", "submitted", "adjustment_required", "revision_requested", "issued", "approved", "rejected"];
     
     if (status && typeof status === 'string' && validStatuses.includes(status)) {
-      query.status = status;
+      query.status = String(status); 
     }
 
     const quotations = await quotationModel

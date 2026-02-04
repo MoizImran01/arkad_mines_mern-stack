@@ -122,7 +122,7 @@ const getUserOrders = async (req, res) => {
     
 
     if (status && typeof status === 'string' && validStatuses.includes(status)) {
-       query.status = status;
+       query.status = String(status);
     }
     
     const orders = await orderModel.find(query)
@@ -145,7 +145,7 @@ const getAllOrders = async (req, res) => {
     
     if (status && typeof status === 'string') {
       const safeStatus = String(status).trim();
-      if (validStatuses.includes(safeStatus)) query.status = safeStatus;
+      if (validStatuses.includes(safeStatus)) query.status = String(safeStatus);
     }
 
     const orders = await orderModel
