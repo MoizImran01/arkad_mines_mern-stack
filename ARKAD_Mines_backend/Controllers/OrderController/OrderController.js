@@ -43,13 +43,14 @@ const generateSignedUrlsForPaymentProofs = (order) => {
 };
 
 // Get order details by order number for the logged-in user for a single order
+
 const getOrderDetails = async (req, res) => {
   try {
     const { orderNumber } = req.params;
-
+    const safeOrderNumber = String(orderNumber);
 
     const order = await orderModel.findOne({ 
-      orderNumber: orderNumber,
+      orderNumber: safeOrderNumber,
       buyer: req.user.id 
     }).populate("buyer", "companyName email");
 
@@ -80,9 +81,10 @@ const getUserOrders = async (req, res) => {
     const { status } = req.query; 
 
     const query = { buyer: userId };
+    const validStatuses = ["draft", "confirmed", "dispatched", "delivered", "cancelled"];
     
-    if (status) {
-      query.status = status;
+    if (status && typeof status === 'string' && validStatuses.includes(status)) {
+       query.status = status;
     }
     
     const orders = await orderModel.find(query)
@@ -147,6 +149,9 @@ const updateOrderStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { status, courierService, trackingNumber, courierLink, notes, dispatchedBlocks } = req.body;
+    if (!orderId || !mongoose.Types.ObjectId.isValid(String(orderId))) {
+      return res.status(400).json({ success: false, message: "Invalid Order ID" });
+  }
 
     const validStatuses = ["draft", "confirmed", "dispatched", "delivered", "cancelled"];
     if (!validStatuses.includes(status)) {

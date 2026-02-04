@@ -41,12 +41,11 @@ export const getNotifications = async (req, res) => {
     // Sanitize and validate inputs to prevent NoSQL injection
     const safe_role = String(role || '').trim();
     
-    // Construct query explicitly to prevent injection
     let query = {};
     if (safe_role === "admin") {
       query.recipientType = "admin";
     } else {
-      // Validate ObjectId format before using in query
+
       if (!id || !mongoose.Types.ObjectId.isValid(String(id))) {
         return res.status(400).json({
           success: false,

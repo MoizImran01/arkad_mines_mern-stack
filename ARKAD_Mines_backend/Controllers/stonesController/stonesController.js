@@ -395,15 +395,15 @@ const filterStones = async (req, res) => {
             }
         }
 
-        if (keywords && keywords.trim()) {
-            // Escape regex special characters to prevent ReDoS
-            const escapedKeywords = keywords.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const keywordRegex = new RegExp(escapedKeywords, 'i');
+        if (keywords && typeof keywords === 'string' && keywords.trim().length > 0) {
+            const safeKeywords = keywords.trim().slice(0, 50);
+            const escapedKeywords = safeKeywords.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regexQuery = { $regex: escapedKeywords, $options: 'i' };
             query.$or = [
-                { stoneName: keywordRegex },
-                { dimensions: keywordRegex },
-                { category: keywordRegex },
-                { subcategory: keywordRegex }
+                { stoneName: regexQuery },
+                { dimensions: regexQuery },
+                { category: regexQuery },
+                { subcategory: regexQuery }
             ];
         }
 
