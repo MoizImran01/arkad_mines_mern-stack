@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import { uploadBuffer, deleteImage, getPublicIdFromUrl } from '../../config/cloudinary.js';
 import { logAudit, logError, getClientIp, normalizeRole } from '../../logger/auditLogger.js';
+import mongoose from 'mongoose';
 
 //add stones item to the db - now using Cloudinary for image storage
 const addStones = async (req, res) => {
@@ -355,36 +356,49 @@ const filterStones = async (req, res) => {
         } = req.query;
 
 
+        // Construct query explicitly to prevent NoSQL injection
         let query = {};
 
-
-        if (category && category !== 'all') {
-            query.category = category;
+        // Sanitize category - only allow string values
+        if (category && category !== 'all' && typeof category === 'string') {
+            query.category = String(category).trim();
         }
 
-
-        if (subcategory && subcategory !== 'all') {
-            query.subcategory = subcategory;
+        // Sanitize subcategory - only allow string values
+        if (subcategory && subcategory !== 'all' && typeof subcategory === 'string') {
+            query.subcategory = String(subcategory).trim();
         }
 
-
+        // Validate and sanitize price range
         if (minPrice || maxPrice) {
             query.price = {};
             if (minPrice) {
-                query.price.$gte = Number(minPrice);
+                const minPriceNum = Number(minPrice);
+                if (!isNaN(minPriceNum) && minPriceNum >= 0) {
+                    query.price.$gte = minPriceNum;
+                }
             }
             if (maxPrice) {
-                query.price.$lte = Number(maxPrice);
+                const maxPriceNum = Number(maxPrice);
+                if (!isNaN(maxPriceNum) && maxPriceNum >= 0) {
+                    query.price.$lte = maxPriceNum;
+                }
             }
         }
 
-
-        if (stockAvailability && stockAvailability !== 'all') {
-            query.stockAvailability = stockAvailability;
+        // Sanitize stockAvailability - only allow valid enum values
+        const validStockAvailability = ['in_stock', 'out_of_stock', 'low_stock'];
+        if (stockAvailability && stockAvailability !== 'all' && typeof stockAvailability === 'string') {
+            const safeStockAvailability = String(stockAvailability).trim();
+            if (validStockAvailability.includes(safeStockAvailability)) {
+                query.stockAvailability = safeStockAvailability;
+            }
         }
 
         if (keywords && keywords.trim()) {
-            const keywordRegex = new RegExp(keywords.trim(), 'i');
+            // Escape regex special characters to prevent ReDoS
+            const escapedKeywords = keywords.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const keywordRegex = new RegExp(escapedKeywords, 'i');
             query.$or = [
                 { stoneName: keywordRegex },
                 { dimensions: keywordRegex },
@@ -394,8 +408,9 @@ const filterStones = async (req, res) => {
         }
 
 
-        if (source && source !== 'all' && !category) {
-            query.category = source;
+        // Sanitize source - only allow string values
+        if (source && source !== 'all' && !category && typeof source === 'string') {
+            query.category = String(source).trim();
         }
 
 

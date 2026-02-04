@@ -308,12 +308,25 @@ const getMyQuotations = async (req, res) => {
   const userAgent = getUserAgent(req);
   try {
     const { status } = req.query;
-    const query = { buyer: req.user.id };
+    
+    // Validate and sanitize buyer ID to prevent NoSQL injection
+    if (!req.user?.id || !mongoose.Types.ObjectId.isValid(String(req.user.id))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID"
+      });
+    }
+    
+    // Construct query explicitly to prevent injection
+    const query = { buyer: new mongoose.Types.ObjectId(String(req.user.id)) };
 
-    // Allow filtering by any valid status, including issued, approved, rejected
+    // Validate status against allowed enum values to prevent injection
     const allValidStatuses = ["draft", "submitted", "adjustment_required", "revision_requested", "issued", "approved", "rejected"];
-    if (status && allValidStatuses.includes(status)) {
-      query.status = status;
+    if (status && typeof status === 'string') {
+      const safeStatus = String(status).trim();
+      if (allValidStatuses.includes(safeStatus)) {
+        query.status = safeStatus;
+      }
     }
 
     const quotations = await quotationModel
@@ -751,10 +764,25 @@ const approveQuotation = async (req, res) => {
     const { quoteId } = req.params;
     const { comment } = req.body;
 
+    // Validate ObjectIds to prevent NoSQL injection - reject invalid IDs
+    if (!quoteId || !mongoose.Types.ObjectId.isValid(String(quoteId))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid quotation ID format"
+      });
+    }
     
+    if (!req.user?.id || !mongoose.Types.ObjectId.isValid(String(req.user.id))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID format"
+      });
+    }
+    
+    // Construct query explicitly with validated ObjectIds
     const quotation = await quotationModel.findOne({
-      _id: mongoose.Types.ObjectId.isValid(quoteId) ? new mongoose.Types.ObjectId(quoteId) : quoteId,
-      buyer: mongoose.Types.ObjectId.isValid(req.user.id) ? new mongoose.Types.ObjectId(req.user.id) : req.user.id // Strict ownership check - defense in depth
+      _id: new mongoose.Types.ObjectId(String(quoteId)),
+      buyer: new mongoose.Types.ObjectId(String(req.user.id))
     }).populate("buyer");
 
     if (!quotation) {
@@ -953,9 +981,25 @@ const rejectQuotation = async (req, res) => {
     const { quoteId } = req.params;
     const { comment } = req.body;
 
+    // Validate ObjectIds to prevent NoSQL injection
+    if (!quoteId || !mongoose.Types.ObjectId.isValid(String(quoteId))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid quotation ID format"
+      });
+    }
+    
+    if (!req.user?.id || !mongoose.Types.ObjectId.isValid(String(req.user.id))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID format"
+      });
+    }
+
+    // Construct query explicitly with validated ObjectIds
     const quotation = await quotationModel.findOne({
-      _id: quoteId,
-      buyer: req.user.id,
+      _id: new mongoose.Types.ObjectId(String(quoteId)),
+      buyer: new mongoose.Types.ObjectId(String(req.user.id)),
     }).populate("buyer");
 
     if (!quotation) {
@@ -1040,9 +1084,25 @@ const requestRevision = async (req, res) => {
     const { quoteId } = req.params;
     const { comment } = req.body;
 
+    // Validate ObjectIds to prevent NoSQL injection
+    if (!quoteId || !mongoose.Types.ObjectId.isValid(String(quoteId))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid quotation ID format"
+      });
+    }
+    
+    if (!req.user?.id || !mongoose.Types.ObjectId.isValid(String(req.user.id))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID format"
+      });
+    }
+
+    // Construct query explicitly with validated ObjectIds
     const quotation = await quotationModel.findOne({
-      _id: quoteId,
-      buyer: req.user.id,
+      _id: new mongoose.Types.ObjectId(String(quoteId)),
+      buyer: new mongoose.Types.ObjectId(String(req.user.id)),
     }).populate("buyer");
 
     if (!quotation) {

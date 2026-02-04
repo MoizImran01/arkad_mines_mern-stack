@@ -3,6 +3,7 @@ import stonesModel from "../../Models/stonesModel/stonesModel.js";
 import { cloudinary, configureCloudinary, generateSignedUrl } from '../../config/cloudinary.js';
 import { logAudit, logError, getClientIp, normalizeRole, getUserAgent } from '../../logger/auditLogger.js';
 import { createNotification } from "../NotificationController/notificationController.js";
+import mongoose from "mongoose";
 
 // Helper function to round to 2 decimal places
 const roundToTwoDecimals = (value) => {
@@ -107,10 +108,17 @@ const getUserOrders = async (req, res) => {
 const getAllOrders = async (req, res) => {
   try {
     const { status } = req.query;
+    
+    // Construct query explicitly to prevent NoSQL injection
     const query = {};
 
-    if (status) {
-      query.status = status;
+    // Validate status against allowed enum values to prevent injection
+    const validStatuses = ["draft", "confirmed", "dispatched", "delivered", "cancelled"];
+    if (status && typeof status === 'string') {
+      const safeStatus = String(status).trim();
+      if (validStatuses.includes(safeStatus)) {
+        query.status = safeStatus;
+      }
     }
 
     const orders = await orderModel
@@ -952,11 +960,26 @@ const getOrderDetailsWithPayment = async (req, res) => {
     const { orderId } = req.params;
     const isAdmin = req.user.role === "admin";
 
-    let query = { _id: orderId };
+    // Validate ObjectId to prevent NoSQL injection
+    if (!orderId || !mongoose.Types.ObjectId.isValid(String(orderId))) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID format"
+      });
+    }
 
-    // If not admin, ensure user is the buyer
+    // Construct query explicitly with validated ObjectId
+    let query = { _id: new mongoose.Types.ObjectId(String(orderId)) };
+
+    // If not admin, ensure user is the buyer - validate user ID
     if (!isAdmin) {
-      query.buyer = userId;
+      if (!userId || !mongoose.Types.ObjectId.isValid(String(userId))) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid user ID format"
+        });
+      }
+      query.buyer = new mongoose.Types.ObjectId(String(userId));
     }
 
     const order = await orderModel.findOne(query).populate("buyer", "companyName email phone");
