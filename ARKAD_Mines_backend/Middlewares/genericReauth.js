@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import userModel from "../Models/Users/userModel.js";
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";
+import mongoose from "mongoose";
 
 export const createReauthMiddleware = ({
   actionName = 'REAUTH',
@@ -51,7 +52,26 @@ export const createReauthMiddleware = ({
         });
       }
 
-      const user = await userModel.findById(userId).select('password');
+      // Sanitize and validate userId to prevent NoSQL injection
+      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        await logAudit({
+          userId: null,
+          role: normalizeRole(req.user?.role),
+          action: actionName,
+          status: 'FAILED_AUTH',
+          resourceId: getResourceId(req),
+          clientIp,
+          userAgent,
+          details: `Invalid user ID format: ${userId}`
+        });
+        return res.status(400).json({
+          success: false,
+          message: "Invalid user ID"
+        });
+      }
+      const safeUserId = String(userId).trim();
+      
+      const user = await userModel.findById(safeUserId).select('password');
       
       if (!user || !user.password) {
         await logAudit({

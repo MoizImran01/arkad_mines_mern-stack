@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import { uploadBuffer, deleteImage, getPublicIdFromUrl } from '../../config/cloudinary.js';
 import { logAudit, logError, getClientIp, normalizeRole } from '../../logger/auditLogger.js';
+import mongoose from "mongoose";
 
 //add stones item to the db - now using Cloudinary for image storage
 const addStones = async (req, res) => {
@@ -166,7 +167,17 @@ const listStones = async (req, res) => {
 const removeStones = async (req, res) => {
     const clientIp = getClientIp(req);
     try {
-        const stones = await stonesModel.findById(req.body.id); 
+        // Sanitize and validate inputs to prevent NoSQL injection
+        const stoneId = req.body?.id;
+        if (!stoneId || !mongoose.Types.ObjectId.isValid(stoneId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid stone ID"
+            });
+        }
+        const safeStoneId = String(stoneId).trim();
+        
+        const stones = await stonesModel.findById(safeStoneId); 
         
         if (!stones) {
             logAudit({
@@ -174,7 +185,7 @@ const removeStones = async (req, res) => {
                 role: normalizeRole(req.user?.role),
                 action: 'REMOVE_STONE',
                 status: 'FAILED_VALIDATION',
-                resourceId: req.body.id,
+                resourceId: safeStoneId,
                 clientIp,
                 details: 'Stone not found'
             });
@@ -182,7 +193,7 @@ const removeStones = async (req, res) => {
         }
         
         // Delete from database FIRST for immediate response
-        await stonesModel.findByIdAndDelete(req.body.id);
+        await stonesModel.findByIdAndDelete(safeStoneId);
         
         logAudit({
             userId: req.user?.id,
@@ -258,7 +269,16 @@ const getStoneById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const stone = await stonesModel.findById(id).select('-__v');
+        // Sanitize and validate inputs to prevent NoSQL injection
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid stone ID"
+            });
+        }
+        const safeId = String(id).trim();
+
+        const stone = await stonesModel.findById(safeId).select('-__v');
 
         if (!stone) {
             logAudit({
@@ -266,7 +286,7 @@ const getStoneById = async (req, res) => {
                 role: req.user ? normalizeRole(req.user.role) : 'GUEST',
                 action: 'VIEW_ITEM_DETAILS',
                 status: 'FAILED_VALIDATION',
-                resourceId: id,
+                resourceId: safeId,
                 clientIp,
                 details: `Item not found: itemId=${id}`
             });
@@ -315,7 +335,16 @@ const getBlockByQRCode = async (req, res) => {
     try {
         const { qrCode } = req.params;
 
-        const block = await stonesModel.findOne({ qrCode: qrCode }).select('-__v');
+        // Sanitize and validate inputs to prevent NoSQL injection
+        const safeQrCode = String(qrCode || '').trim();
+        if (!safeQrCode) {
+            return res.status(400).json({
+                success: false,
+                message: "QR code is required"
+            });
+        }
+
+        const block = await stonesModel.findOne({ qrCode: safeQrCode }).select('-__v');
 
         if (!block) {
             return res.status(404).json({
@@ -354,48 +383,71 @@ const filterStones = async (req, res) => {
             source
         } = req.query;
 
-
+        // Sanitize and validate inputs to prevent NoSQL injection
         let query = {};
 
-
-        if (category && category !== 'all') {
-            query.category = category;
+        // Sanitize category - only allow alphanumeric, spaces, hyphens, underscores
+        if (category && typeof category === 'string' && category !== 'all') {
+            const safeCategory = category.trim().replace(/[^a-zA-Z0-9\s\-_]/g, '');
+            if (safeCategory) {
+                query.category = safeCategory;
+            }
         }
 
-
-        if (subcategory && subcategory !== 'all') {
-            query.subcategory = subcategory;
+        // Sanitize subcategory - only allow alphanumeric, spaces, hyphens, underscores
+        if (subcategory && typeof subcategory === 'string' && subcategory !== 'all') {
+            const safeSubcategory = subcategory.trim().replace(/[^a-zA-Z0-9\s\-_]/g, '');
+            if (safeSubcategory) {
+                query.subcategory = safeSubcategory;
+            }
         }
 
-
+        // Validate and sanitize price range - ensure they are valid numbers
         if (minPrice || maxPrice) {
             query.price = {};
             if (minPrice) {
-                query.price.$gte = Number(minPrice);
+                const safeMinPrice = Number(minPrice);
+                if (!isNaN(safeMinPrice) && safeMinPrice >= 0) {
+                    query.price.$gte = safeMinPrice;
+                }
             }
             if (maxPrice) {
-                query.price.$lte = Number(maxPrice);
+                const safeMaxPrice = Number(maxPrice);
+                if (!isNaN(safeMaxPrice) && safeMaxPrice >= 0) {
+                    query.price.$lte = safeMaxPrice;
+                }
             }
         }
 
-
-        if (stockAvailability && stockAvailability !== 'all') {
-            query.stockAvailability = stockAvailability;
+        // Sanitize stockAvailability - only allow specific values
+        const validStockAvailability = ['in_stock', 'out_of_stock', 'low_stock'];
+        if (stockAvailability && typeof stockAvailability === 'string' && stockAvailability !== 'all') {
+            const safeStockAvailability = stockAvailability.trim();
+            if (validStockAvailability.includes(safeStockAvailability)) {
+                query.stockAvailability = safeStockAvailability;
+            }
         }
 
-        if (keywords && keywords.trim()) {
-            const keywordRegex = new RegExp(keywords.trim(), 'i');
-            query.$or = [
-                { stoneName: keywordRegex },
-                { dimensions: keywordRegex },
-                { category: keywordRegex },
-                { subcategory: keywordRegex }
-            ];
+        // Sanitize keywords - escape regex special characters
+        if (keywords && typeof keywords === 'string' && keywords.trim()) {
+            const safeKeywords = keywords.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            if (safeKeywords) {
+                const keywordRegex = new RegExp(safeKeywords, 'i');
+                query.$or = [
+                    { stoneName: keywordRegex },
+                    { dimensions: keywordRegex },
+                    { category: keywordRegex },
+                    { subcategory: keywordRegex }
+                ];
+            }
         }
 
-
-        if (source && source !== 'all' && !category) {
-            query.category = source;
+        // Sanitize source - only allow alphanumeric, spaces, hyphens, underscores
+        if (source && typeof source === 'string' && source !== 'all' && !category) {
+            const safeSource = source.trim().replace(/[^a-zA-Z0-9\s\-_]/g, '');
+            if (safeSource) {
+                query.category = safeSource;
+            }
         }
 
 

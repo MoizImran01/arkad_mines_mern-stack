@@ -3,6 +3,7 @@ import stonesModel from "../../Models/stonesModel/stonesModel.js";
 import { cloudinary, configureCloudinary, generateSignedUrl } from '../../config/cloudinary.js';
 import { logAudit, logError, getClientIp, normalizeRole, getUserAgent } from '../../logger/auditLogger.js';
 import { createNotification } from "../NotificationController/notificationController.js";
+import mongoose from "mongoose";
 
 // Helper function to round to 2 decimal places
 const roundToTwoDecimals = (value) => {
@@ -46,10 +47,27 @@ const getOrderDetails = async (req, res) => {
   try {
     const { orderNumber } = req.params;
 
+    // Sanitize and validate inputs to prevent NoSQL injection
+    const safeOrderNumber = String(orderNumber || '').trim();
+    if (!safeOrderNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "Order number is required"
+      });
+    }
+    
+    const safeBuyerId = req.user?.id;
+    if (!safeBuyerId || !mongoose.Types.ObjectId.isValid(safeBuyerId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID"
+      });
+    }
+    const safeBuyerIdStr = String(safeBuyerId).trim();
 
     const order = await orderModel.findOne({ 
-      orderNumber: orderNumber,
-      buyer: req.user.id 
+      orderNumber: safeOrderNumber,
+      buyer: safeBuyerIdStr 
     }).populate("buyer", "companyName email");
 
     if (!order) {
@@ -75,13 +93,24 @@ const getOrderDetails = async (req, res) => {
 //Get all orders for the logged-in user
 const getUserOrders = async (req, res) => {
   try {
-    const userId = req.user.id; 
+    // Sanitize and validate inputs to prevent NoSQL injection
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID"
+      });
+    }
+    const safeUserId = String(userId).trim();
+    
     const { status } = req.query; 
 
-    const query = { buyer: userId };
+    const query = { buyer: safeUserId };
     
-    if (status) {
-      query.status = status;
+    // Validate status against whitelist to prevent injection
+    const validStatuses = ["pending", "processing", "dispatched", "delivered", "cancelled"];
+    if (status && typeof status === 'string' && validStatuses.includes(status.trim())) {
+      query.status = status.trim();
     }
     
     const orders = await orderModel.find(query)
@@ -109,8 +138,10 @@ const getAllOrders = async (req, res) => {
     const { status } = req.query;
     const query = {};
 
-    if (status) {
-      query.status = status;
+    // Validate status against whitelist to prevent injection
+    const validStatuses = ["pending", "processing", "dispatched", "delivered", "cancelled"];
+    if (status && typeof status === 'string' && validStatuses.includes(status.trim())) {
+      query.status = status.trim();
     }
 
     const orders = await orderModel
@@ -952,11 +983,28 @@ const getOrderDetailsWithPayment = async (req, res) => {
     const { orderId } = req.params;
     const isAdmin = req.user.role === "admin";
 
-    let query = { _id: orderId };
+    // Sanitize and validate inputs to prevent NoSQL injection
+    if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID"
+      });
+    }
+    const safeOrderId = String(orderId).trim();
+    
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID"
+      });
+    }
+    const safeUserId = String(userId).trim();
+
+    let query = { _id: safeOrderId };
 
     // If not admin, ensure user is the buyer
     if (!isAdmin) {
-      query.buyer = userId;
+      query.buyer = safeUserId;
     }
 
     const order = await orderModel.findOne(query).populate("buyer", "companyName email phone");

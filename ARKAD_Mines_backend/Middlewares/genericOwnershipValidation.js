@@ -1,4 +1,5 @@
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";
+import mongoose from "mongoose";
 
 export const createOwnershipValidator = ({
   model,
@@ -53,7 +54,43 @@ export const createOwnershipValidator = ({
         selectString = selectFields.join(' ');
       }
 
-      const resource = await model.findById(resourceId).select(selectString).lean();
+      // Sanitize and validate inputs to prevent NoSQL injection
+      if (!mongoose.Types.ObjectId.isValid(resourceId)) {
+        await logAudit({
+          userId,
+          role: normalizeRole(req.user?.role),
+          action: actionName,
+          status: 'FAILED_VALIDATION',
+          resourceId,
+          clientIp,
+          userAgent,
+          details: `Invalid resource ID format: ${resourceId}`
+        });
+        return res.status(400).json({
+          success: false,
+          message: "Invalid resource ID format"
+        });
+      }
+      const safeResourceId = String(resourceId).trim();
+      
+      if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        await logAudit({
+          userId: null,
+          role: normalizeRole(req.user?.role),
+          action: actionName,
+          status: 'FAILED_AUTH',
+          resourceId: safeResourceId,
+          clientIp,
+          userAgent,
+          details: `Invalid user ID format: ${userId}`
+        });
+        return res.status(400).json({
+          success: false,
+          message: "Invalid user ID format"
+        });
+      }
+      
+      const resource = await model.findById(safeResourceId).select(selectString).lean();
 
       if (!resource) {
         await logAudit({
