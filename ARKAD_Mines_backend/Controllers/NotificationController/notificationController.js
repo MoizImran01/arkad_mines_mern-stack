@@ -1,5 +1,6 @@
 import notificationModel from "../../Models/notificationModel/notificationModel.js";
 import orderModel from "../../Models/orderModel/orderModel.js";
+import mongoose from "mongoose";
 
 export const createNotification = async (payload) => {
   try {
@@ -37,14 +38,22 @@ export const getNotifications = async (req, res) => {
   try {
     const { role, id } = req.user;
     
-    // Sanitize inputs to prevent NoSQL injection
-    const safe_user_id = String(id || '').trim();
+    // Sanitize and validate inputs to prevent NoSQL injection
     const safe_role = String(role || '').trim();
-
-    const query =
-      safe_role === "admin"
-        ? { recipientType: "admin" }
-        : { recipientType: "user", recipientId: safe_user_id };
+    
+    let query;
+    if (safe_role === "admin") {
+      query = { recipientType: "admin" };
+    } else {
+      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid user ID"
+        });
+      }
+      const safe_user_id = String(id).trim();
+      query = { recipientType: "user", recipientId: safe_user_id };
+    }
 
     const notifications = await notificationModel
       .find(query)
@@ -65,14 +74,23 @@ export const clearNotifications = async (req, res) => {
   try {
     const { role, id } = req.user;
     
-    // Sanitize inputs to prevent NoSQL injection
-    const safe_user_id = String(id || '').trim();
+    // Sanitize and validate inputs to prevent NoSQL injection
     const safe_role = String(role || '').trim();
+    
+    let query;
+    if (safe_role === "admin") {
+      query = { recipientType: "admin" };
+    } else {
 
-    const query =
-      safe_role === "admin"
-        ? { recipientType: "admin" }
-        : { recipientType: "user", recipientId: safe_user_id };
+      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid user ID"
+        });
+      }
+      const safe_user_id = String(id).trim();
+      query = { recipientType: "user", recipientId: safe_user_id };
+    }
 
     const clearedAt = new Date();
 
