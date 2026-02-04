@@ -373,10 +373,9 @@ const getAllQuotations = async (req, res) => {
   try {
     const { status } = req.query;
     const query = {};
-
-    // Filter by status if provided
     const validStatuses = ["draft", "submitted", "adjustment_required", "revision_requested", "issued", "approved", "rejected"];
-    if (status && validStatuses.includes(status)) {
+    
+    if (status && typeof status === 'string' && validStatuses.includes(status)) {
       query.status = status;
     }
 
@@ -396,7 +395,7 @@ const getAllQuotations = async (req, res) => {
       requestPayload: {
         method: req.method,
         path: req.path,
-        query: req.query,
+        query: JSON.stringify(req.query),
       },
       details: `Admin/Sales Rep accessed all quotations: statusFilter=${status || 'all'}, count=${quotations.length}`
     });
