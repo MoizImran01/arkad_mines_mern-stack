@@ -167,17 +167,7 @@ const listStones = async (req, res) => {
 const removeStones = async (req, res) => {
     const clientIp = getClientIp(req);
     try {
-        // Sanitize and validate inputs to prevent NoSQL injection
-        const stoneId = req.body?.id;
-        if (!stoneId || !mongoose.Types.ObjectId.isValid(stoneId)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid stone ID"
-            });
-        }
-        const safeStoneId = String(stoneId).trim();
-        
-        const stones = await stonesModel.findById(safeStoneId); 
+        const stones = await stonesModel.findById(req.body.id); 
         
         if (!stones) {
             logAudit({
@@ -185,7 +175,7 @@ const removeStones = async (req, res) => {
                 role: normalizeRole(req.user?.role),
                 action: 'REMOVE_STONE',
                 status: 'FAILED_VALIDATION',
-                resourceId: safeStoneId,
+                resourceId: req.body.id,
                 clientIp,
                 details: 'Stone not found'
             });
@@ -193,7 +183,7 @@ const removeStones = async (req, res) => {
         }
         
         // Delete from database FIRST for immediate response
-        await stonesModel.findByIdAndDelete(safeStoneId);
+        await stonesModel.findByIdAndDelete(req.body.id);
         
         logAudit({
             userId: req.user?.id,
@@ -286,7 +276,7 @@ const getStoneById = async (req, res) => {
                 role: req.user ? normalizeRole(req.user.role) : 'GUEST',
                 action: 'VIEW_ITEM_DETAILS',
                 status: 'FAILED_VALIDATION',
-                resourceId: safeId,
+                resourceId: id,
                 clientIp,
                 details: `Item not found: itemId=${id}`
             });
@@ -335,7 +325,7 @@ const getBlockByQRCode = async (req, res) => {
     try {
         const { qrCode } = req.params;
 
-        // Sanitize and validate inputs to prevent NoSQL injection
+        // Sanitize inputs to prevent NoSQL injection
         const safeQrCode = String(qrCode || '').trim();
         if (!safeQrCode) {
             return res.status(400).json({
@@ -383,71 +373,48 @@ const filterStones = async (req, res) => {
             source
         } = req.query;
 
-        // Sanitize and validate inputs to prevent NoSQL injection
+
         let query = {};
 
-        // Sanitize category - only allow alphanumeric, spaces, hyphens, underscores
-        if (category && typeof category === 'string' && category !== 'all') {
-            const safeCategory = category.trim().replace(/[^a-zA-Z0-9\s\-_]/g, '');
-            if (safeCategory) {
-                query.category = safeCategory;
-            }
+
+        if (category && category !== 'all') {
+            query.category = category;
         }
 
-        // Sanitize subcategory - only allow alphanumeric, spaces, hyphens, underscores
-        if (subcategory && typeof subcategory === 'string' && subcategory !== 'all') {
-            const safeSubcategory = subcategory.trim().replace(/[^a-zA-Z0-9\s\-_]/g, '');
-            if (safeSubcategory) {
-                query.subcategory = safeSubcategory;
-            }
+
+        if (subcategory && subcategory !== 'all') {
+            query.subcategory = subcategory;
         }
 
-        // Validate and sanitize price range - ensure they are valid numbers
+
         if (minPrice || maxPrice) {
             query.price = {};
             if (minPrice) {
-                const safeMinPrice = Number(minPrice);
-                if (!isNaN(safeMinPrice) && safeMinPrice >= 0) {
-                    query.price.$gte = safeMinPrice;
-                }
+                query.price.$gte = Number(minPrice);
             }
             if (maxPrice) {
-                const safeMaxPrice = Number(maxPrice);
-                if (!isNaN(safeMaxPrice) && safeMaxPrice >= 0) {
-                    query.price.$lte = safeMaxPrice;
-                }
+                query.price.$lte = Number(maxPrice);
             }
         }
 
-        // Sanitize stockAvailability - only allow specific values
-        const validStockAvailability = ['in_stock', 'out_of_stock', 'low_stock'];
-        if (stockAvailability && typeof stockAvailability === 'string' && stockAvailability !== 'all') {
-            const safeStockAvailability = stockAvailability.trim();
-            if (validStockAvailability.includes(safeStockAvailability)) {
-                query.stockAvailability = safeStockAvailability;
-            }
+
+        if (stockAvailability && stockAvailability !== 'all') {
+            query.stockAvailability = stockAvailability;
         }
 
-        // Sanitize keywords - escape regex special characters
-        if (keywords && typeof keywords === 'string' && keywords.trim()) {
-            const safeKeywords = keywords.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            if (safeKeywords) {
-                const keywordRegex = new RegExp(safeKeywords, 'i');
-                query.$or = [
-                    { stoneName: keywordRegex },
-                    { dimensions: keywordRegex },
-                    { category: keywordRegex },
-                    { subcategory: keywordRegex }
-                ];
-            }
+        if (keywords && keywords.trim()) {
+            const keywordRegex = new RegExp(keywords.trim(), 'i');
+            query.$or = [
+                { stoneName: keywordRegex },
+                { dimensions: keywordRegex },
+                { category: keywordRegex },
+                { subcategory: keywordRegex }
+            ];
         }
 
-        // Sanitize source - only allow alphanumeric, spaces, hyphens, underscores
-        if (source && typeof source === 'string' && source !== 'all' && !category) {
-            const safeSource = source.trim().replace(/[^a-zA-Z0-9\s\-_]/g, '');
-            if (safeSource) {
-                query.category = safeSource;
-            }
+
+        if (source && source !== 'all' && !category) {
+            query.category = source;
         }
 
 

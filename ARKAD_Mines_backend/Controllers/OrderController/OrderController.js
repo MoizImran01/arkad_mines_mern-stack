@@ -55,19 +55,19 @@ const getOrderDetails = async (req, res) => {
         message: "Order number is required"
       });
     }
-    
-    const safeBuyerId = req.user?.id;
-    if (!safeBuyerId || !mongoose.Types.ObjectId.isValid(safeBuyerId)) {
+
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({
         success: false,
         message: "Invalid user ID"
       });
     }
-    const safeBuyerIdStr = String(safeBuyerId).trim();
+    const safeUserId = String(userId).trim();
 
     const order = await orderModel.findOne({ 
       orderNumber: safeOrderNumber,
-      buyer: safeBuyerIdStr 
+      buyer: safeUserId 
     }).populate("buyer", "companyName email");
 
     if (!order) {
@@ -102,15 +102,18 @@ const getUserOrders = async (req, res) => {
       });
     }
     const safeUserId = String(userId).trim();
-    
-    const { status } = req.query; 
+
+    const { status } = req.query;
+    const safeStatus = status ? String(status).trim() : null;
 
     const query = { buyer: safeUserId };
     
-    // Validate status against whitelist to prevent injection
-    const validStatuses = ["pending", "processing", "dispatched", "delivered", "cancelled"];
-    if (status && typeof status === 'string' && validStatuses.includes(status.trim())) {
-      query.status = status.trim();
+    // Validate status against allowed enum values if provided
+    if (safeStatus) {
+      const allowedStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+      if (allowedStatuses.includes(safeStatus)) {
+        query.status = safeStatus;
+      }
     }
     
     const orders = await orderModel.find(query)
@@ -138,10 +141,8 @@ const getAllOrders = async (req, res) => {
     const { status } = req.query;
     const query = {};
 
-    // Validate status against whitelist to prevent injection
-    const validStatuses = ["pending", "processing", "dispatched", "delivered", "cancelled"];
-    if (status && typeof status === 'string' && validStatuses.includes(status.trim())) {
-      query.status = status.trim();
+    if (status) {
+      query.status = status;
     }
 
     const orders = await orderModel
@@ -983,28 +984,11 @@ const getOrderDetailsWithPayment = async (req, res) => {
     const { orderId } = req.params;
     const isAdmin = req.user.role === "admin";
 
-    // Sanitize and validate inputs to prevent NoSQL injection
-    if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid order ID"
-      });
-    }
-    const safeOrderId = String(orderId).trim();
-    
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID"
-      });
-    }
-    const safeUserId = String(userId).trim();
-
-    let query = { _id: safeOrderId };
+    let query = { _id: orderId };
 
     // If not admin, ensure user is the buyer
     if (!isAdmin) {
-      query.buyer = safeUserId;
+      query.buyer = userId;
     }
 
     const order = await orderModel.findOne(query).populate("buyer", "companyName email phone");

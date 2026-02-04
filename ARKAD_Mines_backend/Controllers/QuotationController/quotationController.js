@@ -56,6 +56,16 @@ const createOrUpdateQuotation = async (req, res) => {
       quoteId,
     } = req.body;
 
+    // Sanitize and validate inputs to prevent NoSQL injection
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID"
+      });
+    }
+    const safeUserId = String(userId).trim();
+
     const normalizedItems = normalizeItems(items);
 
     if (!normalizedItems.length) {
@@ -68,7 +78,7 @@ const createOrUpdateQuotation = async (req, res) => {
       };
       
       logAudit({
-        userId: req.user?.id,
+        userId: safeUserId,
         role: normalizeRole(req.user?.role),
         action: saveAsDraft ? 'CREATE_QUOTATION_DRAFT' : 'REQUEST_QUOTATION',
         status: 'FAILED_VALIDATION',
@@ -81,7 +91,7 @@ const createOrUpdateQuotation = async (req, res) => {
         .json({ success: false, message: "At least one item is required" });
     }
 
-    // Sanitize and validate stone IDs to prevent NoSQL injection
+    // Validate and sanitize stoneIds to prevent NoSQL injection
     const stoneIds = normalizedItems
       .map((item) => item.stoneId)
       .filter((id) => id && mongoose.Types.ObjectId.isValid(id))
@@ -90,10 +100,10 @@ const createOrUpdateQuotation = async (req, res) => {
     if (stoneIds.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "No valid stone IDs provided"
+        message: "Invalid stone IDs provided"
       });
     }
-    
+
     const stones = await stonesModel.find({ _id: { $in: stoneIds } });
 
     const unavailableItems = [];
@@ -207,7 +217,7 @@ const createOrUpdateQuotation = async (req, res) => {
 
     let quotation;
     if (quoteId) {
-      // Sanitize and validate inputs to prevent NoSQL injection
+      // Validate quoteId to prevent NoSQL injection
       if (!mongoose.Types.ObjectId.isValid(quoteId)) {
         return res.status(400).json({
           success: false,
@@ -215,18 +225,10 @@ const createOrUpdateQuotation = async (req, res) => {
         });
       }
       const safeQuoteId = String(quoteId).trim();
-      const safeBuyerId = req.user?.id;
-      if (!safeBuyerId || !mongoose.Types.ObjectId.isValid(safeBuyerId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid user ID"
-        });
-      }
-      const safeBuyerIdStr = String(safeBuyerId).trim();
-      
+
       quotation = await quotationModel.findOne({
         _id: safeQuoteId,
-        buyer: safeBuyerIdStr,
+        buyer: safeUserId,
       });
 
       if (!quotation) {
@@ -257,20 +259,10 @@ const createOrUpdateQuotation = async (req, res) => {
       }
       await quotation.save();
     } else {
-      // Validate buyer ID before creating quotation
-      const safeBuyerId = req.user?.id;
-      if (!safeBuyerId || !mongoose.Types.ObjectId.isValid(safeBuyerId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid user ID"
-        });
-      }
-      const safeBuyerIdStr = String(safeBuyerId).trim();
-      
       quotation = new quotationModel({
         referenceNumber: generateReferenceNumber(),
         quotationRequestId: saveAsDraft ? null : quotationRequestId, // Only set for actual requests, not drafts
-        buyer: safeBuyerIdStr,
+        buyer: safeUserId,
         notes,
         status,
         items: preparedItems,
@@ -346,23 +338,13 @@ const getMyQuotations = async (req, res) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);
   try {
-    // Sanitize and validate inputs to prevent NoSQL injection
-    const safeBuyerId = req.user?.id;
-    if (!safeBuyerId || !mongoose.Types.ObjectId.isValid(safeBuyerId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID"
-      });
-    }
-    const safeBuyerIdStr = String(safeBuyerId).trim();
-    
     const { status } = req.query;
-    const query = { buyer: safeBuyerIdStr };
+    const query = { buyer: req.user.id };
 
     // Allow filtering by any valid status, including issued, approved, rejected
     const allValidStatuses = ["draft", "submitted", "adjustment_required", "revision_requested", "issued", "approved", "rejected"];
-    if (status && typeof status === 'string' && allValidStatuses.includes(status.trim())) {
-      query.status = status.trim();
+    if (status && allValidStatuses.includes(status)) {
+      query.status = status;
     }
 
     const quotations = await quotationModel
@@ -801,27 +783,9 @@ const approveQuotation = async (req, res) => {
     const { comment } = req.body;
 
     
-    // Sanitize and validate inputs to prevent NoSQL injection
-    if (!quoteId || !mongoose.Types.ObjectId.isValid(quoteId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid quotation ID"
-      });
-    }
-    const safeQuoteId = String(quoteId).trim();
-    
-    const safeBuyerId = req.user?.id;
-    if (!safeBuyerId || !mongoose.Types.ObjectId.isValid(safeBuyerId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID"
-      });
-    }
-    const safeBuyerIdObj = new mongoose.Types.ObjectId(safeBuyerId);
-    
     const quotation = await quotationModel.findOne({
-      _id: new mongoose.Types.ObjectId(safeQuoteId),
-      buyer: safeBuyerIdObj // Strict ownership check - defense in depth
+      _id: mongoose.Types.ObjectId.isValid(quoteId) ? new mongoose.Types.ObjectId(quoteId) : quoteId,
+      buyer: mongoose.Types.ObjectId.isValid(req.user.id) ? new mongoose.Types.ObjectId(req.user.id) : req.user.id // Strict ownership check - defense in depth
     }).populate("buyer");
 
     if (!quotation) {
@@ -1020,27 +984,9 @@ const rejectQuotation = async (req, res) => {
     const { quoteId } = req.params;
     const { comment } = req.body;
 
-    // Sanitize and validate inputs to prevent NoSQL injection
-    if (!quoteId || !mongoose.Types.ObjectId.isValid(quoteId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid quotation ID"
-      });
-    }
-    const safeQuoteId = String(quoteId).trim();
-    
-    const safeBuyerId = req.user?.id;
-    if (!safeBuyerId || !mongoose.Types.ObjectId.isValid(safeBuyerId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID"
-      });
-    }
-    const safeBuyerIdStr = String(safeBuyerId).trim();
-    
     const quotation = await quotationModel.findOne({
-      _id: safeQuoteId,
-      buyer: safeBuyerIdStr,
+      _id: quoteId,
+      buyer: req.user.id,
     }).populate("buyer");
 
     if (!quotation) {
@@ -1125,27 +1071,9 @@ const requestRevision = async (req, res) => {
     const { quoteId } = req.params;
     const { comment } = req.body;
 
-    // Sanitize and validate inputs to prevent NoSQL injection
-    if (!quoteId || !mongoose.Types.ObjectId.isValid(quoteId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid quotation ID"
-      });
-    }
-    const safeQuoteId = String(quoteId).trim();
-    
-    const safeBuyerId = req.user?.id;
-    if (!safeBuyerId || !mongoose.Types.ObjectId.isValid(safeBuyerId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID"
-      });
-    }
-    const safeBuyerIdStr = String(safeBuyerId).trim();
-    
     const quotation = await quotationModel.findOne({
-      _id: safeQuoteId,
-      buyer: safeBuyerIdStr,
+      _id: quoteId,
+      buyer: req.user.id,
     }).populate("buyer");
 
     if (!quotation) {
@@ -1233,19 +1161,19 @@ const convertToSalesOrder = async (req, res) => {
       });
     }
     const safeQuoteId = String(quoteId).trim();
-    
-    const safeBuyerId = req.user?.id;
-    if (!safeBuyerId || !mongoose.Types.ObjectId.isValid(safeBuyerId)) {
+
+    const userId = req.user?.id;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({
         success: false,
         message: "Invalid user ID"
       });
     }
-    const safeBuyerIdStr = String(safeBuyerId).trim();
-    
+    const safeUserId = String(userId).trim();
+
     const quotation = await quotationModel.findOne({
       _id: safeQuoteId,
-      buyer: safeBuyerIdStr,
+      buyer: safeUserId,
     }).populate("buyer");
 
     if (!quotation) {

@@ -1,6 +1,5 @@
 import quotationModel from "../Models/quotationModel/quotationModel.js";
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";
-import mongoose from "mongoose";
 
 export const validateQuotationStatus = async (req, res, next) => {
   const quoteId = req.params.quoteId;
@@ -9,26 +8,7 @@ export const validateQuotationStatus = async (req, res, next) => {
   const userId = req.user?.id;
 
   try {
-    // Sanitize and validate inputs to prevent NoSQL injection
-    if (!quoteId || !mongoose.Types.ObjectId.isValid(quoteId)) {
-      await logAudit({
-        userId,
-        role: normalizeRole(req.user?.role),
-        action: 'VALIDATE_QUOTATION_STATUS',
-        status: 'FAILED_VALIDATION',
-        resourceId: quoteId,
-        clientIp,
-        userAgent,
-        details: `Invalid quotation ID format: ${quoteId}`
-      });
-      return res.status(400).json({
-        success: false,
-        message: "Invalid quotation ID format"
-      });
-    }
-    const safeQuoteId = String(quoteId).trim();
-    
-    const quotation = await quotationModel.findById(safeQuoteId).select('status validity referenceNumber');
+    const quotation = await quotationModel.findById(quoteId).select('status validity referenceNumber');
 
     if (!quotation) {
       await logAudit({
