@@ -664,14 +664,7 @@ const Orders = () => {
           role="dialog"
           aria-modal="true"
         >
-          <button 
-            type="button"
-            className="modal-backdrop-btn" 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
-            onClick={closeTrackingView}
-            aria-label="Close tracking modal"
-          />
-          <div className="tracking-modal" role="document" style={{ position: 'relative', zIndex: 10 }}>
+          <div className="tracking-modal" role="document">
             
             {/* Modal Header */}
             <div className="modal-header">
@@ -1001,20 +994,7 @@ const Orders = () => {
           role="dialog"
           aria-modal="true"
         >
-          <button 
-            type="button"
-            className="modal-backdrop-btn" 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
-            onClick={() => {
-              setShowCaptchaModal(false);
-              setCaptchaToken(null);
-              setCaptchaPassword("");
-              recaptchaRef.current?.reset();
-              setPendingPayment(null);
-            }}
-            aria-label="Close CAPTCHA modal"
-          />
-          <div className="modal-content" role="document" style={{ position: 'relative', zIndex: 10 }}>
+          <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -1105,18 +1085,7 @@ const Orders = () => {
           role="dialog"
           aria-modal="true"
         >
-          <button 
-            type="button"
-            className="modal-backdrop-btn" 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
-            onClick={() => {
-              setShowMfaModal(false);
-              setMfaPassword("");
-              setPendingPayment(null);
-            }}
-            aria-label="Close MFA modal"
-          />
-          <div className="modal-content" role="document" style={{ position: 'relative', zIndex: 10 }}>
+          <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />

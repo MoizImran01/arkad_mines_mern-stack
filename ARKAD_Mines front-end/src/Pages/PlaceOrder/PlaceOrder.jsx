@@ -920,20 +920,7 @@ const PlaceOrder = () => {
           role="dialog"
           aria-modal="true"
         >
-          <button 
-            type="button"
-            className="modal-backdrop-btn" 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
-            onClick={() => {
-              setShowCaptchaModal(false);
-              setCaptchaToken(null);
-              setCaptchaPassword("");
-              recaptchaRef.current?.reset();
-              setPendingPayment(null);
-            }}
-            aria-label="Close CAPTCHA modal"
-          />
-          <div className="modal-content" style={{ zIndex: 10001, position: 'relative' }} role="document">
+          <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -1025,18 +1012,7 @@ const PlaceOrder = () => {
           role="dialog"
           aria-modal="true"
         >
-          <button 
-            type="button"
-            className="modal-backdrop-btn" 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
-            onClick={() => {
-              setShowMfaModal(false);
-              setMfaPassword("");
-              setPendingPayment(null);
-            }}
-            aria-label="Close MFA modal"
-          />
-          <div className="modal-content" style={{ zIndex: 10001, position: 'relative' }} role="document">
+          <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -1112,14 +1088,7 @@ const PlaceOrder = () => {
           role="dialog"
           aria-modal="true"
         >
-          <button 
-            type="button"
-            className="modal-backdrop-btn" 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
-            onClick={() => setShowPaymentModal(false)}
-            aria-label="Close payment modal"
-          />
-          <div className="payment-modal" role="document" style={{ position: 'relative', zIndex: 10 }}>
+          <div className="payment-modal" role="document">
             <div className="payment-modal-header">
               <h3><FiCreditCard /> Submit Payment Proof</h3>
               <button className="modal-close-btn" onClick={() => setShowPaymentModal(false)} disabled={paymentSubmitting}>×</button>

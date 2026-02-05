@@ -127,15 +127,7 @@ const handleSubmit = async (event) => {
             role="dialog"
             aria-modal="true"
         >
-            <button 
-                type="button"
-                className="modal-backdrop-btn" 
-                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
-                onClick={() => setShowLogin(false)}
-                aria-label="Close login modal"
-            />
-
-            <div className='login-modal' role="document" style={{ position: 'relative', zIndex: 10 }}>
+            <div className='login-modal' role="document">
 
                 <form onSubmit={handleSubmit} className='login-form'>
 

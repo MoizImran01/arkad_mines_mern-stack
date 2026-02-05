@@ -393,17 +393,9 @@ function ContactUs({ setShowLogin }) {
           role="dialog"
           aria-modal="true"
         >
-          <button 
-            type="button"
-            className="modal-backdrop-btn" 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
-            onClick={() => setShowLoginPrompt(false)}
-            aria-label="Close login prompt modal"
-          />
           <div 
             className="login-prompt-modal-pro" 
             role="document"
-            style={{ position: 'relative', zIndex: 10 }}
           >
             <button className="close-prompt-pro" onClick={() => setShowLoginPrompt(false)}>
               <span>×</span>

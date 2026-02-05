@@ -138,7 +138,7 @@ const List = () => {
                             src={getImageUrl(item.qrCodeImage)} 
                             alt={`QR Code for ${item.stoneName}`}
                             className="qr-code-thumbnail"
-                          />
+                        />
                         </button>
                       ) : (
                         <span className="no-qr">N/A</span>
@@ -169,14 +169,7 @@ const List = () => {
             aria-modal="true"
             aria-labelledby="qr-modal-title"
           >
-            <button 
-              type="button"
-              className="modal-backdrop-btn" 
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
-              onClick={() => setQrModal({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null })}
-              aria-label="Close QR modal"
-            />
-            <div className="qr-modal-content" role="document" style={{ position: 'relative', zIndex: 10 }}>
+            <div className="qr-modal-content" role="document">
               <div className="qr-modal-header">
                 <h3 id="qr-modal-title">QR Code Details</h3>
                 <button 

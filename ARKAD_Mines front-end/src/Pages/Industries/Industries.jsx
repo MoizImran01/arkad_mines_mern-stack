@@ -554,14 +554,7 @@ function Industries({ setShowLogin }) {
           role="dialog"
           aria-modal="true"
         >
-          <button 
-            type="button"
-            className="modal-backdrop-btn" 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
-            onClick={() => setShowLoginPrompt(false)}
-            aria-label="Close login prompt modal"
-          />
-          <div className="login-prompt-modal" role="document" style={{ position: 'relative', zIndex: 10 }}>
+          <div className="login-prompt-modal" role="document">
             <button className="close-prompt" onClick={() => setShowLoginPrompt(false)}>×</button>
             <div className="prompt-icon">🔐</div>
             <h3>Login Required</h3>

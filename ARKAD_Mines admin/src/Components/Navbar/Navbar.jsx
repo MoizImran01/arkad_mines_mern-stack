@@ -156,14 +156,7 @@ const Navbar = () => {
           aria-modal="true"
           aria-labelledby="notification-modal-title"
         >
-          <button 
-            type="button"
-            className="modal-backdrop-btn" 
-            style={{ cursor: 'default' }}
-            onClick={() => setShowExpanded(false)}
-            aria-label="Close modal"
-          />
-          <div className="notification-modal" role="document" style={{ position: 'relative', zIndex: 10 }}>
+          <div className="notification-modal" role="document">
             <div className="notification-modal-header">
               <h3 id="notification-modal-title">Payment Notifications</h3>
               <button className="notification-modal-close" onClick={() => setShowExpanded(false)}>

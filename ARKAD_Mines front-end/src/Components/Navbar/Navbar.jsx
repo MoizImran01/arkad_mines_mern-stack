@@ -198,7 +198,7 @@ const Navbar = ({ setShowLogin }) => {
                   className="dropdown-item"
                 >
                   <img src={dashboard} alt="" />
-                  <span>Dashboard</span>
+                <span>Dashboard</span>
                 </button>
               </li>
               <li className="dropdown-item-wrapper">
@@ -208,7 +208,7 @@ const Navbar = ({ setShowLogin }) => {
                   className="dropdown-item"
                 >
                   <img src={assets.bag_icon} alt="" />
-                  <span>My Orders</span>
+                <span>My Orders</span>
                 </button>
               </li>
               <li className="dropdown-item-wrapper">
@@ -217,22 +217,22 @@ const Navbar = ({ setShowLogin }) => {
                   onClick={() => navigate('/quotations')} 
                   className="dropdown-item"
                 >
-                  <FiFileText style={{ fontSize: '18px', color: '#475467' }} />
-                  <span>My Quotations</span>
+                <FiFileText style={{ fontSize: '18px', color: '#475467' }} />
+                <span>My Quotations</span>
                 </button>
               </li>
               <hr className="dropdown-divider" />
               <li className="dropdown-item-wrapper">
                 <button 
                   type="button"
-                  onClick={() => {
-                    logout();
-                    navigate("/");
-                  }}
-                  className="dropdown-item"
-                >
+                onClick={() => {
+                  logout();
+                  navigate("/");
+                }}
+                className="dropdown-item"
+              >
                   <img src={assets.logout_icon} alt="" />
-                  <span>Logout</span>
+                <span>Logout</span>
                 </button>
               </li>
             </ul>

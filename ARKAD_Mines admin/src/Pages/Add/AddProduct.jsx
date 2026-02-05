@@ -269,14 +269,7 @@ export const AddProduct = () => {
           aria-modal="true"
           aria-labelledby="qr-success-title"
         >
-          <button 
-            type="button"
-            className="modal-backdrop-btn" 
-            style={{ cursor: 'default' }}
-            onClick={() => setShowQRCode(false)}
-            aria-label="Close modal"
-          />
-          <div className="qr-code-content" role="document" style={{ position: 'relative', zIndex: 10 }}>
+          <div className="qr-code-content" role="document">
             <h3 id="qr-success-title">Block Registered Successfully!</h3>
             <p>QR Code Generated - Print this label and attach to the block</p>
             <div className="qr-code-image-container">
