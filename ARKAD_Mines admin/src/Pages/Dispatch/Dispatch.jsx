@@ -159,8 +159,8 @@ const Dispatch = () => {
       const video = videoRef.current;
       
 
-      if ('BarcodeDetector' in window) {
-        const barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+      if ('BarcodeDetector' in globalThis) {
+        const barcodeDetector = new globalThis.BarcodeDetector({ formats: ['qr_code'] });
         
         const detectQR = async () => {
           try {

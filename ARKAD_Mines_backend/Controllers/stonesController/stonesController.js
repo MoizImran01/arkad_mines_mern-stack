@@ -403,7 +403,7 @@ const filterStones = async (req, res) => {
 
         if (keywords && typeof keywords === 'string' && keywords.trim().length > 0) {
             const safeKeywords = keywords.trim().slice(0, 50);
-            const escapedKeywords = safeKeywords.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const escapedKeywords = safeKeywords.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regexQuery = { $regex: escapedKeywords, $options: 'i' };
             query.$or = [
                 { stoneName: regexQuery },

@@ -637,67 +637,58 @@ const Analytics = () => {
     const { summary, topClients, mostSoldStones, monthlySales, orderStatusDistribution, 
             quotationStatusDistribution, paymentStatusOverview } = analytics;
 
-    let csv = [];
+    const csv = [
+      'ARKAD MINES - ANALYTICS REPORT',
+      `Generated on: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+      '',
+      '=== SUMMARY ===',
+      `Total Revenue,${formatCurrency(summary?.forecastedRevenue)}`,
+      `Pending Payments,${formatCurrency(summary?.pendingPayments)}`,
+      `Total Orders,${summary?.totalOrders || 0}`,
+      `Total Quotations,${summary?.totalQuotations || 0}`,
+      `Total Customers,${summary?.totalCustomers || 0}`,
+      `Total Stones,${summary?.totalStones || 0}`,
+      '',
+      '=== TOP CLIENTS BY REVENUE ===',
+      'Rank,Client Name,Email,Total Orders,Total Spent',
+      ...(topClients || []).map((client, index) => 
+        `${index + 1},${client.companyName || 'N/A'},${client.email || 'N/A'},${client.orderCount || 0},${formatCurrency(client.totalSpent)}`
+      ),
+      '',
+      '=== BEST SELLING STONES ===',
+      'Rank,Stone Name,Quantity Sold,Revenue,Order Count',
+      ...(mostSoldStones || []).map((stone, index) => 
+        `${index + 1},${stone.stoneName},${stone.totalQuantity || 0},${formatCurrency(stone.totalRevenue)},${stone.orderCount || 0}`
+      ),
+      '',
+      '=== MONTHLY SALES ===',
+      'Month,Year,Revenue,Orders',
+      ...(monthlySales || []).map(sale => 
+        `${sale._id?.month || 'N/A'},${sale._id?.year || 'N/A'},${formatCurrency(sale.totalSales)},${sale.orderCount || 0}`
+      ),
+      ''
+    ];
     
-    // Summary Section
-    csv.push('ARKAD MINES - ANALYTICS REPORT');
-    csv.push(`Generated on: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`);
-    csv.push('');
-    csv.push('=== SUMMARY ===');
-    csv.push(`Total Revenue,${formatCurrency(summary?.forecastedRevenue)}`);
-    csv.push(`Pending Payments,${formatCurrency(summary?.pendingPayments)}`);
-    csv.push(`Total Orders,${summary?.totalOrders || 0}`);
-    csv.push(`Total Quotations,${summary?.totalQuotations || 0}`);
-    csv.push(`Total Customers,${summary?.totalCustomers || 0}`);
-    csv.push(`Total Stones,${summary?.totalStones || 0}`);
-    csv.push('');
-    
-    // Top Clients
-    csv.push('=== TOP CLIENTS BY REVENUE ===');
-    csv.push('Rank,Client Name,Email,Total Orders,Total Spent');
-    (topClients || []).forEach((client, index) => {
-      csv.push(`${index + 1},${client.companyName || 'N/A'},${client.email || 'N/A'},${client.orderCount || 0},${formatCurrency(client.totalSpent)}`);
-    });
-    csv.push('');
-    
-    // Best Selling Stones
-    csv.push('=== BEST SELLING STONES ===');
-    csv.push('Rank,Stone Name,Quantity Sold,Revenue,Order Count');
-    (mostSoldStones || []).forEach((stone, index) => {
-      csv.push(`${index + 1},${stone.stoneName},${stone.totalQuantity || 0},${formatCurrency(stone.totalRevenue)},${stone.orderCount || 0}`);
-    });
-    csv.push('');
-    
-    // Monthly Sales
-    csv.push('=== MONTHLY SALES ===');
-    csv.push('Month,Year,Revenue,Orders');
-    (monthlySales || []).forEach(sale => {
-      csv.push(`${sale._id?.month || 'N/A'},${sale._id?.year || 'N/A'},${formatCurrency(sale.totalSales)},${sale.orderCount || 0}`);
-    });
-    csv.push('');
-    
-    // Order Status
-    csv.push('=== ORDER STATUS DISTRIBUTION ===');
-    csv.push('Status,Count');
-    (orderStatusDistribution || []).forEach(item => {
-      csv.push(`${item._id || 'Unknown'},${item.count || 0}`);
-    });
-    csv.push('');
-    
-    // Quotation Status
-    csv.push('=== QUOTATION STATUS DISTRIBUTION ===');
-    csv.push('Status,Count');
-    (quotationStatusDistribution || []).forEach(item => {
-      csv.push(`${item._id || 'Unknown'},${item.count || 0}`);
-    });
-    csv.push('');
-    
-    // Payment Status
-    csv.push('=== PAYMENT STATUS OVERVIEW ===');
-    csv.push('Status,Count,Total Amount');
-    (paymentStatusOverview || []).forEach(item => {
-      csv.push(`${item._id || 'Unknown'},${item.count || 0},${formatCurrency(item.totalAmount)}`);
-    });
+    // Add remaining sections
+    csv.push(
+      '=== ORDER STATUS DISTRIBUTION ===',
+      'Status,Count',
+      ...(orderStatusDistribution || []).map(item => 
+        `${item._id || 'Unknown'},${item.count || 0}`
+      ),
+      '',
+      '=== QUOTATION STATUS DISTRIBUTION ===',
+      'Status,Count',
+      ...(quotationStatusDistribution || []).map(item => 
+        `${item._id || 'Unknown'},${item.count || 0}`
+      ),
+      '',
+      '=== PAYMENT STATUS OVERVIEW ===',
+      'Status,Count,Total Amount',
+      ...(paymentStatusOverview || []).map(item => 
+        `${item._id || 'Unknown'},${item.count || 0},${formatCurrency(item.totalAmount)}`
+      )
+    );
     
     return csv.join('\n');
   };
@@ -712,7 +703,7 @@ const Analytics = () => {
       console.error("Error logging PDF export:", error);
     }
     
-    const printWindow = window.open('', '_blank');
+    const printWindow = globalThis.open('', '_blank');
     
     printWindow.document.write(`
       <html>

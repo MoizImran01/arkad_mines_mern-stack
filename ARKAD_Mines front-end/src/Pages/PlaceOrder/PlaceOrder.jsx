@@ -650,8 +650,11 @@ const PlaceOrder = () => {
 
   return (
     <div className="place-order">
-      <div className="tabs">
-        <div 
+      <div className="tabs" role="tablist">
+        <button 
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'information'}
           className={`tab ${activeTab === 'information' ? 'active' : ''} ${hasPaymentProofs ? 'disabled' : ''}`}
           onClick={() => {
             if (!hasPaymentProofs) {
@@ -659,18 +662,22 @@ const PlaceOrder = () => {
             }
           }}
           style={{ cursor: hasPaymentProofs ? 'not-allowed' : 'pointer', opacity: hasPaymentProofs ? 0.5 : 1 }}
+          disabled={hasPaymentProofs}
         >
           <span className="tab-number">1</span>
           <span>Shipping Information</span>
-        </div>
-        <div 
+        </button>
+        <button 
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'summary'}
           className={`tab ${activeTab === 'summary' ? 'active' : ''}`}
           onClick={() => setActiveTab('summary')}
           style={{ cursor: 'pointer' }}
         >
           <span className="tab-number">2</span>
           <span>Review & Confirm</span>
-        </div>
+        </button>
       </div>
 
       {activeTab === 'information' ? (
@@ -680,16 +687,18 @@ const PlaceOrder = () => {
             <form onSubmit={(e) => { e.preventDefault(); proceedToSummary(); }}>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Business Name</label>
+                  <label htmlFor="businessName">Business Name</label>
                   <input 
+                    id="businessName"
                     type='text' 
                     value={userData?.businessName || ''} 
                     disabled 
                   />
                 </div>
                 <div className="form-group">
-                  <label>Email Address</label>
+                  <label htmlFor="emailAddress">Email Address</label>
                   <input 
+                    id="emailAddress"
                     type="email" 
                     value={userData?.email || ''} 
                     disabled 
@@ -698,8 +707,9 @@ const PlaceOrder = () => {
               </div>
 
               <div className="form-group">
-                <label>Street Address</label>
+                <label htmlFor="streetAddress">Street Address</label>
                 <input 
+                  id="streetAddress"
                   required 
                   name='street' 
                   onChange={onChangeHandler} 
@@ -711,8 +721,9 @@ const PlaceOrder = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>City</label>
+                  <label htmlFor="city">City</label>
                   <input 
+                    id="city"
                     required 
                     name='city' 
                     onChange={onChangeHandler} 
@@ -723,8 +734,9 @@ const PlaceOrder = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Province</label>
+                  <label htmlFor="province">Province</label>
                   <select 
+                    id="province"
                     required 
                     name='state' 
                     onChange={onChangeHandler} 
@@ -745,8 +757,9 @@ const PlaceOrder = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Postal Code</label>
+                  <label htmlFor="postalCode">Postal Code</label>
                   <input 
+                    id="postalCode"
                     required 
                     name='zipCode' 
                     onChange={onChangeHandler} 
@@ -757,8 +770,9 @@ const PlaceOrder = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Country</label>
+                  <label htmlFor="country">Country</label>
                   <input 
+                    id="country"
                     required 
                     name='country' 
                     onChange={onChangeHandler} 
@@ -770,8 +784,9 @@ const PlaceOrder = () => {
               </div>
 
               <div className="form-group">
-                <label>Phone Number</label>
+                <label htmlFor="phoneNumber">Phone Number</label>
                 <input 
+                  id="phoneNumber"
                   required 
                   name='phone' 
                   onChange={onChangeHandler} 
@@ -860,7 +875,7 @@ const PlaceOrder = () => {
                 </div>
                 <div className="summary-row total">
                   <span>Outstanding Balance</span>
-                  <span>PKR {(orderData.outstandingBalance ?? orderData.financials.grandTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>PKR {(orderData.outstandingBalance ?? orderData.financials?.grandTotal ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
             </div>
@@ -1119,13 +1134,14 @@ const PlaceOrder = () => {
                 <div className="payment-info-card">
                   <div className="info-row">
                     <span className="info-label">Outstanding Balance:</span>
-                    <span className="info-value highlight">PKR {(orderData?.outstandingBalance ?? orderData?.financials?.grandTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="info-value highlight">PKR {(orderData?.outstandingBalance ?? orderData?.financials?.grandTotal ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label>Amount Paid (PKR)</label>
+                  <label htmlFor="paymentAmount">Amount Paid (PKR)</label>
                   <input
+                    id="paymentAmount"
                     type="number"
                     step="0.01"
                     value={paymentAmount}
@@ -1140,7 +1156,7 @@ const PlaceOrder = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Payment Proof (Screenshot)</label>
+                  <label htmlFor="paymentProof">Payment Proof (Screenshot)</label>
                   <div className="file-upload-wrapper">
                     <input
                       type="file"

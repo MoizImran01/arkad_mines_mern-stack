@@ -270,11 +270,11 @@ export const AddProduct = () => {
               setShowQRCode(false);
             }
           }}
-
-          role="button"
-          tabIndex={0}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+            if (e.key === 'Escape') {
               setShowQRCode(false);
             }
           }}
