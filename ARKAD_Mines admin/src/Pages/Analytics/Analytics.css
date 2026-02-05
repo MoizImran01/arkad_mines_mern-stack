@@ -1,5 +1,16 @@
 /* Analytics Dashboard Styles - Green & White Theme */
 
+.modal-backdrop-btn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
 :root {
   --primary-color: #536438;
   --primary-dark: #2c5035;

@@ -1,3 +1,14 @@
+.modal-backdrop-btn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
 .add-product {
   display: flex;
   justify-content: center;

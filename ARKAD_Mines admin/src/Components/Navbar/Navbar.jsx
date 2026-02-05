@@ -152,13 +152,18 @@ const Navbar = () => {
       {showExpanded && (
         <div 
           className="notification-modal-overlay" 
-          onClick={() => setShowExpanded(false)}
-          onKeyDown={(e) => e.key === 'Escape' && setShowExpanded(false)}
           role="dialog"
           aria-modal="true"
           aria-labelledby="notification-modal-title"
-          tabIndex={-1}
         >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            onClick={() => setShowExpanded(false)}
+            onKeyDown={(e) => e.key === 'Escape' && setShowExpanded(false)}
+            aria-label="Close modal"
+            tabIndex={-1}
+          />
           <div className="notification-modal" role="document">
             <div className="notification-modal-header">
               <h3 id="notification-modal-title">Payment Notifications</h3>

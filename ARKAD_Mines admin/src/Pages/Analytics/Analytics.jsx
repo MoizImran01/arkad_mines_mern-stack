@@ -434,13 +434,18 @@ const ChartModal = ({ isOpen, onClose, title, description, children }) => {
   return (
     <div 
       className="chart-modal-overlay" 
-      onClick={onClose}
-      onKeyDown={(e) => e.key === 'Escape' && onClose()}
       role="dialog"
       aria-modal="true"
       aria-labelledby={modalId}
-      tabIndex={-1}
     >
+      <button 
+        type="button"
+        className="modal-backdrop-btn" 
+        onClick={onClose}
+        onKeyDown={(e) => e.key === 'Escape' && onClose()}
+        aria-label="Close modal"
+        tabIndex={-1}
+      />
       <div className="chart-modal-content" role="document">
         <div className="chart-modal-header">
           <h3 id={modalId}>{title}</h3>
@@ -870,20 +875,25 @@ const Analytics = () => {
           <div 
             className="modal-overlay" 
             style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
-            onClick={() => {
-              setShowMFAModal(false);
-              setMfaPassword("");
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                setShowMFAModal(false);
-                setMfaPassword("");
-              }
-            }}
             role="dialog"
             aria-modal="true"
-            tabIndex={-1}
           >
+            <button 
+              type="button"
+              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+              onClick={() => {
+                setShowMFAModal(false);
+                setMfaPassword("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setShowMFAModal(false);
+                  setMfaPassword("");
+                }
+              }}
+              aria-label="Close modal"
+              tabIndex={-1}
+            />
             <div className="modal-content" style={{ zIndex: 10001, position: 'relative', backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '500px', width: '90%', maxHeight: '90vh', overflow: 'auto' }} role="document">
               <div className="modal-header">
                 <h3>
@@ -1025,10 +1035,17 @@ const Analytics = () => {
     <>
       {/* MFA Modal - Render first so it appears on top */}
       {showMFAModal && (
-        <div className="modal-overlay" style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => {
-          setShowMFAModal(false);
-          setMfaPassword("");
-        }}>
+        <div className="modal-overlay" style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} role="dialog" aria-modal="true">
+          <button 
+            type="button"
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={() => {
+              setShowMFAModal(false);
+              setMfaPassword("");
+            }}
+            aria-label="Close modal"
+            tabIndex={-1}
+          />
           <div className="modal-content" style={{ zIndex: 10001, position: 'relative', backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '500px', width: '90%', maxHeight: '90vh', overflow: 'auto' }} role="document">
             <div className="modal-header">
               <h3>

@@ -265,21 +265,18 @@ export const AddProduct = () => {
 {showQRCode && qrCodeImage && qrCodeId && (
         <div 
           className="qr-code-modal" 
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowQRCode(false);
-            }
-          }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="qr-success-title"
-          tabIndex={-1}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              setShowQRCode(false);
-            }
-          }}
         >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            onClick={() => setShowQRCode(false)}
+            onKeyDown={(e) => e.key === 'Escape' && setShowQRCode(false)}
+            aria-label="Close modal"
+            tabIndex={-1}
+          />
           <div className="qr-code-content" role="document">
             <h3 id="qr-success-title">Block Registered Successfully!</h3>
             <p>QR Code Generated - Print this label and attach to the block</p>
