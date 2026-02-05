@@ -120,14 +120,22 @@ const handleSubmit = async (event) => {
         setCaptchaToken(null)
     }
 
+    const handleOverlayClick = (e) => {
+        // Close modal if clicking on the overlay itself, not on the modal content
+        if (e.target === e.currentTarget) {
+            setShowLogin(false);
+        }
+    };
+
     return (
 
         <div 
             className='login-overlay' 
             role="dialog"
             aria-modal="true"
+            onClick={handleOverlayClick}
         >
-            <div className='login-modal' role="document">
+            <div className='login-modal' role="document" onClick={(e) => e.stopPropagation()}>
 
                 <form onSubmit={handleSubmit} className='login-form'>
 

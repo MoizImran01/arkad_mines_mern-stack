@@ -39,6 +39,16 @@
     animation: fadeIn 0.3s ease-out;
 }
 
+/* Hide any modal-backdrop-btn that might be interfering */
+.login-overlay .modal-backdrop-btn {
+    display: none !important;
+}
+
+/* Ensure the overlay itself handles clicks */
+.login-overlay > * {
+    pointer-events: auto;
+}
+
 .login-modal {
     width: 100%;
     max-width: 440px;
@@ -47,6 +57,8 @@
     box-shadow: var(--shadow-xl);
     animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
+    position: relative;
+    z-index: 10001;
 }
 
 .login-form {
