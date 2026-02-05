@@ -429,6 +429,8 @@ HorizontalBarChart.propTypes = {
 const ChartModal = ({ isOpen, onClose, title, description, children }) => {
   if (!isOpen) return null;
   
+  const modalId = `chart-modal-${title.replace(/\s+/g, '-').toLowerCase()}`;
+  
   return (
     <div 
       className="chart-modal-overlay" 
@@ -436,11 +438,12 @@ const ChartModal = ({ isOpen, onClose, title, description, children }) => {
       onKeyDown={(e) => e.key === 'Escape' && onClose()}
       role="dialog"
       aria-modal="true"
+      aria-labelledby={modalId}
       tabIndex={-1}
     >
-      <div className="chart-modal-content" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()} role="document">
+      <div className="chart-modal-content" role="document">
         <div className="chart-modal-header">
-          <h3>{title}</h3>
+          <h3 id={modalId}>{title}</h3>
           <button className="chart-modal-close" onClick={onClose}>×</button>
         </div>
         <div className="chart-modal-body">

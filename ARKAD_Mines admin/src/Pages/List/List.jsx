@@ -169,12 +169,12 @@ const List = () => {
             onKeyDown={(e) => e.key === 'Escape' && setQrModal({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null })}
             role="dialog"
             aria-modal="true"
-            aria-label="QR Code Details"
+            aria-labelledby="qr-modal-title"
             tabIndex={-1}
           >
-            <div className="qr-modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+            <div className="qr-modal-content" role="document">
               <div className="qr-modal-header">
-                <h3>QR Code Details</h3>
+                <h3 id="qr-modal-title">QR Code Details</h3>
                 <button 
                   className="qr-modal-close"
                   onClick={() => setQrModal({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null })}

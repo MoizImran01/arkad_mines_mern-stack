@@ -272,6 +272,7 @@ export const AddProduct = () => {
           }}
           role="dialog"
           aria-modal="true"
+          aria-labelledby="qr-success-title"
           tabIndex={-1}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
@@ -279,8 +280,8 @@ export const AddProduct = () => {
             }
           }}
         >
-          <div className="qr-code-content">
-            <h3>Block Registered Successfully!</h3>
+          <div className="qr-code-content" role="document">
+            <h3 id="qr-success-title">Block Registered Successfully!</h3>
             <p>QR Code Generated - Print this label and attach to the block</p>
             <div className="qr-code-image-container">
               <img src={qrCodeImage} alt="QR Code" />

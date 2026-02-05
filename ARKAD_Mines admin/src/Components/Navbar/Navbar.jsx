@@ -156,11 +156,12 @@ const Navbar = () => {
           onKeyDown={(e) => e.key === 'Escape' && setShowExpanded(false)}
           role="dialog"
           aria-modal="true"
+          aria-labelledby="notification-modal-title"
           tabIndex={-1}
         >
-          <div className="notification-modal" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+          <div className="notification-modal" role="document">
             <div className="notification-modal-header">
-              <h3>Payment Notifications</h3>
+              <h3 id="notification-modal-title">Payment Notifications</h3>
               <button className="notification-modal-close" onClick={() => setShowExpanded(false)}>
                 <FiX />
               </button>
