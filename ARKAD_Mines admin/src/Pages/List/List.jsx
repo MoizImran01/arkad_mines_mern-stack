@@ -32,8 +32,6 @@ const List = () => {
 
       if(response.data.success)
       {
-          console.log("Stone list fetched successfully", response)
-
           setList(response.data.stones_data)
       }
       else
@@ -44,8 +42,6 @@ const List = () => {
       }
       catch(error)
       {
-
-          console.log("error fetching stone list", error);
           toast.error("Error fetching stone list")
       }
   }
@@ -71,8 +67,6 @@ const List = () => {
                   }
               }
           )
-          
-          console.log("Stone item removed with id: ", stoneID)
 
           if(response.data.success)
           {
@@ -86,7 +80,6 @@ const List = () => {
       }
       catch(error)
       {
-          console.log(`Error removing stone with ID ${stoneID}. The error is: ${error}`)
           toast.error(`Error removing stone with ID ${stoneID}`)
       }
   }

@@ -476,9 +476,7 @@ const Analytics = () => {
   }, [token]);
 
   useEffect(() => {
-    if (showMFAModal) {
-      console.log("MFA Modal is now visible:", showMFAModal);
-    }
+    // MFA modal visibility change - no action needed
   }, [showMFAModal]);
 
   const fetchAnalytics = async (passwordConfirmation = null) => {

@@ -715,13 +715,13 @@ const issueQuotation = async (req, res) => {
   }
 };
 const downloadQuotation = async (req, res) => {
+  const clientIp = getClientIp(req);
   try {
     const { quoteId } = req.params;
- 
-// Line 652
-const quotation = await quotationModel.findById(String(quoteId)).populate("buyer");
+
+    const quotation = await quotationModel.findById(String(quoteId)).populate("buyer");
     if (!quotation) {
-      return res.status(404).json({ message: "Quotation not found" });
+      return res.status(404).json({ success: false, message: "Quotation not found" });
     }
 
     // Check if user is admin or the buyer of this quotation
@@ -740,7 +740,7 @@ const quotation = await quotationModel.findById(String(quoteId)).populate("buyer
         clientIp,
         details: 'Unauthorized access attempt - user not admin or buyer'
       });
-      return res.status(403).json({ message: "Unauthorized to download this quotation" });
+      return res.status(403).json({ success: false, message: "Unauthorized to download this quotation" });
     }
 
     const pdfBuffer = await generateQuotationPDF(quotation);
@@ -753,8 +753,13 @@ const quotation = await quotationModel.findById(String(quoteId)).populate("buyer
 
     res.send(pdfBuffer);
   } catch (error) {
-    console.error("Download error:", error);
-    res.status(500).json({ message: "Error generating PDF" });
+    logError(error, {
+      action: 'DOWNLOAD_QUOTATION',
+      userId: req.user?.id,
+      quotationId: req.params.quoteId,
+      clientIp
+    });
+    res.status(500).json({ success: false, message: "Error generating PDF" });
   }
 };
 

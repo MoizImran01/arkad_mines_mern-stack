@@ -1,6 +1,7 @@
 import notificationModel from "../../Models/notificationModel/notificationModel.js";
 import orderModel from "../../Models/orderModel/orderModel.js";
 import mongoose from "mongoose";
+import { logError } from "../../logger/auditLogger.js";
 
 export const createNotification = async (payload) => {
   try {
@@ -16,7 +17,6 @@ export const createNotification = async (payload) => {
       amount 
     } = payload;
 
-
     await notificationModel.create({
       recipientType,
       recipientId,
@@ -30,7 +30,7 @@ export const createNotification = async (payload) => {
     });
 
   } catch (error) {
-    console.error("Notification create error:", error);
+    logError(error, { action: 'CREATE_NOTIFICATION', orderId: payload?.orderId });
   }
 };
 
@@ -63,7 +63,7 @@ export const getNotifications = async (req, res) => {
 
     res.status(200).json({ success: true, notifications });
   } catch (error) {
-    console.error("Notification fetch error:", error);
+    logError(error, { action: 'FETCH_NOTIFICATIONS', userId: req.user?.id });
     res.status(500).json({
       success: false,
       message: "Error fetching notifications",
@@ -107,7 +107,7 @@ export const clearNotifications = async (req, res) => {
       clearedAt,
     });
   } catch (error) {
-    console.error("Notification clear error:", error);
+    logError(error, { action: 'CLEAR_NOTIFICATIONS', userId: req.user?.id });
     res.status(500).json({
       success: false,
       message: "Error clearing notifications",
@@ -158,7 +158,7 @@ export const getAdminPaymentSummary = async (req, res) => {
 
     res.status(200).json({ success: true, summary });
   } catch (error) {
-    console.error("Payment summary error:", error);
+    logError(error, { action: 'GET_ADMIN_PAYMENT_SUMMARY', userId: req.user?.id });
     res.status(500).json({
       success: false,
       message: "Error fetching payment summary",

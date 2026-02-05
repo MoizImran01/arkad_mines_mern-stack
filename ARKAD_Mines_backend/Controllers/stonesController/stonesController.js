@@ -158,8 +158,12 @@ const listStones = async (req, res) => {
         const stones = await stonesModel.find({});
         res.json({ success: true, stones_data: stones });
     } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: "Error fetching stones" });
+        logError(error, {
+            action: 'LIST_STONES',
+            userId: req.user?.id,
+            clientIp: getClientIp(req)
+        });
+        res.status(500).json({ success: false, message: "Error fetching stones" });
     }
 }
 

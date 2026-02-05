@@ -2,7 +2,7 @@ import orderModel from "../../Models/orderModel/orderModel.js";
 import quotationModel from "../../Models/quotationModel/quotationModel.js";
 import stonesModel from "../../Models/stonesModel/stonesModel.js";
 import userModel from "../../Models/Users/userModel.js";
-import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../../logger/auditLogger.js";
+import { logAudit, logError, getClientIp, normalizeRole, getUserAgent } from "../../logger/auditLogger.js";
 import { analyticsDTO } from "../../Utils/DTOs/analyticsDTO.js";
 import { getCachedAnalytics, setCachedAnalytics, generateCacheKey } from "../../Utils/analyticsCache.js";
 
@@ -494,7 +494,7 @@ export const getAnalytics = async (req, res) => {
       queryTime: `${queryTime}ms`
     });
   } catch (error) {
-    console.error("Analytics error:", error);
+    logError(error, { action: 'ANALYTICS_ACCESS', userId: req.user?.id });
     
     await logAudit({
       userId: req.user?.id || null,
@@ -584,7 +584,7 @@ export const exportAnalyticsPDF = async (req, res) => {
       message: "PDF export logged. Export functionality handled client-side."
     });
   } catch (error) {
-    console.error("PDF export logging error:", error);
+    logError(error, { action: 'ANALYTICS_PDF_EXPORT', userId: req.user?.id });
     
     await logAudit({
       userId: req.user?.id || null,
