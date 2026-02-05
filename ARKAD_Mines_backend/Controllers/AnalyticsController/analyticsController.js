@@ -337,13 +337,13 @@ export const getAnalytics = async (req, res) => {
           day: {
             $switch: {
               branches: [
-                { case: { $eq: ["$_id", 1] }, then: "Sun" },
-                { case: { $eq: ["$_id", 2] }, then: "Mon" },
-                { case: { $eq: ["$_id", 3] }, then: "Tue" },
-                { case: { $eq: ["$_id", 4] }, then: "Wed" },
-                { case: { $eq: ["$_id", 5] }, then: "Thu" },
-                { case: { $eq: ["$_id", 6] }, then: "Fri" },
-                { case: { $eq: ["$_id", 7] }, then: "Sat" }
+                { case: { $eq: ["$_id", 1] }, "then": "Sun" },
+                { case: { $eq: ["$_id", 2] }, "then": "Mon" },
+                { case: { $eq: ["$_id", 3] }, "then": "Tue" },
+                { case: { $eq: ["$_id", 4] }, "then": "Wed" },
+                { case: { $eq: ["$_id", 5] }, "then": "Thu" },
+                { case: { $eq: ["$_id", 6] }, "then": "Fri" },
+                { case: { $eq: ["$_id", 7] }, "then": "Sat" }
               ],
               default: "Unknown"
             }

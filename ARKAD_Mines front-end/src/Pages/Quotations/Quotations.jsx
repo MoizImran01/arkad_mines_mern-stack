@@ -911,22 +911,20 @@ const Quotations = () => {
       {showReauthModal && (
         <div 
           className="modal-overlay" 
-          onClick={() => {
-            setShowReauthModal(false);
-            setReauthPassword("");
-            setPendingApproval(null);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
+          role="dialog"
+          aria-modal="true"
+        >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={() => {
               setShowReauthModal(false);
               setReauthPassword("");
               setPendingApproval(null);
-            }
-          }}
-          role="dialog"
-          aria-modal="true"
-          tabIndex={-1}
-        >
+            }}
+            aria-label="Close re-authentication modal"
+          />
           <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>

@@ -190,8 +190,8 @@ const Navbar = ({ setShowLogin }) => {
             </div>
             <div className='nav-profile'>
             <img src={assets.profile_icon} alt="Profile" className="profile-img" />
-            <ul className="nav-dropdown" role="menu">
-              <li className="dropdown-item-wrapper" role="none">
+            <ul className="nav-dropdown">
+              <li className="dropdown-item-wrapper">
                 <button 
                   type="button"
                   onClick={() => navigate('/dashboard')} 
@@ -201,7 +201,7 @@ const Navbar = ({ setShowLogin }) => {
                   <span>Dashboard</span>
                 </button>
               </li>
-              <li className="dropdown-item-wrapper" role="none">
+              <li className="dropdown-item-wrapper">
                 <button 
                   type="button"
                   onClick={() => navigate('/orders')} 
@@ -211,7 +211,7 @@ const Navbar = ({ setShowLogin }) => {
                   <span>My Orders</span>
                 </button>
               </li>
-              <li className="dropdown-item-wrapper" role="none">
+              <li className="dropdown-item-wrapper">
                 <button 
                   type="button"
                   onClick={() => navigate('/quotations')} 
@@ -222,7 +222,7 @@ const Navbar = ({ setShowLogin }) => {
                 </button>
               </li>
               <hr className="dropdown-divider" />
-              <li className="dropdown-item-wrapper" role="none">
+              <li className="dropdown-item-wrapper">
                 <button 
                   type="button"
                   onClick={() => {
