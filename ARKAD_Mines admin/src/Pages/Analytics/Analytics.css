@@ -241,6 +241,9 @@
   transition: all 0.3s ease;
   box-shadow: var(--shadow);
   position: relative;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
 }
 
 .chart-card.clickable {

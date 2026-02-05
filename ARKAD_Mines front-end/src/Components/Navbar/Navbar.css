@@ -310,6 +310,10 @@
   font-size: 12px;
 }
 
+.dropdown-item-wrapper {
+  list-style: none;
+}
+
 .dropdown-item {
   display: flex;
   align-items: center;
@@ -320,6 +324,10 @@
   list-style: none;
   color: var(--text-dark);
   font-size: 0.9rem;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
 }
 
 .dropdown-item:hover {

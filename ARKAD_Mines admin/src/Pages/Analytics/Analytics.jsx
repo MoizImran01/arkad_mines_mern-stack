@@ -471,14 +471,14 @@ const ChartCard = ({ title, description, children, expandedContent }) => {
   
   return (
     <>
-      <div className="chart-card clickable" onClick={() => setIsExpanded(true)}>
+      <button type="button" className="chart-card clickable" onClick={() => setIsExpanded(true)}>
         <h3>{title}</h3>
         <div className="chart-content">
           {children}
         </div>
         <p className="chart-description-preview">{description}</p>
         <span className="expand-hint">Click to expand</span>
-      </div>
+      </button>
       <ChartModal
         isOpen={isExpanded}
         onClose={() => setIsExpanded(false)}

@@ -1037,7 +1037,7 @@ const Orders = () => {
               </p>
               <form onSubmit={handleCaptchaSubmit}>
                 <div className="form-group" style={{ marginBottom: '20px' }}>
-                  <label style={{ marginBottom: '10px', display: 'block' }}>CAPTCHA Verification:</label>
+                  <span style={{ marginBottom: '10px', display: 'block' }}>CAPTCHA Verification:</span>
                   <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
                     <ReCAPTCHA
                       ref={recaptchaRef}

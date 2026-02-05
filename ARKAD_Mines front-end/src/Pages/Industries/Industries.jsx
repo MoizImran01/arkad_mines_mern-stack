@@ -302,8 +302,6 @@ function Industries({ setShowLogin }) {
               className={`industry-card ${activeSection === index ? "active" : ""}`}
               onMouseEnter={() => setActiveSection(index)}
               onFocus={() => setActiveSection(index)}
-              role="listitem"
-              tabIndex="0"
             >
               <div className="card-glow"></div>
               <div className="card-content">
