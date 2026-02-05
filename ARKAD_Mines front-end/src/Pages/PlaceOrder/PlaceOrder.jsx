@@ -937,7 +937,7 @@ const PlaceOrder = () => {
           aria-modal="true"
           tabIndex={-1}
         >
-          <div className="modal-content" style={{ zIndex: 10001, position: 'relative' }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+          <div className="modal-content" style={{ zIndex: 10001, position: 'relative' }} role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -1042,7 +1042,7 @@ const PlaceOrder = () => {
           aria-modal="true"
           tabIndex={-1}
         >
-          <div className="modal-content" style={{ zIndex: 10001, position: 'relative' }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+          <div className="modal-content" style={{ zIndex: 10001, position: 'relative' }} role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -1121,7 +1121,7 @@ const PlaceOrder = () => {
           aria-modal="true"
           tabIndex={-1}
         >
-          <div className="payment-modal" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+          <div className="payment-modal" role="document">
             <div className="payment-modal-header">
               <h3><FiCreditCard /> Submit Payment Proof</h3>
               <button className="modal-close-btn" onClick={() => setShowPaymentModal(false)} disabled={paymentSubmitting}>×</button>

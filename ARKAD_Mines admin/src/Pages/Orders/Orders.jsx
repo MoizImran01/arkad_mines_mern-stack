@@ -458,7 +458,7 @@ PKR
                           {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                         </div>
                       </td>
-                      <td className="order-actions" onClick={(e) => e.stopPropagation()}>
+                      <td className="order-actions">
                         <button 
                           className="details-btn"
                           onClick={() => toggleOrderExpand(order._id)}
@@ -895,7 +895,7 @@ PKR
           aria-modal="true"
           tabIndex={-1}
         >
-          <div className="status-modal" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+          <div className="status-modal" role="document">
             <div className="modal-header">
               <h3>Update Order Status</h3>
               <button className="close-btn" onClick={closeStatusModal}>
@@ -1024,7 +1024,7 @@ PKR
           aria-modal="true"
           tabIndex={-1}
         >
-          <div className="status-modal" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+          <div className="status-modal" role="document">
             <div className="modal-header">
               <h3>Reject Payment Proof</h3>
               <button 

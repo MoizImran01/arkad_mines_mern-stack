@@ -744,7 +744,7 @@ const Quotations = () => {
           aria-modal="true"
           tabIndex={-1}
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+          <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>
                 {decisionType === "approve" && "Approve Quotation"}
@@ -823,7 +823,7 @@ const Quotations = () => {
           aria-modal="true"
           tabIndex={-1}
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+          <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -927,7 +927,7 @@ const Quotations = () => {
           aria-modal="true"
           tabIndex={-1}
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+          <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />

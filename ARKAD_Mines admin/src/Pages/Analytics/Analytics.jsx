@@ -429,7 +429,7 @@ HorizontalBarChart.propTypes = {
 const ChartModal = ({ isOpen, onClose, title, description, children }) => {
   if (!isOpen) return null;
   
-  const modalId = `chart-modal-${title.replace(/\s+/g, '-').toLowerCase()}`;
+  const modalId = `chart-modal-${title.replaceAll(/\s+/g, '-').toLowerCase()}`;
   
   return (
     <div 
@@ -884,7 +884,7 @@ const Analytics = () => {
             aria-modal="true"
             tabIndex={-1}
           >
-            <div className="modal-content" style={{ zIndex: 10001, position: 'relative', backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '500px', width: '90%', maxHeight: '90vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+            <div className="modal-content" style={{ zIndex: 10001, position: 'relative', backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '500px', width: '90%', maxHeight: '90vh', overflow: 'auto' }} role="document">
               <div className="modal-header">
                 <h3>
                   <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -1029,7 +1029,7 @@ const Analytics = () => {
           setShowMFAModal(false);
           setMfaPassword("");
         }}>
-          <div className="modal-content" style={{ zIndex: 10001, position: 'relative', backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '500px', width: '90%', maxHeight: '90vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" style={{ zIndex: 10001, position: 'relative', backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '500px', width: '90%', maxHeight: '90vh', overflow: 'auto' }} role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -1380,7 +1380,7 @@ const Analytics = () => {
           aria-modal="true"
           tabIndex={-1}
         >
-          <div className="modal-content export-modal" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()} role="document">
+          <div className="modal-content export-modal" role="document">
             <div className="modal-header">
               <h3>📊 CSV Export Preview</h3>
               <button className="modal-close" onClick={() => setExportModal({ show: false, type: null })}>×</button>

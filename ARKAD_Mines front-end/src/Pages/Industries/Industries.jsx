@@ -301,6 +301,9 @@ function Industries({ setShowLogin }) {
               key={index} 
               className={`industry-card ${activeSection === index ? "active" : ""}`}
               onMouseEnter={() => setActiveSection(index)}
+              onFocus={() => setActiveSection(index)}
+              role="listitem"
+              tabIndex="0"
             >
               <div className="card-glow"></div>
               <div className="card-content">
@@ -555,7 +558,7 @@ function Industries({ setShowLogin }) {
           aria-modal="true"
           tabIndex={-1}
         >
-          <div className="login-prompt-modal" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+          <div className="login-prompt-modal" role="document">
             <button className="close-prompt" onClick={() => setShowLoginPrompt(false)}>×</button>
             <div className="prompt-icon">🔐</div>
             <h3>Login Required</h3>

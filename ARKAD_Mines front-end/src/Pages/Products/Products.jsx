@@ -436,7 +436,7 @@ const Products = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="product-actions" onClick={(e) => e.stopPropagation()}>
+                  <div className="product-actions">
                     {(product.stockQuantity || 0) - (product.quantityDelivered || 0) > 0 ? (
                       <button
                         className="request-btn"

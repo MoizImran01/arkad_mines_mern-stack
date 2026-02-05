@@ -138,7 +138,7 @@ const handleSubmit = async (event) => {
             tabIndex={-1}
         >
 
-            <div className='login-modal' onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+            <div className='login-modal' role="document">
 
                 <form onSubmit={handleSubmit} className='login-form'>
 

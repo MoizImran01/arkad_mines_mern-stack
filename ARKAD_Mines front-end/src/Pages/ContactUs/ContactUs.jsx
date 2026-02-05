@@ -398,8 +398,6 @@ function ContactUs({ setShowLogin }) {
         >
           <div 
             className="login-prompt-modal-pro" 
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
             role="document"
           >
             <button className="close-prompt-pro" onClick={() => setShowLoginPrompt(false)}>

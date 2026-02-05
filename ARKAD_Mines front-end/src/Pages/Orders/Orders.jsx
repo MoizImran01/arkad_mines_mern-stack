@@ -667,7 +667,7 @@ const Orders = () => {
           aria-modal="true"
           tabIndex={-1}
         >
-          <div className="tracking-modal" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+          <div className="tracking-modal" role="document">
             
             {/* Modal Header */}
             <div className="modal-header">
@@ -1014,7 +1014,7 @@ const Orders = () => {
           aria-modal="true"
           tabIndex={-1}
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+          <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -1118,7 +1118,7 @@ const Orders = () => {
           aria-modal="true"
           tabIndex={-1}
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
+          <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
