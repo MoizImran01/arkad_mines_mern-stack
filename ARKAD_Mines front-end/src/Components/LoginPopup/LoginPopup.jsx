@@ -270,5 +270,6 @@ const handleSubmit = async (event) => {
 LoginPopup.propTypes = {
   setShowLogin: PropTypes.func.isRequired,
 };
+//end of LoginPopup.jsx
 
 export default LoginPopup
