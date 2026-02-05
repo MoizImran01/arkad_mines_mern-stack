@@ -744,11 +744,11 @@ const Quotations = () => {
           <button 
             type="button"
             className="modal-backdrop-btn" 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 1 }}
             onClick={closeDecisionModal}
             aria-label="Close decision modal"
           />
-          <div className="modal-content" role="document">
+          <div className="modal-content" role="document" style={{ position: 'relative', zIndex: 2 }}>
             <div className="modal-header">
               <h3>
                 {decisionType === "approve" && "Approve Quotation"}
@@ -813,7 +813,7 @@ const Quotations = () => {
           <button 
             type="button"
             className="modal-backdrop-btn" 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 1 }}
             onClick={() => {
               setShowCaptchaModal(false);
               setCaptchaToken(null);
@@ -823,7 +823,7 @@ const Quotations = () => {
             }}
             aria-label="Close CAPTCHA modal"
           />
-          <div className="modal-content" role="document">
+          <div className="modal-content" role="document" style={{ position: 'relative', zIndex: 2 }}>
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -917,7 +917,7 @@ const Quotations = () => {
           <button 
             type="button"
             className="modal-backdrop-btn" 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 1 }}
             onClick={() => {
               setShowReauthModal(false);
               setReauthPassword("");
@@ -925,7 +925,7 @@ const Quotations = () => {
             }}
             aria-label="Close re-authentication modal"
           />
-          <div className="modal-content" role="document">
+          <div className="modal-content" role="document" style={{ position: 'relative', zIndex: 2 }}>
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />

@@ -172,11 +172,11 @@ const List = () => {
             <button 
               type="button"
               className="modal-backdrop-btn" 
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 1 }}
               onClick={() => setQrModal({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null })}
               aria-label="Close QR modal"
             />
-            <div className="qr-modal-content" role="document">
+            <div className="qr-modal-content" role="document" style={{ position: 'relative', zIndex: 2 }}>
               <div className="qr-modal-header">
                 <h3 id="qr-modal-title">QR Code Details</h3>
                 <button 
