@@ -1175,7 +1175,7 @@ const PlaceOrder = () => {
 
                 {addressData.street && (
                   <div className="form-group">
-                    <label>Delivery Address</label>
+                    <span className="form-label">Delivery Address</span>
                     <div className="address-preview">
                       <p><strong>{addressData.street}</strong></p>
                       <p>{addressData.city}, {addressData.state} {addressData.zipCode}</p>

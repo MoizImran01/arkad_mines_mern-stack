@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect, useContext } from "react"
+import PropTypes from "prop-types"
 import { useNavigate } from "react-router-dom"
 import { Phone, Mail, MapPin, Clock, Copy, Check, Send, MessageSquare, Building, Users } from "lucide-react"
 import { StoreContext } from "../../context/StoreContext"
 import "./ContactUs.css"
 
-export default function ContactUs({ setShowLogin }) {
+function ContactUs({ setShowLogin }) {
   const [isVisible, setIsVisible] = useState({});
   const [copied, setCopied] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
@@ -420,3 +421,9 @@ export default function ContactUs({ setShowLogin }) {
     </div>
   )
 }
+
+ContactUs.propTypes = {
+  setShowLogin: PropTypes.func.isRequired,
+}
+
+export default ContactUs

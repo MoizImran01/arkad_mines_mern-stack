@@ -546,7 +546,7 @@
 }
 
 @keyframes fillBar {
-  from { width: 0 !important; }
+  from { width: 0; }
 }
 
 /* ===== VALUES SECTION ===== */

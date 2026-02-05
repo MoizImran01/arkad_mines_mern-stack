@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useContext } from "react";
+import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import "./Industries.css";
 import { 
@@ -18,7 +19,7 @@ import {
 } from "lucide-react";
 import { StoreContext } from "../../context/StoreContext";
 
-export default function Industries({ setShowLogin }) {
+function Industries({ setShowLogin }) {
   const [activeSection, setActiveSection] = useState(0);
   const [scrollY, setScrollY] = useState(0);
   const [isVisible, setIsVisible] = useState({});
@@ -189,11 +190,11 @@ export default function Industries({ setShowLogin }) {
           </p>
           <div className="hero-cta">
             <button className="primary-btn" onClick={handleCatalogClick}>
-              Explore Our Catalog
+              Explore Our Catalog{" "}
               <span className="btn-arrow">→</span>
             </button>
             <button className="secondary-btn" onClick={handleQuoteClick}>
-              <span className="play-icon">📋</span>
+              <span className="play-icon">📋</span>{" "}
               Request a Quote
             </button>
           </div>
@@ -573,4 +574,10 @@ export default function Industries({ setShowLogin }) {
     </div>
   );
 }
+
+Industries.propTypes = {
+  setShowLogin: PropTypes.func.isRequired,
+};
+
+export default Industries;
 

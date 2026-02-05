@@ -127,7 +127,7 @@ const Quotations = () => {
     const invalidPrices = [];
     selectedQuote.items?.forEach((item, idx) => {
       const price = issueFormData.itemPrices[idx];
-      if (price !== undefined && (isNaN(price) || price < 0)) {
+      if (price !== undefined && (Number.isNaN(Number(price)) || price < 0)) {
         invalidPrices.push(item.stoneName);
       }
     });
@@ -389,8 +389,9 @@ const Quotations = () => {
                       <div className="item-price-section">
                         {isEditable ? (
                           <div className="item-price-input-group">
-                            <label>Unit Price (Rs):</label>
+                            <label htmlFor={`unit-price-${idx}`}>Unit Price (Rs):</label>
                             <input
+                              id={`unit-price-${idx}`}
                               type="number"
                               min="0"
                               step="0.01"
