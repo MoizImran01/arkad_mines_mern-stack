@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import PropTypes from 'prop-types';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
@@ -105,6 +106,15 @@ const BarChart = ({ data, dataKey, nameKey, fill, height = 300, expanded = false
       })}
     </svg>
   );
+};
+
+BarChart.propTypes = {
+  data: PropTypes.array,
+  dataKey: PropTypes.string.isRequired,
+  nameKey: PropTypes.string.isRequired,
+  fill: PropTypes.string,
+  height: PropTypes.number,
+  expanded: PropTypes.bool,
 };
 
 // Improved Pie Chart that handles single items
@@ -235,6 +245,15 @@ const PieChart = ({ data, dataKey, nameKey, colors, size = 200, expanded = false
   );
 };
 
+PieChart.propTypes = {
+  data: PropTypes.array,
+  dataKey: PropTypes.string.isRequired,
+  nameKey: PropTypes.string.isRequired,
+  colors: PropTypes.array,
+  size: PropTypes.number,
+  expanded: PropTypes.bool,
+};
+
 // Improved Line Chart
 const LineChart = ({ data, dataKey, nameKey, stroke, height = 250, expanded = false }) => {
   if (!data || data.length === 0) return <div className="no-data">No data available</div>;
@@ -329,6 +348,15 @@ const LineChart = ({ data, dataKey, nameKey, stroke, height = 250, expanded = fa
   );
 };
 
+LineChart.propTypes = {
+  data: PropTypes.array,
+  dataKey: PropTypes.string.isRequired,
+  nameKey: PropTypes.string.isRequired,
+  stroke: PropTypes.string,
+  height: PropTypes.number,
+  expanded: PropTypes.bool,
+};
+
 // Improved Horizontal Bar Chart
 const HorizontalBarChart = ({ data, dataKey, nameKey, fill, height = 300, expanded = false }) => {
   if (!data || data.length === 0) return <div className="no-data">No data available</div>;
@@ -388,13 +416,29 @@ const HorizontalBarChart = ({ data, dataKey, nameKey, fill, height = 300, expand
   );
 };
 
+HorizontalBarChart.propTypes = {
+  data: PropTypes.array,
+  dataKey: PropTypes.string.isRequired,
+  nameKey: PropTypes.string.isRequired,
+  fill: PropTypes.string,
+  height: PropTypes.number,
+  expanded: PropTypes.bool,
+};
+
 // Chart Modal Component
 const ChartModal = ({ isOpen, onClose, title, description, children }) => {
   if (!isOpen) return null;
   
   return (
-    <div className="chart-modal-overlay" onClick={onClose}>
-      <div className="chart-modal-content" onClick={e => e.stopPropagation()}>
+    <div 
+      className="chart-modal-overlay" 
+      onClick={onClose}
+      onKeyDown={(e) => e.key === 'Escape' && onClose()}
+      role="dialog"
+      aria-modal="true"
+      tabIndex={-1}
+    >
+      <div className="chart-modal-content" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()} role="document">
         <div className="chart-modal-header">
           <h3>{title}</h3>
           <button className="chart-modal-close" onClick={onClose}>×</button>
@@ -408,6 +452,14 @@ const ChartModal = ({ isOpen, onClose, title, description, children }) => {
       </div>
     </div>
   );
+};
+
+ChartModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string,
+  children: PropTypes.node,
 };
 
 // Clickable Chart Card Component
@@ -434,6 +486,13 @@ const ChartCard = ({ title, description, children, expandedContent }) => {
       </ChartModal>
     </>
   );
+};
+
+ChartCard.propTypes = {
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string,
+  children: PropTypes.node,
+  expandedContent: PropTypes.node,
 };
 
 const Analytics = () => {
@@ -814,11 +873,24 @@ const Analytics = () => {
     return (
       <>
         {showMFAModal && (
-          <div className="modal-overlay" style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => {
-            setShowMFAModal(false);
-            setMfaPassword("");
-          }}>
-            <div className="modal-content" style={{ zIndex: 10001, position: 'relative', backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '500px', width: '90%', maxHeight: '90vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
+          <div 
+            className="modal-overlay" 
+            style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+            onClick={() => {
+              setShowMFAModal(false);
+              setMfaPassword("");
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setShowMFAModal(false);
+                setMfaPassword("");
+              }
+            }}
+            role="dialog"
+            aria-modal="true"
+            tabIndex={-1}
+          >
+            <div className="modal-content" style={{ zIndex: 10001, position: 'relative', backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '500px', width: '90%', maxHeight: '90vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
               <div className="modal-header">
                 <h3>
                   <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -1306,8 +1378,15 @@ const Analytics = () => {
 
       {/* CSV Preview Modal */}
       {exportModal.show && exportModal.type === 'csv' && (
-        <div className="modal-overlay" onClick={() => setExportModal({ show: false, type: null })}>
-          <div className="modal-content export-modal" onClick={e => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          onClick={() => setExportModal({ show: false, type: null })}
+          onKeyDown={(e) => e.key === 'Escape' && setExportModal({ show: false, type: null })}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="modal-content export-modal" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()} role="document">
             <div className="modal-header">
               <h3>📊 CSV Export Preview</h3>
               <button className="modal-close" onClick={() => setExportModal({ show: false, type: null })}>×</button>

@@ -601,12 +601,12 @@ PKR
 
                                     return (
                                       <div key={idx} className="timeline-entry">
-                                        <div className={`timeline-dot payment-${entry.action?.replace('payment_', '')}`} />
+                                        <div className={`timeline-dot payment-${entry.action?.replaceAll('payment_', '')}`} />
                                         <div className="timeline-content">
                                           <div className="timeline-header">
                                             <div>
                                               <strong>
-                                                {entry.action?.replace(/_/g, ' ').toUpperCase()}
+                                                {entry.action?.replaceAll('_', ' ').toUpperCase()}
                                               </strong>
                                               <p>{formatDate(entry.timestamp)}</p>
                                               {entry.amountPaid && (
@@ -887,8 +887,15 @@ PKR
 
       {/* Status Update Modal */}
       {statusModalOrder && (
-        <div className="status-modal-overlay" onClick={closeStatusModal}>
-          <div className="status-modal" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="status-modal-overlay" 
+          onClick={closeStatusModal}
+          onKeyDown={(e) => e.key === 'Escape' && closeStatusModal()}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="status-modal" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
             <div className="modal-header">
               <h3>Update Order Status</h3>
               <button className="close-btn" onClick={closeStatusModal}>
@@ -1009,8 +1016,15 @@ PKR
 
       {/* Rejection Reason Modal */}
       {rejectModal.show && (
-        <div className="status-modal-overlay" onClick={() => setRejectModal({ show: false, orderId: null, proofIndex: null, reason: '' })}>
-          <div className="status-modal" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="status-modal-overlay" 
+          onClick={() => setRejectModal({ show: false, orderId: null, proofIndex: null, reason: '' })}
+          onKeyDown={(e) => e.key === 'Escape' && setRejectModal({ show: false, orderId: null, proofIndex: null, reason: '' })}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="status-modal" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
             <div className="modal-header">
               <h3>Reject Payment Proof</h3>
               <button 

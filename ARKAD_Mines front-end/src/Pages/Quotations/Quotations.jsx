@@ -736,8 +736,15 @@ const Quotations = () => {
       </div>
 
       {showDecisionModal && (
-        <div className="modal-overlay" onClick={closeDecisionModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          onClick={closeDecisionModal}
+          onKeyDown={(e) => e.key === 'Escape' && closeDecisionModal()}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
             <div className="modal-header">
               <h3>
                 {decisionType === "approve" && "Approve Quotation"}
@@ -794,14 +801,29 @@ const Quotations = () => {
 
       {/* CAPTCHA Modal */}
       {showCaptchaModal && (
-        <div className="modal-overlay" onClick={() => {
-          setShowCaptchaModal(false);
-          setCaptchaToken(null);
-          setCaptchaPassword("");
-          recaptchaRef.current?.reset();
-          setPendingCaptchaApproval(null);
-        }}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          onClick={() => {
+            setShowCaptchaModal(false);
+            setCaptchaToken(null);
+            setCaptchaPassword("");
+            recaptchaRef.current?.reset();
+            setPendingCaptchaApproval(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setShowCaptchaModal(false);
+              setCaptchaToken(null);
+              setCaptchaPassword("");
+              recaptchaRef.current?.reset();
+              setPendingCaptchaApproval(null);
+            }
+          }}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -887,12 +909,25 @@ const Quotations = () => {
 
       {/* Re-authentication Modal */}
       {showReauthModal && (
-        <div className="modal-overlay" onClick={() => {
-          setShowReauthModal(false);
-          setReauthPassword("");
-          setPendingApproval(null);
-        }}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          onClick={() => {
+            setShowReauthModal(false);
+            setReauthPassword("");
+            setPendingApproval(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setShowReauthModal(false);
+              setReauthPassword("");
+              setPendingApproval(null);
+            }
+          }}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />

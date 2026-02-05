@@ -659,8 +659,15 @@ const Orders = () => {
 
       {/* SINGLE MODAL WITH TABS */}
       {trackingOrderNumber && trackingOrderDetails && (
-        <div className="modal-overlay" onClick={closeTrackingView}>
-          <div className="tracking-modal" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          onClick={closeTrackingView}
+          onKeyDown={(e) => e.key === 'Escape' && closeTrackingView()}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="tracking-modal" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
             
             {/* Modal Header */}
             <div className="modal-header">
@@ -925,7 +932,7 @@ const Orders = () => {
                             <div key={idx} className="payment-timeline-entry">
                               <div className={`timeline-indicator ${entry.action}`} />
                               <div className="timeline-details">
-                                <strong>{entry.action?.replace(/_/g, ' ').toUpperCase()}</strong>
+                                <strong>{entry.action?.replaceAll('_', ' ').toUpperCase()}</strong>
                                 <p className="timeline-date">{new Date(entry.timestamp).toLocaleDateString()}</p>
                                   {entry.amountPaid !== undefined && <p className="timeline-amount">Amount: Rs {entry.amountPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}
                                   <p className="timeline-notes">
@@ -985,14 +992,29 @@ const Orders = () => {
 
       {/* CAPTCHA Modal */}
       {showCaptchaModal && (
-        <div className="modal-overlay" onClick={() => {
-          setShowCaptchaModal(false);
-          setCaptchaToken(null);
-          setCaptchaPassword("");
-          recaptchaRef.current?.reset();
-          setPendingPayment(null);
-        }}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          onClick={() => {
+            setShowCaptchaModal(false);
+            setCaptchaToken(null);
+            setCaptchaPassword("");
+            recaptchaRef.current?.reset();
+            setPendingPayment(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setShowCaptchaModal(false);
+              setCaptchaToken(null);
+              setCaptchaPassword("");
+              recaptchaRef.current?.reset();
+              setPendingPayment(null);
+            }
+          }}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -1078,12 +1100,25 @@ const Orders = () => {
 
       {/* MFA Modal */}
       {showMfaModal && (
-        <div className="modal-overlay" onClick={() => {
-          setShowMfaModal(false);
-          setMfaPassword("");
-          setPendingPayment(null);
-        }}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          onClick={() => {
+            setShowMfaModal(false);
+            setMfaPassword("");
+            setPendingPayment(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setShowMfaModal(false);
+              setMfaPassword("");
+              setPendingPayment(null);
+            }
+          }}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />

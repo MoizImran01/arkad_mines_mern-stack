@@ -150,8 +150,15 @@ const Navbar = () => {
         </div>
       </div>
       {showExpanded && (
-        <div className="notification-modal-overlay" onClick={() => setShowExpanded(false)}>
-          <div className="notification-modal" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="notification-modal-overlay" 
+          onClick={() => setShowExpanded(false)}
+          onKeyDown={(e) => e.key === 'Escape' && setShowExpanded(false)}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="notification-modal" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
             <div className="notification-modal-header">
               <h3>Payment Notifications</h3>
               <button className="notification-modal-close" onClick={() => setShowExpanded(false)}>

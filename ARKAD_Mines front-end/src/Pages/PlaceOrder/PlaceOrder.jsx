@@ -630,7 +630,7 @@ const PlaceOrder = () => {
     const required = ['street', 'city', 'state', 'zipCode', 'phone'];
     for (let field of required) {
       if (!addressData[field].trim()) {
-        alert(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+        alert(`Please fill in ${field.replaceAll(/([A-Z])/g, ' $1').toLowerCase()}`);
         return false;
       }
     }
@@ -899,14 +899,30 @@ const PlaceOrder = () => {
 
       {/* CAPTCHA Modal */}
       {showCaptchaModal && (
-        <div className="modal-overlay" style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)' }} onClick={() => {
-          setShowCaptchaModal(false);
-          setCaptchaToken(null);
-          setCaptchaPassword("");
-          recaptchaRef.current?.reset();
-          setPendingPayment(null);
-        }}>
-          <div className="modal-content" style={{ zIndex: 10001, position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)' }} 
+          onClick={() => {
+            setShowCaptchaModal(false);
+            setCaptchaToken(null);
+            setCaptchaPassword("");
+            recaptchaRef.current?.reset();
+            setPendingPayment(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setShowCaptchaModal(false);
+              setCaptchaToken(null);
+              setCaptchaPassword("");
+              recaptchaRef.current?.reset();
+              setPendingPayment(null);
+            }
+          }}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="modal-content" style={{ zIndex: 10001, position: 'relative' }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -992,12 +1008,26 @@ const PlaceOrder = () => {
 
       {/* MFA Modal */}
       {showMfaModal && (
-        <div className="modal-overlay" style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)' }} onClick={() => {
-          setShowMfaModal(false);
-          setMfaPassword("");
-          setPendingPayment(null);
-        }}>
-          <div className="modal-content" style={{ zIndex: 10001, position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)' }} 
+          onClick={() => {
+            setShowMfaModal(false);
+            setMfaPassword("");
+            setPendingPayment(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setShowMfaModal(false);
+              setMfaPassword("");
+              setPendingPayment(null);
+            }
+          }}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="modal-content" style={{ zIndex: 10001, position: 'relative' }} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -1067,8 +1097,16 @@ const PlaceOrder = () => {
 
       {/* Payment Modal */}
       {showPaymentModal && !showCaptchaModal && !showMfaModal && (
-        <div className="modal-overlay" style={{ zIndex: 9999 }} onClick={() => setShowPaymentModal(false)}>
-          <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          style={{ zIndex: 9999 }} 
+          onClick={() => setShowPaymentModal(false)}
+          onKeyDown={(e) => e.key === 'Escape' && setShowPaymentModal(false)}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="payment-modal" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
             <div className="payment-modal-header">
               <h3><FiCreditCard /> Submit Payment Proof</h3>
               <button className="modal-close-btn" onClick={() => setShowPaymentModal(false)} disabled={paymentSubmitting}>×</button>

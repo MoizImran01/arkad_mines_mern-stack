@@ -1,4 +1,5 @@
 import { createContext, useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import axios from "axios";
 
 export const AdminAuthContext = createContext(null);
@@ -109,6 +110,10 @@ const AdminAuthContextProvider = (props) => {
       {props.children}
     </AdminAuthContext.Provider>
   );
+};
+
+AdminAuthContextProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export default AdminAuthContextProvider;

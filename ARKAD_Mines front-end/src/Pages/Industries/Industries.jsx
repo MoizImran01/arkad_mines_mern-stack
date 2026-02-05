@@ -546,8 +546,15 @@ export default function Industries({ setShowLogin }) {
       </section>
 
       {showLoginPrompt && (
-        <div className="login-prompt-overlay" onClick={() => setShowLoginPrompt(false)}>
-          <div className="login-prompt-modal" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="login-prompt-overlay" 
+          onClick={() => setShowLoginPrompt(false)}
+          onKeyDown={(e) => e.key === 'Escape' && setShowLoginPrompt(false)}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="login-prompt-modal" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
             <button className="close-prompt" onClick={() => setShowLoginPrompt(false)}>×</button>
             <div className="prompt-icon">🔐</div>
             <h3>Login Required</h3>

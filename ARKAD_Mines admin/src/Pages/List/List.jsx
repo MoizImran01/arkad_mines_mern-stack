@@ -174,7 +174,7 @@ const List = () => {
             aria-label="QR Code Details"
             tabIndex={-1}
           >
-            <div className="qr-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="qr-modal-content" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
               <div className="qr-modal-header">
                 <h3>QR Code Details</h3>
                 <button 

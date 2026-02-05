@@ -191,15 +191,33 @@ const Navbar = ({ setShowLogin }) => {
             <div className='nav-profile'>
             <img src={assets.profile_icon} alt="Profile" className="profile-img" />
             <ul className="nav-dropdown">
-              <li onClick={() => navigate('/dashboard')} className="dropdown-item">
-                <img src={dashboard }alt="Dashboard" />
+              <li 
+                onClick={() => navigate('/dashboard')} 
+                className="dropdown-item"
+                role="menuitem"
+                tabIndex="0"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/dashboard'); }}
+              >
+                <img src={dashboard} alt="Dashboard" />
                 <span>Dashboard</span>
               </li>
-              <li onClick={() => navigate('/orders')} className="dropdown-item">
+              <li 
+                onClick={() => navigate('/orders')} 
+                className="dropdown-item"
+                role="menuitem"
+                tabIndex="0"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/orders'); }}
+              >
                 <img src={assets.bag_icon} alt="Orders" />
                 <span>My Orders</span>
               </li>
-              <li onClick={() => navigate('/quotations')} className="dropdown-item">
+              <li 
+                onClick={() => navigate('/quotations')} 
+                className="dropdown-item"
+                role="menuitem"
+                tabIndex="0"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/quotations'); }}
+              >
                 <FiFileText style={{ fontSize: '18px', color: '#475467' }} />
                 <span>My Quotations</span>
               </li>
@@ -210,6 +228,14 @@ const Navbar = ({ setShowLogin }) => {
                   navigate("/");
                 }}
                 className="dropdown-item"
+                role="menuitem"
+                tabIndex="0"
+                onKeyDown={(e) => { 
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    logout();
+                    navigate("/");
+                  }
+                }}
               >
                 <img src={assets.logout_icon} alt="Logout" />
                 <span>Logout</span>

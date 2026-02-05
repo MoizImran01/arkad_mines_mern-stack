@@ -1,5 +1,6 @@
 
 import { createContext, useEffect, useState } from "react";
+import PropTypes from "prop-types";
 
 //create global context for application state management
 export const StoreContext = createContext(null);
@@ -178,6 +179,10 @@ const StoreContextProvider = (props) => {
       {props.children}
     </StoreContext.Provider>
   );
+};
+
+StoreContextProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export default StoreContextProvider;

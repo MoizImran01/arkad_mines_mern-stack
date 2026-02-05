@@ -129,9 +129,16 @@ const handleSubmit = async (event) => {
 
     return (
 
-        <div className='login-overlay' onClick={handleBackdropClick}>
+        <div 
+            className='login-overlay' 
+            onClick={handleBackdropClick}
+            onKeyDown={(e) => e.key === 'Escape' && setShowLogin(false)}
+            role="dialog"
+            aria-modal="true"
+            tabIndex={-1}
+        >
 
-            <div className='login-modal'>
+            <div className='login-modal' onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="document">
 
                 <form onSubmit={handleSubmit} className='login-form'>
 
