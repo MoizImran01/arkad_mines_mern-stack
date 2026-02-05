@@ -1124,7 +1124,7 @@ const Analytics = () => {
 
       {/* Summary Cards */}
       <div className="summary-grid">
-        <div className="summary-card revenue clickable" onClick={() => navigate('/orders')} title="View Orders">
+        <button type="button" className="summary-card revenue clickable" onClick={() => navigate('/orders')} title="View Orders">
           <div className="card-icon">💵</div>
           <div className="card-content">
             <h3>Total Revenue</h3>
@@ -1132,11 +1132,11 @@ const Analytics = () => {
             <span className="card-label">Fully paid orders only</span>
           </div>
           <span className="card-link-hint">View Orders →</span>
-        </div>
+        </button>
 
 
 
-        <div className="summary-card pending clickable" onClick={() => navigate('/orders')} title="View Orders">
+        <button type="button" className="summary-card pending clickable" onClick={() => navigate('/orders')} title="View Orders">
           <div className="card-icon">⏳</div>
           <div className="card-content">
             <h3>Pending Payments</h3>
@@ -1144,9 +1144,9 @@ const Analytics = () => {
             <span className="card-label">Awaiting payment</span>
           </div>
           <span className="card-link-hint">View Orders →</span>
-        </div>
+        </button>
 
-        <div className="summary-card orders clickable" onClick={() => navigate('/orders')} title="View Orders">
+        <button type="button" className="summary-card orders clickable" onClick={() => navigate('/orders')} title="View Orders">
           <div className="card-icon">📦</div>
           <div className="card-content">
             <h3>Total Orders</h3>
@@ -1154,9 +1154,9 @@ const Analytics = () => {
             <span className="card-label">Last 12 months</span>
           </div>
           <span className="card-link-hint">View Orders →</span>
-        </div>
+        </button>
 
-        <div className="summary-card quotations clickable" onClick={() => navigate('/quotes')} title="View Quotations">
+        <button type="button" className="summary-card quotations clickable" onClick={() => navigate('/quotes')} title="View Quotations">
           <div className="card-icon">📝</div>
           <div className="card-content">
             <h3>Quotations</h3>
@@ -1164,9 +1164,9 @@ const Analytics = () => {
             <span className="card-label">Last 12 months</span>
           </div>
           <span className="card-link-hint">View Quotes →</span>
-        </div>
+        </button>
 
-        <div className="summary-card customers clickable" onClick={() => navigate('/users')} title="View Customers">
+        <button type="button" className="summary-card customers clickable" onClick={() => navigate('/users')} title="View Customers">
           <div className="card-icon">👥</div>
           <div className="card-content">
             <h3>Total Customers</h3>
@@ -1174,9 +1174,9 @@ const Analytics = () => {
             <span className="card-label">Registered clients</span>
           </div>
           <span className="card-link-hint">View Users →</span>
-        </div>
+        </button>
 
-        <div className="summary-card stones clickable" onClick={() => navigate('/list')} title="View Products">
+        <button type="button" className="summary-card stones clickable" onClick={() => navigate('/list')} title="View Products">
           <div className="card-icon">💎</div>
           <div className="card-content">
             <h3>Stone Products</h3>
@@ -1184,9 +1184,9 @@ const Analytics = () => {
             <span className="card-label">In catalog</span>
           </div>
           <span className="card-link-hint">View Products →</span>
-        </div>
+        </button>
 
-        <div className="summary-card conversion clickable" onClick={() => navigate('/quotes')} title="View Quotations">
+        <button type="button" className="summary-card conversion clickable" onClick={() => navigate('/quotes')} title="View Quotations">
           <div className="card-icon">📊</div>
           <div className="card-content">
             <h3>Conversion Rate</h3>
@@ -1194,7 +1194,7 @@ const Analytics = () => {
             <span className="card-label">Quote to Order</span>
           </div>
           <span className="card-link-hint">View Quotes →</span>
-        </div>
+        </button>
       </div>
 
       {/* Charts Section */}
