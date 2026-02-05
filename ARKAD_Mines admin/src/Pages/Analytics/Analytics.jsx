@@ -442,9 +442,7 @@ const ChartModal = ({ isOpen, onClose, title, description, children }) => {
         type="button"
         className="modal-backdrop-btn" 
         onClick={onClose}
-        onKeyDown={(e) => e.key === 'Escape' && onClose()}
         aria-label="Close modal"
-        tabIndex={-1}
       />
       <div className="chart-modal-content" role="document">
         <div className="chart-modal-header">
@@ -1391,10 +1389,8 @@ const Analytics = () => {
       {exportModal.show && exportModal.type === 'csv' && (
         <div 
           className="modal-overlay" 
-          onKeyDown={(e) => e.key === 'Escape' && setExportModal({ show: false, type: null })}
           role="dialog"
           aria-modal="true"
-          tabIndex={-1}
         >
           <button 
             type="button"

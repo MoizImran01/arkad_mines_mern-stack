@@ -917,18 +917,8 @@ const PlaceOrder = () => {
         <div 
           className="modal-overlay" 
           style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)' }} 
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              setShowCaptchaModal(false);
-              setCaptchaToken(null);
-              setCaptchaPassword("");
-              recaptchaRef.current?.reset();
-              setPendingPayment(null);
-            }
-          }}
           role="dialog"
           aria-modal="true"
-          tabIndex={-1}
         >
           <button 
             type="button"
@@ -1032,16 +1022,8 @@ const PlaceOrder = () => {
         <div 
           className="modal-overlay" 
           style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)' }} 
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              setShowMfaModal(false);
-              setMfaPassword("");
-              setPendingPayment(null);
-            }
-          }}
           role="dialog"
           aria-modal="true"
-          tabIndex={-1}
         >
           <button 
             type="button"
@@ -1127,10 +1109,8 @@ const PlaceOrder = () => {
         <div 
           className="modal-overlay" 
           style={{ zIndex: 9999 }} 
-          onKeyDown={(e) => e.key === 'Escape' && setShowPaymentModal(false)}
           role="dialog"
           aria-modal="true"
-          tabIndex={-1}
         >
           <button 
             type="button"

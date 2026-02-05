@@ -273,9 +273,7 @@ export const AddProduct = () => {
             type="button"
             className="modal-backdrop-btn" 
             onClick={() => setShowQRCode(false)}
-            onKeyDown={(e) => e.key === 'Escape' && setShowQRCode(false)}
             aria-label="Close modal"
-            tabIndex={-1}
           />
           <div className="qr-code-content" role="document">
             <h3 id="qr-success-title">Block Registered Successfully!</h3>

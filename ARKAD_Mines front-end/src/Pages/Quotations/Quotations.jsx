@@ -738,10 +738,8 @@ const Quotations = () => {
       {showDecisionModal && (
         <div 
           className="modal-overlay" 
-          onKeyDown={(e) => e.key === 'Escape' && closeDecisionModal()}
           role="dialog"
           aria-modal="true"
-          tabIndex={-1}
         >
           <button 
             type="button"
@@ -809,18 +807,8 @@ const Quotations = () => {
       {showCaptchaModal && (
         <div 
           className="modal-overlay" 
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              setShowCaptchaModal(false);
-              setCaptchaToken(null);
-              setCaptchaPassword("");
-              recaptchaRef.current?.reset();
-              setPendingCaptchaApproval(null);
-            }
-          }}
           role="dialog"
           aria-modal="true"
-          tabIndex={-1}
         >
           <button 
             type="button"

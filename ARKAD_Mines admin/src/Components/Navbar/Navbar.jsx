@@ -160,9 +160,7 @@ const Navbar = () => {
             type="button"
             className="modal-backdrop-btn" 
             onClick={() => setShowExpanded(false)}
-            onKeyDown={(e) => e.key === 'Escape' && setShowExpanded(false)}
             aria-label="Close modal"
-            tabIndex={-1}
           />
           <div className="notification-modal" role="document">
             <div className="notification-modal-header">

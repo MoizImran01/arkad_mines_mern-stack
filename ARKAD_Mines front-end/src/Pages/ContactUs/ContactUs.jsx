@@ -390,10 +390,8 @@ function ContactUs({ setShowLogin }) {
       {showLoginPrompt && (
         <div 
           className="login-prompt-overlay-pro" 
-          onKeyDown={(e) => e.key === 'Escape' && setShowLoginPrompt(false)}
           role="dialog"
           aria-modal="true"
-          tabIndex={-1}
         >
           <button 
             type="button"

@@ -124,10 +124,8 @@ const handleSubmit = async (event) => {
 
         <div 
             className='login-overlay' 
-            onKeyDown={(e) => e.key === 'Escape' && setShowLogin(false)}
             role="dialog"
             aria-modal="true"
-            tabIndex={-1}
         >
             <button 
                 type="button"

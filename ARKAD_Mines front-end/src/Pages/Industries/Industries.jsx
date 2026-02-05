@@ -297,7 +297,8 @@ function Industries({ setShowLogin }) {
         
         <div className="industries-grid">
           {industries.map((industry, index) => (
-            <div 
+            <button 
+              type="button"
               key={index} 
               className={`industry-card ${activeSection === index ? "active" : ""}`}
               onMouseEnter={() => setActiveSection(index)}
@@ -317,7 +318,7 @@ function Industries({ setShowLogin }) {
               <div className="card-background">
                 <span className="bg-emoji">{industry.image}</span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </section>
@@ -550,10 +551,8 @@ function Industries({ setShowLogin }) {
       {showLoginPrompt && (
         <div 
           className="login-prompt-overlay" 
-          onKeyDown={(e) => e.key === 'Escape' && setShowLoginPrompt(false)}
           role="dialog"
           aria-modal="true"
-          tabIndex={-1}
         >
           <button 
             type="button"

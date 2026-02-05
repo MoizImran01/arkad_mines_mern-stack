@@ -661,10 +661,8 @@ const Orders = () => {
       {trackingOrderNumber && trackingOrderDetails && (
         <div 
           className="modal-overlay" 
-          onKeyDown={(e) => e.key === 'Escape' && closeTrackingView()}
           role="dialog"
           aria-modal="true"
-          tabIndex={-1}
         >
           <button 
             type="button"
@@ -1000,18 +998,8 @@ const Orders = () => {
       {showCaptchaModal && (
         <div 
           className="modal-overlay" 
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              setShowCaptchaModal(false);
-              setCaptchaToken(null);
-              setCaptchaPassword("");
-              recaptchaRef.current?.reset();
-              setPendingPayment(null);
-            }
-          }}
           role="dialog"
           aria-modal="true"
-          tabIndex={-1}
         >
           <button 
             type="button"
@@ -1114,16 +1102,8 @@ const Orders = () => {
       {showMfaModal && (
         <div 
           className="modal-overlay" 
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              setShowMfaModal(false);
-              setMfaPassword("");
-              setPendingPayment(null);
-            }
-          }}
           role="dialog"
           aria-modal="true"
-          tabIndex={-1}
         >
           <button 
             type="button"

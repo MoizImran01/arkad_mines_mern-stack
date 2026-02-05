@@ -165,11 +165,9 @@ const List = () => {
         {qrModal.isOpen && (
           <div 
             className="qr-modal-overlay" 
-            onKeyDown={(e) => e.key === 'Escape' && setQrModal({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null })}
             role="dialog"
             aria-modal="true"
             aria-labelledby="qr-modal-title"
-            tabIndex={-1}
           >
             <button 
               type="button"

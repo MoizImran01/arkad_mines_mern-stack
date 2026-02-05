@@ -889,10 +889,8 @@ PKR
       {statusModalOrder && (
         <div 
           className="status-modal-overlay" 
-          onKeyDown={(e) => e.key === 'Escape' && closeStatusModal()}
           role="dialog"
           aria-modal="true"
-          tabIndex={-1}
         >
           <button 
             type="button"
@@ -1024,10 +1022,8 @@ PKR
       {rejectModal.show && (
         <div 
           className="status-modal-overlay" 
-          onKeyDown={(e) => e.key === 'Escape' && setRejectModal({ show: false, orderId: null, proofIndex: null, reason: '' })}
           role="dialog"
           aria-modal="true"
-          tabIndex={-1}
         >
           <button 
             type="button"
