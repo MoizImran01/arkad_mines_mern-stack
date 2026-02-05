@@ -738,12 +738,18 @@ const Quotations = () => {
       {showDecisionModal && (
         <div 
           className="modal-overlay" 
-          onClick={closeDecisionModal}
           onKeyDown={(e) => e.key === 'Escape' && closeDecisionModal()}
           role="dialog"
           aria-modal="true"
           tabIndex={-1}
         >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={closeDecisionModal}
+            aria-label="Close decision modal"
+          />
           <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>
@@ -803,13 +809,6 @@ const Quotations = () => {
       {showCaptchaModal && (
         <div 
           className="modal-overlay" 
-          onClick={() => {
-            setShowCaptchaModal(false);
-            setCaptchaToken(null);
-            setCaptchaPassword("");
-            recaptchaRef.current?.reset();
-            setPendingCaptchaApproval(null);
-          }}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
               setShowCaptchaModal(false);
@@ -823,6 +822,19 @@ const Quotations = () => {
           aria-modal="true"
           tabIndex={-1}
         >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={() => {
+              setShowCaptchaModal(false);
+              setCaptchaToken(null);
+              setCaptchaPassword("");
+              recaptchaRef.current?.reset();
+              setPendingCaptchaApproval(null);
+            }}
+            aria-label="Close CAPTCHA modal"
+          />
           <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>

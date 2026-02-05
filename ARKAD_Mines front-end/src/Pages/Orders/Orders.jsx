@@ -661,12 +661,18 @@ const Orders = () => {
       {trackingOrderNumber && trackingOrderDetails && (
         <div 
           className="modal-overlay" 
-          onClick={closeTrackingView}
           onKeyDown={(e) => e.key === 'Escape' && closeTrackingView()}
           role="dialog"
           aria-modal="true"
           tabIndex={-1}
         >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={closeTrackingView}
+            aria-label="Close tracking modal"
+          />
           <div className="tracking-modal" role="document">
             
             {/* Modal Header */}
@@ -994,13 +1000,6 @@ const Orders = () => {
       {showCaptchaModal && (
         <div 
           className="modal-overlay" 
-          onClick={() => {
-            setShowCaptchaModal(false);
-            setCaptchaToken(null);
-            setCaptchaPassword("");
-            recaptchaRef.current?.reset();
-            setPendingPayment(null);
-          }}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
               setShowCaptchaModal(false);
@@ -1014,6 +1013,19 @@ const Orders = () => {
           aria-modal="true"
           tabIndex={-1}
         >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={() => {
+              setShowCaptchaModal(false);
+              setCaptchaToken(null);
+              setCaptchaPassword("");
+              recaptchaRef.current?.reset();
+              setPendingPayment(null);
+            }}
+            aria-label="Close CAPTCHA modal"
+          />
           <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>
@@ -1102,11 +1114,6 @@ const Orders = () => {
       {showMfaModal && (
         <div 
           className="modal-overlay" 
-          onClick={() => {
-            setShowMfaModal(false);
-            setMfaPassword("");
-            setPendingPayment(null);
-          }}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
               setShowMfaModal(false);
@@ -1118,6 +1125,17 @@ const Orders = () => {
           aria-modal="true"
           tabIndex={-1}
         >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={() => {
+              setShowMfaModal(false);
+              setMfaPassword("");
+              setPendingPayment(null);
+            }}
+            aria-label="Close MFA modal"
+          />
           <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>

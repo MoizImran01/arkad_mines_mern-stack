@@ -120,23 +120,22 @@ const handleSubmit = async (event) => {
         setCaptchaToken(null)
     }
 
-    const handleBackdropClick = (e) => {
-
-        if (e.target === e.currentTarget) {
-            setShowLogin(false)
-        }
-    }
-
     return (
 
         <div 
             className='login-overlay' 
-            onClick={handleBackdropClick}
             onKeyDown={(e) => e.key === 'Escape' && setShowLogin(false)}
             role="dialog"
             aria-modal="true"
             tabIndex={-1}
         >
+            <button 
+                type="button"
+                className="modal-backdrop-btn" 
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+                onClick={() => setShowLogin(false)}
+                aria-label="Close login modal"
+            />
 
             <div className='login-modal' role="document">
 

@@ -889,12 +889,18 @@ PKR
       {statusModalOrder && (
         <div 
           className="status-modal-overlay" 
-          onClick={closeStatusModal}
           onKeyDown={(e) => e.key === 'Escape' && closeStatusModal()}
           role="dialog"
           aria-modal="true"
           tabIndex={-1}
         >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={closeStatusModal}
+            aria-label="Close status modal"
+          />
           <div className="status-modal" role="document">
             <div className="modal-header">
               <h3>Update Order Status</h3>
@@ -1018,12 +1024,18 @@ PKR
       {rejectModal.show && (
         <div 
           className="status-modal-overlay" 
-          onClick={() => setRejectModal({ show: false, orderId: null, proofIndex: null, reason: '' })}
           onKeyDown={(e) => e.key === 'Escape' && setRejectModal({ show: false, orderId: null, proofIndex: null, reason: '' })}
           role="dialog"
           aria-modal="true"
           tabIndex={-1}
         >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={() => setRejectModal({ show: false, orderId: null, proofIndex: null, reason: '' })}
+            aria-label="Close rejection modal"
+          />
           <div className="status-modal" role="document">
             <div className="modal-header">
               <h3>Reject Payment Proof</h3>

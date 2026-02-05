@@ -1391,12 +1391,18 @@ const Analytics = () => {
       {exportModal.show && exportModal.type === 'csv' && (
         <div 
           className="modal-overlay" 
-          onClick={() => setExportModal({ show: false, type: null })}
           onKeyDown={(e) => e.key === 'Escape' && setExportModal({ show: false, type: null })}
           role="dialog"
           aria-modal="true"
           tabIndex={-1}
         >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={() => setExportModal({ show: false, type: null })}
+            aria-label="Close CSV preview modal"
+          />
           <div className="modal-content export-modal" role="document">
             <div className="modal-header">
               <h3>📊 CSV Export Preview</h3>

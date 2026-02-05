@@ -165,13 +165,19 @@ const List = () => {
         {qrModal.isOpen && (
           <div 
             className="qr-modal-overlay" 
-            onClick={() => setQrModal({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null })}
             onKeyDown={(e) => e.key === 'Escape' && setQrModal({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null })}
             role="dialog"
             aria-modal="true"
             aria-labelledby="qr-modal-title"
             tabIndex={-1}
           >
+            <button 
+              type="button"
+              className="modal-backdrop-btn" 
+              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+              onClick={() => setQrModal({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null })}
+              aria-label="Close QR modal"
+            />
             <div className="qr-modal-content" role="document">
               <div className="qr-modal-header">
                 <h3 id="qr-modal-title">QR Code Details</h3>

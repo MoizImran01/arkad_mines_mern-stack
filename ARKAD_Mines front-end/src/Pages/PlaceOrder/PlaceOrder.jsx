@@ -917,13 +917,6 @@ const PlaceOrder = () => {
         <div 
           className="modal-overlay" 
           style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)' }} 
-          onClick={() => {
-            setShowCaptchaModal(false);
-            setCaptchaToken(null);
-            setCaptchaPassword("");
-            recaptchaRef.current?.reset();
-            setPendingPayment(null);
-          }}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
               setShowCaptchaModal(false);
@@ -937,6 +930,19 @@ const PlaceOrder = () => {
           aria-modal="true"
           tabIndex={-1}
         >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={() => {
+              setShowCaptchaModal(false);
+              setCaptchaToken(null);
+              setCaptchaPassword("");
+              recaptchaRef.current?.reset();
+              setPendingPayment(null);
+            }}
+            aria-label="Close CAPTCHA modal"
+          />
           <div className="modal-content" style={{ zIndex: 10001, position: 'relative' }} role="document">
             <div className="modal-header">
               <h3>
@@ -1026,11 +1032,6 @@ const PlaceOrder = () => {
         <div 
           className="modal-overlay" 
           style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)' }} 
-          onClick={() => {
-            setShowMfaModal(false);
-            setMfaPassword("");
-            setPendingPayment(null);
-          }}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
               setShowMfaModal(false);
@@ -1042,6 +1043,17 @@ const PlaceOrder = () => {
           aria-modal="true"
           tabIndex={-1}
         >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={() => {
+              setShowMfaModal(false);
+              setMfaPassword("");
+              setPendingPayment(null);
+            }}
+            aria-label="Close MFA modal"
+          />
           <div className="modal-content" style={{ zIndex: 10001, position: 'relative' }} role="document">
             <div className="modal-header">
               <h3>
@@ -1115,12 +1127,18 @@ const PlaceOrder = () => {
         <div 
           className="modal-overlay" 
           style={{ zIndex: 9999 }} 
-          onClick={() => setShowPaymentModal(false)}
           onKeyDown={(e) => e.key === 'Escape' && setShowPaymentModal(false)}
           role="dialog"
           aria-modal="true"
           tabIndex={-1}
         >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={() => setShowPaymentModal(false)}
+            aria-label="Close payment modal"
+          />
           <div className="payment-modal" role="document">
             <div className="payment-modal-header">
               <h3><FiCreditCard /> Submit Payment Proof</h3>

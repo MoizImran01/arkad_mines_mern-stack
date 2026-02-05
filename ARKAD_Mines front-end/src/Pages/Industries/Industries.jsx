@@ -550,12 +550,18 @@ function Industries({ setShowLogin }) {
       {showLoginPrompt && (
         <div 
           className="login-prompt-overlay" 
-          onClick={() => setShowLoginPrompt(false)}
           onKeyDown={(e) => e.key === 'Escape' && setShowLoginPrompt(false)}
           role="dialog"
           aria-modal="true"
           tabIndex={-1}
         >
+          <button 
+            type="button"
+            className="modal-backdrop-btn" 
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer' }}
+            onClick={() => setShowLoginPrompt(false)}
+            aria-label="Close login prompt modal"
+          />
           <div className="login-prompt-modal" role="document">
             <button className="close-prompt" onClick={() => setShowLoginPrompt(false)}>×</button>
             <div className="prompt-icon">🔐</div>
