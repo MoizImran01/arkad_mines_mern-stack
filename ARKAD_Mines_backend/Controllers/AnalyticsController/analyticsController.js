@@ -452,8 +452,8 @@ export const getAnalytics = async (req, res) => {
         totalRevenue,
         forecastedRevenue,
         pendingPayments,
-        conversionRate: parseFloat(conversionRate),
-        orderGrowth: parseFloat(orderGrowth)
+        conversionRate: Number.parseFloat(conversionRate),
+        orderGrowth: Number.parseFloat(orderGrowth)
       },
       topClients: roundedTopClients,
       mostSoldStones: roundedMostSoldStones,
