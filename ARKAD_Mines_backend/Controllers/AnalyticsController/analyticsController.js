@@ -43,8 +43,8 @@ export const getAnalytics = async (req, res) => {
       });
     }
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 100;
+    const page = Number.parseInt(req.query.page, 10) || 1;
+    const limit = Number.parseInt(req.query.limit, 10) || 100;
     const skip = (page - 1) * limit;
 
     const endDate = new Date();

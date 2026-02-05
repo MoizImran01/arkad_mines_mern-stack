@@ -58,7 +58,7 @@ export const decryptSensitiveData = (data) => {
   return decrypted;
 };
 
-const RETENTION_DAYS = parseInt(process.env.ANALYTICS_RETENTION_DAYS || '365', 10);
+const RETENTION_DAYS = Number.parseInt(process.env.ANALYTICS_RETENTION_DAYS || '365', 10);
 
 export const cleanupOldAnalyticsLogs = async () => {
   try {

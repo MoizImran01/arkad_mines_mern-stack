@@ -19,7 +19,7 @@ export const createIPWhitelist = (allowedIPs = [], enforceWhitelist = true) => {
     const isAllowed = allowedIPs.some(ip => {
       if (ip === clientIp) return true;
       if (ip.includes('*')) {
-        const pattern = ip.replace(/\*/g, '.*');
+        const pattern = ip.replaceAll('*', '.*');
         return new RegExp(`^${pattern}$`).test(clientIp);
       }
       return false;

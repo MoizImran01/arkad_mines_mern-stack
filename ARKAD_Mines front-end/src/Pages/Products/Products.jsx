@@ -398,7 +398,10 @@ const Products = () => {
                   key={product._id} 
                   className="product-card"
                   onClick={() => navigate(`/item/${product._id}`)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/item/${product._id}`); }}
                   style={{ cursor: 'pointer' }}
+                  role="button"
+                  tabIndex={0}
                 >
                   <div className="product-image">
                     <img 

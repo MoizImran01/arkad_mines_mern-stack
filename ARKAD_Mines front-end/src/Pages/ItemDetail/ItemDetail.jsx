@@ -151,6 +151,9 @@ const ItemDetail = () => {
             <div 
               className={`item-image-wrapper ${imageZoom ? 'zoomed' : ''}`}
               onClick={handleImageClick}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleImageClick(); }}
+              role="button"
+              tabIndex={0}
             >
               <img
                 src={getImageUrl(stone.image)}

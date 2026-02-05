@@ -19,8 +19,8 @@ export const detectPaymentAnomalies = async (req, res, next) => {
   }
 
   try {
-    const numericAmount = parseFloat(amountPaid);
-    if (!isFinite(numericAmount) || numericAmount <= 0) {
+    const numericAmount = Number.parseFloat(amountPaid);
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
       return next();
     }
 

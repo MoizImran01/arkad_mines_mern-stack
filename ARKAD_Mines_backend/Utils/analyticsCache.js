@@ -1,5 +1,5 @@
 const cache = new Map();
-const CACHE_TTL = parseInt(process.env.ANALYTICS_CACHE_TTL || '600', 10) * 1000;
+const CACHE_TTL = Number.parseInt(process.env.ANALYTICS_CACHE_TTL || '600', 10) * 1000;
 
 export const getCachedAnalytics = (key) => {
   const cached = cache.get(key);

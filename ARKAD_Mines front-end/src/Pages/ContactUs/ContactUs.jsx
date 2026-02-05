@@ -131,6 +131,11 @@ function ContactUs({ setShowLogin }) {
     </svg>
   );
 
+  AnimatedWave.propTypes = {
+    fill: PropTypes.string,
+    className: PropTypes.string,
+  };
+
   return (
     <div className="contact-page-pro">
       <section className="contact-hero-pro">

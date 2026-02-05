@@ -563,7 +563,7 @@ const Quotations = () => {
                     <td>{quote.referenceNumber}</td>
                     <td>
                       <span className={`status-badge ${quote.status}`}>
-                        {quote.status.replace(/_/g, ' ')}
+                        {quote.status.replaceAll('_', ' ')}
                       </span>
                     </td>
                     <td>
@@ -590,7 +590,7 @@ const Quotations = () => {
             </div>
 
             <div className="panel-section">
-              <h4>Status: <span style={{textTransform: 'capitalize'}}>{selectedQuote.status.replace(/_/g, ' ')}</span></h4>
+              <h4>Status: <span style={{textTransform: 'capitalize'}}>{selectedQuote.status.replaceAll('_', ' ')}</span></h4>
               {selectedQuote.validity && (
                 <small>
                   Valid until: {formatDate(selectedQuote.validity.end)}
