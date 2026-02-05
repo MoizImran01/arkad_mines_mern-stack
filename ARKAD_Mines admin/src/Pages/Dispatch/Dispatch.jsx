@@ -283,8 +283,11 @@ const Dispatch = () => {
                   ref={videoRef}
                   autoPlay
                   playsInline
+                  muted
                   className="camera-video"
-                />
+                >
+                  <track kind="captions" />
+                </video>
                 <div className="camera-overlay">
                   <div className="scan-frame"></div>
                   <p>Point camera at QR code</p>

@@ -124,10 +124,9 @@ const List = () => {
                     </p>
                     <div className="qr-code-cell">
                       {item.qrCodeImage ? (
-                        <img 
-                          src={getImageUrl(item.qrCodeImage)} 
-                          alt="QR Code" 
-                          className="qr-code-thumbnail"
+                        <button
+                          type="button"
+                          className="qr-code-btn"
                           title={`Click to view QR Code: ${item.qrCode}`}
                           onClick={() => setQrModal({
                             isOpen: true,
@@ -135,13 +134,27 @@ const List = () => {
                             qrCodeId: item.qrCode,
                             stoneName: item.stoneName
                           })}
-                        />
+                          aria-label={`View QR code for ${item.stoneName}`}
+                        >
+                          <img 
+                            src={getImageUrl(item.qrCodeImage)} 
+                            alt={`QR Code for ${item.stoneName}`}
+                            className="qr-code-thumbnail"
+                          />
+                        </button>
                       ) : (
                         <span className="no-qr">N/A</span>
                       )}
                     </div>
 
-                    <p onClick={()=>{removeStoneItem(item._id)}} className="remove-btn">X</p>
+                    <button 
+                      type="button"
+                      onClick={()=>{removeStoneItem(item._id)}} 
+                      className="remove-btn"
+                      aria-label={`Remove ${item.stoneName}`}
+                    >
+                      X
+                    </button>
                   </div>
 
                   {index !== list.length - 1 && <hr className="row-separator" />}
@@ -152,7 +165,15 @@ const List = () => {
 
         {/* QR Code Modal */}
         {qrModal.isOpen && (
-          <div className="qr-modal-overlay" onClick={() => setQrModal({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null })}>
+          <div 
+            className="qr-modal-overlay" 
+            onClick={() => setQrModal({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null })}
+            onKeyDown={(e) => e.key === 'Escape' && setQrModal({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null })}
+            role="dialog"
+            aria-modal="true"
+            aria-label="QR Code Details"
+            tabIndex={-1}
+          >
             <div className="qr-modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="qr-modal-header">
                 <h3>QR Code Details</h3>

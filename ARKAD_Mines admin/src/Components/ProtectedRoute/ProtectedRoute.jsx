@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import { AdminAuthContext } from '../../context/AdminAuthContext';
 
 const ProtectedRoute = ({ children }) => {
@@ -27,6 +28,10 @@ const ProtectedRoute = ({ children }) => {
 
 
   return children;
+};
+
+ProtectedRoute.propTypes = {
+  children: PropTypes.node.isRequired
 };
 
 export default ProtectedRoute;
