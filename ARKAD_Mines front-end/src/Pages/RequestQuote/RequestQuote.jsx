@@ -277,10 +277,11 @@ const RequestQuote = () => {
                     </div>
 
                     <div className="item-actions">
-                      <label>Quantity needed</label>
+                      <label htmlFor={`quantity-${item._id}`}>Quantity needed</label>
                       <div className="quantity-control">
                         <input
                           type="number"
+                          id={`quantity-${item._id}`}
                           min="1"
                           value={item.requestedQuantity}
                           onChange={(e) =>

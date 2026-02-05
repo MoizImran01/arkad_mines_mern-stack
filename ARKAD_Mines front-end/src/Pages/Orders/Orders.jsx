@@ -882,9 +882,10 @@ const Orders = () => {
                         <h4>Submit Payment</h4>
                         <form onSubmit={handlePaymentSubmit}>
                           <div className="form-group">
-                            <label>Amount to Pay</label>
+                            <label htmlFor="payment-amount">Amount to Pay</label>
                             <input 
                               type="number" 
+                              id="payment-amount"
                               placeholder={`Enter amount (max: Rs ${trackingOrderDetails.outstandingBalance?.toLocaleString()})`}
                               step="0.01"
                               max={trackingOrderDetails.outstandingBalance}
@@ -895,9 +896,10 @@ const Orders = () => {
                             />
                           </div>
                           <div className="form-group">
-                            <label>Upload Payment Proof (Screenshot)</label>
+                            <label htmlFor="payment-proof">Upload Payment Proof (Screenshot)</label>
                             <input 
                               type="file" 
+                              id="payment-proof"
                               accept="image/*"
                               onChange={(e) => setPaymentForm({...paymentForm, proofFile: e.target.files[0]})}
                               className="form-input"

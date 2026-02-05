@@ -552,6 +552,13 @@ const Quotations = () => {
                     key={quote._id}
                     className={selectedQuote?._id === quote._id ? "selected" : ""}
                     onClick={() => handleSelectQuote(quote)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        handleSelectQuote(quote)
+                      }
+                    }}
+                    tabIndex="0"
+                    role="button"
                   >
                     <td>{quote.referenceNumber}</td>
                     <td>
@@ -746,8 +753,9 @@ const Quotations = () => {
                 {decisionType === "revision" && "Please provide details about what needs to be revised."}
               </p>
               <div className="form-group">
-                <label>Comment (Optional):</label>
+                <label htmlFor="decision-comment">Comment (Optional):</label>
                 <textarea
+                  id="decision-comment"
                   value={decisionComment}
                   onChange={(e) => setDecisionComment(e.target.value)}
                   placeholder={

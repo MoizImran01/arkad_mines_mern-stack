@@ -183,7 +183,7 @@ const AdminLogin = () => {
 
         <div className="login-footer">
           <p className="security-note">
-            <span className="lock-icon">🔒</span>
+            <span className="lock-icon">🔒</span>{' '}
             This portal is restricted to authorized administrators only
           </p>
         </div>

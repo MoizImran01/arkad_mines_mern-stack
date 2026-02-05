@@ -400,6 +400,13 @@ PKR
                     <tr 
                       className="order-row" 
                       onClick={() => toggleOrderExpand(order._id)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          toggleOrderExpand(order._id)
+                        }
+                      }}
+                      tabIndex="0"
+                      role="button"
                     >
                       <td className="order-id">#{order.orderNumber}</td>
                       <td className="customer-info">
@@ -438,6 +445,14 @@ PKR
                             e.stopPropagation()
                             openStatusModal(order)
                           }}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.stopPropagation()
+                              openStatusModal(order)
+                            }
+                          }}
+                          role="button"
+                          tabIndex="0"
                           title="Click to edit status"
                         >
                           {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
@@ -766,8 +781,9 @@ PKR
                               {editingStatus === order._id ? (
                                 <div className="status-form">
                                   <div className="form-group">
-                                    <label>Status</label>
+                                    <label htmlFor={`inline-status-${order._id}`}>Status</label>
                                     <select 
+                                      id={`inline-status-${order._id}`}
                                       value={statusForm.status}
                                       onChange={(e) => setStatusForm({...statusForm, status: e.target.value})}
                                       className="form-control"
@@ -784,9 +800,10 @@ PKR
                                   {statusForm.status === 'dispatched' && (
                                     <>
                                       <div className="form-group">
-                                        <label>Courier Service *</label>
+                                        <label htmlFor={`inline-courier-${order._id}`}>Courier Service *</label>
                                         <input 
                                           type="text"
+                                          id={`inline-courier-${order._id}`}
                                           placeholder="e.g., TCS, Leopards, Hundi"
                                           value={statusForm.courierService}
                                           onChange={(e) => setStatusForm({...statusForm, courierService: e.target.value})}
@@ -795,9 +812,10 @@ PKR
                                         />
                                       </div>
                                       <div className="form-group">
-                                        <label>Tracking Number *</label>
+                                        <label htmlFor={`inline-tracking-${order._id}`}>Tracking Number *</label>
                                         <input 
                                           type="text"
+                                          id={`inline-tracking-${order._id}`}
                                           placeholder="e.g., TCS123456789"
                                           value={statusForm.trackingNumber}
                                           onChange={(e) => setStatusForm({...statusForm, trackingNumber: e.target.value})}
@@ -806,9 +824,10 @@ PKR
                                         />
                                       </div>
                                       <div className="form-group">
-                                        <label>Courier Tracking Link</label>
+                                        <label htmlFor={`inline-link-${order._id}`}>Courier Tracking Link</label>
                                         <input 
                                           type="text"
+                                          id={`inline-link-${order._id}`}
                                           placeholder="https://courier.com/track/..."
                                           value={statusForm.courierLink}
                                           onChange={(e) => setStatusForm({...statusForm, courierLink: e.target.value})}
@@ -819,8 +838,9 @@ PKR
                                   )}
 
                                   <div className="form-group">
-                                    <label>Notes</label>
+                                    <label htmlFor={`inline-notes-${order._id}`}>Notes</label>
                                     <textarea 
+                                      id={`inline-notes-${order._id}`}
                                       placeholder="Optional notes about this status update"
                                       value={statusForm.notes}
                                       onChange={(e) => setStatusForm({...statusForm, notes: e.target.value})}
@@ -878,8 +898,9 @@ PKR
             
             <div className="modal-body">
               <div className="form-group">
-                <label>Order Status</label>
+                <label htmlFor="modal-order-status">Order Status</label>
                 <select 
+                  id="modal-order-status"
                   value={statusForm.status}
                   onChange={(e) => setStatusForm({...statusForm, status: e.target.value})}
                   className="form-control"
@@ -894,8 +915,9 @@ PKR
               </div>
 
               <div className="form-group">
-                <label>Payment Status</label>
+                <label htmlFor="modal-payment-status">Payment Status</label>
                 <select 
+                  id="modal-payment-status"
                   value={statusForm.paymentStatus}
                   onChange={(e) => setStatusForm({...statusForm, paymentStatus: e.target.value})}
                   className="form-control"
@@ -914,9 +936,10 @@ PKR
               {statusForm.status === 'dispatched' && (
                 <>
                   <div className="form-group">
-                    <label>Courier Service *</label>
+                    <label htmlFor="modal-courier-service">Courier Service *</label>
                     <input 
                       type="text"
+                      id="modal-courier-service"
                       placeholder="e.g., TCS, Leopards, Hundi"
                       value={statusForm.courierService}
                       onChange={(e) => setStatusForm({...statusForm, courierService: e.target.value})}
@@ -925,9 +948,10 @@ PKR
                     />
                   </div>
                   <div className="form-group">
-                    <label>Tracking Number *</label>
+                    <label htmlFor="modal-tracking-number">Tracking Number *</label>
                     <input 
                       type="text"
+                      id="modal-tracking-number"
                       placeholder="e.g., TCS123456789"
                       value={statusForm.trackingNumber}
                       onChange={(e) => setStatusForm({...statusForm, trackingNumber: e.target.value})}
@@ -936,9 +960,10 @@ PKR
                     />
                   </div>
                   <div className="form-group">
-                    <label>Courier Tracking Link</label>
+                    <label htmlFor="modal-courier-link">Courier Tracking Link</label>
                     <input 
                       type="text"
+                      id="modal-courier-link"
                       placeholder="https://courier.com/track/..."
                       value={statusForm.courierLink}
                       onChange={(e) => setStatusForm({...statusForm, courierLink: e.target.value})}
@@ -949,8 +974,9 @@ PKR
               )}
 
               <div className="form-group">
-                <label>Notes</label>
+                <label htmlFor="modal-notes">Notes</label>
                 <textarea 
+                  id="modal-notes"
                   placeholder="Optional notes about this status update"
                   value={statusForm.notes}
                   onChange={(e) => setStatusForm({...statusForm, notes: e.target.value})}
@@ -997,8 +1023,9 @@ PKR
             
             <div className="modal-body">
               <div className="form-group">
-                <label>Rejection Reason (Optional)</label>
+                <label htmlFor="rejection-reason">Rejection Reason (Optional)</label>
                 <textarea 
+                  id="rejection-reason"
                   placeholder="Enter reason for rejection (this will be shown to the client)"
                   value={rejectModal.reason}
                   onChange={(e) => setRejectModal({...rejectModal, reason: e.target.value})}

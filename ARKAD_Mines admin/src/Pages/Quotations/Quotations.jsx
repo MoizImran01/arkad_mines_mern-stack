@@ -306,6 +306,13 @@ const Quotations = () => {
                     key={quote._id}
                     className={selectedQuote?._id === quote._id ? "selected" : ""}
                     onClick={() => handleSelectQuote(quote)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        handleSelectQuote(quote)
+                      }
+                    }}
+                    tabIndex="0"
+                    role="button"
                   >
                     <td>{quote.referenceNumber}</td>
                     <td>
@@ -410,9 +417,10 @@ const Quotations = () => {
                 <h4> Issue Formal Quote</h4>
                 
                 <div className="form-group">
-                  <label>Tax %</label>
+                  <label htmlFor="taxPercentage">Tax %</label>
                   <input 
                     type="number" 
+                    id="taxPercentage"
                     name="taxPercentage" 
                     value={issueFormData.taxPercentage} 
                     onChange={handleInputChange} 
@@ -421,9 +429,10 @@ const Quotations = () => {
                 </div>
                 
                 <div className="form-group">
-                  <label>Shipping Cost (Rs)</label>
+                  <label htmlFor="shippingCost">Shipping Cost (Rs)</label>
                   <input 
                     type="number" 
+                    id="shippingCost"
                     name="shippingCost" 
                     value={issueFormData.shippingCost} 
                     onChange={handleInputChange} 
@@ -432,9 +441,10 @@ const Quotations = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Discount (Rs)</label>
+                  <label htmlFor="discountAmount">Discount (Rs)</label>
                   <input 
                     type="number" 
+                    id="discountAmount"
                     name="discountAmount" 
                     value={issueFormData.discountAmount} 
                     onChange={handleInputChange} 
@@ -443,8 +453,9 @@ const Quotations = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Admin Notes / Terms</label>
+                  <label htmlFor="adminNotes">Admin Notes / Terms</label>
                   <textarea 
+                    id="adminNotes"
                     name="adminNotes" 
                     value={issueFormData.adminNotes} 
                     onChange={handleInputChange}
