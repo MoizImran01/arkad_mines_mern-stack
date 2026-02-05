@@ -441,11 +441,11 @@ const ChartModal = ({ isOpen, onClose, title, description, children }) => {
       <button 
         type="button"
         className="modal-backdrop-btn" 
-        style={{ zIndex: 1 }}
+        style={{ cursor: 'default' }}
         onClick={onClose}
         aria-label="Close modal"
       />
-      <div className="chart-modal-content" role="document" style={{ position: 'relative', zIndex: 2 }}>
+      <div className="chart-modal-content" role="document" style={{ position: 'relative', zIndex: 10 }}>
         <div className="chart-modal-header">
           <h3 id={modalId}>{title}</h3>
           <button className="chart-modal-close" onClick={onClose}>×</button>
@@ -879,7 +879,7 @@ const Analytics = () => {
           >
             <button 
               type="button"
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 1 }}
+              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
               onClick={() => {
                 setShowMFAModal(false);
                 setMfaPassword("");
@@ -1037,7 +1037,7 @@ const Analytics = () => {
         <div className="modal-overlay" style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} role="dialog" aria-modal="true">
           <button 
             type="button"
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 1 }}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
             onClick={() => {
               setShowMFAModal(false);
               setMfaPassword("");
@@ -1396,11 +1396,11 @@ const Analytics = () => {
           <button 
             type="button"
             className="modal-backdrop-btn" 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 1 }}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
             onClick={() => setExportModal({ show: false, type: null })}
             aria-label="Close CSV preview modal"
           />
-          <div className="modal-content export-modal" role="document" style={{ position: 'relative', zIndex: 2 }}>
+          <div className="modal-content export-modal" role="document" style={{ position: 'relative', zIndex: 10 }}>
             <div className="modal-header">
               <h3>📊 CSV Export Preview</h3>
               <button className="modal-close" onClick={() => setExportModal({ show: false, type: null })}>×</button>

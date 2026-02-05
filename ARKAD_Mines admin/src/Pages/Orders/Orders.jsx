@@ -895,11 +895,11 @@ PKR
           <button 
             type="button"
             className="modal-backdrop-btn" 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 1 }}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
             onClick={closeStatusModal}
             aria-label="Close status modal"
           />
-          <div className="status-modal" role="document" style={{ position: 'relative', zIndex: 2 }}>
+          <div className="status-modal" role="document" style={{ position: 'relative', zIndex: 10 }}>
             <div className="modal-header">
               <h3>Update Order Status</h3>
               <button className="close-btn" onClick={closeStatusModal}>
@@ -1028,11 +1028,11 @@ PKR
           <button 
             type="button"
             className="modal-backdrop-btn" 
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 1 }}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
             onClick={() => setRejectModal({ show: false, orderId: null, proofIndex: null, reason: '' })}
             aria-label="Close rejection modal"
           />
-          <div className="status-modal" role="document" style={{ position: 'relative', zIndex: 2 }}>
+          <div className="status-modal" role="document" style={{ position: 'relative', zIndex: 10 }}>
             <div className="modal-header">
               <h3>Reject Payment Proof</h3>
               <button 
