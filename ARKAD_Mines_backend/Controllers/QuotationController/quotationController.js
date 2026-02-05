@@ -481,7 +481,7 @@ const issueQuotation = async (req, res) => {
 
     //Validations
     const taxPercent = Number(taxPercentage);
-    if (isNaN(taxPercent) || taxPercent < 0 || taxPercent > 100) {
+    if (Number.isNaN(taxPercent) || taxPercent < 0 || taxPercent > 100) {
       logAudit({
         userId: req.user?.id,
         role: normalizeRole(req.user?.role),
@@ -500,7 +500,7 @@ const issueQuotation = async (req, res) => {
 
     
     const shipping = Number(shippingCost);
-    if (isNaN(shipping) || shipping < 0) {
+    if (Number.isNaN(shipping) || shipping < 0) {
       logAudit({
         userId: req.user?.id,
         role: normalizeRole(req.user?.role),
@@ -519,7 +519,7 @@ const issueQuotation = async (req, res) => {
 
     
     const discount = Number(discountAmount);
-    if (isNaN(discount) || discount < 0) {
+    if (Number.isNaN(discount) || discount < 0) {
       logAudit({
         userId: req.user?.id,
         role: normalizeRole(req.user?.role),
@@ -538,7 +538,7 @@ const issueQuotation = async (req, res) => {
 
     
     const validity = Number(validityDays);
-    if (isNaN(validity) || validity < 1 || validity > 365) {
+    if (Number.isNaN(validity) || validity < 1 || validity > 365) {
       logAudit({
         userId: req.user?.id,
         role: normalizeRole(req.user?.role),
@@ -567,7 +567,7 @@ const issueQuotation = async (req, res) => {
         const customPrice = Number(itemPrices[index]);
         
         
-        if (isNaN(customPrice) || customPrice < 0) {
+        if (Number.isNaN(customPrice) || customPrice < 0) {
           throw new Error(`Invalid price for item "${item.stoneName}" at index ${index}. Price must be a non-negative number.`);
         }
         

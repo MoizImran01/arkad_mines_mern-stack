@@ -124,8 +124,8 @@ const PlaceOrder = () => {
   const submitPaymentProof = async (e) => {
     e.preventDefault();
     // Parse amount with proper decimal handling
-    const numericAmount = parseFloat(paymentAmount);
-    if (!isFinite(numericAmount) || numericAmount <= 0 || numericAmount < 0.01) {
+    const numericAmount = Number.parseFloat(paymentAmount);
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0 || numericAmount < 0.01) {
       alert('Please enter a valid payment amount (minimum 0.01)');
       return;
     }
@@ -266,7 +266,7 @@ const PlaceOrder = () => {
       }
 
       const payload = {
-        amountPaid: parseFloat(numericAmount.toFixed(2)), // Ensure proper decimal precision
+        amountPaid: Number.parseFloat(numericAmount.toFixed(2)), // Ensure proper decimal precision
         address: addressData,
         proofBase64: base64,
         proofFileName: paymentProofFile.name
@@ -377,7 +377,7 @@ const PlaceOrder = () => {
         // Store payment data for retry
         const pendingData = {
           orderId: orderData._id,
-          amountPaid: parseFloat(numericAmount.toFixed(2)),
+          amountPaid: Number.parseFloat(numericAmount.toFixed(2)),
           address: addressData,
           proofBase64: base64,
           proofFileName: paymentProofFile.name
@@ -475,7 +475,7 @@ const PlaceOrder = () => {
         // Store payment data for retry
         const pendingData = {
           orderId: orderData._id,
-          amountPaid: parseFloat(numericAmount.toFixed(2)),
+          amountPaid: Number.parseFloat(numericAmount.toFixed(2)),
           address: addressData,
           proofBase64: base64,
           proofFileName: paymentProofFile.name

@@ -103,7 +103,7 @@ const StoreContextProvider = (props) => {
         let newQuantity = Number(quantity);
         
 
-        if (isNaN(newQuantity) || newQuantity < 1) {
+        if (Number.isNaN(newQuantity) || newQuantity < 1) {
           newQuantity = 1;
         }
         

@@ -380,13 +380,13 @@ const filterStones = async (req, res) => {
             query.price = {};
             if (minPrice) {
                 const minPriceNum = Number(minPrice);
-                if (!isNaN(minPriceNum) && minPriceNum >= 0) {
+                if (!Number.isNaN(minPriceNum) && minPriceNum >= 0) {
                     query.price.$gte = minPriceNum;
                 }
             }
             if (maxPrice) {
                 const maxPriceNum = Number(maxPrice);
-                if (!isNaN(maxPriceNum) && maxPriceNum >= 0) {
+                if (!Number.isNaN(maxPriceNum) && maxPriceNum >= 0) {
                     query.price.$lte = maxPriceNum;
                 }
             }

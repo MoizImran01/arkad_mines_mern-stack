@@ -1,6 +1,5 @@
-
-
 import React from 'react';
+import PropTypes from 'prop-types';
 
 const ExampleCarouselImage = ({ src, text }) => {
   return (
@@ -13,5 +12,10 @@ const ExampleCarouselImage = ({ src, text }) => {
     </div>
   );
 }
+
+ExampleCarouselImage.propTypes = {
+  src: PropTypes.string.isRequired,
+  text: PropTypes.string.isRequired,
+};
 
 export default ExampleCarouselImage;

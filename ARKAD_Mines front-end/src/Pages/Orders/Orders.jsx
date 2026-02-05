@@ -113,8 +113,8 @@ const Orders = () => {
 
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
-    const amount = parseFloat(paymentForm.amount);
-    if (!isFinite(amount) || amount <= 0 || amount < 0.01) {
+    const amount = Number.parseFloat(paymentForm.amount);
+    if (!Number.isFinite(amount) || amount <= 0 || amount < 0.01) {
       toast.error("Please enter a valid payment amount (minimum 0.01)");
       return;
     }
@@ -246,7 +246,7 @@ const Orders = () => {
       }
       
       const payload = {
-        amountPaid: parseFloat(amount.toFixed(2)),
+        amountPaid: Number.parseFloat(amount.toFixed(2)),
         address: trackingOrderDetails.deliveryAddress || {},
         proofBase64: compressedBase64,
         proofFileName: paymentForm.proofFile.name
@@ -302,7 +302,7 @@ const Orders = () => {
         
         const pendingData = {
           orderId: trackingOrderDetails._id,
-          amountPaid: parseFloat(amount.toFixed(2)),
+          amountPaid: Number.parseFloat(amount.toFixed(2)),
           address: trackingOrderDetails.deliveryAddress || {},
           proofBase64: base64ToUse,
           proofFileName: paymentForm.proofFile?.name
@@ -348,7 +348,7 @@ const Orders = () => {
         
         const pendingData = {
           orderId: trackingOrderDetails._id,
-          amountPaid: parseFloat(amount.toFixed(2)),
+          amountPaid: Number.parseFloat(amount.toFixed(2)),
           address: trackingOrderDetails.deliveryAddress || {},
           proofBase64: base64ToUse,
           proofFileName: paymentForm.proofFile?.name

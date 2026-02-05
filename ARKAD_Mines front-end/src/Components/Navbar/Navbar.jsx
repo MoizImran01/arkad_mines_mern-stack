@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useContext } from 'react';
+import PropTypes from 'prop-types';
 import './Navbar.css';
 import logoimg from '../../assets/logo.png';
 import dashboard from '../../assets/dashboard.png'
@@ -233,6 +234,10 @@ const Navbar = ({ setShowLogin }) => {
       </div>
     </header>
   );
+};
+
+Navbar.propTypes = {
+  setShowLogin: PropTypes.func.isRequired,
 };
 
 export default Navbar;

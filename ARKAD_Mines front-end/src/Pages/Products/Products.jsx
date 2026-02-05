@@ -217,11 +217,12 @@ const Products = () => {
           {showFilters && (
             <div className="filters-content">
               <div className="filter-group">
-                <label>Product Search</label>
+                <label htmlFor="product-search">Product Search</label>
                 <div className="search-input-wrapper">
                   <FiSearch className="search-icon" />
                   <input
                     type="text"
+                    id="product-search"
                     placeholder="Search by name, category..."
                     value={filters.keywords}
                     onChange={(e) => handleFilterChange('keywords', e.target.value)}
@@ -232,8 +233,9 @@ const Products = () => {
 
               {/* Category Filter */}
               <div className="filter-group">
-                <label>Color / Pattern</label>
+                <label htmlFor="filter-category">Color / Pattern</label>
                 <select
+                  id="filter-category"
                   value={filters.category}
                   onChange={(e) => handleFilterChange('category', e.target.value)}
                   className="filter-select"
@@ -246,8 +248,9 @@ const Products = () => {
 
               {/* Subcategory Filter */}
               <div className="filter-group">
-                <label>Product Type</label>
+                <label htmlFor="filter-subcategory">Product Type</label>
                 <select
+                  id="filter-subcategory"
                   value={filters.subcategory}
                   onChange={(e) => handleFilterChange('subcategory', e.target.value)}
                   className="filter-select"
@@ -260,10 +263,11 @@ const Products = () => {
 
               {/* Price Range */}
               <div className="filter-group">
-                <label>Price Range</label>
+                <label htmlFor="filter-min-price">Price Range</label>
                 <div className="price-range-inputs">
                   <input
                     type="number"
+                    id="filter-min-price"
                     placeholder="Min Price"
                     value={filters.minPrice}
                     onChange={(e) => handleFilterChange('minPrice', e.target.value)}
@@ -272,6 +276,7 @@ const Products = () => {
                   <span className="price-separator">-</span>
                   <input
                     type="number"
+                    id="filter-max-price"
                     placeholder="Max Price"
                     value={filters.maxPrice}
                     onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
@@ -282,8 +287,9 @@ const Products = () => {
 
               {/* Stock Availability */}
               <div className="filter-group">
-                <label>Stock Availability</label>
+                <label htmlFor="filter-availability">Stock Availability</label>
                 <select
+                  id="filter-availability"
                   value={filters.stockAvailability}
                   onChange={(e) => handleFilterChange('stockAvailability', e.target.value)}
                   className="filter-select"
@@ -296,8 +302,9 @@ const Products = () => {
 
               {/* Source Filter */}
               <div className="filter-group">
-                <label>Source / Mine</label>
+                <label htmlFor="filter-source">Source / Mine</label>
                 <select
+                  id="filter-source"
                   value={filters.source}
                   onChange={(e) => handleFilterChange('source', e.target.value)}
                   className="filter-select"
@@ -340,8 +347,9 @@ const Products = () => {
               )}
             </div>
             <div className="sort-selector">
-              <label>Sort by:</label>
+              <label htmlFor="sort-by">Sort by:</label>
               <select
+                id="sort-by"
                 value={filters.sortBy}
                 onChange={(e) => handleFilterChange('sortBy', e.target.value)}
                 className="sort-select"

@@ -1,4 +1,5 @@
 import React, { useContext, useState, useRef } from 'react'
+import PropTypes from 'prop-types';
 import './LoginPopup.css'
 import crossicon from '../../assets/cross_icon.png'
 import axios from "axios";
@@ -261,5 +262,9 @@ const handleSubmit = async (event) => {
         </div>
     )
 }
+
+LoginPopup.propTypes = {
+  setShowLogin: PropTypes.func.isRequired,
+};
 
 export default LoginPopup
