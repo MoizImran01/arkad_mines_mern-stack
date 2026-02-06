@@ -161,6 +161,34 @@
     color: #2d8659;
     cursor: pointer;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.notification-link:hover {
+    background: #f0f7e6;
+}
+
+.refresh-notification-btn {
+    padding: 4px;
+}
+
+.refresh-notification-btn .spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.refresh-notification-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .notifications-list {

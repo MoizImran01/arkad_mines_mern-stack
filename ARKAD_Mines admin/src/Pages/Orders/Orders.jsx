@@ -6,7 +6,7 @@ import { toast } from 'react-toastify'
 import {
   FiPackage, FiCheckCircle, FiXCircle, FiClock, FiDollarSign,
   FiUser, FiMapPin, FiPhone, FiCalendar, FiTruck, FiEdit2,
-  FiX, FiCheck, FiDownload, FiFileText, FiHome, FiBox
+  FiX, FiCheck, FiDownload, FiFileText, FiHome, FiBox, FiRefreshCw
 } from 'react-icons/fi'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000"
@@ -31,6 +31,7 @@ const Orders = () => {
     proofIndex: null, 
     reason: '' 
   })
+  const [refreshing, setRefreshing] = useState(false)
 
   // Status options for order model
   const statusOptions = [
@@ -61,6 +62,7 @@ const Orders = () => {
   const fetchAllOrders = async () => {
     try {
       setLoading(true)
+      setRefreshing(true)
       const token = localStorage.getItem('adminToken')
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
       const response = await axios.get(`${API_URL}/api/orders/admin/all`, { headers })
@@ -75,6 +77,7 @@ const Orders = () => {
       toast.error("Failed to load orders")
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
@@ -305,8 +308,18 @@ const Orders = () => {
     <div className="orders-admin-container">
       {/* Header */}
       <div className="orders-header">
-        <h1><FiPackage className="header-icon" /> Orders Management</h1>
-        <p>Manage and track all customer orders</p>
+        <div>
+          <div className="orders-title-row">
+            <h1>
+              <FiPackage className="header-icon" /> Orders Management
+            </h1>
+            <button className="refresh-btn header-refresh-btn" onClick={fetchAllOrders} disabled={refreshing || loading}>
+              <FiRefreshCw className={refreshing ? 'spin' : ''} />
+              Refresh
+            </button>
+          </div>
+          <p>Manage and track all customer orders</p>
+        </div>
       </div>
 
       {/* Statistics Cards */}

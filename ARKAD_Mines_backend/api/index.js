@@ -10,6 +10,7 @@ import stonesRouter from "../Routes/StonesRoutes/StonesRoutes.js";
 import quoteRouter from "../Routes/QuoteRoutes/quoteRouter.js";
 import notificationRouter from "../Routes/NotificationRoutes/notificationRouter.js";
 import orderRouter from "../Routes/OrderRoutes/OrderRoutes.js";
+import documentRouter from "../Routes/DocumentRoutes/DocumentRoutes.js";
 
 const app = express();
 
@@ -36,14 +37,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    // Check if the origin is in our allowed list
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      console.log('Blocked by CORS:', origin); // Log blocked attempts for debugging
+      console.log('Blocked by CORS:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -52,7 +51,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-///database configuration
 connectDB().catch((e) => console.error("DB connect error:", e));
 
 (async () => {
@@ -73,13 +71,13 @@ connectDB().catch((e) => console.error("DB connect error:", e));
 
 app.use("/images", express.static("uploads"));
 
-//Routes
 app.use("/api/user", userRouter);
 app.use("/api", adminRouter);
 app.use("/api/stones", stonesRouter);
 app.use("/api/quotes", quoteRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/orders", orderRouter);
+app.use("/api/documents", documentRouter);
 
 app.get("/", (req, res) => res.status(200).send(" Server running successfully"));
 

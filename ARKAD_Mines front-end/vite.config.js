@@ -4,6 +4,13 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    dedupe: ['react', 'react-dom'],
+  },
+  optimizeDeps: {
+    include: ['framer-motion', 'recharts'],
+    exclude: [],
+  },
   build: {
     // Ensure proper cache busting
     rollupOptions: {

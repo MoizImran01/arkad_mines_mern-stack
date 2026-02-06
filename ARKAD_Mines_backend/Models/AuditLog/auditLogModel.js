@@ -11,7 +11,6 @@ import mongoose from "mongoose";
  * - Server-side validation and authorization
  */
 const auditLogSchema = new mongoose.Schema({
-  // Timestamp - ISO 8601 format
   timestamp: {
     type: Date,
     required: true,
@@ -19,7 +18,6 @@ const auditLogSchema = new mongoose.Schema({
     index: true
   },
   
-  // User information
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "user",
@@ -32,7 +30,6 @@ const auditLogSchema = new mongoose.Schema({
     required: false
   },
   
-  // Action details
   action: {
     type: String,
     required: true,
@@ -45,7 +42,6 @@ const auditLogSchema = new mongoose.Schema({
     index: true
   },
   
-  // Resource identifiers
   resourceId: {
     type: String,
     required: false,
@@ -62,7 +58,6 @@ const auditLogSchema = new mongoose.Schema({
     index: true
   },
   
-  // Network and device information
   clientIp: {
     type: String,
     required: false
@@ -73,49 +68,41 @@ const auditLogSchema = new mongoose.Schema({
     maxlength: 500
   },
   
-  // Full request payload (for non-repudiation)
   requestPayload: {
     type: mongoose.Schema.Types.Mixed,
     required: false
   },
   
-  // Detailed information
   details: {
     type: String,
     required: false
   }
 }, {
-  timestamps: false, // Don't use mongoose timestamps, we use our own timestamp field
+  timestamps: false,
   collection: 'auditlogs'
 });
 
-// Compound indexes for efficient queries
 auditLogSchema.index({ userId: 1, timestamp: -1 });
 auditLogSchema.index({ action: 1, timestamp: -1 });
 auditLogSchema.index({ quotationId: 1, timestamp: -1 });
 auditLogSchema.index({ quotationRequestId: 1, timestamp: -1 });
-auditLogSchema.index({ timestamp: -1 }); // For time-based queries
+auditLogSchema.index({ timestamp: -1 });
 
-// Pre-save hook: Ensure timestamp is set and prevent modifications
 auditLogSchema.pre('save', function(next) {
   if (this.isNew) {
-    // Ensure timestamp is set
     if (!this.timestamp) {
       this.timestamp = new Date();
     }
   } else {
-    // Prevent modifications to existing audit logs
     throw new Error('Audit logs are immutable and cannot be modified after creation');
   }
   next();
 });
 
-// Prevent updates and deletes (immutability enforcement)
 auditLogSchema.pre(['updateOne', 'findOneAndUpdate', 'updateMany', 'deleteOne', 'findOneAndDelete', 'deleteMany'], function() {
   throw new Error('Audit logs are immutable and cannot be modified or deleted');
 });
 
-// Create model
 const AuditLog = mongoose.models.AuditLog || mongoose.model("AuditLog", auditLogSchema);
 
 export default AuditLog;

@@ -5,7 +5,7 @@ import { AdminAuthContext } from '../../context/AdminAuthContext'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import axios from 'axios'
-import { FiBell, FiX } from 'react-icons/fi'
+import { FiBell, FiX, FiRefreshCw } from 'react-icons/fi'
 
 const Navbar = () => {
   const { adminUser, logout, token } = useContext(AdminAuthContext);
@@ -15,6 +15,7 @@ const Navbar = () => {
   const [showExpanded, setShowExpanded] = useState(false);
   const [paymentSummary, setPaymentSummary] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [refreshingNotifications, setRefreshingNotifications] = useState(false);
   const panelRef = useRef(null);
 
   const handleLogout = () => {
@@ -23,10 +24,14 @@ const Navbar = () => {
     navigate("/login");
   };
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (isRefresh = false) => {
     if (!token) return;
     try {
-      setLoadingNotifications(true);
+      if (isRefresh) {
+        setRefreshingNotifications(true);
+      } else {
+        setLoadingNotifications(true);
+      }
       const response = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -37,6 +42,7 @@ const Navbar = () => {
       console.error("Notification fetch error:", error);
     } finally {
       setLoadingNotifications(false);
+      setRefreshingNotifications(false);
     }
   };
 
@@ -112,6 +118,14 @@ const Navbar = () => {
               <div className="notifications-header">
                 <h4>Payment Notifications</h4>
                 <div className="notification-actions">
+                  <button 
+                    className="notification-link refresh-notification-btn" 
+                    onClick={() => fetchNotifications(true)}
+                    disabled={refreshingNotifications || loadingNotifications}
+                    title="Refresh notifications"
+                  >
+                    <FiRefreshCw className={refreshingNotifications ? 'spin' : ''} />
+                  </button>
                   <button className="notification-link" onClick={() => { setShowExpanded(true); fetchPaymentSummary(); }}>
                     Expand
                   </button>
@@ -159,9 +173,20 @@ const Navbar = () => {
           <div className="notification-modal" role="document">
             <div className="notification-modal-header">
               <h3 id="notification-modal-title">Payment Notifications</h3>
-              <button className="notification-modal-close" onClick={() => setShowExpanded(false)}>
-                <FiX />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <button 
+                  className="notification-link refresh-notification-btn" 
+                  onClick={() => { fetchNotifications(true); fetchPaymentSummary(); }}
+                  disabled={refreshingNotifications || loadingNotifications}
+                  title="Refresh notifications"
+                  style={{ padding: '4px 8px' }}
+                >
+                  <FiRefreshCw className={refreshingNotifications ? 'spin' : ''} />
+                </button>
+                <button className="notification-modal-close" onClick={() => setShowExpanded(false)}>
+                  <FiX />
+                </button>
+              </div>
             </div>
             <div className="notification-modal-content">
               <div className="notification-modal-section">

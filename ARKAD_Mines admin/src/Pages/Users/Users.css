@@ -1,3 +1,37 @@
+:root {
+  --primary-color: #536438;
+  --primary-light: #6b8248;
+  --primary-dark: #3a471f;
+  --secondary-color: #f8f9fa;
+  --success-color: #28a745;
+  --success-light: #d1fae5;
+  --danger-color: #ef4444;
+  --danger-light: #fee2e2;
+  --warning-color: #f59e0b;
+  --warning-light: #fef3c7;
+  --info-color: #17a2b8;
+  --info-light: #b3e5fc;
+  --light-color: #f8f9fa;
+  --dark-color: #1f2937;
+  --text-color: #374151;
+  --text-light: #6b7280;
+  --border-color: #e5e7eb;
+  --border-light: #f3f4f6;
+  --white: #ffffff;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
 .users-container {
   padding: 30px;
   max-width: 1400px;
@@ -11,7 +45,7 @@
 .users-header h1 {
   font-size: 28px;
   font-weight: 700;
-  color: #1a2a2a;
+  color: var(--dark-color, #1f2937);
   margin: 0 0 8px 0;
   display: flex;
   align-items: center;
@@ -20,12 +54,12 @@
 
 .users-header .header-icon {
   font-size: 32px;
-  color: #667eea;
+  color: var(--primary-color, #536438);
 }
 
 .users-header p {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text-light, #6b7280);
   margin: 0;
 }
 
@@ -38,19 +72,20 @@
 }
 
 .stat-card {
-  background: white;
+  background: var(--white, #ffffff);
   border-radius: 12px;
   padding: 20px;
   display: flex;
   align-items: center;
   gap: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  border: 1px solid var(--border-color, #e5e7eb);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md, 0 4px 6px rgba(0, 0, 0, 0.1));
 }
 
 .stat-icon {
@@ -65,39 +100,40 @@
 }
 
 .stat-icon.total {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #536438 0%, #6b8245 100%);
 }
 
 .stat-icon.admin {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
 }
 
 .stat-icon.employee {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
 }
 
 .stat-icon.customer {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  background: linear-gradient(135deg, #73df58 0%, #2d8659 100%);
 }
 
 .stat-info h3 {
   font-size: 24px;
   font-weight: 700;
-  color: #1a2a2a;
+  color: var(--dark-color, #1f2937);
   margin: 0 0 4px 0;
 }
 
 .stat-info p {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--text-light, #6b7280);
   margin: 0;
 }
 
 /* Table Container */
 .users-table-container {
-  background: white;
+  background: var(--white, #ffffff);
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+  border: 1px solid var(--border-color, #e5e7eb);
   overflow: hidden;
 }
 
@@ -111,7 +147,7 @@
 }
 
 .users-table thead {
-  background: #f8f9fa;
+  background: var(--light-color, #f8f9fa);
 }
 
 .users-table th {
@@ -119,23 +155,23 @@
   text-align: left;
   font-weight: 600;
   font-size: 14px;
-  color: #374151;
+  color: var(--text-color, #374151);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 2px solid var(--border-color, #e5e7eb);
 }
 
 .users-table tbody tr {
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
   transition: background-color 0.2s;
 }
 
 .users-table tbody tr:hover {
-  background-color: #f9fafb;
+  background-color: var(--gray-50, #f9fafb);
 }
 
 .users-table tbody tr.current-user {
-  background-color: #fef3c7;
+  background-color: var(--warning-light, #fef3c7);
 }
 
 .users-table tbody tr.current-user:hover {
@@ -145,7 +181,7 @@
 .users-table td {
   padding: 16px;
   font-size: 14px;
-  color: #1a2a2a;
+  color: var(--dark-color, #1f2937);
 }
 
 .company-name {
@@ -159,12 +195,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #6b7280;
+  color: var(--text-light, #6b7280);
 }
 
 .info-icon {
   font-size: 16px;
-  color: #9ca3af;
+  color: var(--gray-400, #9ca3af);
 }
 
 .user-role {
@@ -173,46 +209,46 @@
 
 .role-select {
   padding: 6px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-color, #e5e7eb);
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   width: 100%;
-  background: white;
+  background: var(--white, #ffffff);
 }
 
 .role-select:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  background: #f3f4f6;
+  background: var(--gray-100, #f3f4f6);
 }
 
 .role-select:hover:not(:disabled) {
-  border-color: #667eea;
+  border-color: var(--primary-color, #536438);
 }
 
 .role-select.role-admin {
-  color: #dc2626;
-  border-color: #fecaca;
+  color: var(--danger-color, #dc3545);
+  border-color: var(--danger-light, #fee2e2);
   background: #fef2f2;
 }
 
 .role-select.role-employee {
-  color: #2563eb;
-  border-color: #bfdbfe;
-  background: #eff6ff;
+  color: var(--info-color, #17a2b8);
+  border-color: var(--info-light, #b3e5fc);
+  background: #e0f7fa;
 }
 
 .role-select.role-customer {
-  color: #059669;
-  border-color: #a7f3d0;
+  color: var(--success-color, #28a745);
+  border-color: var(--success-light, #d1fae5);
   background: #ecfdf5;
 }
 
 .user-date {
-  color: #6b7280;
+  color: var(--text-light, #6b7280);
   font-size: 13px;
 }
 
@@ -223,8 +259,8 @@
 
 .delete-btn {
   padding: 8px 12px;
-  background: #fee2e2;
-  color: #dc2626;
+  background: var(--danger-light, #fee2e2);
+  color: var(--danger-color, #dc3545);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -237,6 +273,7 @@
 .delete-btn:hover:not(:disabled) {
   background: #fecaca;
   transform: translateY(-1px);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
 }
 
 .delete-btn:disabled {
@@ -262,12 +299,12 @@
 
 .empty-icon {
   font-size: 48px;
-  color: #d1d5db;
+  color: var(--gray-300, #d1d5db);
 }
 
 .empty-state p {
   font-size: 16px;
-  color: #6b7280;
+  color: var(--text-light, #6b7280);
   margin: 0;
 }
 
@@ -285,8 +322,8 @@
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f4f6;
-  border-top-color: #667eea;
+  border: 4px solid var(--gray-100, #f3f4f6);
+  border-top-color: var(--primary-color, #536438);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -297,7 +334,7 @@
 
 .users-loading p {
   font-size: 16px;
-  color: #6b7280;
+  color: var(--text-light, #6b7280);
 }
 
 /* Responsive Design */
