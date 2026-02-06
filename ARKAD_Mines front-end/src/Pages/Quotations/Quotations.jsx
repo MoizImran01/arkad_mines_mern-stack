@@ -796,7 +796,6 @@ const Quotations = () => {
         </div>
       )}
 
-      {/* CAPTCHA Modal */}
       {showCaptchaModal && (
         <div 
           className="modal-overlay" 
@@ -806,22 +805,25 @@ const Quotations = () => {
           <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>
-                <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                <FiLock />
                 CAPTCHA Verification Required
               </h3>
-              <button onClick={() => {
-                setShowCaptchaModal(false);
-                setCaptchaToken(null);
-                setCaptchaPassword("");
-                recaptchaRef.current?.reset();
-                setPendingCaptchaApproval(null);
-              }}>
+              <button 
+                onClick={() => {
+                  setShowCaptchaModal(false);
+                  setCaptchaToken(null);
+                  setCaptchaPassword("");
+                  recaptchaRef.current?.reset();
+                  setPendingCaptchaApproval(null);
+                }}
+                aria-label="Close modal"
+              >
                 <FiX />
               </button>
             </div>
             <div className="modal-body">
-              <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
-                <FiAlertTriangle style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+              <p style={{ color: '#e74c3c', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FiAlertTriangle />
                 For security purposes, please complete the CAPTCHA verification and enter your password to approve this quotation.
               </p>
               <form onSubmit={handleCaptchaSubmit}>
@@ -857,7 +859,7 @@ const Quotations = () => {
                     }}
                   />
                 </div>
-                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <div className="modal-footer">
                   <button 
                     type="button"
                     className="btn-secondary" 
@@ -876,7 +878,6 @@ const Quotations = () => {
                     type="submit"
                     className="btn-primary"
                     disabled={actionLoading || !captchaToken || !captchaPassword.trim()}
-                    style={{ backgroundColor: '#2d8659' }}
                   >
                     {actionLoading ? "Verifying..." : "Confirm & Approve"}
                   </button>

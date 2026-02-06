@@ -13,13 +13,29 @@ import { Routes, Route } from 'react-router-dom';
 import RequestQuote from './Pages/RequestQuote/RequestQuote';
 import Orders from './Pages/Orders/Orders';
 import Quotations from './Pages/Quotations/Quotations';
+import Documents from './Pages/Documents/Documents';
 import ItemDetail from './Pages/ItemDetail/ItemDetail';
+import Dashboard from './Pages/Dashboard/Dashboard';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const [showLogin, setShowLogin] = useState(false);
 
   return (
     <>
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       {showLogin ? <LoginPopup setShowLogin={setShowLogin} /> : null}
       <div className="app">
         <Navbar setShowLogin={setShowLogin} />
@@ -73,6 +89,22 @@ function App() {
             element={
               <ProtectedRoute setShowLogin={setShowLogin}>
                 <Quotations />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/documents"
+            element={
+              <ProtectedRoute setShowLogin={setShowLogin}>
+                <Documents />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute setShowLogin={setShowLogin}>
+                <Dashboard />
               </ProtectedRoute>
             }
           />

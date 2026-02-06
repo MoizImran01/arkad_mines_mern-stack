@@ -6,7 +6,7 @@ import dashboard from '../../assets/dashboard.png'
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { StoreContext } from '../../context/StoreContext';
 import { assets } from '../../assets/assets.js';
-import { FiBell, FiFileText } from 'react-icons/fi';
+import { FiBell, FiFileText, FiFolder, FiRefreshCw } from 'react-icons/fi';
 import axios from 'axios';
 
 
@@ -20,6 +20,7 @@ const Navbar = ({ setShowLogin }) => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [refreshingNotifications, setRefreshingNotifications] = useState(false);
   const notificationRef = useRef(null);
 
   const getActiveMenu = () => {
@@ -42,10 +43,14 @@ const Navbar = ({ setShowLogin }) => {
     setIsMenuOpen(false); 
   };
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (isRefresh = false) => {
     if (!token) return;
     try {
-      setLoadingNotifications(true);
+      if (isRefresh) {
+        setRefreshingNotifications(true);
+      } else {
+        setLoadingNotifications(true);
+      }
       const response = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -56,6 +61,7 @@ const Navbar = ({ setShowLogin }) => {
       console.error("Client notifications error:", error);
     } finally {
       setLoadingNotifications(false);
+      setRefreshingNotifications(false);
     }
   };
 
@@ -167,7 +173,17 @@ const Navbar = ({ setShowLogin }) => {
                 <div className="client-notifications-panel">
                   <div className="client-notifications-header">
                     <h4>Payment Updates</h4>
-                    <button className="client-notification-link" onClick={clearNotifications}>Clear</button>
+                    <div className="client-notifications-actions">
+                      <button 
+                        className="client-notification-refresh" 
+                        onClick={() => fetchNotifications(true)}
+                        disabled={refreshingNotifications}
+                        title="Refresh notifications"
+                      >
+                        <FiRefreshCw className={refreshingNotifications ? 'spin' : ''} />
+                      </button>
+                      <button className="client-notification-link" onClick={clearNotifications}>Clear</button>
+                    </div>
                   </div>
                   <div className="client-notifications-list">
                     {loadingNotifications && <p className="client-notifications-empty">Loading...</p>}
@@ -219,6 +235,16 @@ const Navbar = ({ setShowLogin }) => {
                 >
                 <FiFileText style={{ fontSize: '18px', color: '#475467' }} />
                 <span>My Quotations</span>
+                </button>
+              </li>
+              <li className="dropdown-item-wrapper">
+                <button 
+                  type="button"
+                  onClick={() => navigate('/documents')} 
+                  className="dropdown-item"
+                >
+                <FiFolder style={{ fontSize: '18px', color: '#475467' }} />
+                <span>Document History</span>
                 </button>
               </li>
               <hr className="dropdown-divider" />

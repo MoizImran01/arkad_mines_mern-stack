@@ -9,7 +9,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { 
   FiLoader, FiExternalLink, FiCreditCard, FiPackage, 
   FiMapPin, FiCalendar, FiTruck, FiX, FiCheck, FiShoppingCart, FiCheckCircle, FiDownload,
-  FiBriefcase, FiLock, FiAlertTriangle
+  FiBriefcase, FiLock, FiAlertTriangle, FiRefreshCw
 } from "react-icons/fi";
 
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
@@ -572,11 +572,46 @@ const Orders = () => {
     );
   }
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchOrders();
+    setRefreshing(false);
+  };
+
+  const refreshOrderDetails = async () => {
+    if (!trackingOrderDetails || !trackingOrderDetails._id) return;
+    try {
+      const response = await axios.get(`${url}/api/orders/details/${trackingOrderDetails._id}`, { headers });
+      if (response.data.success) {
+        const updatedOrder = response.data.order;
+        setTrackingOrderDetails(updatedOrder);
+        // Also update in orders list
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order._id === updatedOrder._id ? updatedOrder : order
+          )
+        );
+        toast.success("Order details refreshed");
+      }
+    } catch (err) {
+      console.error("Error refreshing order details:", err);
+      toast.error("Failed to refresh order details");
+    }
+  };
+
   return (
     <div className="orders-page">
       <div className="orders-header">
-        <h1>My Orders</h1>
-        <p>Track your order status and view historical purchases.</p>
+        <div>
+          <h1>My Orders</h1>
+          <p>Track your order status and view historical purchases.</p>
+        </div>
+        <button className="refresh-btn" onClick={handleRefresh} disabled={refreshing || loading}>
+          <FiRefreshCw className={refreshing ? 'spin' : ''} />
+          Refresh
+        </button>
       </div>
 
       {/* Main Page Tabs */}
@@ -923,7 +958,16 @@ const Orders = () => {
 
                     {trackingOrderDetails.paymentTimeline && trackingOrderDetails.paymentTimeline.length > 0 && (
                       <div className="payment-timeline-section">
-                        <h4>Payment Timeline</h4>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                          <h4>Payment Timeline</h4>
+                          <button 
+                            className="refresh-btn-small" 
+                            onClick={refreshOrderDetails}
+                            title="Refresh payment timeline"
+                          >
+                            <FiRefreshCw />
+                          </button>
+                        </div>
                         <div className="payment-timeline">
                           {trackingOrderDetails.paymentTimeline.map((entry, idx) => (
                             <div key={idx} className="payment-timeline-entry">
@@ -1078,7 +1122,6 @@ const Orders = () => {
         </div>
       )}
 
-      {/* MFA Modal */}
       {showMfaModal && (
         <div 
           className="modal-overlay" 
@@ -1088,20 +1131,23 @@ const Orders = () => {
           <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>
-                <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                <FiLock />
                 Multi-Factor Authentication Required
               </h3>
-              <button onClick={() => {
-                setShowMfaModal(false);
-                setMfaPassword("");
-                setPendingPayment(null);
-              }}>
+              <button 
+                onClick={() => {
+                  setShowMfaModal(false);
+                  setMfaPassword("");
+                  setPendingPayment(null);
+                }}
+                aria-label="Close modal"
+              >
                 <FiX />
               </button>
             </div>
             <div className="modal-body">
-              <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
-                <FiAlertTriangle style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+              <p style={{ color: '#e74c3c', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FiAlertTriangle />
                 For security purposes, please confirm your password to submit this payment.
               </p>
               <form onSubmit={handleMfaSubmit}>
@@ -1125,7 +1171,7 @@ const Orders = () => {
                     }}
                   />
                 </div>
-                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <div className="modal-footer">
                   <button 
                     type="button"
                     className="btn-secondary" 
@@ -1142,7 +1188,6 @@ const Orders = () => {
                     type="submit"
                     className="btn-primary"
                     disabled={paymentSubmitting || !mfaPassword.trim()}
-                    style={{ backgroundColor: '#2d8659' }}
                   >
                     {paymentSubmitting ? "Submitting..." : "Confirm & Submit Payment"}
                   </button>

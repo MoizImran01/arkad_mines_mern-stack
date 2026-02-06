@@ -1,4 +1,4 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { RateLimitTracking } from "./rateLimitModel.js";
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";
 
@@ -14,7 +14,12 @@ export const createRateLimiter = ({
   const userLimiter = rateLimit({
     windowMs,
     max: maxRequests,
-    keyGenerator: (req) => req.user?.id || getClientIp(req),
+    keyGenerator: (req) => {
+      if (req.user?.id) {
+        return String(req.user.id);
+      }
+      return ipKeyGenerator(req);
+    },
     message: { error: `Rate limit exceeded. Maximum ${maxRequests} requests per ${windowMs / 1000 / 60} minutes.` },
     standardHeaders: true,
     legacyHeaders: false,
@@ -40,7 +45,7 @@ export const createRateLimiter = ({
   const ipLimiter = rateLimit({
     windowMs,
     max: maxRequests * 2,
-    keyGenerator: (req) => getClientIp(req) || req.ip,
+    keyGenerator: ipKeyGenerator,
     message: { error: `Rate limit exceeded for your IP address. Please try again later.` },
     standardHeaders: true,
     legacyHeaders: false,

@@ -4,12 +4,41 @@
 }
 
 .quotations-header {
+  margin-bottom: 16px;
+}
+
+.quotations-title-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
   flex-wrap: wrap;
-  gap: 16px;
+  width: 100%;
+}
+
+.quotations-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--dark-color);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  flex-wrap: wrap;
+}
+
+.quotations-header .header-refresh-btn {
+  font-size: 0.875rem;
+  padding: 8px 14px;
+  white-space: nowrap;
+  position: static !important;
+  float: none !important;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .quotations-tabs {
@@ -51,12 +80,6 @@
   background: transparent;
 }
 
-.quotations-header h1 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-}
 
 .refresh-btn {
   display: inline-flex;

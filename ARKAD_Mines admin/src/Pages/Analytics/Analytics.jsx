@@ -4,7 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { AdminAuthContext } from '../../context/AdminAuthContext';
-import { FiLock, FiX, FiAlertTriangle } from 'react-icons/fi';
+import { FiLock, FiX, FiAlertTriangle, FiDollarSign, FiClock, FiPackage, FiFileText, FiUsers, FiBox, FiTrendingUp, FiRefreshCw } from 'react-icons/fi';
 import './Analytics.css';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -463,8 +463,9 @@ ChartModal.propTypes = {
 };
 
 // Clickable Chart Card Component
-const ChartCard = ({ title, description, children, expandedContent }) => {
+const ChartCard = ({ title, description, children, expandedContent, detailView, data }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   
   return (
     <>
@@ -474,15 +475,32 @@ const ChartCard = ({ title, description, children, expandedContent }) => {
           {children}
         </div>
         <p className="chart-description-preview">{description}</p>
-        <span className="expand-hint">Click to expand</span>
+        <span className="expand-hint">Click to view details</span>
       </button>
       <ChartModal
         isOpen={isExpanded}
-        onClose={() => setIsExpanded(false)}
+        onClose={() => {
+          setIsExpanded(false);
+          setShowDetails(false);
+        }}
         title={title}
         description={description}
       >
-        {expandedContent || children}
+        <div className="chart-modal-actions">
+          <button 
+            className="view-details-btn"
+            onClick={() => setShowDetails(!showDetails)}
+          >
+            {showDetails ? 'Hide Details' : 'View Details'}
+          </button>
+        </div>
+        {showDetails && detailView ? (
+          <div className="chart-details-view">
+            {detailView}
+          </div>
+        ) : (
+          expandedContent || children
+        )}
       </ChartModal>
     </>
   );
@@ -493,6 +511,8 @@ ChartCard.propTypes = {
   description: PropTypes.string,
   children: PropTypes.node,
   expandedContent: PropTypes.node,
+  detailView: PropTypes.node,
+  data: PropTypes.array,
 };
 
 const Analytics = () => {
@@ -530,17 +550,88 @@ const Analytics = () => {
     refunded: '#e74c3c'
   };
 
+  // MFA Session Management - 30 minutes validity
+  const MFA_SESSION_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+  const MFA_SESSION_KEY = 'analytics_mfa_session';
+  const MFA_PASSWORD_KEY = 'analytics_mfa_password'; // Store password in localStorage to persist across navigations
+
+  const isMFASessionValid = () => {
+    const sessionData = localStorage.getItem(MFA_SESSION_KEY);
+    if (!sessionData) return false;
+    
+    try {
+      const { timestamp } = JSON.parse(sessionData);
+      const now = Date.now();
+      const isValid = (now - timestamp) < MFA_SESSION_DURATION;
+      if (!isValid) {
+        // Clear expired session
+        clearMFASession();
+      }
+      return isValid;
+    } catch (error) {
+      console.error('Error parsing MFA session:', error);
+      return false;
+    }
+  };
+
+  const getStoredPassword = () => {
+    if (!isMFASessionValid()) {
+      return null;
+    }
+    try {
+      const password = localStorage.getItem(MFA_PASSWORD_KEY);
+      return password;
+    } catch (error) {
+      console.error('Error getting stored password:', error);
+      return null;
+    }
+  };
+
+  const setMFASession = (password) => {
+    const timestamp = Date.now();
+    localStorage.setItem(MFA_SESSION_KEY, JSON.stringify({ timestamp }));
+    // Store password in localStorage to persist across page navigations
+    // Note: This is a security trade-off for UX - password is stored in plain text in localStorage
+    // In production, consider using a more secure approach like backend session tokens
+    if (password) {
+      localStorage.setItem(MFA_PASSWORD_KEY, password);
+    }
+  };
+
+  const clearMFASession = () => {
+    localStorage.removeItem(MFA_SESSION_KEY);
+    localStorage.removeItem(MFA_PASSWORD_KEY);
+  };
+
   useEffect(() => {
-    fetchAnalytics();
+    // Check MFA session before fetching
+    if (isMFASessionValid()) {
+      const storedPassword = getStoredPassword();
+      if (storedPassword) {
+        console.log("MFA session is valid, using stored password for analytics");
+        fetchAnalytics(storedPassword, true);
+      } else {
+        console.log("MFA session expired or password not found, fetching without password");
+        fetchAnalytics();
+      }
+    } else {
+      fetchAnalytics();
+    }
   }, [token]);
 
   useEffect(() => {
     // MFA modal visibility change - no action needed
   }, [showMFAModal]);
 
-  const fetchAnalytics = async (passwordConfirmation = null) => {
+  const fetchAnalytics = async (passwordConfirmation = null, skipMFACheck = false) => {
     try {
       setLoading(true);
+      
+      // If MFA session is valid and no password provided, try without password first
+      if (!passwordConfirmation && !skipMFACheck && isMFASessionValid()) {
+        console.log("MFA session valid, attempting request without password");
+      }
+      
       const params = {};
       if (passwordConfirmation && typeof passwordConfirmation === 'string') {
         params.passwordConfirmation = passwordConfirmation;
@@ -552,13 +643,26 @@ const Analytics = () => {
       
       if (response.data.success) {
         setAnalytics(response.data.data);
+        setLoading(false);
         if (showMFAModal) {
           setShowMFAModal(false);
           setMfaPassword("");
         }
+        // Set MFA session after successful authentication
+        // Store the password so we can reuse it for subsequent requests
+        if (passwordConfirmation) {
+          setMFASession(passwordConfirmation);
+        } else if (isMFASessionValid()) {
+          // If we used stored password and it worked, refresh the session timestamp
+          const storedPassword = getStoredPassword();
+          if (storedPassword) {
+            setMFASession(storedPassword);
+          }
+        }
         console.log(response.data.data);
       } else {
         toast.error('Failed to fetch analytics');
+        setLoading(false);
       }
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -566,7 +670,15 @@ const Analytics = () => {
       console.log("Error status:", error.response?.status);
       
       if (error.response?.status === 429) {
-        toast.error('Rate limit exceeded. Please wait 1 hour or restart the server to test MFA.');
+        toast.error('Rate limit exceeded. Please wait before trying again.');
+        setLoading(false);
+        // Don't show MFA modal for rate limit errors
+        return;
+      }
+      
+      // Handle network errors or errors without response
+      if (!error.response) {
+        toast.error('Network error. Please check your connection.');
         setLoading(false);
         return;
       }
@@ -593,8 +705,14 @@ const Analytics = () => {
       
       const hasPasswordProvided = passwordConfirmation && typeof passwordConfirmation === 'string' && passwordConfirmation.trim().length > 0;
       
+      // If MFA is required and we have a valid session but no password, clear session and show modal
+      // This handles the case where backend session expired but frontend session is still valid
       if (requiresMFA && !hasPasswordProvided) {
-        console.log("MFA required - showing modal, hasPasswordProvided:", hasPasswordProvided);
+        if (isMFASessionValid()) {
+          console.log("Backend requires MFA but frontend session valid - clearing session and showing modal");
+          clearMFASession();
+        }
+        console.log("MFA required - showing modal");
         setShowMFAModal(true);
         setLoading(false);
         return;
@@ -606,16 +724,24 @@ const Analytics = () => {
       }
       
       if (error.response?.status === 401 && !hasPasswordProvided) {
-        console.log("401 without explicit MFA flag - showing modal anyway");
+        // If we have a valid session but got 401, clear it and show modal
+        if (isMFASessionValid()) {
+          console.log("Got 401 with valid session - clearing session");
+          clearMFASession();
+        }
+        console.log("401 without explicit MFA flag - showing modal");
         setShowMFAModal(true);
         setLoading(false);
         return;
       }
       
+      // Only show generic error if it's not an MFA/401 issue
       if (!requiresMFA && error.response?.status !== 401) {
         toast.error(responseData.message || 'Error fetching analytics');
       }
     } finally {
+      // Always set loading to false in finally block
+      // The MFA cases set it before returning, but this ensures it's always cleared
       setLoading(false);
     }
   };
@@ -628,6 +754,7 @@ const Analytics = () => {
     }
     setLoading(true);
     await fetchAnalytics(mfaPassword);
+    // Session will be set in fetchAnalytics if successful
   };
 
   // Generate CSV data
@@ -892,10 +1019,14 @@ const Analytics = () => {
                   <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
                   Multi-Factor Authentication Required
                 </h3>
-                <button onClick={() => {
-                  setShowMFAModal(false);
-                  setMfaPassword("");
-                }}>
+                <button 
+                  className="modal-close"
+                  onClick={() => {
+                    setShowMFAModal(false);
+                    setMfaPassword("");
+                  }}
+                  aria-label="Close modal"
+                >
                   <FiX />
                 </button>
               </div>
@@ -925,27 +1056,26 @@ const Analytics = () => {
                       }}
                     />
                   </div>
-                  <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                    <button 
-                      type="button"
-                      className="btn-secondary" 
-                      onClick={() => {
-                        setShowMFAModal(false);
-                        setMfaPassword("");
-                      }}
-                      disabled={loading}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn-primary"
-                      disabled={loading || !mfaPassword.trim()}
-                      style={{ backgroundColor: '#2d8659' }}
-                    >
-                      {loading ? "Verifying..." : "Confirm & Access Analytics"}
-                    </button>
-                  </div>
+                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'center', gap: '12px' }}>
+                  <button 
+                    type="button"
+                    className="cancel-btn" 
+                    onClick={() => {
+                      setShowMFAModal(false);
+                      setMfaPassword("");
+                    }}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="confirm-btn"
+                    disabled={loading || !mfaPassword.trim()}
+                  >
+                    {loading ? "Verifying..." : "Confirm & Access Analytics"}
+                  </button>
+                </div>
                 </form>
               </div>
             </div>
@@ -961,12 +1091,19 @@ const Analytics = () => {
     );
   }
 
-  if (!analytics && !showMFAModal) {
+  // Don't show error if MFA modal is showing, if we're loading, or if we have a valid session (might be waiting for MFA modal)
+  if (!analytics && !showMFAModal && !loading) {
+    // Check if we should wait a bit for MFA modal to appear (in case of async error handling)
+    // If session is valid but we got here, it means backend rejected - show error
     return (
       <div className="analytics-container">
         <div className="analytics-error">
           <p>Failed to load analytics data</p>
-          <button onClick={() => fetchAnalytics()} className="retry-btn">Retry</button>
+          <button onClick={() => {
+            // Clear MFA session and retry
+            clearMFASession();
+            fetchAnalytics();
+          }} className="retry-btn">Retry</button>
         </div>
       </div>
     );
@@ -1027,33 +1164,27 @@ const Analytics = () => {
     <>
       {/* MFA Modal - Render first so it appears on top */}
       {showMFAModal && (
-        <div className="modal-overlay" style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} role="dialog" aria-modal="true">
-          <button 
-            type="button"
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'transparent', border: 'none', cursor: 'default' }}
-            onClick={() => {
-              setShowMFAModal(false);
-              setMfaPassword("");
-            }}
-            aria-label="Close modal"
-            tabIndex={-1}
-          />
-          <div className="modal-content" style={{ zIndex: 10001, position: 'relative', backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '500px', width: '90%', maxHeight: '90vh', overflow: 'auto' }} role="document">
+        <div className="modal-overlay" role="dialog" aria-modal="true">
+          <div className="modal-content" style={{ maxWidth: '500px', width: '90%' }} role="document">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
                 Multi-Factor Authentication Required
               </h3>
-              <button onClick={() => {
-                setShowMFAModal(false);
-                setMfaPassword("");
-              }}>
+              <button 
+                className="modal-close"
+                onClick={() => {
+                  setShowMFAModal(false);
+                  setMfaPassword("");
+                }}
+                aria-label="Close modal"
+              >
                 <FiX />
               </button>
             </div>
             <div className="modal-body">
-              <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
-                <FiAlertTriangle style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+              <p style={{ color: '#e74c3c', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FiAlertTriangle />
                 For security purposes, please confirm your password to access analytics.
               </p>
               <form onSubmit={handleMFASubmit}>
@@ -1077,26 +1208,27 @@ const Analytics = () => {
                     }}
                   />
                 </div>
-                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                  <button 
-                    type="button"
-                    className="btn-secondary" 
-                    onClick={() => {
-                      setShowMFAModal(false);
-                      setMfaPassword("");
-                    }}
-                    disabled={loading}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={loading || !mfaPassword.trim()}
-                    style={{ backgroundColor: '#2d8659' }}
-                  >
-                    {loading ? "Verifying..." : "Confirm & Access Analytics"}
-                  </button>
+                <div className="modal-footer">
+                  <div className="modal-actions">
+                    <button 
+                      type="button"
+                      className="cancel-btn" 
+                      onClick={() => {
+                        setShowMFAModal(false);
+                        setMfaPassword("");
+                      }}
+                      disabled={loading}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="confirm-btn"
+                      disabled={loading || !mfaPassword.trim()}
+                    >
+                      {loading ? "Verifying..." : "Confirm & Access Analytics"}
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
@@ -1110,14 +1242,16 @@ const Analytics = () => {
         <h1>Business Analytics</h1>
         <p className="analytics-subtitle">Comprehensive insights into your stone business</p>
         <button onClick={fetchAnalytics} className="refresh-btn">
-          <span className="refresh-icon">↻</span> Refresh Data
+          <FiRefreshCw className="refresh-icon" /> Refresh Data
         </button>
       </div>
 
       {/* Summary Cards */}
       <div className="summary-grid">
         <button type="button" className="summary-card revenue clickable" onClick={() => navigate('/orders')} title="View Orders">
-          <div className="card-icon">💵</div>
+          <div className="card-icon">
+            <FiDollarSign />
+          </div>
           <div className="card-content">
             <h3>Total Revenue</h3>
             <p className="card-value">{formatCurrency(summary?.totalRevenue)}</p>
@@ -1129,7 +1263,9 @@ const Analytics = () => {
 
 
         <button type="button" className="summary-card pending clickable" onClick={() => navigate('/orders')} title="View Orders">
-          <div className="card-icon">⏳</div>
+          <div className="card-icon">
+            <FiClock />
+          </div>
           <div className="card-content">
             <h3>Pending Payments</h3>
             <p className="card-value">{formatCurrency(summary?.pendingPayments)}</p>
@@ -1139,7 +1275,9 @@ const Analytics = () => {
         </button>
 
         <button type="button" className="summary-card orders clickable" onClick={() => navigate('/orders')} title="View Orders">
-          <div className="card-icon">📦</div>
+          <div className="card-icon">
+            <FiPackage />
+          </div>
           <div className="card-content">
             <h3>Total Orders</h3>
             <p className="card-value">{summary?.totalOrders || 0}</p>
@@ -1149,7 +1287,9 @@ const Analytics = () => {
         </button>
 
         <button type="button" className="summary-card quotations clickable" onClick={() => navigate('/quotes')} title="View Quotations">
-          <div className="card-icon">📝</div>
+          <div className="card-icon">
+            <FiFileText />
+          </div>
           <div className="card-content">
             <h3>Quotations</h3>
             <p className="card-value">{summary?.totalQuotations || 0}</p>
@@ -1159,7 +1299,9 @@ const Analytics = () => {
         </button>
 
         <button type="button" className="summary-card customers clickable" onClick={() => navigate('/users')} title="View Customers">
-          <div className="card-icon">👥</div>
+          <div className="card-icon">
+            <FiUsers />
+          </div>
           <div className="card-content">
             <h3>Total Customers</h3>
             <p className="card-value">{summary?.totalCustomers || 0}</p>
@@ -1169,7 +1311,9 @@ const Analytics = () => {
         </button>
 
         <button type="button" className="summary-card stones clickable" onClick={() => navigate('/list')} title="View Products">
-          <div className="card-icon">💎</div>
+          <div className="card-icon">
+            <FiBox />
+          </div>
           <div className="card-content">
             <h3>Stone Products</h3>
             <p className="card-value">{summary?.totalStones || 0}</p>
@@ -1179,7 +1323,9 @@ const Analytics = () => {
         </button>
 
         <button type="button" className="summary-card conversion clickable" onClick={() => navigate('/quotes')} title="View Quotations">
-          <div className="card-icon">📊</div>
+          <div className="card-icon">
+            <FiTrendingUp />
+          </div>
           <div className="card-content">
             <h3>Conversion Rate</h3>
             <p className="card-value">{summary?.conversionRate || 0}%</p>
@@ -1195,8 +1341,48 @@ const Analytics = () => {
         <ChartCard 
           title="Monthly Sales Trend"
           description={chartDescriptions.monthlySales}
+          data={monthlySales || []}
           expandedContent={
             <LineChart data={monthlySales || []} dataKey="totalSales" nameKey="month" stroke="#536438" height={350} expanded={true} />
+          }
+          detailView={
+            <div className="monthly-sales-details-table">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Total Sales</th>
+                    <th>Order Count</th>
+                    <th>Average Order Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(monthlySales || []).map((sale, index) => {
+                    const avgOrderValue = sale.orderCount > 0 ? (sale.totalSales || 0) / sale.orderCount : 0;
+                    // Format month display (e.g., "2024-01" -> "January 2024")
+                    const monthDisplay = sale.month ? (() => {
+                      const [year, month] = sale.month.split('-');
+                      const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 
+                                         'July', 'August', 'September', 'October', 'November', 'December'];
+                      return `${monthNames[parseInt(month)] || month} ${year}`;
+                    })() : 'N/A';
+                    return (
+                      <tr key={index}>
+                        <td><strong>{monthDisplay}</strong></td>
+                        <td className="currency-cell">{formatCurrency(sale.totalSales || 0)}</td>
+                        <td>{sale.orderCount || 0}</td>
+                        <td className="currency-cell">{formatCurrency(avgOrderValue)}</td>
+                      </tr>
+                    );
+                  })}
+                  {(!monthlySales || monthlySales.length === 0) && (
+                    <tr>
+                      <td colSpan="4" className="no-data-cell">No monthly sales data available</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           }
         >
           <LineChart data={monthlySales || []} dataKey="totalSales" nameKey="month" stroke="#536438" height={280} />
@@ -1206,8 +1392,42 @@ const Analytics = () => {
         <ChartCard 
           title="Top Clients by Revenue"
           description={chartDescriptions.topClients}
+          data={topClients || []}
           expandedContent={
             <HorizontalBarChart data={(topClients || []).slice(0, 10)} dataKey="totalPurchases" nameKey="companyName" fill="#2d8659" height={400} expanded={true} />
+          }
+          detailView={
+            <div className="client-details-table">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Company Name</th>
+                    <th>Email</th>
+                    <th>Total Orders</th>
+                    <th>Total Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(topClients || []).map((client, index) => (
+                    <tr key={client._id || index}>
+                      <td>
+                        <span className={`rank-badge rank-${index + 1}`}>#{index + 1}</span>
+                      </td>
+                      <td><strong>{client.companyName || 'N/A'}</strong></td>
+                      <td>{client.email || 'N/A'}</td>
+                      <td>{client.orderCount || 0}</td>
+                      <td className="currency-cell">{formatCurrency(client.totalPurchases)}</td>
+                    </tr>
+                  ))}
+                  {(!topClients || topClients.length === 0) && (
+                    <tr>
+                      <td colSpan="5" className="no-data-cell">No client data available</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           }
         >
           <HorizontalBarChart data={(topClients || []).slice(0, 7)} dataKey="totalPurchases" nameKey="companyName" fill="#2d8659" height={280} />
@@ -1217,8 +1437,42 @@ const Analytics = () => {
         <ChartCard 
           title="Best Selling Stones"
           description={chartDescriptions.bestSelling}
+          data={mostSoldStones || []}
           expandedContent={
             <HorizontalBarChart data={(mostSoldStones || []).slice(0, 10)} dataKey="totalQuantity" nameKey="stoneName" fill="#73df58" height={400} expanded={true} />
+          }
+          detailView={
+            <div className="stone-details-table">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Stone Name</th>
+                    <th>Total Quantity Sold</th>
+                    <th>Total Revenue</th>
+                    <th>Order Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(mostSoldStones || []).map((stone, index) => (
+                    <tr key={stone._id || index}>
+                      <td>
+                        <span className={`rank-badge rank-${index + 1}`}>#{index + 1}</span>
+                      </td>
+                      <td><strong>{stone.stoneName || 'N/A'}</strong></td>
+                      <td>{stone.totalQuantity?.toLocaleString() || 0}</td>
+                      <td className="currency-cell">{formatCurrency(stone.totalRevenue)}</td>
+                      <td>{stone.orderCount || 0}</td>
+                    </tr>
+                  ))}
+                  {(!mostSoldStones || mostSoldStones.length === 0) && (
+                    <tr>
+                      <td colSpan="5" className="no-data-cell">No stone data available</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           }
         >
           <HorizontalBarChart data={(mostSoldStones || []).slice(0, 7)} dataKey="totalQuantity" nameKey="stoneName" fill="#73df58" height={280} />
@@ -1228,8 +1482,56 @@ const Analytics = () => {
         <ChartCard 
           title="Order Status Distribution"
           description={chartDescriptions.orderStatus}
+          data={orderStatusData}
           expandedContent={
             <PieChart data={orderStatusData} dataKey="value" nameKey="name" colors={orderStatusData.map(d => statusColors[d.name] || '#6c757d')} size={300} expanded={true} />
+          }
+          detailView={
+            <div className="order-status-details-table">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th>Count</th>
+                    <th>Percentage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const total = orderStatusData.reduce((sum, item) => sum + (item.value || 0), 0);
+                    return orderStatusData.map((item, index) => {
+                      const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
+                      return (
+                        <tr key={index}>
+                          <td>
+                            <span 
+                              className="status-badge" 
+                              style={{ 
+                                backgroundColor: statusColors[item.name] || '#6c757d',
+                                color: 'white',
+                                padding: '4px 12px',
+                                borderRadius: '4px',
+                                fontSize: '0.875rem',
+                                fontWeight: '500'
+                              }}
+                            >
+                              {item.name?.replace(/_/g, ' ').toUpperCase() || 'Unknown'}
+                            </span>
+                          </td>
+                          <td><strong>{item.value || 0}</strong></td>
+                          <td>{percentage}%</td>
+                        </tr>
+                      );
+                    });
+                  })()}
+                  {(!orderStatusData || orderStatusData.length === 0) && (
+                    <tr>
+                      <td colSpan="3" className="no-data-cell">No order status data available</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           }
         >
           <PieChart data={orderStatusData} dataKey="value" nameKey="name" colors={orderStatusData.map(d => statusColors[d.name] || '#6c757d')} size={220} />
@@ -1239,8 +1541,56 @@ const Analytics = () => {
         <ChartCard 
           title="Quotation Status"
           description={chartDescriptions.quotationStatus}
+          data={quotationStatusData}
           expandedContent={
             <PieChart data={quotationStatusData} dataKey="value" nameKey="name" colors={quotationStatusData.map(d => statusColors[d.name] || '#6c757d')} size={300} expanded={true} />
+          }
+          detailView={
+            <div className="quotation-status-details-table">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th>Count</th>
+                    <th>Percentage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const total = quotationStatusData.reduce((sum, item) => sum + (item.value || 0), 0);
+                    return quotationStatusData.map((item, index) => {
+                      const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
+                      return (
+                        <tr key={index}>
+                          <td>
+                            <span 
+                              className="status-badge" 
+                              style={{ 
+                                backgroundColor: statusColors[item.name] || '#6c757d',
+                                color: 'white',
+                                padding: '4px 12px',
+                                borderRadius: '4px',
+                                fontSize: '0.875rem',
+                                fontWeight: '500'
+                              }}
+                            >
+                              {item.name?.replace(/_/g, ' ').toUpperCase() || 'Unknown'}
+                            </span>
+                          </td>
+                          <td><strong>{item.value || 0}</strong></td>
+                          <td>{percentage}%</td>
+                        </tr>
+                      );
+                    });
+                  })()}
+                  {(!quotationStatusData || quotationStatusData.length === 0) && (
+                    <tr>
+                      <td colSpan="3" className="no-data-cell">No quotation status data available</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           }
         >
           <PieChart data={quotationStatusData} dataKey="value" nameKey="name" colors={quotationStatusData.map(d => statusColors[d.name] || '#6c757d')} size={220} />
@@ -1250,8 +1600,41 @@ const Analytics = () => {
         <ChartCard 
           title="Weekly Sales Pattern"
           description={chartDescriptions.weeklySales}
+          data={weeklySalesPattern || []}
           expandedContent={
             <BarChart data={weeklySalesPattern || []} dataKey="totalSales" nameKey="day" fill="#6b8245" height={350} expanded={true} />
+          }
+          detailView={
+            <div className="weekly-sales-details-table">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Day of Week</th>
+                    <th>Total Sales</th>
+                    <th>Order Count</th>
+                    <th>Average Order Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(weeklySalesPattern || []).map((day, index) => {
+                    const avgOrderValue = day.orderCount > 0 ? (day.totalSales || 0) / day.orderCount : 0;
+                    return (
+                      <tr key={index}>
+                        <td><strong>{day.day || 'N/A'}</strong></td>
+                        <td className="currency-cell">{formatCurrency(day.totalSales)}</td>
+                        <td>{day.orderCount || 0}</td>
+                        <td className="currency-cell">{formatCurrency(avgOrderValue)}</td>
+                      </tr>
+                    );
+                  })}
+                  {(!weeklySalesPattern || weeklySalesPattern.length === 0) && (
+                    <tr>
+                      <td colSpan="4" className="no-data-cell">No weekly sales data available</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           }
         >
           <BarChart data={weeklySalesPattern || []} dataKey="totalSales" nameKey="day" fill="#6b8245" height={260} />
@@ -1261,8 +1644,44 @@ const Analytics = () => {
         <ChartCard 
           title="Sales by Category"
           description={chartDescriptions.categorySales}
+          data={categoryData}
           expandedContent={
             <PieChart data={categoryData} dataKey="value" nameKey="name" colors={pieColors} size={300} expanded={true} />
+          }
+          detailView={
+            <div className="category-sales-details-table">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Total Revenue</th>
+                    <th>Percentage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const total = categoryData.reduce((sum, item) => sum + (item.value || 0), 0);
+                    return categoryData
+                      .sort((a, b) => (b.value || 0) - (a.value || 0))
+                      .map((item, index) => {
+                        const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
+                        return (
+                          <tr key={index}>
+                            <td><strong>{item.name || 'Uncategorized'}</strong></td>
+                            <td className="currency-cell">{formatCurrency(item.value)}</td>
+                            <td>{percentage}%</td>
+                          </tr>
+                        );
+                      });
+                  })()}
+                  {(!categoryData || categoryData.length === 0) && (
+                    <tr>
+                      <td colSpan="3" className="no-data-cell">No category sales data available</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           }
         >
           <PieChart data={categoryData} dataKey="value" nameKey="name" colors={pieColors} size={220} />
@@ -1272,8 +1691,60 @@ const Analytics = () => {
         <ChartCard 
           title="Payment Status Overview"
           description={chartDescriptions.paymentStatus}
+          data={paymentData}
           expandedContent={
             <PieChart data={paymentData} dataKey="value" nameKey="name" colors={paymentData.map(d => statusColors[d.name] || '#6c757d')} size={300} expanded={true} />
+          }
+          detailView={
+            <div className="payment-status-details-table">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Payment Status</th>
+                    <th>Order Count</th>
+                    <th>Total Amount</th>
+                    <th>Percentage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const totalCount = paymentData.reduce((sum, item) => sum + (item.value || 0), 0);
+                    const totalAmount = paymentStatusOverview?.reduce((sum, item) => sum + (item.totalAmount || 0), 0) || 0;
+                    return paymentData.map((item, index) => {
+                      const percentage = totalCount > 0 ? ((item.value / totalCount) * 100).toFixed(1) : 0;
+                      const statusItem = paymentStatusOverview?.find(p => (p._id || '').toLowerCase() === (item.name || '').toLowerCase());
+                      return (
+                        <tr key={index}>
+                          <td>
+                            <span 
+                              className="status-badge" 
+                              style={{ 
+                                backgroundColor: statusColors[item.name] || '#6c757d',
+                                color: 'white',
+                                padding: '4px 12px',
+                                borderRadius: '4px',
+                                fontSize: '0.875rem',
+                                fontWeight: '500'
+                              }}
+                            >
+                              {item.name?.replace(/_/g, ' ').toUpperCase() || 'Unknown'}
+                            </span>
+                          </td>
+                          <td><strong>{item.value || 0}</strong></td>
+                          <td className="currency-cell">{formatCurrency(statusItem?.totalAmount || item.amount || 0)}</td>
+                          <td>{percentage}%</td>
+                        </tr>
+                      );
+                    });
+                  })()}
+                  {(!paymentData || paymentData.length === 0) && (
+                    <tr>
+                      <td colSpan="4" className="no-data-cell">No payment status data available</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           }
         >
           <PieChart data={paymentData} dataKey="value" nameKey="name" colors={paymentData.map(d => statusColors[d.name] || '#6c757d')} size={220} />
@@ -1283,8 +1754,63 @@ const Analytics = () => {
         <ChartCard 
           title="Stock Availability"
           description={chartDescriptions.stockAvailability}
+          data={stockData}
           expandedContent={
             <PieChart data={stockData} dataKey="value" nameKey="name" colors={['#28a745', '#ffc107', '#dc3545', '#17a2b8']} size={300} expanded={true} />
+          }
+          detailView={
+            <div className="stock-status-details-table">
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Stock Status</th>
+                    <th>Product Count</th>
+                    <th>Percentage</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const total = stockData.reduce((sum, item) => sum + (item.value || 0), 0);
+                    const statusColorsMap = {
+                      'in_stock': '#28a745',
+                      'low_stock': '#ffc107',
+                      'out_of_stock': '#dc3545',
+                      'discontinued': '#17a2b8'
+                    };
+                    return stockData.map((item, index) => {
+                      const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
+                      const statusKey = (item.name || '').toLowerCase().replace(/\s+/g, '_');
+                      return (
+                        <tr key={index}>
+                          <td>
+                            <span 
+                              className="status-badge" 
+                              style={{ 
+                                backgroundColor: statusColorsMap[statusKey] || '#6c757d',
+                                color: 'white',
+                                padding: '4px 12px',
+                                borderRadius: '4px',
+                                fontSize: '0.875rem',
+                                fontWeight: '500'
+                              }}
+                            >
+                              {item.name?.replace(/_/g, ' ').toUpperCase() || 'Unknown'}
+                            </span>
+                          </td>
+                          <td><strong>{item.value || 0}</strong></td>
+                          <td>{percentage}%</td>
+                        </tr>
+                      );
+                    });
+                  })()}
+                  {(!stockData || stockData.length === 0) && (
+                    <tr>
+                      <td colSpan="3" className="no-data-cell">No stock status data available</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           }
         >
           <PieChart data={stockData} dataKey="value" nameKey="name" colors={['#28a745', '#ffc107', '#dc3545', '#17a2b8']} size={220} />
@@ -1388,7 +1914,7 @@ const Analytics = () => {
         >
           <div className="modal-content export-modal" role="document">
             <div className="modal-header">
-              <h3>📊 CSV Export Preview</h3>
+              <h3>CSV Export Preview</h3>
               <button className="modal-close" onClick={() => setExportModal({ show: false, type: null })}>×</button>
             </div>
             <div className="csv-preview-container">

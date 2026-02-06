@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 *
 {
   padding: 0;
@@ -7,7 +11,7 @@
 
 body{
   min-height: 100vh;
-  background-color: #F1F8E8;
+  background-color: #ffffff;
   padding-top: 80px;
 }
 a{

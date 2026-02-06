@@ -1,10 +1,6 @@
 import { fileURLToPath } from 'url';
 import AuditLog from '../Models/AuditLog/auditLogModel.js';
 
-// --- REMOVED FS (File System) imports to prevent crashes on Vercel ---
-// import fs from 'fs';
-// import path from 'path';
-
 /**
  * Centralized audit logging system for security and compliance.
  * IMMUTABLE AUDIT TRAIL: All logs are stored in database and cannot be modified or deleted.
@@ -27,15 +23,13 @@ export const logAudit = async ({
   status,
   clientIp = null,
   userAgent = null,
-  requestPayload = null, // Full request payload for non-repudiation
+  requestPayload = null,
   details = null
 }) => {
   try {
-    // Sanitize request payload to remove sensitive information before logging
     let sanitizedPayload = null;
     if (requestPayload) {
       sanitizedPayload = { ...requestPayload };
-      // Remove password fields (don't log actual passwords)
       if (sanitizedPayload.passwordConfirmation) {
         sanitizedPayload.passwordConfirmation = '[REDACTED]';
       }
@@ -54,35 +48,28 @@ export const logAudit = async ({
       quotationId,
       status,
       clientIp,
-      userAgent: userAgent ? userAgent.substring(0, 500) : null, // Limit length for storage
-      requestPayload: sanitizedPayload, // Store sanitized request payload
+      userAgent: userAgent ? userAgent.substring(0, 500) : null,
+      requestPayload: sanitizedPayload,
       details
     };
 
-    // Store in database for immutable audit trail (non-repudiation)
     try {
       const auditLog = new AuditLog(auditEntry);
       await auditLog.save();
       
-      // Also log to console for immediate visibility (Vercel/deployment logs)
       console.log('[AUDIT LOG]:', JSON.stringify({
         ...auditEntry,
         timestamp: auditEntry.timestamp.toISOString()
       }));
     } catch (dbError) {
-      // If database save fails, still log to console as fallback
       console.error('[AUDIT LOG DB ERROR]:', dbError.message);
       console.log('[AUDIT LOG FALLBACK]:', JSON.stringify({
         ...auditEntry,
         timestamp: auditEntry.timestamp.toISOString()
       }));
-      
-      // In production, you might want to alert administrators about audit log failures
-      // For now, we log to console as fallback to ensure we don't lose audit information
     }
     
   } catch (error) {
-    // Even if audit logging fails completely, log the error
     console.error('[AUDIT LOGGER ERROR] Failed to log audit entry:', error.message);
     console.error('[AUDIT LOGGER ERROR] Stack:', error.stack);
   }
@@ -101,7 +88,6 @@ export const logError = (error, context = {}) => {
       ...context
     };
 
-    // FIX: Use console.error instead of fs.appendFileSync
     console.error('[SYSTEM ERROR]:', JSON.stringify(errorEntry));
     
   } catch (logError) {

@@ -38,7 +38,6 @@ const sessionActivitySchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Compound index for efficient lookups
 sessionActivitySchema.index({ userId: 1, lastActivity: -1 });
 
 const SessionActivity = mongoose.models.SessionActivity || mongoose.model("SessionActivity", sessionActivitySchema);
@@ -75,29 +74,24 @@ export const detectAnomalies = async (req, res, next) => {
   const quoteId = req.params.quoteId || req.analyticsAnomalyContext?.resourceId;
 
   if (!userId) {
-    // Skip anomaly detection if user is not authenticated
     return next();
   }
 
   try {
     const sessionActivity = await getOrCreateSessionActivity(userId);
     const currentIp = clientIp || 'Unknown';
-    const truncatedUserAgent = userAgent.substring(0, 200); // Limit length
+    const truncatedUserAgent = userAgent.substring(0, 200);
     
     let isAnomalous = false;
     let anomalyDetails = [];
 
-    // Check 1: IP Address Change Detection
     if (sessionActivity.lastIpAddress && sessionActivity.lastIpAddress !== currentIp) {
-      // Check if this IP is known for this user
       const knownIp = sessionActivity.knownIps.find(ip => ip.ip === currentIp);
       
       if (!knownIp) {
-        // New IP address - potential anomaly
         isAnomalous = true;
         anomalyDetails.push(`New IP address detected: ${currentIp} (previous: ${sessionActivity.lastIpAddress})`);
         
-        // Add to known IPs
         sessionActivity.knownIps.push({
           ip: currentIp,
           firstSeen: new Date(),
@@ -105,12 +99,10 @@ export const detectAnomalies = async (req, res, next) => {
           count: 1
         });
       } else {
-        // Known IP, update stats
         knownIp.lastSeen = new Date();
         knownIp.count += 1;
       }
     } else if (!sessionActivity.lastIpAddress) {
-      // First time tracking - add current IP
       sessionActivity.lastIpAddress = currentIp;
       sessionActivity.knownIps.push({
         ip: currentIp,
@@ -120,19 +112,15 @@ export const detectAnomalies = async (req, res, next) => {
       });
     }
 
-    // Check 2: User Agent Change Detection
     if (sessionActivity.lastUserAgent && sessionActivity.lastUserAgent !== truncatedUserAgent) {
       isAnomalous = true;
       anomalyDetails.push(`User-Agent change detected. Previous: ${sessionActivity.lastUserAgent.substring(0, 50)}...`);
     }
 
-    // Check 3: Rapid Activity Detection (multiple approvals in short time)
     const timeSinceLastActivity = sessionActivity.lastActivity 
-      ? (new Date() - sessionActivity.lastActivity) / 1000 // seconds
+      ? (new Date() - sessionActivity.lastActivity) / 1000
       : Infinity;
     
-    // If multiple approvals within 60 seconds, flag as potential anomaly
-    // Or rapid analytics access within 10 seconds
     if (req.path.includes('/approve') && timeSinceLastActivity < 60) {
       isAnomalous = true;
       anomalyDetails.push(`Rapid approval activity detected: ${timeSinceLastActivity.toFixed(1)}s since last activity`);
@@ -141,13 +129,11 @@ export const detectAnomalies = async (req, res, next) => {
       anomalyDetails.push(`Rapid analytics access: ${timeSinceLastActivity.toFixed(1)}s since last request`);
     }
 
-    // Update session activity
     sessionActivity.lastIpAddress = currentIp;
     sessionActivity.lastUserAgent = truncatedUserAgent;
     sessionActivity.lastActivity = new Date();
     await sessionActivity.save();
 
-    // Log anomaly if detected
     if (isAnomalous) {
       const actionName = req.analyticsAnomalyContext?.actionPrefix 
         ? `${req.analyticsAnomalyContext.actionPrefix}_ANOMALY_DETECTED`
@@ -169,13 +155,8 @@ export const detectAnomalies = async (req, res, next) => {
           : { quoteId, comment: req.body?.comment || null },
         details: `Anomalous activity detected: ${anomalyDetails.join('; ')}`
       });
-      
-      // For high-risk anomalies (new IP + user agent change), we could require additional verification
-      // For now, we just log and allow the request to proceed (re-auth middleware will handle additional security)
-      // In production, you might want to trigger additional security challenges here
     }
 
-    // Store anomaly flag in request for downstream middleware/handlers
     req.sessionAnomaly = {
       isAnomalous,
       details: anomalyDetails,
@@ -185,7 +166,6 @@ export const detectAnomalies = async (req, res, next) => {
 
     next();
   } catch (error) {
-    // Don't block the request if anomaly detection fails, but log it
     await logAudit({
       userId,
       role: normalizeRole(req.user?.role),
@@ -204,7 +184,6 @@ export const detectAnomalies = async (req, res, next) => {
       details: `Error in anomaly detection: ${error.message}`
     });
     
-    // Continue with request even if anomaly detection fails
     next();
   }
 };

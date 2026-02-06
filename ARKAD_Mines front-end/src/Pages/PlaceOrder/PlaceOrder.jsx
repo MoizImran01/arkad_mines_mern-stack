@@ -1004,31 +1004,32 @@ const PlaceOrder = () => {
         </div>
       )}
 
-      {/* MFA Modal */}
       {showMfaModal && (
         <div 
           className="modal-overlay" 
-          style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)' }} 
           role="dialog"
           aria-modal="true"
         >
           <div className="modal-content" role="document">
             <div className="modal-header">
               <h3>
-                <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                <FiLock />
                 Multi-Factor Authentication Required
               </h3>
-              <button onClick={() => {
-                setShowMfaModal(false);
-                setMfaPassword("");
-                setPendingPayment(null);
-              }}>
+              <button 
+                onClick={() => {
+                  setShowMfaModal(false);
+                  setMfaPassword("");
+                  setPendingPayment(null);
+                }}
+                aria-label="Close modal"
+              >
                 <FiX />
               </button>
             </div>
             <div className="modal-body">
-              <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
-                <FiAlertTriangle style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+              <p style={{ color: '#e74c3c', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FiAlertTriangle />
                 For security purposes, please confirm your password to submit this payment.
               </p>
               <form onSubmit={handleMfaSubmit}>
@@ -1052,7 +1053,7 @@ const PlaceOrder = () => {
                     }}
                   />
                 </div>
-                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <div className="modal-footer">
                   <button 
                     type="button"
                     className="btn-secondary" 
@@ -1069,7 +1070,6 @@ const PlaceOrder = () => {
                     type="submit"
                     className="btn-primary"
                     disabled={paymentSubmitting || !mfaPassword.trim()}
-                    style={{ backgroundColor: '#2d8659' }}
                   >
                     {paymentSubmitting ? "Submitting..." : "Confirm & Submit Payment"}
                   </button>

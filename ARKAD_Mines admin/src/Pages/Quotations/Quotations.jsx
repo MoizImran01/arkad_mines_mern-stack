@@ -216,12 +216,14 @@ const Quotations = () => {
     <div className="quotations-container">
       <div className="quotations-header">
         <div>
-          <h1><FiFileText /> Quotation Requests</h1>
+          <div className="quotations-title-row">
+            <h1><FiFileText /> Quotation Requests</h1>
+            <button className="refresh-btn header-refresh-btn" onClick={fetchQuotes} disabled={refreshing}>
+              {refreshing ? <FiRefreshCw className="spin" /> : <FiRefreshCw />} Refresh
+            </button>
+          </div>
           <p>Track buyer requests and issue formal quotations.</p>
         </div>
-        <button className="refresh-btn" onClick={fetchQuotes} disabled={refreshing}>
-          {refreshing ? <FiRefreshCw className="spin" /> : <FiRefreshCw />} Refresh
-        </button>
       </div>
 
       <div className="quotations-tabs">
