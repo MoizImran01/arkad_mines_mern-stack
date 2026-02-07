@@ -51,8 +51,8 @@ const App = () => {
         
 
         <Route path="/" element={
-          token && adminUser?.role === 'admin' ? (
-            <Navigate to="/add" replace />
+          token && (adminUser?.role === 'admin' || adminUser?.role === 'employee') ? (
+            <Navigate to={adminUser?.role === 'admin' ? "/add" : "/users"} replace />
           ) : (
             <Navigate to="/login" replace />
           )

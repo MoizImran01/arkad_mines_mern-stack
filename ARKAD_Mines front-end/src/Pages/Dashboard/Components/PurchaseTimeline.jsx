@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
+import '../Dashboard.css';
 
 const PurchaseTimeline = ({ timeline }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
@@ -31,13 +32,11 @@ const PurchaseTimeline = ({ timeline }) => {
   }
 
   return (
-    <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100" style={{ background: 'white', borderRadius: '1rem', padding: '2rem', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', border: '1px solid #f3f4f6' }}>
-      <div className="mb-8 flex items-center justify-between" style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div className="bg-white rounded-xl border border-gray-100 dashboard-compact-card">
+      <div className="dashboard-compact-header">
         <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2" style={{ fontSize: 'clamp(1.5rem, 4vw, 1.875rem)', fontWeight: '700', color: '#111827', marginBottom: '0.5rem' }}>
-            Purchase Rhythm Timeline
-          </h2>
-          <p className="text-gray-500 text-sm" style={{ color: '#6b7280', fontSize: '0.875rem' }}>Your purchasing activity over time</p>
+          <h2 className="dashboard-compact-title">Purchase timeline</h2>
+          <p className="dashboard-compact-subtitle">Your purchasing activity over time</p>
         </div>
         <div className="hidden md:flex items-center gap-2 text-sm text-gray-500" style={{ display: 'none' }}>
           <span className="w-3 h-3 bg-primary rounded-full" style={{ width: '12px', height: '12px', backgroundColor: '#536438', borderRadius: '50%' }}></span>
@@ -51,15 +50,15 @@ const PurchaseTimeline = ({ timeline }) => {
         style={{ 
           scrollbarWidth: 'thin', 
           position: 'relative', 
-          paddingTop: '140px',
-          paddingBottom: '20px',
+          paddingTop: '100px',
+          paddingBottom: '12px',
           overflowY: 'visible'
         }}
       >
         <div
           ref={containerRef}
           className="flex items-end gap-6 min-w-max px-4"
-          style={{ height: '200px', position: 'relative', overflow: 'visible' }}
+          style={{ height: '160px', position: 'relative', overflow: 'visible' }}
         >
           {timelineData.map((item, index) => {
             const isFirst = index === 0;

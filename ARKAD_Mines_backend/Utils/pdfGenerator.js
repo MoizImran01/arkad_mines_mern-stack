@@ -42,17 +42,10 @@ export const generateQuotationPDF = (quotation) => {
     doc.fontSize(16)
        .fillColor('#000000')
        .font('Helvetica-Bold')
-       .text('ARKAD MINES & MINERALS', 120, headerTop + 10);
-    
-    doc.fontSize(9)
-       .font('Helvetica')
-       .text('123 Granite Industrial Estate', 120, headerTop + 30)
-       .text('Lahore, Pakistan 54000', 120, headerTop + 42)
-       .text('Email: sales@arkad.com | Phone: +92-300-1234567', 120, headerTop + 54)
-       .text('www.arkadmines.com', 120, headerTop + 66);
+       .text('ARKAD MINES & MINERALS', 50, headerTop + 10);
 
-    doc.moveTo(50, headerTop + 80)
-       .lineTo(550, headerTop + 80)
+    doc.moveTo(50, headerTop + 35)
+       .lineTo(550, headerTop + 35)
        .strokeColor('#333333')
        .lineWidth(1)
        .stroke();
@@ -290,17 +283,10 @@ const createPDFHeader = (doc, headerTop) => {
   doc.fontSize(16)
      .fillColor('#000000')
      .font('Helvetica-Bold')
-     .text('ARKAD MINES & MINERALS', 120, headerTop + 10);
-  
-  doc.fontSize(9)
-     .font('Helvetica')
-     .text('123 Granite Industrial Estate', 120, headerTop + 30)
-     .text('Lahore, Pakistan 54000', 120, headerTop + 42)
-     .text('Email: sales@arkad.com | Phone: +92-300-1234567', 120, headerTop + 54)
-     .text('www.arkadmines.com', 120, headerTop + 66);
+     .text('ARKAD MINES & MINERALS', 50, headerTop + 10);
 
-  doc.moveTo(50, headerTop + 80)
-     .lineTo(550, headerTop + 80)
+  doc.moveTo(50, headerTop + 35)
+     .lineTo(550, headerTop + 35)
      .strokeColor('#333333')
      .lineWidth(1)
      .stroke();
@@ -892,6 +878,156 @@ export const generateStatementPDF = (order) => {
     
     doc.text('ARKAD MINES & MINERALS - Your Trusted Partner in Quality Minerals', 
              50, footerY + 25, { width: 500, align: 'center' });
+
+    doc.end();
+  });
+};
+
+/**
+ * Generate Customer History PDF (contact, quotes, orders)
+ */
+export const generateCustomerHistoryPDF = (customer, quotations = [], orders = []) => {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      margin: 50,
+      size: 'A4',
+      info: {
+        Title: `Customer History - ${customer.companyName || customer.email}`,
+        Author: 'ARKAD MINES & MINERALS',
+        Subject: 'Customer History'
+      }
+    });
+    const buffers = [];
+
+    doc.on('data', (chunk) => buffers.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(buffers)));
+    doc.on('error', (err) => reject(err));
+
+    const headerTop = 50;
+    createPDFHeader(doc, headerTop);
+
+    doc.moveDown(2);
+    const headingY = doc.y;
+    doc.fontSize(18)
+       .font('Helvetica-Bold')
+       .fillColor('#436650')
+       .text('CUSTOMER HISTORY', 50, headingY, { width: 500, align: 'center' });
+    doc.y = headingY + 22;
+    doc.moveDown(1);
+
+    const contactTop = doc.y;
+    doc.fontSize(10)
+       .font('Helvetica-Bold')
+       .fillColor('#000000')
+       .text('CONTACT', 50, contactTop);
+    doc.font('Helvetica')
+       .text(`Company: ${customer.companyName || 'N/A'}`, 50, contactTop + 15)
+       .text(`Email: ${customer.email || 'N/A'}`, 50, contactTop + 30)
+       .text(`Role: ${(customer.role || 'customer').toUpperCase()}`, 50, contactTop + 45);
+
+    let currentY = contactTop + 70;
+
+    if (quotations.length > 0) {
+      if (currentY > 650) {
+        doc.addPage();
+        currentY = 50;
+      }
+      doc.fontSize(12)
+         .font('Helvetica-Bold')
+         .fillColor('#436650')
+         .text('QUOTATIONS', 50, currentY);
+      currentY += 22;
+
+      doc.rect(50, currentY, 500, 20)
+         .fill('#436650')
+         .stroke();
+      doc.fontSize(9).font('Helvetica-Bold').fillColor('#ffffff');
+      doc.text('Reference', 55, currentY + 6, { width: 120 });
+      doc.text('Status', 180, currentY + 6, { width: 80 });
+      doc.text('Total', 270, currentY + 6, { width: 80 });
+      doc.text('Created', 360, currentY + 6, { width: 90 });
+      currentY += 20;
+
+      quotations.slice(0, 15).forEach((q, i) => {
+        if (currentY > 700) {
+          doc.addPage();
+          currentY = 50;
+          doc.rect(50, currentY, 500, 20).fill('#436650').stroke();
+          doc.fontSize(9).font('Helvetica-Bold').fillColor('#ffffff');
+          doc.text('Reference', 55, currentY + 6, { width: 120 });
+          doc.text('Status', 180, currentY + 6, { width: 80 });
+          doc.text('Total', 270, currentY + 6, { width: 80 });
+          doc.text('Created', 360, currentY + 6, { width: 90 });
+          currentY += 20;
+        }
+        const rowColor = i % 2 === 0 ? '#f8f9fa' : '#ffffff';
+        doc.rect(50, currentY, 500, 18).fill(rowColor);
+        doc.font('Helvetica').fontSize(9).fillColor('#000000');
+        doc.text(String(q.referenceNumber || 'N/A').slice(0, 22), 55, currentY + 5, { width: 120 });
+        doc.text(String(q.status || 'N/A').slice(0, 12), 180, currentY + 5, { width: 80 });
+        doc.text(`${(q.financials?.grandTotal ?? q.totalEstimatedCost ?? 0).toFixed(2)}`, 270, currentY + 5, { width: 80 });
+        doc.text(q.createdAt ? new Date(q.createdAt).toLocaleDateString('en-GB') : 'N/A', 360, currentY + 5, { width: 90 });
+        currentY += 18;
+      });
+      currentY += 15;
+    }
+
+    if (orders.length > 0) {
+      if (currentY > 620) {
+        doc.addPage();
+        currentY = 50;
+      }
+      doc.fontSize(12)
+         .font('Helvetica-Bold')
+         .fillColor('#436650')
+         .text('ORDERS', 50, currentY);
+      currentY += 22;
+
+      doc.rect(50, currentY, 500, 20)
+         .fill('#436650')
+         .stroke();
+      doc.fontSize(9).font('Helvetica-Bold').fillColor('#ffffff');
+      doc.text('Order No', 55, currentY + 6, { width: 100 });
+      doc.text('Status', 160, currentY + 6, { width: 70 });
+      doc.text('Payment', 235, currentY + 6, { width: 70 });
+      doc.text('Total', 310, currentY + 6, { width: 80 });
+      doc.text('Created', 395, currentY + 6, { width: 90 });
+      currentY += 20;
+
+      orders.slice(0, 15).forEach((o, i) => {
+        if (currentY > 700) {
+          doc.addPage();
+          currentY = 50;
+          doc.rect(50, currentY, 500, 20).fill('#436650').stroke();
+          doc.fontSize(9).font('Helvetica-Bold').fillColor('#ffffff');
+          doc.text('Order No', 55, currentY + 6, { width: 100 });
+          doc.text('Status', 160, currentY + 6, { width: 70 });
+          doc.text('Payment', 235, currentY + 6, { width: 70 });
+          doc.text('Total', 310, currentY + 6, { width: 80 });
+          doc.text('Created', 395, currentY + 6, { width: 90 });
+          currentY += 20;
+        }
+        const rowColor = i % 2 === 0 ? '#f8f9fa' : '#ffffff';
+        doc.rect(50, currentY, 500, 18).fill(rowColor);
+        doc.font('Helvetica').fontSize(9).fillColor('#000000');
+        doc.text(String(o.orderNumber || 'N/A').slice(0, 18), 55, currentY + 5, { width: 100 });
+        doc.text(String(o.status || 'N/A').slice(0, 12), 160, currentY + 5, { width: 70 });
+        doc.text(String(o.paymentStatus || 'N/A').slice(0, 12), 235, currentY + 5, { width: 70 });
+        doc.text(`${(o.financials?.grandTotal ?? 0).toFixed(2)}`, 310, currentY + 5, { width: 80 });
+        doc.text(o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-GB') : 'N/A', 395, currentY + 5, { width: 90 });
+        currentY += 18;
+      });
+    }
+
+    const footerY = 750;
+    doc.moveTo(50, footerY)
+       .lineTo(550, footerY)
+       .strokeColor('#cccccc')
+       .stroke();
+    doc.fontSize(8)
+       .fillColor('#666666')
+       .text('ARKAD MINES & MINERALS - Customer History. Generated: ' + new Date().toLocaleString('en-GB'),
+             50, footerY + 10, { width: 500, align: 'center' });
 
     doc.end();
   });

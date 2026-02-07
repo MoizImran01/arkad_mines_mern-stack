@@ -28,11 +28,11 @@ const analyticsIPWhitelist = createIPWhitelist(
   process.env.ENFORCE_ANALYTICS_IP_WHITELIST === 'true'
 );
 
-adminRouter.get("/admin-dashboard", verifyToken, authorizeRoles("admin"), (req, res) => {
-  res.json({ message: "Welcome, Admin." });
+adminRouter.get("/admin-dashboard", verifyToken, authorizeRoles("admin", "employee"), (req, res) => {
+  res.json({ message: req.user?.role === "admin" ? "Welcome, Admin." : "Welcome." });
 });
 
-adminRouter.get("/users", verifyToken, authorizeRoles("admin"), getAllUsers);
+adminRouter.get("/users", verifyToken, authorizeRoles("admin", "employee"), getAllUsers);
 adminRouter.put("/users/:userId/role", verifyToken, authorizeRoles("admin"), updateUserRole);
 adminRouter.delete("/users/:userId", verifyToken, authorizeRoles("admin"), deleteUser);
 

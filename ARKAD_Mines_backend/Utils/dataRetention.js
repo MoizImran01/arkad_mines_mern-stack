@@ -1,4 +1,3 @@
-import AuditLog from "../Models/AuditLog/auditLogModel.js";
 import crypto from "crypto";
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
@@ -62,18 +61,11 @@ const RETENTION_DAYS = Number.parseInt(process.env.ANALYTICS_RETENTION_DAYS || '
 
 export const cleanupOldAnalyticsLogs = async () => {
   try {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - RETENTION_DAYS);
-    
-    const result = await AuditLog.deleteMany({
-      action: { $in: ['ANALYTICS_ACCESS', 'ANALYTICS_PDF_EXPORT'] },
-      timestamp: { $lt: cutoffDate }
-    });
-    
-    console.log(`[DATA RETENTION] Cleaned up ${result.deletedCount} analytics logs older than ${RETENTION_DAYS} days`);
-    return result.deletedCount;
+    // AuditLog is immutable (no deletes/updates). Skip retention cleanup for audit logs.
+    console.log(`[DATA RETENTION] Skipping audit log cleanup (audit logs are immutable, retention: ${RETENTION_DAYS} days)`);
+    return 0;
   } catch (error) {
-    console.error('[DATA RETENTION] Error cleaning up old analytics logs:', error);
+    console.error('[DATA RETENTION] Error in retention job:', error);
     return 0;
   }
 };

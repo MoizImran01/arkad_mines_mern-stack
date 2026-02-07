@@ -11,6 +11,7 @@ import quoteRouter from "../Routes/QuoteRoutes/quoteRouter.js";
 import notificationRouter from "../Routes/NotificationRoutes/notificationRouter.js";
 import orderRouter from "../Routes/OrderRoutes/OrderRoutes.js";
 import documentRouter from "../Routes/DocumentRoutes/DocumentRoutes.js";
+import customerRouter from "../Routes/CustomerRoutes/customerRouter.js";
 
 const app = express();
 
@@ -78,6 +79,7 @@ app.use("/api/quotes", quoteRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/orders", orderRouter);
 app.use("/api/documents", documentRouter);
+app.use("/api/customers", customerRouter);
 
 app.get("/", (req, res) => res.status(200).send(" Server running successfully"));
 

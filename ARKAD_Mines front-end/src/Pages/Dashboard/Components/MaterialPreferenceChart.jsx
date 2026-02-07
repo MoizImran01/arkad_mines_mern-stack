@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import '../Dashboard.css';
 import { motion } from 'framer-motion';
 
 const MaterialPreferenceChart = ({ preferences }) => {
@@ -129,24 +130,23 @@ const MaterialPreferenceChart = ({ preferences }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100"
-      style={{ background: 'white', borderRadius: '1rem', padding: '2rem', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', border: '1px solid #f3f4f6' }}
+      className="bg-white rounded-xl border border-gray-100 dashboard-compact-card"
     >
-      <div className="mb-8" style={{ marginBottom: '2rem' }}>
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2" style={{ fontSize: 'clamp(1.5rem, 4vw, 1.875rem)', fontWeight: '700', color: '#111827', marginBottom: '0.5rem' }}>
-          Material Preference Distribution
-        </h2>
-        <p className="text-gray-500 text-sm" style={{ color: '#6b7280', fontSize: '0.875rem' }}>Interactive breakdown of your purchases by category</p>
+      <div className="dashboard-compact-header">
+        <div>
+          <h2 className="dashboard-compact-title">Material preferences</h2>
+          <p className="dashboard-compact-subtitle">Breakdown by category</p>
+        </div>
       </div>
       
       {animatedData.length === 0 ? (
-        <div style={{ height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+        <div style={{ height: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', fontSize: '0.875rem' }}>
           <p>No category data available</p>
         </div>
       ) : (
         <>
-          <div className="w-full" style={{ height: '400px', minHeight: '400px', position: 'relative' }}>
-            <ResponsiveContainer width="100%" height={400}>
+          <div className="w-full" style={{ height: '260px', minHeight: '260px', position: 'relative' }}>
+            <ResponsiveContainer width="100%" height={260}>
               <PieChart>
                 <Pie
                   data={animatedData}

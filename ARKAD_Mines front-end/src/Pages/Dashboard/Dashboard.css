@@ -1,3 +1,264 @@
 .dashboard-container {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, #f9fafb, #fff, #f9fafb);
+  padding: 1rem 0.75rem;
+}
+
+.dashboard-inner {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.dashboard-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+  background: linear-gradient(to right, #536438, #6b8248);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dashboard-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Stats row */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .dashboard-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.dashboard-stat-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-stat-value {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.dashboard-stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* Quick actions */
+.dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-action-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #536438;
+  color: #fff;
+}
+
+.dashboard-action-btn:hover {
+  background: #6b8248;
+}
+
+.dashboard-action-btn.secondary {
+  background: #fff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.dashboard-action-btn.secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* Section */
+.dashboard-section {
+  margin-bottom: 1.25rem;
+}
+
+.dashboard-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.75rem 0;
+}
+
+/* Table */
+.dashboard-table-wrap {
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.dashboard-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.dashboard-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dashboard-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.dashboard-badge.status-confirmed,
+.dashboard-badge.status-delivered { background: #d1fae5; color: #065f46; }
+.dashboard-badge.status-dispatched { background: #dbeafe; color: #1e40af; }
+.dashboard-badge.status-draft { background: #f3f4f6; color: #4b5563; }
+.dashboard-badge.status-cancelled { background: #fee2e2; color: #991b1b; }
+.dashboard-badge.payment_fully_paid,
+.dashboard-badge.payment-fully_paid { background: #d1fae5; color: #065f46; }
+.dashboard-badge.payment_pending,
+.dashboard-badge.payment-pending { background: #fef3c7; color: #92400e; }
+
+.dashboard-link-btn {
+  background: none;
+  border: none;
+  color: #536438;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.dashboard-link-btn:hover {
+  text-decoration: underline;
+}
+
+/* Empty state */
+.dashboard-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.dashboard-empty h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.dashboard-empty p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+}
+
+/* Error */
+.dashboard-error {
+  min-height: 40vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.dashboard-error p {
+  color: #dc2626;
+}
+
+.dashboard-error button {
+  padding: 0.5rem 1rem;
+  background: #536438;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Compact card used by PurchaseTimeline, MaterialPreferenceChart, TopStonesPanel */
+.dashboard-compact-card {
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f3f4f6;
+  background: #fff;
+}
+
+.dashboard-compact-header {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dashboard-compact-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.dashboard-compact-subtitle {
+  color: #6b7280;
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+.dashboard-section.dashboard-card-wrap > div {
+  padding: 1rem 1.25rem !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+.dashboard-card-wrap h2 {
+  font-size: 1rem !important;
+  margin-bottom: 0.5rem !important;
 }

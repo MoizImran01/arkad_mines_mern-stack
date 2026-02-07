@@ -22,7 +22,8 @@ const ProtectedRoute = ({ children }) => {
   }
 
 
-  if (!token || adminUser?.role !== 'admin') {
+  const allowedRoles = ['admin', 'employee'];
+  if (!token || !allowedRoles.includes(adminUser?.role)) {
     return <Navigate to="/login" replace />;
   }
 
