@@ -103,7 +103,7 @@ const StoneCard = ({ stone, index }) => {
           </span>
         </div>
         
-        {stone.category && (
+        {stone.category && String(stone.category).trim() && String(stone.category).toLowerCase() !== 'unknown' && (
           <p className="text-sm text-gray-500 mb-4">
             {stone.category}
           </p>

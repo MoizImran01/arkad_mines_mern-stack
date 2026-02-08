@@ -1,33 +1,51 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, useInView } from 'framer-motion';
+import React, { useState, useMemo } from 'react';
 import '../Dashboard.css';
 
-const PurchaseTimeline = ({ timeline }) => {
-  const [hoveredIndex, setHoveredIndex] = useState(null);
-  const scrollContainerRef = useRef(null);
-  const containerRef = useRef(null);
-  const tooltipRefs = useRef({});
-  const isInView = useInView(containerRef, { once: true, margin: '-100px' });
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
 
-  const groupedTimeline = timeline.reduce((acc, purchase) => {
-    const monthKey = purchase.month;
-    if (!acc[monthKey]) {
-      acc[monthKey] = {
-        month: monthKey,
-        date: purchase.date,
-        dateString: purchase.dateString || (purchase.date ? new Date(purchase.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''),
-        purchases: [],
-        totalValue: 0,
-      };
-    }
-    acc[monthKey].purchases.push(...purchase.stones);
-    acc[monthKey].totalValue += purchase.totalValue;
-    return acc;
-  }, {});
+const PurchaseTimeline = ({ orders }) => {
+  const yearOptions = useMemo(() => {
+    if (!orders?.length) return [];
+    const years = new Set();
+    orders.forEach((o) => {
+      const d = new Date(o.createdAt);
+      if (!isNaN(d.getTime())) years.add(d.getFullYear());
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [orders]);
 
-  const timelineData = Object.values(groupedTimeline).sort((a, b) => a.date - b.date);
+  const defaultYear = yearOptions[0] ?? new Date().getFullYear();
+  const defaultMonth = useMemo(() => {
+    if (!orders?.length) return new Date().getMonth() + 1;
+    const sorted = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const d = new Date(sorted[0].createdAt);
+    return d.getMonth() + 1;
+  }, [orders]);
 
-  if (!timelineData || timelineData.length === 0) {
+  const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
+  const currentMonth = selectedMonth !== '' ? Number(selectedMonth) : defaultMonth;
+  const currentYear = selectedYear !== '' ? Number(selectedYear) : defaultYear;
+
+  const ordersInMonth = useMemo(() => {
+    if (!orders?.length) return [];
+    return orders
+      .filter((o) => {
+        const d = new Date(o.createdAt);
+        return d.getFullYear() === currentYear && d.getMonth() + 1 === currentMonth;
+      })
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [orders, currentMonth, currentYear]);
+
+  const formatDate = (d) =>
+    d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+  const formatMoney = (n) =>
+    n != null ? Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
+
+  if (!orders?.length || yearOptions.length === 0) {
     return null;
   }
 
@@ -36,157 +54,79 @@ const PurchaseTimeline = ({ timeline }) => {
       <div className="dashboard-compact-header">
         <div>
           <h2 className="dashboard-compact-title">Purchase timeline</h2>
-          <p className="dashboard-compact-subtitle">Your purchasing activity over time</p>
+          <p className="dashboard-compact-subtitle">View orders by month and year</p>
         </div>
-        <div className="hidden md:flex items-center gap-2 text-sm text-gray-500" style={{ display: 'none' }}>
-          <span className="w-3 h-3 bg-primary rounded-full" style={{ width: '12px', height: '12px', backgroundColor: '#536438', borderRadius: '50%' }}></span>
-          <span>{timelineData.length} Month{timelineData.length !== 1 ? 's' : ''}</span>
-        </div>
-      </div>
-      
-      <div
-        ref={scrollContainerRef}
-        className="overflow-x-auto pb-4"
-        style={{ 
-          scrollbarWidth: 'thin', 
-          position: 'relative', 
-          paddingTop: '100px',
-          paddingBottom: '12px',
-          overflowY: 'visible'
-        }}
-      >
-        <div
-          ref={containerRef}
-          className="flex items-end gap-6 min-w-max px-4"
-          style={{ height: '160px', position: 'relative', overflow: 'visible' }}
-        >
-          {timelineData.map((item, index) => {
-            const isFirst = index === 0;
-            const isLast = index === timelineData.length - 1;
-            const isNearLeft = index < 2;
-            const isNearRight = index >= timelineData.length - 2;
-            
-            let positionClass = 'center';
-            if (isFirst || isNearLeft) {
-              positionClass = 'left';
-            } else if (isLast || isNearRight) {
-              positionClass = 'right';
-            }
-            
-            let tooltipStyle = {
-              pointerEvents: 'none',
-              bottom: '100%',
-              marginBottom: '12px',
-              width: '240px',
-              maxHeight: '280px',
-              whiteSpace: 'normal',
-              wordWrap: 'break-word',
-              overflowY: 'auto',
-              overflowX: 'hidden',
-            };
-            
-            let arrowStyle = {
-              position: 'absolute',
-              top: '100%',
-              marginTop: '-4px',
-            };
-            
-            if (positionClass === 'left') {
-              tooltipStyle.left = '0%';
-              tooltipStyle.right = 'auto';
-              tooltipStyle.transform = 'none';
-              arrowStyle.left = '20px';
-              arrowStyle.transform = 'none';
-            } else if (positionClass === 'right') {
-              tooltipStyle.left = 'auto';
-              tooltipStyle.right = '0%';
-              tooltipStyle.transform = 'none';
-              arrowStyle.left = 'auto';
-              arrowStyle.right = '20px';
-              arrowStyle.transform = 'none';
-            } else {
-              tooltipStyle.left = '50%';
-              tooltipStyle.right = 'auto';
-              tooltipStyle.transform = 'translateX(-50%)';
-              arrowStyle.left = '50%';
-              arrowStyle.transform = 'translateX(-50%)';
-            }
-            
-            return (
-            <motion.div
-              key={item.month}
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-              className="relative flex flex-col items-center group"
-              style={{ position: 'relative' }}
-              onMouseEnter={() => setHoveredIndex(index)}
-              onMouseLeave={() => setHoveredIndex(null)}
-            >
-              {hoveredIndex === index && (
-                <motion.div
-                  ref={(el) => {
-                    if (el) tooltipRefs.current[index] = el;
-                  }}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="absolute bg-gray-900 text-white text-sm rounded-lg px-4 py-3 shadow-xl z-50"
-                  style={tooltipStyle}
-                >
-                  <div className="font-semibold mb-2 text-base sticky top-0 bg-gray-900 pb-2">{item.month}</div>
-                  <div className="text-xs text-gray-300 mb-2 pb-2 border-b border-gray-700">
-                    Date: {item.dateString || (item.date ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A')}
-                  </div>
-                  <div className="text-xs text-gray-300 mb-2">
-                    {item.purchases.length} purchase{item.purchases.length !== 1 ? 's' : ''}
-                  </div>
-                  <div className="text-xs text-gray-300 space-y-1.5">
-                    {item.purchases.map((stone, idx) => (
-                      <div key={idx} className="flex justify-between gap-2 items-start">
-                        <span className="font-medium flex-1 break-words">{stone.name}</span>
-                        <span className="text-gray-400 whitespace-nowrap flex-shrink-0">Qty: {stone.quantity}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="text-xs font-medium mt-3 pt-2 border-t border-gray-700 sticky bottom-0 bg-gray-900">
-                    Total: PKR {item.totalValue.toLocaleString()}
-                  </div>
-                  <div style={arrowStyle}>
-                    <div className="w-2 h-2 bg-gray-900 transform rotate-45" />
-                  </div>
-                </motion.div>
-              )}
-
-              <motion.div
-                className="w-12 h-12 rounded-full bg-gradient-to-br from-primary via-primary-light to-primary-dark shadow-md cursor-pointer relative"
-                whileHover={{ scale: 1.2 }}
-                transition={{ duration: 0.2 }}
-                style={{
-                  background: hoveredIndex === index
-                    ? 'linear-gradient(135deg, #536438 0%, #6b8248 50%, #536438 100%)'
-                    : 'linear-gradient(135deg, #6b8248 0%, #536438 100%)',
-                }}
-              >
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
-              </motion.div>
-
-              <div className="mt-3 text-xs font-medium text-gray-600 text-center">
-                {item.month.split(' ')[0]}
-              </div>
-            </motion.div>
-            );
-          })}
+        <div className="purchase-timeline-dropdown-wrap">
+          <label htmlFor="purchase-timeline-month" className="sr-only">
+            Select month
+          </label>
+          <select
+            id="purchase-timeline-month"
+            className="purchase-timeline-select"
+            value={currentMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            aria-label="Select month"
+          >
+            {MONTHS.map((name, i) => (
+              <option key={i} value={i + 1}>
+                {name}
+              </option>
+            ))}
+          </select>
+          <label htmlFor="purchase-timeline-year" className="sr-only">
+            Select year
+          </label>
+          <select
+            id="purchase-timeline-year"
+            className="purchase-timeline-select"
+            value={currentYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            aria-label="Select year"
+          >
+            {yearOptions.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      <div className="relative mt-4">
-        <div className="h-0.5 bg-gray-200" />
-        <div
-          className="absolute top-0 left-0 h-0.5 bg-gradient-to-r from-primary-light via-primary to-primary-light"
-          style={{
-            width: `${Math.min(100, (timelineData.length / Math.max(timelineData.length, 12)) * 100)}%`,
-          }}
-        />
+      <div className="dashboard-table-wrap purchase-timeline-table-wrap">
+        {ordersInMonth.length > 0 ? (
+          <table className="dashboard-table">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ordersInMonth.map((order) => (
+                <tr key={order._id}>
+                  <td>{order.orderNumber}</td>
+                  <td>{formatDate(order.createdAt)}</td>
+                  <td>
+                    <span className={`dashboard-badge status-${order.status}`}>{order.status}</span>
+                  </td>
+                  <td>
+                    <span className={`dashboard-badge payment-${order.paymentStatus}`}>
+                      {order.paymentStatus || '—'}
+                    </span>
+                  </td>
+                  <td>{formatMoney(order.financials?.grandTotal)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="purchase-timeline-empty">
+            No orders in this month.
+          </div>
+        )}
       </div>
     </div>
   );

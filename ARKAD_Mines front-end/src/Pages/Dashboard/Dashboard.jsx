@@ -96,7 +96,7 @@ const Dashboard = () => {
           stoneDetails[stoneName] = {
             name: stoneName,
             image: item.image,
-            category: item.category || 'Unknown',
+            category: item.category && String(item.category).trim() ? item.category.trim() : '',
           };
         }
       });
@@ -199,8 +199,6 @@ const Dashboard = () => {
     (q) => q.status && ['draft', 'submitted', 'adjustment_required', 'revision_requested', 'issued'].includes(q.status)
   ).length;
 
-  const recentOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
-
   const formatDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
   const formatMoney = (n) => (n != null ? Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00');
 
@@ -263,51 +261,10 @@ const Dashboard = () => {
           )}
         </section>
 
-        {/* Recent orders */}
-        {recentOrders.length > 0 && (
-          <section className="dashboard-section">
-            <h2 className="dashboard-section-title">Recent orders</h2>
-            <div className="dashboard-table-wrap">
-              <table className="dashboard-table">
-                <thead>
-                  <tr>
-                    <th>Order</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Payment</th>
-                    <th>Total</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentOrders.map((order) => (
-                    <tr key={order._id}>
-                      <td>{order.orderNumber}</td>
-                      <td>{formatDate(order.createdAt)}</td>
-                      <td><span className={`dashboard-badge status-${order.status}`}>{order.status}</span></td>
-                      <td><span className={`dashboard-badge payment-${order.paymentStatus}`}>{order.paymentStatus || '—'}</span></td>
-                      <td>{formatMoney(order.financials?.grandTotal)}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="dashboard-link-btn"
-                          onClick={() => navigate(`/place-order/${order.orderNumber}`)}
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-
         {/* Purchase timeline */}
-        {analytics?.purchaseTimeline?.length > 0 && (
+        {orders.length > 0 && (
           <section className="dashboard-section dashboard-card-wrap">
-            <PurchaseTimeline timeline={analytics.purchaseTimeline} />
+            <PurchaseTimeline orders={orders} />
           </section>
         )}
 
