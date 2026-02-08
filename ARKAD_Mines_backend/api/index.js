@@ -15,24 +15,18 @@ import customerRouter from "../Routes/CustomerRoutes/customerRouter.js";
 
 const app = express();
 
-// --- 1. SETUP ALLOWED ORIGINS ---
-// Parse the CLIENT_URL env variable (which is "url1,url2") into an array
+// CORS allowed origins: CLIENT_URL plus localhost dev URLs.
 const configuredOrigins = process.env.CLIENT_URL 
   ? process.env.CLIENT_URL.split(',') 
   : [];
-
-// Default local origins for development
 const localOrigins = [
   'http://localhost:5173', 
   'http://localhost:3000', 
   'http://localhost:5174',
   'http://localhost:4000'
 ];
-
-// Combine them into one list
 const allowedOrigins = [...configuredOrigins, ...localOrigins];
 
-// --- 2. MIDDLEWARES ---
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 

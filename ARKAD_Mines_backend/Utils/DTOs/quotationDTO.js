@@ -1,21 +1,9 @@
-/**
- * Data Transfer Objects (DTOs) for Quotation Responses
- * Ensures only appropriate data is sent based on user role
- * Prevents information disclosure of sensitive internal data
- */
-
-/**
- * Buyer-facing Quotation DTO
- * Strips admin-only fields and internal cost calculations
- * Ensures buyers only see customer-facing data
- */
+// Buyer-facing quotation DTO; strips admin-only and internal fields.
 export const quotationBuyerDTO = (quotation) => {
   if (!quotation) return null;
 
-  // Convert to plain object if it's a Mongoose document
   const quoteObj = quotation.toObject ? quotation.toObject({ getters: true }) : quotation;
 
-  // Build buyer-safe quotation object
   const buyerQuotation = {
     _id: quoteObj._id,
     referenceNumber: quoteObj.referenceNumber,
@@ -32,7 +20,6 @@ export const quotationBuyerDTO = (quotation) => {
         finalUnitPrice: itemObj.finalUnitPrice || itemObj.priceSnapshot, // Final price buyer sees
         image: itemObj.image || null,
         dimensions: itemObj.dimensions || null,
-        // DO NOT include: priceSnapshot (internal), availabilityAtRequest (internal)
       };
     }),
     financials: {
@@ -42,7 +29,6 @@ export const quotationBuyerDTO = (quotation) => {
       shippingCost: quoteObj.financials?.shippingCost || 0,
       discountAmount: quoteObj.financials?.discountAmount || 0,
       grandTotal: quoteObj.financials?.grandTotal || 0,
-      // DO NOT include: internal cost calculations, profit margins, etc.
     },
     validity: quoteObj.validity ? {
       start: quoteObj.validity.start,
@@ -56,18 +42,15 @@ export const quotationBuyerDTO = (quotation) => {
         reason: adjObj.reason,
         availableQuantity: adjObj.availableQuantity,
         type: adjObj.type,
-        // DO NOT include: stoneId (internal reference)
       };
     }),
     createdAt: quoteObj.createdAt,
     updatedAt: quoteObj.updatedAt,
   };
 
-  // Explicitly remove sensitive fields (defense in depth)
   delete buyerQuotation.adminNotes;
   delete buyerQuotation.totalEstimatedCost;
   delete buyerQuotation.quotationRequestId;
-  // Remove buyer object if it contains sensitive info (buyer only needs to know it's their quote)
   if (buyerQuotation.buyer && typeof buyerQuotation.buyer === 'object') {
     delete buyerQuotation.buyer;
   }
@@ -75,18 +58,12 @@ export const quotationBuyerDTO = (quotation) => {
   return buyerQuotation;
 };
 
-/**
- * Admin/Sales Rep Quotation DTO
- * Includes all fields including admin-only data
- * Admin and Sales Reps can see internal cost calculations and admin notes
- */
+// Admin/sales rep quotation DTO; includes all fields.
 export const quotationAdminDTO = (quotation) => {
   if (!quotation) return null;
 
-  // Convert to plain object if it's a Mongoose document
   const quoteObj = quotation.toObject ? quotation.toObject({ getters: true }) : quotation;
 
-  // Admin gets full access to all fields
   return {
     _id: quoteObj._id,
     referenceNumber: quoteObj.referenceNumber,
@@ -107,10 +84,7 @@ export const quotationAdminDTO = (quotation) => {
   };
 };
 
-/**
- * Approve Quotation Response DTO (for buyer)
- * Only returns buyer-appropriate data after approval
- */
+// Approve response DTO for buyer (quotation + order summary).
 export const approveQuotationBuyerDTO = (quotation, order) => {
   return {
     success: true,
@@ -119,22 +93,17 @@ export const approveQuotationBuyerDTO = (quotation, order) => {
     order: {
       orderNumber: order?.orderNumber || null,
       status: order?.status || null,
-      // DO NOT include: full order details, payment info, internal status, etc.
     },
   };
 };
 
-/**
- * Get Quotations List DTO (buyer-facing)
- */
+// Maps quotations array to buyer DTOs.
 export const quotationsListBuyerDTO = (quotations) => {
   if (!Array.isArray(quotations)) return [];
   return quotations.map(quote => quotationBuyerDTO(quote));
 };
 
-/**
- * Get Quotations List DTO (admin-facing)
- */
+// Maps quotations array to admin DTOs.
 export const quotationsListAdminDTO = (quotations) => {
   if (!Array.isArray(quotations)) return [];
   return quotations.map(quote => quotationAdminDTO(quote));

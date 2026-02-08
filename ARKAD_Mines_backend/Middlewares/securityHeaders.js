@@ -1,13 +1,4 @@
-/**
- * Security Headers Middleware
- * Enforces HTTPS/TLS 1.3 and adds security headers to prevent tampering
- * Implements security headers similar to helmet but without external dependency
- */
-
-/**
- * Middleware to enforce HTTPS in production
- * Redirects HTTP to HTTPS and sets security headers
- */
+// In production, rejects non-HTTPS requests.
 export const enforceHTTPS = (req, res, next) => {
   const isProduction = process.env.NODE_ENV === 'production';
   const isHTTPS = req.secure || 
@@ -24,10 +15,7 @@ export const enforceHTTPS = (req, res, next) => {
   next();
 };
 
-/**
- * Security Headers Middleware
- * Sets various security headers to prevent tampering and enforce secure communication
- */
+// Sets HSTS, CSP, X-Content-Type-Options, X-Frame-Options, and related headers.
 export const securityHeaders = (req, res, next) => {
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
 

@@ -1,9 +1,4 @@
-/**
- * CSV Generator Utilities
- * Generates CSV files for statements and order history
- */
-
-
+// Statement CSV for a single order (summary, items, financials, payment history).
 export const generateStatementCSV = async (order) => {
   const lines = [];
   
@@ -66,9 +61,7 @@ export const generateStatementCSV = async (order) => {
   return lines.join('\n');
 };
 
-/**
- * Generate CSV for Order History
- */
+// Order history CSV (list of orders with financials).
 export const generateOrderCSV = async (orders) => {
   const lines = [];
   
@@ -105,9 +98,7 @@ export const generateOrderCSV = async (orders) => {
   return lines.join('\n');
 };
 
-/**
- * Generate CSV for Customer History (View Customer History - export for offline review)
- */
+// Customer history CSV for offline export (contact, quotes, orders).
 export const generateCustomerHistoryCSV = (customer, quotations = [], orders = []) => {
   const lines = [];
 

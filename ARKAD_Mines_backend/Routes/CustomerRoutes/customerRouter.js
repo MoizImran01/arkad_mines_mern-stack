@@ -8,12 +8,11 @@ import {
   exportCustomerHistory,
 } from "../../Controllers/CustomerHistoryController/customerHistoryController.js";
 
+// Customer routes: search, history, export (admin/sales rep only).
 const customerRouter = express.Router();
 
-// STRIDE S & E: only admin and employee (sales rep) can access
 const allowedRoles = ["admin", "employee"];
 
-// STRIDE D: rate limits to prevent DoS
 const searchRateLimiter = createRateLimiter({
   endpoint: "/api/customers/search",
   windowMs: 60 * 1000,
@@ -38,7 +37,6 @@ const exportRateLimiter = createRateLimiter({
   actionType: "EXPORT_CUSTOMER_HISTORY_RATE_LIMIT_EXCEEDED",
 });
 
-// Search: sales rep searches for customer profile
 customerRouter.get(
   "/search",
   verifyToken,
@@ -48,7 +46,6 @@ customerRouter.get(
   searchCustomers
 );
 
-// View customer history: contact details, quotes, orders
 customerRouter.get(
   "/:customerId/history",
   verifyToken,
@@ -58,7 +55,6 @@ customerRouter.get(
   getCustomerHistory
 );
 
-// Export history for offline review (alternate course)
 customerRouter.get(
   "/:customerId/history/export",
   enforceHTTPS,

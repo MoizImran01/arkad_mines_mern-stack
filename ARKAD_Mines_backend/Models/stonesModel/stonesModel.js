@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
-//define the stones schema for the db
+
+// Stone product schema: name, dimensions, price, image, category, stock.
 const stonesSchema = new mongoose.Schema({
     stoneName: { 
         type: String, 

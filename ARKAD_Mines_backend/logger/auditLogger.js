@@ -1,18 +1,7 @@
 import { fileURLToPath } from 'url';
 import AuditLog from '../Models/AuditLog/auditLogModel.js';
 
-/**
- * Centralized audit logging system for security and compliance.
- * IMMUTABLE AUDIT TRAIL: All logs are stored in database and cannot be modified or deleted.
- * These logs form a non-repudiation trail for security-critical actions.
- * 
- * Data integrity is protected by:
- * - HTTPS/TLS encryption in transit (prevents tampering during transmission)
- * - Database-level immutability constraints (prevents modification/deletion)
- * - Server-side validation and authorization
- * 
- * For Vercel/deployment: Database storage ensures logs persist across deployments.
- */
+// Writes audit entry to DB (redacts passwords); used for security and compliance.
 export const logAudit = async ({
   userId = null,
   role = null,
@@ -75,9 +64,7 @@ export const logAudit = async ({
   }
 };
 
-/**
- * Logs errors with context for debugging and security monitoring.
- */
+// Logs error and optional context to console for debugging and monitoring.
 export const logError = (error, context = {}) => {
   try {
     const errorEntry = {
@@ -95,9 +82,7 @@ export const logError = (error, context = {}) => {
   }
 };
 
-/**
- * Helper function to get client IP from request
- */
+// Resolves client IP from x-forwarded-for, x-real-ip, or socket.
 export const getClientIp = (req) => {
   return req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
          req.headers['x-real-ip'] ||
@@ -106,16 +91,12 @@ export const getClientIp = (req) => {
          null;
 };
 
-/**
- * Helper function to get user agent from request
- */
+// Returns request User-Agent or 'Unknown'.
 export const getUserAgent = (req) => {
   return req.headers['user-agent'] || 'Unknown';
 };
 
-/**
- * Helper function to normalize user role for logging
- */
+// Maps role string to normalized value (ADMIN, BUYER, SALES_REP, GUEST).
 export const normalizeRole = (role) => {
   if (!role) return 'GUEST';
   

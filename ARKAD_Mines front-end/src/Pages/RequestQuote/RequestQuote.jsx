@@ -13,6 +13,7 @@ import {
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
+// Quote request form: items from cart, quantities, notes, submit to backend.
 const RequestQuote = () => {
   const {
     quoteItems,
@@ -30,7 +31,7 @@ const RequestQuote = () => {
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [unavailableItems, setUnavailableItems] = useState([]);
-  const [exceededMaxItems, setExceededMaxItems] = useState({}); // Track items that tried to exceed max
+  const [exceededMaxItems, setExceededMaxItems] = useState({});
   const navigate = useNavigate();
 
   const headers = useMemo(
@@ -40,14 +41,11 @@ const RequestQuote = () => {
     [token]
   );
 
-  // Get image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/80x80?text=No+Image';
-    // If it's already a full URL (Cloudinary), return as is
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath;
     }
-    // Otherwise, construct local URL for legacy images
     return `${url}/images/${imagePath}`;
   };
 
@@ -241,13 +239,11 @@ const RequestQuote = () => {
                 const handleQuantityInput = (newValue) => {
                   const numValue = Number(newValue);
                   if (numValue > maxQuantity && maxQuantity > 0) {
-                    // User tried to exceed max
                     setExceededMaxItems(prev => ({
                       ...prev,
                       [item._id]: true
                     }));
                   } else {
-                    // Clear the exceeded flag
                     setExceededMaxItems(prev => ({
                       ...prev,
                       [item._id]: false

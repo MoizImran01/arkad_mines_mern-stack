@@ -6,11 +6,11 @@ import { logAudit, logError, getClientIp, normalizeRole, getUserAgent } from "..
 import { analyticsDTO } from "../../Utils/DTOs/analyticsDTO.js";
 import { getCachedAnalytics, setCachedAnalytics, generateCacheKey } from "../../Utils/analyticsCache.js";
 
-// Helper function to round to 2 decimal places
 const roundToTwoDecimals = (value) => {
   return Math.round((value || 0) * 100) / 100;
 };
 
+// Aggregates dashboard analytics (clients, stones, trends, revenue, conversion, etc.); cached.
 export const getAnalytics = async (req, res) => {
   const queryStartTime = Date.now();
   
@@ -51,7 +51,6 @@ export const getAnalytics = async (req, res) => {
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - 12);
 
-    // 1. Top Clients by Purchase Value
     const adminUserId = req.user?.id;
     if (!adminUserId) {
       return res.status(403).json({
@@ -96,7 +95,6 @@ export const getAnalytics = async (req, res) => {
       }
     ]);
 
-    // 2. Most Sold Stones
     const mostSoldStones = await orderModel.aggregate([
       {
         $match: {
@@ -118,7 +116,6 @@ export const getAnalytics = async (req, res) => {
       { $limit: 10 }
     ]);
 
-    // 3. Monthly Sales Trend
     const monthlySales = await orderModel.aggregate([
       {
         $match: {
@@ -159,7 +156,6 @@ export const getAnalytics = async (req, res) => {
       }
     ]);
 
-    // 4. Order Status Distribution
     const orderStatusDistribution = await orderModel.aggregate([
       {
         $match: {
@@ -174,7 +170,6 @@ export const getAnalytics = async (req, res) => {
       }
     ]);
 
-    // 5. Quotation Status Distribution
     const quotationStatusDistribution = await quotationModel.aggregate([
       {
         $match: {
@@ -189,7 +184,6 @@ export const getAnalytics = async (req, res) => {
       }
     ]);
 
-    // 6. Category-wise Sales
     const categorySales = await orderModel.aggregate([
       {
         $match: {
@@ -217,7 +211,6 @@ export const getAnalytics = async (req, res) => {
       { $sort: { totalRevenue: -1 } }
     ]);
 
-    // 7. Payment Status Overview
     const paymentStatusOverview = await orderModel.aggregate([
       {
         $match: {
@@ -233,7 +226,6 @@ export const getAnalytics = async (req, res) => {
       }
     ]);
 
-    // 8. Summary Statistics
     const totalOrders = await orderModel.countDocuments({
       createdAt: { $gte: startDate, $lte: endDate }
     });
@@ -246,7 +238,6 @@ export const getAnalytics = async (req, res) => {
 
     const totalStones = await stonesModel.countDocuments();
 
-    // Actual Revenue - Only from FULLY PAID orders
     const actualRevenueAggregation = await orderModel.aggregate([
       {
         $match: {
@@ -265,7 +256,6 @@ export const getAnalytics = async (req, res) => {
 
     const totalRevenue = roundToTwoDecimals(actualRevenueAggregation[0]?.totalRevenue || 0);
 
-    // Forecasted Revenue - From ALL confirmed/dispatched/delivered orders (regardless of payment)
     const forecastedRevenueAggregation = await orderModel.aggregate([
       {
         $match: {
@@ -283,7 +273,6 @@ export const getAnalytics = async (req, res) => {
 
     const forecastedRevenue = roundToTwoDecimals(forecastedRevenueAggregation[0]?.totalRevenue || 0);
 
-    // Pending Revenue - Sum of outstanding balance from all orders
     const pendingRevenueAggregation = await orderModel.aggregate([
       {
         $match: {
@@ -300,7 +289,6 @@ export const getAnalytics = async (req, res) => {
 
     const pendingPayments = roundToTwoDecimals(pendingRevenueAggregation[0]?.totalRevenue || 0);
 
-    // 9. Conversion Rate (Quotations to Orders)
     const approvedQuotations = await quotationModel.countDocuments({
       status: "approved",
       createdAt: { $gte: startDate, $lte: endDate }
@@ -315,7 +303,6 @@ export const getAnalytics = async (req, res) => {
       ? ((approvedQuotations / submittedQuotations) * 100).toFixed(2) 
       : 0;
 
-    // 10. Weekly Sales Pattern (Day of Week)
     const weeklySalesPattern = await orderModel.aggregate([
       {
         $match: {
@@ -346,7 +333,6 @@ export const getAnalytics = async (req, res) => {
       }
     ]);
 
-    // 11. Stock Status Overview
     const stockStatus = await stonesModel.aggregate([
       {
         $group: {
@@ -356,7 +342,6 @@ export const getAnalytics = async (req, res) => {
       }
     ]);
 
-    // 12. Recent Activity (last 30 days vs previous 30 days comparison)
     const last30Days = new Date();
     last30Days.setDate(last30Days.getDate() - 30);
     const previous30Days = new Date();
@@ -374,7 +359,6 @@ export const getAnalytics = async (req, res) => {
       ? (((recentOrdersCount - previousOrdersCount) / previousOrdersCount) * 100).toFixed(2)
       : recentOrdersCount > 0 ? 100 : 0;
 
-    // Round all revenue values in the response
     const roundedTopClients = topClients.map(client => ({
       ...client,
       totalPurchases: roundToTwoDecimals(client.totalPurchases || 0)

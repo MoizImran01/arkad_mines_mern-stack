@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+// Order item and order schemas: buyer, items, financials, payment proofs, timeline, courier.
 const orderItemSchema = new mongoose.Schema(
   {
     stone: {
@@ -76,7 +77,7 @@ const orderSchema = new mongoose.Schema(
     outstandingBalance: { type: Number, default: 0 },
     paymentProofs: [
       {
-        proofFile: { type: String }, // File path to uploaded proof
+        proofFile: { type: String },
         amountPaid: { type: Number, required: true },
         uploadedAt: { type: Date, default: Date.now },
         approvedAt: { type: Date },
@@ -98,16 +99,16 @@ const orderSchema = new mongoose.Schema(
         },
         timestamp: { type: Date, default: Date.now },
         amountPaid: { type: Number },
-        proofFile: { type: String, trim: true }, // Reference to uploaded proof file
+        proofFile: { type: String, trim: true },
         notes: { type: String, trim: true }
       }
     ],
     courierTracking: {
       isDispatched: { type: Boolean, default: false },
-      courierService: { type: String, trim: true }, // e.g., "TCS", "Leopards", etc.
+      courierService: { type: String, trim: true },
       trackingNumber: { type: String, trim: true },
       dispatchedAt: { type: Date },
-      courierLink: { type: String, trim: true }, //link to courier's tracking page
+      courierLink: { type: String, trim: true },
     },
     timeline: [
       {

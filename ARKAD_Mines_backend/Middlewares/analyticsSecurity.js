@@ -1,6 +1,7 @@
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";
 import { detectAnomalies } from "./anomalyDetection.js";
 
+// Wraps detectAnomalies with analytics context (resourceId, actionPrefix).
 export const detectAnalyticsAnomalies = async (req, res, next) => {
   req.analyticsAnomalyContext = {
     resourceId: 'analytics-dashboard',
@@ -9,6 +10,7 @@ export const detectAnalyticsAnomalies = async (req, res, next) => {
   await detectAnomalies(req, res, next);
 };
 
+// Returns middleware that blocks requests whose IP is not in allowedIPs (supports wildcards).
 export const createIPWhitelist = (allowedIPs = [], enforceWhitelist = true) => {
   return async (req, res, next) => {
     if (!enforceWhitelist || allowedIPs.length === 0) {

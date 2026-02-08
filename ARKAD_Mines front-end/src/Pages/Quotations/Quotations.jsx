@@ -19,6 +19,7 @@ import {
 
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
+// List of user quotations; approve/reject with CAPTCHA and re-auth modals.
 const Quotations = () => {
   const { token, url } = useContext(StoreContext);
   const [quotes, setQuotes] = useState([]);
@@ -30,15 +31,15 @@ const Quotations = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [decisionComment, setDecisionComment] = useState("");
   const [showDecisionModal, setShowDecisionModal] = useState(false);
-  const [decisionType, setDecisionType] = useState(null); // "approve", "reject", or "revision"
+  const [decisionType, setDecisionType] = useState(null);
   const [activeTab, setActiveTab] = useState("pending");
   const [showReauthModal, setShowReauthModal] = useState(false);
   const [reauthPassword, setReauthPassword] = useState("");
-  const [pendingApproval, setPendingApproval] = useState(null); // Store approval request data when re-auth needed
+  const [pendingApproval, setPendingApproval] = useState(null);
   const [showCaptchaModal, setShowCaptchaModal] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
-  const [captchaPassword, setCaptchaPassword] = useState(""); // Password for CAPTCHA + re-auth flow
-  const [pendingCaptchaApproval, setPendingCaptchaApproval] = useState(null); // Store approval request data when CAPTCHA needed
+  const [captchaPassword, setCaptchaPassword] = useState("");
+  const [pendingCaptchaApproval, setPendingCaptchaApproval] = useState(null);
   const recaptchaRef = useRef(null);
 
   const headers = useMemo(
@@ -125,25 +126,19 @@ const Quotations = () => {
     setDecisionComment("");
   };
 
-  // --- RENAMED AND UNIFIED FUNCTION ---
   const handleConvertToSalesOrder = async (passwordForReauth = null) => {
     if (!selectedQuote) return;
 
-    // SCENARIO 1: Quote is ALREADY Approved -> Just Redirect
     if (selectedQuote.status === "approved") {
-      // NOTE: Since we don't have an endpoint to fetch the specific order ID yet,
-      // we check if it's attached to the quote, or fallback to the reference number.
       const targetOrderNumber = selectedQuote.orderNumber || selectedQuote.referenceNumber;
       navigate(`/place-order/${targetOrderNumber}`);
       return;
     }
 
-    // SCENARIO 2: Quote is ISSUED -> Call Approve API -> Then Redirect
     setActionLoading(true);
     try {
       const requestBody = { comment: decisionComment };
       
-      //Include password if re-authentication is being provided
       if (passwordForReauth) {
         requestBody.passwordConfirmation = passwordForReauth;
       }
@@ -168,7 +163,6 @@ const Quotations = () => {
         setSelectedQuote(null);
         closeDecisionModal();
         
-        // Redirect to Place Order Page
         navigate(`/place-order/${orderNum}`);
       } else {
         alert("Failed to approve quotation: " + (response.data.message || "Unknown error"));
@@ -176,22 +170,17 @@ const Quotations = () => {
     } catch (err) {
       console.error("Error approving quotation:", err);
       
-      // Check if CAPTCHA is required
       if (err.response?.data?.requiresCaptcha === true) {
-        // Store the pending approval request
         setPendingCaptchaApproval({
           quoteId: selectedQuote._id,
           comment: decisionComment
         });
-        // Show CAPTCHA modal
         setShowCaptchaModal(true);
         setActionLoading(false);
         return;
       }
       
-      // Check if re-authentication is required
       if (err.response?.data?.requiresReauth === true) {
-        // Store the pending approval request
         setPendingApproval({
           quoteId: selectedQuote._id,
           comment: decisionComment
@@ -209,17 +198,14 @@ const Quotations = () => {
     }
   };
 
-  // Handle CAPTCHA completion
   const handleCaptchaChange = (token) => {
     setCaptchaToken(token);
   };
 
-  // Handle CAPTCHA expiration
   const handleCaptchaExpired = () => {
     setCaptchaToken(null);
   };
 
-  // Handle CAPTCHA submission
   const handleCaptchaSubmit = async (e) => {
     e.preventDefault();
     if (!captchaToken) {
@@ -231,7 +217,6 @@ const Quotations = () => {
       return;
     }
 
-    // Ensure we have a selected quote (use pendingCaptchaApproval if selectedQuote is null)
     const quoteToApprove = selectedQuote || (pendingCaptchaApproval ? quotes.find(q => q._id === pendingCaptchaApproval.quoteId) : null);
     const commentToUse = decisionComment || (pendingCaptchaApproval ? pendingCaptchaApproval.comment : "");
 
@@ -263,7 +248,6 @@ const Quotations = () => {
       if (response.data.success) {
         const orderNum = response.data.order.orderNumber;
         
-        // Close CAPTCHA modal
         setShowCaptchaModal(false);
         setCaptchaToken(null);
         setCaptchaPassword("");
@@ -274,7 +258,6 @@ const Quotations = () => {
         setSelectedQuote(null);
         closeDecisionModal();
         
-        // Redirect to Place Order Page
         navigate(`/place-order/${orderNum}`);
       } else {
         alert("Failed to approve quotation: " + (response.data.message || "Unknown error"));
@@ -284,7 +267,6 @@ const Quotations = () => {
     } catch (err) {
       console.error("Error approving quotation with CAPTCHA:", err);
       
-      // If still requires CAPTCHA, reset and show error
       if (err.response?.data?.requiresCaptcha === true) {
         alert("CAPTCHA verification failed. Please try again.");
         recaptchaRef.current?.reset();
@@ -307,7 +289,6 @@ const Quotations = () => {
       return;
     }
 
-    // Ensure we have a selected quote (use pendingApproval if selectedQuote is null)
     const quoteToApprove = selectedQuote || (pendingApproval ? quotes.find(q => q._id === pendingApproval.quoteId) : null);
     const commentToUse = decisionComment || (pendingApproval ? pendingApproval.comment : "");
 
@@ -342,7 +323,6 @@ const Quotations = () => {
       if (response.data.success) {
         const orderNum = response.data.order.orderNumber;
         
-        // Close re-auth modal
         setShowReauthModal(false);
         setReauthPassword("");
         setPendingApproval(null);
@@ -351,7 +331,6 @@ const Quotations = () => {
         setSelectedQuote(null);
         closeDecisionModal();
         
-        // Redirect to Place Order Page
         navigate(`/place-order/${orderNum}`);
       } else {
         alert("Failed to approve quotation: " + (response.data.message || "Unknown error"));
@@ -359,10 +338,9 @@ const Quotations = () => {
     } catch (err) {
       console.error("Error approving quotation with re-auth:", err);
       
-      // If still requires re-auth, show error
       if (err.response?.data?.requiresReauth === true) {
         alert("Re-authentication failed. Please check your password and try again.");
-        setReauthPassword(""); // Clear password field
+        setReauthPassword("");
       } else {
         const errorMessage = err.response?.data?.error || err.response?.data?.message || err.response?.statusText || err.message;
         alert(`Failed to approve: ${errorMessage}`);
@@ -665,7 +643,6 @@ const Quotations = () => {
 
             {selectedQuote.status === "issued" && (
               <div className="panel-section action-buttons">
-                {/* Modal Trigger */}
                 <button 
                   className="action-btn approve-btn" 
                   onClick={() => openDecisionModal("approve")}
@@ -698,7 +675,6 @@ const Quotations = () => {
 
             {selectedQuote.status === "approved" && (
               <div className="panel-section action-buttons">
-                {/* DIRECT CONVERSION CALL */}
                 <button 
                   className="action-btn convert-order-btn" 
                   onClick={handleConvertToSalesOrder}
@@ -779,7 +755,6 @@ const Quotations = () => {
               <button
                 className={`btn-primary ${decisionType === "approve" ? "approve" : decisionType === "reject" ? "reject" : "revision"}`}
                 onClick={() => {
-                  // UNIFIED CALL IN MODAL
                   if (decisionType === "approve") handleConvertToSalesOrder();
                   else if (decisionType === "reject") handleReject();
                   else if (decisionType === "revision") handleRequestRevision();
@@ -888,7 +863,6 @@ const Quotations = () => {
         </div>
       )}
 
-      {/* Re-authentication Modal */}
       {showReauthModal && (
         <div 
           className="modal-overlay" 

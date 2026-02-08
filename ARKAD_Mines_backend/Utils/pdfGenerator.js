@@ -3,6 +3,7 @@ import fs from "fs";
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// Generates quotation PDF (header, items, financials, validity).
 export const generateQuotationPDF = (quotation) => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ 
@@ -403,9 +404,7 @@ const createFinancialSummary = (doc, financials, startY) => {
   return financialsTop + 140;
 };
 
-/**
- * Generate Proforma Invoice PDF
- */
+// Generates proforma invoice PDF for an order.
 export const generateProformaPDF = (order) => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ 
@@ -522,9 +521,7 @@ export const generateProformaPDF = (order) => {
   });
 };
 
-/**
- * Generate Tax Invoice PDF
- */
+// Generates tax invoice PDF for an order.
 export const generateTaxInvoicePDF = (order) => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ 
@@ -653,9 +650,7 @@ export const generateTaxInvoicePDF = (order) => {
   });
 };
 
-/**
- * Generate Receipt PDF
- */
+// Generates receipt PDF for a single payment proof.
 export const generateReceiptPDF = (order, paymentProof, receiptIndex) => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ 
@@ -767,9 +762,7 @@ export const generateReceiptPDF = (order, paymentProof, receiptIndex) => {
   });
 };
 
-/**
- * Generate Account Statement PDF
- */
+// Generates account statement PDF for an order.
 export const generateStatementPDF = (order) => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ 
@@ -883,9 +876,7 @@ export const generateStatementPDF = (order) => {
   });
 };
 
-/**
- * Generate Customer History PDF (contact, quotes, orders)
- */
+// Generates customer history PDF (contact, quotes, orders).
 export const generateCustomerHistoryPDF = (customer, quotations = [], orders = []) => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({

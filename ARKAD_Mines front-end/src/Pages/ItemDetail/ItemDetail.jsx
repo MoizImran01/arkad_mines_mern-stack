@@ -17,6 +17,7 @@ import {
 } from 'react-icons/fi';
 import './ItemDetail.css';
 
+// Single stone product page: details, image zoom, add to quote.
 const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -102,14 +103,11 @@ const ItemDetail = () => {
     }
   };
 
-  // Get image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/800x600?text=No+Image';
-    // If it's already a full URL (Cloudinary), return as is
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath;
     }
-    // Otherwise, construct local URL for legacy images
     return `${url}/images/${imagePath}`;
   };
 

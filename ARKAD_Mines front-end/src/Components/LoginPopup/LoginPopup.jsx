@@ -8,6 +8,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
+// Modal for client login and business account registration with reCAPTCHA.
 const LoginPopup = ({ setShowLogin }) => {
     
     const [currentState, setCurrentState] = useState("Login")
@@ -38,13 +39,11 @@ const LoginPopup = ({ setShowLogin }) => {
         if (error) setError("")
     }
 
-    // Handle CAPTCHA completion
     const handleCaptchaChange = (token) => {
         setCaptchaToken(token)
         if (error) setError("")
     }
 
-    // Handle CAPTCHA expiration
     const handleCaptchaExpired = () => {
         setCaptchaToken(null)
     }
@@ -53,7 +52,6 @@ const LoginPopup = ({ setShowLogin }) => {
 const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // Check if CAPTCHA is completed
     if (!captchaToken) {
       setError("Please complete the CAPTCHA verification.");
       return;
@@ -65,7 +63,6 @@ const handleSubmit = async (event) => {
     try {
       const endpoint = currentState === "Login" ? "/api/user/login" : "/api/user/register";
 
-      // Include CAPTCHA token with the request
       const response = await axios.post(`${url}${endpoint}`, {
         ...formData,
         captchaToken
@@ -115,13 +112,11 @@ const handleSubmit = async (event) => {
 
         setError("")
         setFormData({ name: "", email: "", password: "" })
-        // Reset CAPTCHA when switching between login and signup
         recaptchaRef.current?.reset()
         setCaptchaToken(null)
     }
 
     const handleOverlayClick = (e) => {
-        // Close modal if clicking on the overlay itself, not on the modal content
         if (e.target === e.currentTarget) {
             setShowLogin(false);
         }
@@ -270,6 +265,5 @@ const handleSubmit = async (event) => {
 LoginPopup.propTypes = {
   setShowLogin: PropTypes.func.isRequired,
 };
-//end of LoginPopup.jsx
 
 export default LoginPopup

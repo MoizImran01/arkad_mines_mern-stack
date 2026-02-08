@@ -2,6 +2,7 @@ import { RateLimitTracking } from "./rateLimitModel.js";
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";
 import axios from "axios";
 
+// Validates reCAPTCHA token with Google API.
 const verifyCaptcha = async (captchaToken) => {
   if (!captchaToken) return false;
   try {
@@ -22,6 +23,7 @@ const verifyCaptcha = async (captchaToken) => {
   }
 };
 
+// Returns middleware that requires CAPTCHA after requestThreshold requests in windowMs.
 export const createCaptchaChallenge = ({
   endpoint,
   windowMs = 60 * 60 * 1000,
@@ -35,7 +37,6 @@ export const createCaptchaChallenge = ({
     const userAgent = getUserAgent(req);
     const rawEndpoint = endpoint;
 
-    // Sanitize inputs to prevent NoSQL injection
     const identifier = String(rawIdentifier || '').trim();
     const type = rawType === 'user' ? 'user' : 'ip';
     const normalizedEndpoint = String(rawEndpoint || '').trim();

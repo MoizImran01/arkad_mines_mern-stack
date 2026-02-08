@@ -1,15 +1,6 @@
 import mongoose from "mongoose";
 
-/**
- * Audit Log Schema - Immutable audit trail for non-repudiation
- * These logs should NEVER be modified or deleted once created
- * They form a permanent record of all security-critical actions
- * 
- * Data integrity is protected by:
- * - HTTPS/TLS encryption in transit
- * - Database-level immutability constraints
- * - Server-side validation and authorization
- */
+// Immutable audit log schema for security and compliance (do not update/delete).
 const auditLogSchema = new mongoose.Schema({
   timestamp: {
     type: Date,

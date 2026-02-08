@@ -8,6 +8,7 @@ import { FiPackage, FiCreditCard, FiMapPin, FiShoppingBag, FiEdit2, FiArrowLeft,
 
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
+// Order status page: delivery info, summary, and payment proof with CAPTCHA/MFA.
 const PlaceOrder = () => {
   const { orderNumber } = useParams();
   const navigate = useNavigate();
@@ -35,7 +36,6 @@ const PlaceOrder = () => {
         if (response.data.success) {
           setOrderData(response.data.order);
           const ord = response.data.order;
-          // Extract user data from the order's buyer information
           if (ord.buyer) {
             setUserData({
               businessName: ord.buyer.companyName || 'N/A',
@@ -43,10 +43,8 @@ const PlaceOrder = () => {
             });
           }
 
-          // Check if order has any payment proofs (at least one payment exists)
           const hasPaymentProofs = ord.paymentProofs && ord.paymentProofs.length > 0;
           
-          // If order already has a delivery address, pre-fill it so user doesn't re-enter
           if (ord.deliveryAddress) {
             setAddressData({
               street: ord.deliveryAddress.street || '',
@@ -57,26 +55,19 @@ const PlaceOrder = () => {
               phone: ord.deliveryAddress.phone || ''
             });
 
-            // Only redirect to payment if payment proofs exist AND there's outstanding balance
-            // If no payment exists yet, user must fill shipping information first
             if (hasPaymentProofs && (ord.outstandingBalance || ord.financials?.grandTotal) > 0) {
               setActiveTab('summary');
-              // Auto-open payment modal after a brief delay to ensure UI is ready
               setTimeout(() => {
                 setShowPaymentModal(true);
               }, 100);
             }
-            // If no payment exists, stay on information tab (default)
           } else {
-            // No delivery address - user must fill it first
-            // Only redirect to payment if payment proofs exist AND there's outstanding balance
             if (hasPaymentProofs && (ord.outstandingBalance || ord.financials?.grandTotal) > 0) {
               setActiveTab('summary');
               setTimeout(() => {
                 setShowPaymentModal(true);
               }, 100);
             }
-            // Otherwise stay on information tab (default)
           }
         } else {
           alert("Order not found");
@@ -99,31 +90,26 @@ const PlaceOrder = () => {
   };
 
   const handlePlaceOrder = async (event) => {
-    // Open payment modal instead of posting to a non-existent endpoint
     event.preventDefault();
     setShowPaymentModal(true);
   };
 
-  // Payment modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentProofFile, setPaymentProofFile] = useState(null);
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   
-  // CAPTCHA Modal State
   const [showCaptchaModal, setShowCaptchaModal] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
   const [captchaPassword, setCaptchaPassword] = useState("");
   const recaptchaRef = useRef(null);
   
-  // MFA Modal State
   const [showMfaModal, setShowMfaModal] = useState(false);
   const [mfaPassword, setMfaPassword] = useState("");
   const [pendingPayment, setPendingPayment] = useState(null);
 
   const submitPaymentProof = async (e) => {
     e.preventDefault();
-    // Parse amount with proper decimal handling
     const numericAmount = Number.parseFloat(paymentAmount);
     if (!Number.isFinite(numericAmount) || numericAmount <= 0 || numericAmount < 0.01) {
       alert('Please enter a valid payment amount (minimum 0.01)');
@@ -134,9 +120,8 @@ const PlaceOrder = () => {
       return;
     }
 
-    // Ensure amount does not exceed outstanding balance (with small tolerance for floating point)
     const outstanding = orderData?.outstandingBalance ?? orderData?.financials?.grandTotal;
-    if (numericAmount > outstanding + 0.01) { // Small tolerance for floating point precision
+    if (numericAmount > outstanding + 0.01) {
       alert(`Amount cannot exceed outstanding balance of Rs ${outstanding.toFixed(2)}`);
       return;
     }
@@ -145,8 +130,6 @@ const PlaceOrder = () => {
     let base64 = null;
     
     try {
-      // Compress and resize image before converting to base64
-      // Aggressive compression to keep payload under 5MB
       const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
@@ -157,7 +140,6 @@ const PlaceOrder = () => {
               let width = img.width;
               let height = img.height;
 
-              // Calculate new dimensions - more aggressive resizing
               const aspectRatio = width / height;
               if (width > height) {
                 if (width > maxWidth) {
@@ -175,13 +157,10 @@ const PlaceOrder = () => {
               canvas.height = height;
 
               const ctx = canvas.getContext('2d');
-              // Use better image rendering
               ctx.imageSmoothingEnabled = true;
-              ctx.imageSmoothingQuality = 'medium'; // Changed from 'high' to reduce processing
+              ctx.imageSmoothingQuality = 'medium';
               ctx.drawImage(img, 0, 0, width, height);
 
-              // Convert to base64 with compression - ensure JPEG format
-              // Use lower quality for smaller file size
               canvas.toBlob(
                 (blob) => {
                   if (!blob) {
@@ -189,9 +168,7 @@ const PlaceOrder = () => {
                     return;
                   }
                   
-                  // Check if blob is still too large (> 3MB), compress more
                   if (blob.size > 3 * 1024 * 1024) {
-                    // Re-compress with even lower quality
                     const img2 = new Image();
                     img2.onload = () => {
                       const canvas2 = document.createElement('canvas');
@@ -214,7 +191,7 @@ const PlaceOrder = () => {
                           reader2.readAsDataURL(blob2);
                         },
                         'image/jpeg',
-                        0.5 // Even lower quality
+                        0.5
                       );
                     };
                     img2.src = e.target.result;
@@ -223,7 +200,6 @@ const PlaceOrder = () => {
                   
                   const reader = new FileReader();
                   reader.onload = () => {
-                    // Ensure we return a valid data URI
                     const dataUrl = reader.result;
                     if (dataUrl && dataUrl.startsWith('data:image/')) {
                       resolve(dataUrl);
@@ -254,7 +230,6 @@ const PlaceOrder = () => {
 
       try {
         base64 = await compressImage(paymentProofFile);
-        // Validate base64 format
         if (!base64 || !base64.startsWith('data:image/')) {
           throw new Error('Invalid image format after compression');
         }
@@ -266,7 +241,7 @@ const PlaceOrder = () => {
       }
 
       const payload = {
-        amountPaid: Number.parseFloat(numericAmount.toFixed(2)), // Ensure proper decimal precision
+        amountPaid: Number.parseFloat(numericAmount.toFixed(2)),
         address: addressData,
         proofBase64: base64,
         proofFileName: paymentProofFile.name
@@ -286,7 +261,6 @@ const PlaceOrder = () => {
       if (response.data.success) {
         alert('Payment proof submitted successfully. Awaiting admin verification.');
         setShowPaymentModal(false);
-        // Optionally refresh or redirect to orders
         navigate('/orders');
       } else {
         alert(response.data.message || 'Failed to submit payment proof');
@@ -296,17 +270,14 @@ const PlaceOrder = () => {
       console.log("Error response data:", err.response?.data);
       console.log("Error status:", err.response?.status);
       
-      // Check if CAPTCHA is required - check both flag and message
       const requiresCaptcha = err.response?.data?.requiresCaptcha === true || 
                               (err.response?.data?.message && err.response.data.message.toLowerCase().includes('captcha'));
       
       if (requiresCaptcha) {
         console.log("CAPTCHA required - showing modal");
         
-        // Close payment modal first
         setShowPaymentModal(false);
         
-        // If base64 is not available, try to compress again
         if (!base64 && paymentProofFile) {
           try {
             const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
@@ -374,7 +345,6 @@ const PlaceOrder = () => {
           }
         }
         
-        // Store payment data for retry
         const pendingData = {
           orderId: orderData._id,
           amountPaid: Number.parseFloat(numericAmount.toFixed(2)),
@@ -389,7 +359,6 @@ const PlaceOrder = () => {
         return;
       }
       
-      // Check if MFA is required - check both flag and message
       const requiresMFA = err.response?.data?.requiresMFA === true || 
                          err.response?.data?.requiresReauth === true ||
                          (err.response?.data?.message && (
@@ -401,10 +370,8 @@ const PlaceOrder = () => {
       if (requiresMFA) {
         console.log("MFA required - showing modal");
         
-        // Close payment modal first
         setShowPaymentModal(false);
         
-        // If base64 is not available, try to compress again
         if (!base64 && paymentProofFile) {
           try {
             const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
@@ -472,7 +439,6 @@ const PlaceOrder = () => {
           }
         }
         
-        // Store payment data for retry
         const pendingData = {
           orderId: orderData._id,
           amountPaid: Number.parseFloat(numericAmount.toFixed(2)),
@@ -487,7 +453,6 @@ const PlaceOrder = () => {
         return;
       }
       
-      // Only show alert if neither CAPTCHA nor MFA is required
       if (!requiresCaptcha && !requiresMFA) {
         alert(err.response?.data?.message || 'Error submitting payment proof');
       }
@@ -645,7 +610,6 @@ const PlaceOrder = () => {
 
   if (loading) return <div className="loading">Loading order details...</div>;
 
-  // Check if payment exists - if so, disable information tab
   const hasPaymentProofs = orderData?.paymentProofs && orderData.paymentProofs.length > 0;
 
   return (
@@ -912,7 +876,6 @@ const PlaceOrder = () => {
         </div>
       )}
 
-      {/* CAPTCHA Modal */}
       {showCaptchaModal && (
         <div 
           className="modal-overlay" 
@@ -1080,7 +1043,6 @@ const PlaceOrder = () => {
         </div>
       )}
 
-      {/* Payment Modal */}
       {showPaymentModal && !showCaptchaModal && !showMfaModal && (
         <div 
           className="modal-overlay" 

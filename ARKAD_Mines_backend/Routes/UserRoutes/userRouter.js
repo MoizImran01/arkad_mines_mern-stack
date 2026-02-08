@@ -2,6 +2,7 @@ import express from "express";
 import { loginUser, registerUser } from "../../Controllers/UserController/userController.js";
 import { createRateLimiter } from "../../Middlewares/genericRateLimiting.js";
 
+// User auth routes: register, login (rate-limited).
 const userRouter = express.Router();
 
 const authRateLimiter = createRateLimiter({

@@ -6,6 +6,7 @@ import {
   getNotifications,
 } from "../../Controllers/NotificationController/notificationController.js";
 
+// Notification routes: list, clear, admin payment summary.
 const notificationRouter = express.Router();
 
 notificationRouter.get("/", verifyToken, getNotifications);

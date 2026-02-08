@@ -9,7 +9,7 @@ const roundToTwoDecimals = (value) => {
   return Math.round((value || 0) * 100) / 100;
 };
 
-// Helper: Handle Stock Deduction
+// Deducts order item quantities from stone stock; throws if insufficient.
 const handleStockDeduction = async (orderItems) => {
   if (!orderItems || orderItems.length === 0) return;
 
@@ -17,7 +17,6 @@ const handleStockDeduction = async (orderItems) => {
     const stone = await stonesModel.findById(item.stone?._id || item.stoneId);
     if (stone) {
       const quantityToDeduct = item.quantity || 1;
-      // Check stock
       const remainingBeforeDeduct = stone.stockQuantity - (stone.quantityDelivered || 0);
       if (remainingBeforeDeduct < quantityToDeduct) {
         throw new Error(`Not enough stock available for ${stone.stoneName}. Need ${quantityToDeduct}, but only ${remainingBeforeDeduct} available.`);
@@ -32,6 +31,7 @@ const handleStockDeduction = async (orderItems) => {
   }
 };
 
+// Restores order item quantities to stone stock on cancel/reject.
 const handleStockRestoration = async (orderItems) => {
   if (!orderItems) return;
   for (const item of orderItems) {
@@ -48,7 +48,7 @@ const handleStockRestoration = async (orderItems) => {
   }
 };
 
-// Helper: Generate Signed URLs
+// Replaces payment proof and timeline proofFile with signed Cloudinary URLs.
 const generateSignedUrlsForPaymentProofs = (order) => {
   if (!order) return order;
   const orderObj = order.toObject ? order.toObject() : order;
@@ -69,7 +69,7 @@ const generateSignedUrlsForPaymentProofs = (order) => {
   return orderObj;
 };
 
-// Helper: Upload to Cloudinary (Extracts logic from submitPaymentProof)
+// Uploads base64 payment proof image to Cloudinary and returns upload result.
 const uploadPaymentProofToCloudinary = async (base64, orderId, userId) => {
   if (!base64) return null;
   
@@ -90,8 +90,7 @@ const uploadPaymentProofToCloudinary = async (base64, orderId, userId) => {
   });
 };
 
-// --- CONTROLLERS ---
-
+// Returns order by orderNumber for the authenticated buyer.
 const getOrderDetails = async (req, res) => {
   try {
     const { orderNumber } = req.params;
@@ -474,7 +473,6 @@ const updatePaymentStatus = async (req, res) => {
 
     await order.save();
     
-    // Notifications...
     await createNotification({ recipientType: "admin", title: "Payment status updated", message: `${order.orderNumber} - ${paymentStatus}`, type: "payment_status_updated", orderId: order._id, orderNumber: order.orderNumber, paymentStatus, amount: order.financials?.grandTotal });
     await createNotification({ recipientType: "user", recipientId: order.buyer, title: "Payment status updated", message: `Status is now ${paymentStatus}`, type: "payment_status_updated", orderId: order._id, orderNumber: order.orderNumber, paymentStatus, amount: order.financials?.grandTotal });
 

@@ -1,8 +1,7 @@
 import jwt from "jsonwebtoken";
 import { logAudit, getClientIp, normalizeRole } from "../logger/auditLogger.js";
 
-//middleware to verify JWT token from authorization header
-
+// Verifies JWT from Authorization header and sets req.user.
 export const verifyToken = (req, res, next) => {
 
   const authHeader = req.headers.authorization;
@@ -43,8 +42,8 @@ export const verifyToken = (req, res, next) => {
   }
 };
 
+// Restricts access to routes by role; responds 403 if req.user.role not in allowedRoles.
 export const authorizeRoles = (...allowedRoles) => {
-
   return (req, res, next) => {
     const clientIp = getClientIp(req);
 

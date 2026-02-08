@@ -1,9 +1,6 @@
 import mongoose from "mongoose";
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";
 
-/**
- * Session Activity Schema - Track user sessions for anomaly detection
- */
 const sessionActivitySchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -42,9 +39,7 @@ sessionActivitySchema.index({ userId: 1, lastActivity: -1 });
 
 const SessionActivity = mongoose.models.SessionActivity || mongoose.model("SessionActivity", sessionActivitySchema);
 
-/**
- * Get or create session activity record for user
- */
+// Loads or creates session record for userId (IP, user-agent, last activity).
 const getOrCreateSessionActivity = async (userId) => {
   let sessionActivity = await SessionActivity.findOne({ userId });
   
@@ -60,13 +55,7 @@ const getOrCreateSessionActivity = async (userId) => {
   return sessionActivity;
 };
 
-/**
- * Anomaly Detection Middleware
- * Monitors for suspicious activity patterns like:
- * - IP address changes
- * - Device/user-agent changes
- * - Rapid approval actions from unusual locations
- */
+// Flags IP/user-agent changes and rapid actions; sets req.sessionAnomaly and logs warnings.
 export const detectAnomalies = async (req, res, next) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);

@@ -5,7 +5,7 @@ import { uploadBuffer, deleteImage, getPublicIdFromUrl } from '../../config/clou
 import { logAudit, logError, getClientIp, normalizeRole } from '../../logger/auditLogger.js';
 import mongoose from 'mongoose';
 
-//add stones item to the db - now using Cloudinary for image storage
+// Creates stone with image and QR code (Cloudinary); audits success/failure.
 const addStones = async (req, res) => {
     const clientIp = getClientIp(req);
     try {
@@ -35,12 +35,9 @@ const addStones = async (req, res) => {
             return res.status(400).json({ success: false, message: "Image is required" });
         }
 
-        // CloudinaryStorage provides the URL in different properties depending on version
-
         const image_url = req.file.secure_url || req.file.url || req.file.path;
         
         if (!image_url) {
-            // Log the actual req.file structure for debugging
             console.error('req.file structure:', JSON.stringify(req.file, null, 2));
             logAudit({
                 userId: req.user?.id,
@@ -66,10 +63,7 @@ const addStones = async (req, res) => {
             qaNotes
         } = req.body;
 
-        // Generate unique QR code identifier
         const qrCodeId = uuidv4();
-        
-        // Create QR code data containing block information
         const qrCodeData = JSON.stringify({
             blockId: qrCodeId,
             stoneName: stoneName,
@@ -78,7 +72,6 @@ const addStones = async (req, res) => {
             registeredAt: new Date().toISOString()
         });
 
-        // Generate QR code as buffer and upload to Cloudinary
         const qrCodeBuffer = await QRCode.toBuffer(qrCodeData, {
             errorCorrectionLevel: 'H',
             type: 'png',
@@ -86,7 +79,6 @@ const addStones = async (req, res) => {
             margin: 1
         });
 
-        // Upload QR code to Cloudinary
         const qrCodeResult = await uploadBuffer(qrCodeBuffer, 'arkad_mines/qrcodes');
         const qrCodeUrl = qrCodeResult.secure_url;
 
@@ -134,7 +126,6 @@ const addStones = async (req, res) => {
             details: `Error: ${error.message}, stack: ${error.stack?.substring(0, 200)}`
         });
         
-        // Log audit for failed operation
         logAudit({
             userId: req.user?.id,
             role: normalizeRole(req.user?.role),
@@ -151,10 +142,9 @@ const addStones = async (req, res) => {
     }
 }
 
-//list all stones
+// Returns all stones (no filter).
 const listStones = async (req, res) => {
     try {
-        // Show all stones (both in stock and out of stock)
         const stones = await stonesModel.find({});
         res.json({ success: true, stones_data: stones });
     } catch (error) {
@@ -167,7 +157,7 @@ const listStones = async (req, res) => {
     }
 }
 
-//remove stones item - now deletes from Cloudinary (non-blocking for faster response)
+// Deletes stone by id; Cloudinary cleanup is non-blocking.
 const removeStones = async (req, res) => {
     const clientIp = getClientIp(req);
     try {
@@ -186,7 +176,6 @@ const removeStones = async (req, res) => {
             return res.json({ success: false, message: "Stone not found" });
         }
         
-        // Delete from database FIRST for immediate response
         await stonesModel.findByIdAndDelete(req.body.id);
         
         logAudit({
@@ -256,7 +245,7 @@ const dispatchBlock = async (req, res) => {
     }
 }
 
-// Get block by ID
+// Returns stone by id; audits view.
 const getStoneById = async (req, res) => {
 
     const clientIp = getClientIp(req);
@@ -315,8 +304,7 @@ const getStoneById = async (req, res) => {
     }
 }
 
-// Get block by QR code
-// Get block by QR code
+// Returns block by qrCode param.
 const getBlockByQRCode = async (req, res) => {
     try {
         const { qrCode } = req.params;
@@ -348,6 +336,7 @@ const getBlockByQRCode = async (req, res) => {
     }
 }
 
+// Filters stones by category, price, stock, keywords, sort; sanitizes query.
 const filterStones = async (req, res) => {
     try {
         const {
@@ -361,21 +350,16 @@ const filterStones = async (req, res) => {
             source
         } = req.query;
 
-
-        // Construct query explicitly to prevent NoSQL injection
         let query = {};
 
-        // Sanitize category - only allow string values
         if (category && category !== 'all' && typeof category === 'string') {
             query.category = String(category).trim();
         }
 
-        // Sanitize subcategory - only allow string values
         if (subcategory && subcategory !== 'all' && typeof subcategory === 'string') {
             query.subcategory = String(subcategory).trim();
         }
 
-        // Validate and sanitize price range
         if (minPrice || maxPrice) {
             query.price = {};
             if (minPrice) {
@@ -392,7 +376,6 @@ const filterStones = async (req, res) => {
             }
         }
 
-        // Sanitize stockAvailability - only allow valid enum values
         const validStockAvailability = ['in_stock', 'out_of_stock', 'low_stock'];
         if (stockAvailability && stockAvailability !== 'all' && typeof stockAvailability === 'string') {
             const safeStockAvailability = String(stockAvailability).trim();
@@ -413,8 +396,6 @@ const filterStones = async (req, res) => {
             ];
         }
 
-
-        // Sanitize source - only allow string values
         if (source && source !== 'all' && !category && typeof source === 'string') {
             query.category = String(source).trim();
         }

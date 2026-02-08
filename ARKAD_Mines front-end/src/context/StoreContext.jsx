@@ -1,10 +1,10 @@
-
 import { createContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
-//create global context for application state management
+// Global context for token, user, quote items, and app URL.
 export const StoreContext = createContext(null);
 
+// Wraps the app and syncs auth/quote state with localStorage and sessionStorage.
 const StoreContextProvider = (props) => {
   const url = import.meta.env.VITE_API_URL || "http://localhost:4000";
 

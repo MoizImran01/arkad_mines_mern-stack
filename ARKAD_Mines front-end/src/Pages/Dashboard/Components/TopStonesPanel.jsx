@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import '../Dashboard.css';
 
+// Renders top 3 purchased stones with tilt cards and images.
 const TopStonesPanel = ({ stones }) => {
   if (!stones || stones.length === 0) {
     return null;
@@ -60,7 +61,6 @@ const StoneCard = ({ stone, index }) => {
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath;
     }
-    // Assuming images are served from the backend
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
     return `${apiUrl}/images/${imagePath}`;
   };

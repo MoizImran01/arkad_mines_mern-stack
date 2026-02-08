@@ -2,13 +2,12 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-// Create uploads directory if it doesn't exist
+// Disk storage and image-only filter; 5MB limit. Creates uploads dir if missing.
 const uploadDir = 'uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configure storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -19,7 +18,6 @@ const storage = multer.diskStorage({
   }
 });
 
-// Filter for image files only
 const fileFilter = (req, file, cb) => {
   const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   const allowedExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
@@ -33,7 +31,6 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Configure multer
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,

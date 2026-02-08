@@ -5,10 +5,7 @@ import { generateOrderCSV, generateStatementCSV } from "../../Utils/csvGenerator
 import { logAudit, logError, getClientIp, normalizeRole, getUserAgent } from '../../logger/auditLogger.js';
 import mongoose from "mongoose";
 
-/**
- * List all documents (quotes, proformas, tax invoices, receipts, statements) for a buyer
- * Supports filtering by date range and order ID
- */
+// Lists documents for buyer (quotes, proformas, invoices, receipts, statements); supports date/order/type filter.
 const listDocuments = async (req, res) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);
@@ -166,10 +163,7 @@ const listDocuments = async (req, res) => {
   }
 };
 
-/**
- * Download a document (PDF or CSV)
- * Handles missing files due to retention/archive
- */
+// Downloads document by id and format (PDF/CSV); generates on demand if not stored.
 const downloadDocument = async (req, res) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);
@@ -257,7 +251,6 @@ const downloadDocument = async (req, res) => {
           });
         }
 
-        // Check authorization
         const isAdmin = req.user.role === "admin";
         const buyerId = order.buyer._id ? order.buyer._id.toString() : order.buyer.toString();
         if (!isAdmin && buyerId !== userId) {
@@ -296,7 +289,6 @@ const downloadDocument = async (req, res) => {
           });
         }
 
-        // Check authorization
         const isAdmin = req.user.role === "admin";
         const buyerId = order.buyer._id ? order.buyer._id.toString() : order.buyer.toString();
         if (!isAdmin && buyerId !== userId) {
@@ -335,7 +327,6 @@ const downloadDocument = async (req, res) => {
           });
         }
 
-        // Check authorization
         const isAdmin = req.user.role === "admin";
         const buyerId = order.buyer._id ? order.buyer._id.toString() : order.buyer.toString();
         if (!isAdmin && buyerId !== userId) {
@@ -376,7 +367,6 @@ const downloadDocument = async (req, res) => {
           });
         }
 
-        // Check authorization
         const isAdmin = req.user.role === "admin";
         const buyerId = order.buyer._id ? order.buyer._id.toString() : order.buyer.toString();
         if (!isAdmin && buyerId !== userId) {

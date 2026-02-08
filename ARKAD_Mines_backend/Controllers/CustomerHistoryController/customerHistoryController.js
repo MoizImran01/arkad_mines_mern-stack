@@ -7,10 +7,7 @@ import { logError } from "../../logger/auditLogger.js";
 import { toCustomerHistoryDTO, toCustomerSearchResultDTO } from "../../Utils/DTOs/customerHistoryDTO.js";
 import { generateCustomerHistoryPDF } from "../../Utils/pdfGenerator.js";
 
-/**
- * Search customers by email or company name (for sales rep to find a customer).
- * STRIDE: S (auth/role on route), I (return only minimal fields).
- */
+// Search customers by email or company name; returns minimal fields (admin/sales rep).
 export const searchCustomers = async (req, res) => {
   const clientIp = getClientIp(req);
   try {
@@ -44,10 +41,7 @@ export const searchCustomers = async (req, res) => {
   }
 };
 
-/**
- * Get customer history: contact details, quotes, and orders.
- * STRIDE: S (auth/role), T (resolve from validated ID only), R (audit log), I (DTO, "No record").
- */
+// Returns customer history (contact, quotes, orders) as DTO; audits and validates customerId.
 export const getCustomerHistory = async (req, res) => {
   const { customerId } = req.params;
   const clientIp = getClientIp(req);
@@ -108,10 +102,7 @@ export const getCustomerHistory = async (req, res) => {
   }
 };
 
-/**
- * Export customer history for offline review (alternate course).
- * STRIDE: D (rate limit on route), R (audit log).
- */
+// Exports customer history as PDF or CSV; rate-limited and audited.
 export const exportCustomerHistory = async (req, res) => {
   const { customerId } = req.params;
   const format = (req.query.format || "pdf").toLowerCase();

@@ -1,9 +1,8 @@
-
-
 import React from 'react';
 import './Header.css';
 import ControlledCarousel from '../ControlledCarousel/ControlledCarousel';
 
+// Top banner with carousel; used on the main landing page.
 export const Header = () => {
   return (
     <div className='header-container'>

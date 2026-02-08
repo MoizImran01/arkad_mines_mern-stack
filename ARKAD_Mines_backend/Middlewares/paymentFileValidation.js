@@ -1,14 +1,10 @@
 import { logAudit, getClientIp, normalizeRole, getUserAgent, logError } from "../logger/auditLogger.js";
 
-/**
- * Payment File Validation Middleware
- * Validates file size (max 5MB) and image dimensions for payment proof uploads
- */
-
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 const MAX_IMAGE_WIDTH = 5000;
 const MAX_IMAGE_HEIGHT = 5000;
 
+// Estimates decoded size in bytes from base64 string length.
 const estimateBase64Size = (base64String) => {
   if (!base64String) return 0;
   
@@ -21,9 +17,7 @@ const estimateBase64Size = (base64String) => {
   return approximateSize;
 };
 
-/**
- * Validate file size from base64 string
- */
+// Rejects request if proofBase64 exceeds max size (5MB); logs and audits.
 export const validatePaymentFileSize = async (req, res, next) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);
@@ -78,23 +72,13 @@ export const validatePaymentFileSize = async (req, res, next) => {
       details: `Error validating payment proof file size for order ${orderId}: ${error.message}`
     });
     
-    // Fail open - allow request if validation fails (should not happen, but safety measure)
     console.error(`[FILE_SIZE_VALIDATION_ERROR] Error in validation:`, error);
     next();
   }
 };
 
-/**
- * Validate image dimensions (if possible from base64)
- * Note: Full dimension validation requires decoding, which is expensive
- * This is a lightweight check - full validation happens in Cloudinary
- */
+// No-op; dimensions are enforced by client compression and Cloudinary.
 export const validatePaymentImageDimensions = async (req, res, next) => {
-  // Dimension validation is handled by:
-  // 1. Client-side compression (resizes before upload)
-  // 2. Cloudinary transformation settings (limits dimensions)
-  // 3. This is a placeholder for any additional server-side checks if needed
-  
   next();
 };
 

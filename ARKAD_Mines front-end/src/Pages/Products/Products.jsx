@@ -5,11 +5,11 @@ import { FiFilter, FiX, FiSearch, FiSliders, FiAlertTriangle } from 'react-icons
 import { StoreContext } from '../../context/StoreContext';
 import { useNavigate } from 'react-router-dom';
 
+// Stone catalog with category, price, stock filters and add-to-quote.
 const Products = () => {
   const navigate = useNavigate();
   const { url, addItemToQuote } = useContext(StoreContext);
   
-  // Filter states
   const [filters, setFilters] = useState({
     category: 'all',
     subcategory: 'all',
@@ -26,7 +26,6 @@ const Products = () => {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(true);
   
-  // New State for handling API errors (Rate limits, Network errors)
   const [error, setError] = useState(null);
 
   const categories = [
@@ -80,7 +79,7 @@ const Products = () => {
   // Apply filters and fetch products
   const applyFilters = async () => {
     setLoading(true);
-    setError(null); // Reset error state before new request
+    setError(null);
     setHasSearched(true);
     
     try {
@@ -104,21 +103,17 @@ const Products = () => {
       }
     } catch (err) {
       console.error("Error fetching filtered products:", err);
-      
-      // Extract specific error message (Priority: Backend Rate Limit Message > Status Text > Generic)
       const errorMessage = 
         err.response?.data?.error || 
         err.response?.statusText || 
         "Unable to load products. Please check your connection.";
-      
       setError(errorMessage);
-      setProducts([]); // Clear products on error to avoid confusion
+      setProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle filter changes
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({
       ...prev,
@@ -126,7 +121,6 @@ const Products = () => {
     }));
   };
 
-  // Clear all filters
   const clearFilters = () => {
     setFilters({
       category: 'all',
@@ -138,16 +132,13 @@ const Products = () => {
       sortBy: 'newest',
       source: 'all'
     });
-    // Filters will auto-apply via useEffect
   };
 
-  // Auto load all blocks on component mount
   useEffect(() => {
     applyFilters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto apply filters when they change (debounced for keywords)
   useEffect(() => {
     if (hasSearched) {
       const timeoutId = setTimeout(() => {
@@ -185,7 +176,6 @@ const Products = () => {
     return 'unknown';
   };
 
-  // Helper function to get image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/300x200?text=No+Image';
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
@@ -231,7 +221,6 @@ const Products = () => {
                 </div>
               </div>
 
-              {/* Category Filter */}
               <div className="filter-group">
                 <label htmlFor="filter-category">Color / Pattern</label>
                 <select
@@ -246,7 +235,6 @@ const Products = () => {
                 </select>
               </div>
 
-              {/* Subcategory Filter */}
               <div className="filter-group">
                 <label htmlFor="filter-subcategory">Product Type</label>
                 <select
@@ -261,7 +249,6 @@ const Products = () => {
                 </select>
               </div>
 
-              {/* Price Range */}
               <div className="filter-group">
                 <label htmlFor="filter-min-price">Price Range</label>
                 <div className="price-range-inputs">
@@ -285,7 +272,6 @@ const Products = () => {
                 </div>
               </div>
 
-              {/* Stock Availability */}
               <div className="filter-group">
                 <label htmlFor="filter-availability">Stock Availability</label>
                 <select
@@ -300,7 +286,6 @@ const Products = () => {
                 </select>
               </div>
 
-              {/* Source Filter */}
               <div className="filter-group">
                 <label htmlFor="filter-source">Source / Mine</label>
                 <select
@@ -315,7 +300,6 @@ const Products = () => {
                 </select>
               </div>
 
-              {/* Action Buttons */}
               <div className="filter-actions">
                 <button 
                   className="apply-filters-btn"
@@ -335,7 +319,6 @@ const Products = () => {
           )}
         </div>
 
-        {/* Products Main Content */}
         <div className="products-main">
 
           <div className="sort-bar">
@@ -361,7 +344,6 @@ const Products = () => {
             </div>
           </div>
 
-          {/* Logic: Error ? Error UI : Loading ? Spinner : Empty ? Empty UI : Grid */}
           {error ? (
             <div className="empty-state" style={{ borderColor: '#ef4444' }}>
               <FiAlertTriangle className="empty-icon" style={{ color: '#ef4444' }} />

@@ -2,6 +2,7 @@ import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { RateLimitTracking } from "./rateLimitModel.js";
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";
 
+// Returns user and IP rate limiters for an endpoint (logs and 429 on exceed).
 export const createRateLimiter = ({
   endpoint,
   windowMs = 60 * 60 * 1000,

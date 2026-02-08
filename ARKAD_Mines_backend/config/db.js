@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-//configurationn to establish connection with the database
+// Connects to MongoDB using MONGO_URI; exits on failure.
 export const connectDB = async () => {
   try
   {

@@ -1,8 +1,4 @@
-/**
- * DTO for View Customer History use case.
- * Returns only the data needed for sales rep review (STRIDE - Information Disclosure).
- */
-
+// Customer history DTO: contact, quotes, orders for sales rep view.
 export const toCustomerHistoryDTO = (customer, quotations = [], orders = []) => {
   if (!customer) return null;
 
@@ -32,7 +28,7 @@ export const toCustomerHistoryDTO = (customer, quotations = [], orders = []) => 
   };
 };
 
-/** Minimal DTO for search results (picker list) */
+// Minimal DTO for customer search results (picker list).
 export const toCustomerSearchResultDTO = (user) => {
   if (!user) return null;
   return {

@@ -1,5 +1,6 @@
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";
 
+// Returns middleware that ensures req.user owns the resource from param (by ownerField).
 export const createOwnershipValidator = ({
   model,
   ownerField = 'buyer',

@@ -9,6 +9,7 @@ import { detectAnalyticsAnomalies, createIPWhitelist } from "../../Middlewares/a
 import { strictAnalyticsCSP } from "../../Middlewares/analyticsTamperingProtection.js";
 import { createReauthMiddleware } from "../../Middlewares/genericReauth.js";
 
+// Admin routes: dashboard, users, role update, delete user, analytics, analytics PDF export.
 const adminRouter = express.Router();
 
 const requireAnalyticsMFA = createReauthMiddleware({

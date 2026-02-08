@@ -15,6 +15,7 @@ import {
 } from "react-icons/fi";
 import { toast } from "react-toastify";
 
+// Documents list with date/order/type filters and download.
 const Documents = () => {
   const { token, url } = useContext(StoreContext);
   const [documents, setDocuments] = useState([]);
@@ -24,7 +25,6 @@ const Documents = () => {
   const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
   
-  // Filter states
   const [showFilters, setShowFilters] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");

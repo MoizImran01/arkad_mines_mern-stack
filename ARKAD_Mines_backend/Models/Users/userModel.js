@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-//define the user schema for MongoDB
+// User schema: company, email, password, role.
 const userSchema = new mongoose.Schema({
   companyName: {
     type: String,

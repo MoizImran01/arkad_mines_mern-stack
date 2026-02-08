@@ -8,6 +8,7 @@ import TopStonesPanel from './Components/TopStonesPanel';
 import DashboardSkeleton from './Components/DashboardSkeleton';
 import './Dashboard.css';
 
+// Client dashboard: orders, quotes, purchase timeline, material preferences, top stones.
 const Dashboard = () => {
   const { token, url } = useContext(StoreContext);
   const navigate = useNavigate();
@@ -223,7 +224,6 @@ const Dashboard = () => {
           <p className="dashboard-subtitle">Your orders, quotes, and insights</p>
         </header>
 
-        {/* Quick stats */}
         <section className="dashboard-stats">
           <div className="dashboard-stat-card">
             <span className="dashboard-stat-value">{orders.length}</span>
@@ -243,7 +243,6 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* Quick actions */}
         <section className="dashboard-actions">
           <button type="button" className="dashboard-action-btn" onClick={() => navigate('/request-quote')}>
             Request a quote
@@ -261,28 +260,24 @@ const Dashboard = () => {
           )}
         </section>
 
-        {/* Purchase timeline */}
         {orders.length > 0 && (
           <section className="dashboard-section dashboard-card-wrap">
             <PurchaseTimeline orders={orders} />
           </section>
         )}
 
-        {/* Material preferences */}
         {analytics && orders.length > 0 && (
           <section className="dashboard-section dashboard-card-wrap">
             <MaterialPreferenceChart preferences={analytics.materialPreferences} />
           </section>
         )}
 
-        {/* Top stones */}
         {analytics?.topStones?.length > 0 && (
           <section className="dashboard-section dashboard-card-wrap">
             <TopStonesPanel stones={analytics.topStones} />
           </section>
         )}
 
-        {/* Empty state */}
         {(!analytics || (orders.length === 0 && quotations.length === 0)) && (
           <section className="dashboard-empty">
             <h3>No activity yet</h3>

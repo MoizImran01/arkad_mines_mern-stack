@@ -14,6 +14,7 @@ import {
 
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
+// Orders list with filters, tracking modal, payment proof upload, and CAPTCHA/MFA flows.
 const Orders = () => {
   const { token, url, replaceQuoteItems, setActiveQuoteId } = useContext(StoreContext);
   
@@ -23,24 +24,20 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Modal State
   const [trackingOrderNumber, setTrackingOrderNumber] = useState(null);
   const [trackingOrderDetails, setTrackingOrderDetails] = useState(null);
-  const [modalTab, setModalTab] = useState("tracking"); // "tracking", "details", or "payment"
+  const [modalTab, setModalTab] = useState("tracking");
   
-  // Payment Form State
   const [paymentForm, setPaymentForm] = useState({
     amount: "",
     proofFile: null
   });
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   
-  // MFA Modal State
   const [showMfaModal, setShowMfaModal] = useState(false);
   const [mfaPassword, setMfaPassword] = useState("");
   const [pendingPayment, setPendingPayment] = useState(null);
   
-  // CAPTCHA Modal State
   const [showCaptchaModal, setShowCaptchaModal] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
   const [captchaPassword, setCaptchaPassword] = useState("");
@@ -132,7 +129,6 @@ const Orders = () => {
 
     setPaymentSubmitting(true);
     
-    // Compress and resize image before converting to base64
     const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
@@ -277,7 +273,6 @@ const Orders = () => {
       console.log("Error response data:", error.response?.data);
       console.log("Error status:", error.response?.status);
       
-      // Check if CAPTCHA is required - check both flag and message
       const requiresCaptcha = error.response?.data?.requiresCaptcha === true || 
                               (error.response?.data?.message && error.response.data.message.toLowerCase().includes('captcha'));
       
@@ -287,7 +282,6 @@ const Orders = () => {
           message: error.response?.data?.message 
         });
         
-        // Use already-compressed base64 if available, otherwise compress again
         let base64ToUse = compressedBase64;
         if (!base64ToUse && paymentForm.proofFile) {
           try {
@@ -317,7 +311,6 @@ const Orders = () => {
         return;
       }
       
-      // Check if MFA is required - check both flag and message
       const requiresMFA = error.response?.data?.requiresMFA === true || 
                          error.response?.data?.requiresReauth === true ||
                          (error.response?.data?.message && (
@@ -333,7 +326,6 @@ const Orders = () => {
           message: error.response?.data?.message 
         });
         
-        // Use already-compressed base64 if available, otherwise compress again
         let base64ToUse = compressedBase64;
         if (!base64ToUse && paymentForm.proofFile) {
           try {
@@ -363,7 +355,6 @@ const Orders = () => {
         return;
       }
       
-      // Only show toast if neither CAPTCHA nor MFA is required
       if (!requiresCaptcha && !requiresMFA) {
         toast.error(error.response?.data?.message || "Error submitting payment proof");
       }
@@ -543,7 +534,6 @@ const Orders = () => {
     return currentIndex >= stepIndex;
   };
 
-  // Format address for display
   const formatAddress = (deliveryAddress, buyer) => {
     if (!deliveryAddress || !deliveryAddress.street) {
       return null;
@@ -587,7 +577,6 @@ const Orders = () => {
       if (response.data.success) {
         const updatedOrder = response.data.order;
         setTrackingOrderDetails(updatedOrder);
-        // Also update in orders list
         setOrders(prevOrders => 
           prevOrders.map(order => 
             order._id === updatedOrder._id ? updatedOrder : order
@@ -614,7 +603,6 @@ const Orders = () => {
         </button>
       </div>
 
-      {/* Main Page Tabs */}
       <div className="orders-tabs">
         <button 
           className={`tab-btn ${activeTab === "all" ? "active" : ""}`} 
@@ -633,7 +621,6 @@ const Orders = () => {
         ))}
       </div>
 
-      {/* Orders Table */}
       {loading ? (
         <div className="orders-loading"><FiLoader className="spin" size={24} /><p>Loading your orders...</p></div>
       ) : error ? (
@@ -692,7 +679,6 @@ const Orders = () => {
         </div>
       )}
 
-      {/* SINGLE MODAL WITH TABS */}
       {trackingOrderNumber && trackingOrderDetails && (
         <div 
           className="modal-overlay" 
@@ -701,7 +687,6 @@ const Orders = () => {
         >
           <div className="tracking-modal" role="document">
             
-            {/* Modal Header */}
             <div className="modal-header">
               <div>
                 <h2>Order #{trackingOrderDetails.orderNumber}</h2>
@@ -712,7 +697,6 @@ const Orders = () => {
               <button className="close-btn" onClick={closeTrackingView}><FiX size={24} /></button>
             </div>
 
-            {/* Modal Internal Tabs */}
             <div className="modal-tabs">
               <button 
                 className={`modal-tab-btn ${modalTab === "tracking" ? "active" : ""}`}
@@ -735,7 +719,6 @@ const Orders = () => {
             </div>
 
             <div className="modal-body">
-              {/* TAB 1: TRACKING VIEW */}
               {modalTab === "tracking" && (
                 <>
                   <div className="timeline-section">
@@ -782,7 +765,6 @@ const Orders = () => {
                   <div className="delivery-section">
                     <h3><FiMapPin /> Delivery Information</h3>
                     <div className="customer-info-grid">
-                      {/* Company/Buyer Info */}
                       <div className="customer-info-card">
                         <h4><FiBriefcase /> Company Details</h4>
                         <div className="info-row">
@@ -795,7 +777,6 @@ const Orders = () => {
                         </div>
                       </div>
 
-                      {/* Delivery Address */}
                       <div className="customer-info-card">
                         <h4><FiMapPin /> Delivery Address</h4>
                         {trackingOrderDetails.deliveryAddress?.street ? (
@@ -836,7 +817,6 @@ const Orders = () => {
                 </>
               )}
 
-              {/* TAB 2: DETAILS VIEW */}
               {modalTab === "details" && (
                 <>
                   <div className="details-section">
@@ -894,7 +874,6 @@ const Orders = () => {
                 </>
               )}
 
-              {/* TAB 3: PAYMENT VIEW */}
               {modalTab === "payment" && (
                 <>
                   <div className="payment-section">
@@ -952,9 +931,6 @@ const Orders = () => {
                         </form>
                       </div>
                     )}
-
-                    {/* Payment Proofs List */}
-                   
 
                     {trackingOrderDetails.paymentTimeline && trackingOrderDetails.paymentTimeline.length > 0 && (
                       <div className="payment-timeline-section">
@@ -1031,7 +1007,6 @@ const Orders = () => {
         </div>
       )}
 
-      {/* CAPTCHA Modal */}
       {showCaptchaModal && (
         <div 
           className="modal-overlay" 

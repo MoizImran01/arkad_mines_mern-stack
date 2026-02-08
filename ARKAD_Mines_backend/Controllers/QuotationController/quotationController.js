@@ -6,7 +6,6 @@ import { logAudit, logError, getClientIp, normalizeRole, getUserAgent } from "..
 import { v4 as uuidv4 } from 'uuid';
 import mongoose from "mongoose";
 
-// Helper function to round to 2 decimal places
 const roundToTwoDecimals = (value) => {
   return Math.round((value || 0) * 100) / 100;
 };
@@ -42,9 +41,9 @@ const buildUnavailableResponse = (unavailableItems) => ({
   requiresReview: true,
 });
 
+// Creates or updates quotation; validates items, availability, and drafts.
 const createOrUpdateQuotation = async (req, res) => {
   const clientIp = getClientIp(req);
-  // Generate quotationRequestId early for tracking (even for failed requests)
   const quotationRequestId = uuidv4();
   
   try {
@@ -59,7 +58,6 @@ const createOrUpdateQuotation = async (req, res) => {
     const normalizedItems = normalizeItems(items);
 
     if (!normalizedItems.length) {
-      // Log full request payload even for failed requests
       const requestPayload = {
         items: [],
         notes: notes || null,
@@ -225,7 +223,6 @@ const createOrUpdateQuotation = async (req, res) => {
       quotation.totalEstimatedCost = totalEstimatedCost;
       quotation.validity = validity;
       quotation.adjustments = unavailableItems;
-      // Preserve quotationRequestId if updating
       if (!quotation.quotationRequestId && !saveAsDraft) {
         quotation.quotationRequestId = quotationRequestId;
       }
@@ -246,12 +243,10 @@ const createOrUpdateQuotation = async (req, res) => {
       await quotation.save();
     }
 
-    // Build comprehensive details string with full request payload
     const itemDetails = preparedItems.map(item => 
       `itemId=${item.stone}, stoneName=${item.stoneName}, quantity=${item.requestedQuantity}, priceSnapshot=${item.priceSnapshot}`
     ).join('; ');
     
-    // Include full request payload for non-repudiation
     const requestPayload = {
       items: normalizedItems.map(item => ({
         stoneId: item.stoneId,
@@ -312,7 +307,6 @@ const getMyQuotations = async (req, res) => {
   try {
     const { status } = req.query;
     
-    // Validate and sanitize buyer ID to prevent NoSQL injection
     if (!req.user?.id || !mongoose.Types.ObjectId.isValid(String(req.user.id))) {
       return res.status(400).json({
         success: false,
@@ -320,10 +314,8 @@ const getMyQuotations = async (req, res) => {
       });
     }
     
-    // Construct query explicitly to prevent injection
     const query = { buyer: new mongoose.Types.ObjectId(String(req.user.id)) };
 
-    // Validate status against allowed enum values to prevent injection
     const allValidStatuses = ["draft", "submitted", "adjustment_required", "revision_requested", "issued", "approved", "rejected"];
     if (status && typeof status === 'string') {
       const safeStatus = String(status).trim();
@@ -443,7 +435,6 @@ const issueQuotation = async (req, res) => {
       return res.status(404).json({ success: false, message: "Quotation not found" });
     }
 
-    // Check if quotation has items
     if (!quotation.items || quotation.items.length === 0) {
       logAudit({
         userId: req.user?.id,
@@ -461,7 +452,6 @@ const issueQuotation = async (req, res) => {
       });
     }
 
-    // Ensure buyer is populated
     if (!quotation.buyer) {
       logAudit({
         userId: req.user?.id,
@@ -479,7 +469,6 @@ const issueQuotation = async (req, res) => {
       });
     }
 
-    //Validations
     const taxPercent = Number(taxPercentage);
     if (Number.isNaN(taxPercent) || taxPercent < 0 || taxPercent > 100) {
       logAudit({
@@ -558,7 +547,6 @@ const issueQuotation = async (req, res) => {
     
     let subtotal = 0;
     quotation.items.forEach((item, index) => {
-      // Safety check for item
       if (!item) {
         throw new Error(`Item at index ${index} is missing or invalid.`);
       }
@@ -642,7 +630,6 @@ const issueQuotation = async (req, res) => {
 
     await quotation.save();
 
-    // Log as CREATE_QUOTATION when sales rep creates/issues the final quotation
     logAudit({
       userId: req.user?.id,
       role: normalizeRole(req.user?.role),
@@ -667,8 +654,6 @@ const issueQuotation = async (req, res) => {
         clientIp,
         userAgent: getUserAgent(req)
       });
-      // PDF generation is critical, but we'll still return success if quotation is saved
-      // The admin can download it later
     }
 
     res.json({
@@ -678,7 +663,6 @@ const issueQuotation = async (req, res) => {
     });
 
   } catch (error) {
-    // If it's a validation error we threw, return it with 400 status
     if (error.message && error.message.includes("Invalid")) {
       logAudit({
         userId: req.user?.id,
@@ -702,7 +686,6 @@ const issueQuotation = async (req, res) => {
       clientIp
     });
     
-    // Return more detailed error in development
     const errorMessage = process.env.NODE_ENV === 'development' 
       ? `Error processing quotation issuance: ${error.message}`
       : "Error processing quotation issuance. Please check server logs for details.";
@@ -724,7 +707,6 @@ const downloadQuotation = async (req, res) => {
       return res.status(404).json({ success: false, message: "Quotation not found" });
     }
 
-    // Check if user is admin or the buyer of this quotation
     const isAdmin = req.user.role === "admin";
     const buyerId = quotation.buyer._id ? quotation.buyer._id.toString() : quotation.buyer.toString();
     const isBuyer = buyerId === req.user.id;
@@ -771,7 +753,6 @@ const approveQuotation = async (req, res) => {
     const { quoteId } = req.params;
     const { comment } = req.body;
 
-    // Validate ObjectIds to prevent NoSQL injection - reject invalid IDs
     if (!quoteId || !mongoose.Types.ObjectId.isValid(String(quoteId))) {
       return res.status(400).json({
         success: false,
@@ -786,7 +767,6 @@ const approveQuotation = async (req, res) => {
       });
     }
     
-    // Construct query explicitly with validated ObjectIds
     const quotation = await quotationModel.findOne({
       _id: new mongoose.Types.ObjectId(String(quoteId)),
       buyer: new mongoose.Types.ObjectId(String(req.user.id))
@@ -918,7 +898,6 @@ const approveQuotation = async (req, res) => {
       ? ` | Anomaly detected: ${req.sessionAnomaly.details.join('; ')}` 
       : '';
 
-    //Prepare full request payload for audit log (non-repudiation)
     const fullRequestPayload = {
       quoteId: quoteId,
       comment: comment || null,
@@ -959,7 +938,6 @@ const approveQuotation = async (req, res) => {
       userAgent: req.headers['user-agent'] || 'Unknown'
     });
     
-    //Log error to audit trail as well
     await logAudit({
       userId: req.user?.id,
       role: normalizeRole(req.user?.role),
@@ -979,16 +957,13 @@ const approveQuotation = async (req, res) => {
   }
 };
 
-// Reject Quotation handler
-// NOTE: All audit logs for approve/reject operations form an immutable audit trail.
-// These logs should never be modified or deleted as they record critical state changes.
+// Rejects issued quotation; sets buyer decision and status (audited).
 const rejectQuotation = async (req, res) => {
   const clientIp = getClientIp(req);
   try {
     const { quoteId } = req.params;
     const { comment } = req.body;
 
-    // Validate ObjectIds to prevent NoSQL injection
     if (!quoteId || !mongoose.Types.ObjectId.isValid(String(quoteId))) {
       return res.status(400).json({
         success: false,
@@ -1003,7 +978,6 @@ const rejectQuotation = async (req, res) => {
       });
     }
 
-    // Construct query explicitly with validated ObjectIds
     const quotation = await quotationModel.findOne({
       _id: new mongoose.Types.ObjectId(String(quoteId)),
       buyer: new mongoose.Types.ObjectId(String(req.user.id)),
@@ -1025,7 +999,6 @@ const rejectQuotation = async (req, res) => {
       });
     }
 
-    // Check if quotation is in issued status
     if (quotation.status !== "issued") {
       logAudit({
         userId: req.user?.id,
@@ -1043,7 +1016,6 @@ const rejectQuotation = async (req, res) => {
       });
     }
 
-    // Update quotation status and buyer decision
     const now = new Date();
     quotation.status = "rejected";
     quotation.buyerDecision = {
@@ -1091,7 +1063,6 @@ const requestRevision = async (req, res) => {
     const { quoteId } = req.params;
     const { comment } = req.body;
 
-    // Validate ObjectIds to prevent NoSQL injection
     if (!quoteId || !mongoose.Types.ObjectId.isValid(String(quoteId))) {
       return res.status(400).json({
         success: false,
@@ -1106,7 +1077,6 @@ const requestRevision = async (req, res) => {
       });
     }
 
-    // Construct query explicitly with validated ObjectIds
     const quotation = await quotationModel.findOne({
       _id: new mongoose.Types.ObjectId(String(quoteId)),
       buyer: new mongoose.Types.ObjectId(String(req.user.id)),
@@ -1128,7 +1098,6 @@ const requestRevision = async (req, res) => {
       });
     }
 
-    // Check if quotation is in issued status
     if (quotation.status !== "issued") {
       logAudit({
         userId: req.user?.id,
@@ -1146,7 +1115,6 @@ const requestRevision = async (req, res) => {
       });
     }
 
-    // Update quotation status to revision_requested
     quotation.status = "revision_requested";
     quotation.notes = (quotation.notes || "") + (quotation.notes ? "\n\n" : "") + 
       `[Revision Requested: ${new Date().toLocaleString()}]\n${comment || "Buyer requested revision"}`;
@@ -1214,7 +1182,6 @@ const convertToSalesOrder = async (req, res) => {
       });
     }
 
-    // Check if quotation is approved
     if (quotation.status !== "approved") {
       logAudit({
         userId: req.user?.id,

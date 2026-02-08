@@ -364,7 +364,7 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// Update user role, Admin only functionality
+// Updates user role (admin only).
 const updateUserRole = async (req, res) => {
   const clientIp = getClientIp(req);
   try {

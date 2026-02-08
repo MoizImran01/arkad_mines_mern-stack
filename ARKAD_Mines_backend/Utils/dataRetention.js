@@ -61,7 +61,6 @@ const RETENTION_DAYS = Number.parseInt(process.env.ANALYTICS_RETENTION_DAYS || '
 
 export const cleanupOldAnalyticsLogs = async () => {
   try {
-    // AuditLog is immutable (no deletes/updates). Skip retention cleanup for audit logs.
     console.log(`[DATA RETENTION] Skipping audit log cleanup (audit logs are immutable, retention: ${RETENTION_DAYS} days)`);
     return 0;
   } catch (error) {

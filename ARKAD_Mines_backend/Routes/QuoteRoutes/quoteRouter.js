@@ -22,6 +22,7 @@ import { detectAnomalies } from "../../Middlewares/anomalyDetection.js";
 import { requirePermission } from "../../Middlewares/rbac.js";
 import quotationModel from "../../Models/quotationModel/quotationModel.js";
 
+// Quote routes: create, my, admin list, issue, download, approve, reject, revision, convert.
 const quoteRouter = express.Router();
 
 const createQuoteRateLimiter = createRateLimiter({

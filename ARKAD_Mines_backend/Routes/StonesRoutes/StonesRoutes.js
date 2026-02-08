@@ -4,6 +4,7 @@ import { upload } from "../../config/cloudinary.js"
 import { verifyToken, authorizeRoles } from "../../Middlewares/auth.js"
 import { createRateLimiter } from "../../Middlewares/genericRateLimiting.js"
 
+// Stone routes: add, remove, dispatch, list, filter, by id, by QR code.
 const stonesRouter = express.Router();
 
 const catalogRateLimiter = createRateLimiter({

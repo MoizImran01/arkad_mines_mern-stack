@@ -1,3 +1,4 @@
+// Sets strict Content-Security-Policy for analytics responses.
 export const strictAnalyticsCSP = (req, res, next) => {
   res.removeHeader('Content-Security-Policy');
   res.setHeader(
