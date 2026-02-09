@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import Navbar from './Components/Navbar/Navbar';
 import LoginPopup from './Components/LoginPopup/LoginPopup';
@@ -9,7 +9,7 @@ import AboutUs from './Pages/AboutUs/AboutUs';
 import ContactUs from './Pages/ContactUs/ContactUs';
 import Industries from './Pages/Industries/Industries';
 import ProtectedRoute from './Components/ProtectedRoute/ProtectedRoute';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import RequestQuote from './Pages/RequestQuote/RequestQuote';
 import Orders from './Pages/Orders/Orders';
 import Quotations from './Pages/Quotations/Quotations';
@@ -18,9 +18,56 @@ import ItemDetail from './Pages/ItemDetail/ItemDetail';
 import Dashboard from './Pages/Dashboard/Dashboard';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Lenis from 'lenis';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 function App() {
   const [showLogin, setShowLogin] = useState(false);
+  const lenisRef = useRef(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
+    lenisRef.current = new Lenis({
+      smoothWheel: true,
+      lerp: 0.07,
+      duration: 1.3,
+      wheelMultiplier: 1,
+      preventDefault: (e) => {
+        const target = e.target.closest('[data-lenis-prevent]');
+        return !!target;
+      },
+    });
+
+    window.lenisInstance = lenisRef.current;
+
+    const raf = (time) => {
+      lenisRef.current?.raf(time);
+      requestAnimationFrame(raf);
+    };
+    requestAnimationFrame(raf);
+    
+    lenisRef.current.on('scroll', () => {
+      ScrollTrigger.update();
+    });
+    
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(0, { immediate: true });
+    }
+
+    return () => {
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+        lenisRef.current = null;
+      }
+    };
+  }, [location.pathname]);
 
   return (
     <>

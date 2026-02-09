@@ -1,20 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-*
-{
+* {
   padding: 0;
   margin: 0;
   box-sizing: border-box;
 }
 
-body{
+body {
   min-height: 100vh;
-  background-color: #ffffff;
-  padding-top: 80px;
+  background-color: #f5f7f5;
+  padding-top: 90px;
+  font-family: 'Manrope', sans-serif;
 }
-a{
+
+a {
   text-decoration: none;
   color: inherit;
 }

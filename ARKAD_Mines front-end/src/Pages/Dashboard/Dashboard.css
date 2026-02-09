@@ -3,6 +3,8 @@
   min-height: 100vh;
   background: linear-gradient(to bottom right, #f9fafb, #fff, #f9fafb);
   padding: 1rem 0.75rem;
+  margin: 100px auto 0 auto;
+
 }
 
 .dashboard-inner {
@@ -32,7 +34,7 @@
   margin: 0;
 }
 
-/* Stats row */
+
 .dashboard-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -66,7 +68,6 @@
   color: #6b7280;
 }
 
-/* Quick actions */
 .dashboard-actions {
   display: flex;
   flex-wrap: wrap;
@@ -100,7 +101,6 @@
   border-color: #9ca3af;
 }
 
-/* Section */
 .dashboard-section {
   margin-bottom: 1.25rem;
 }
@@ -112,7 +112,6 @@
   margin: 0 0 0.75rem 0;
 }
 
-/* Table */
 .dashboard-table-wrap {
   overflow-x: auto;
   background: #fff;
@@ -176,7 +175,6 @@
   text-decoration: underline;
 }
 
-/* Empty state */
 .dashboard-empty {
   text-align: center;
   padding: 2rem 1rem;
@@ -198,7 +196,6 @@
   margin: 0 0 1rem 0;
 }
 
-/* Error */
 .dashboard-error {
   min-height: 40vh;
   display: flex;
@@ -223,7 +220,6 @@
   cursor: pointer;
 }
 
-/* Compact card used by PurchaseTimeline, MaterialPreferenceChart, TopStonesPanel */
 .dashboard-compact-card {
   padding: 1rem 1.25rem;
   border-radius: 8px;
@@ -263,7 +259,6 @@
   margin-bottom: 0.5rem !important;
 }
 
-/* Purchase timeline dropdown */
 .purchase-timeline-dropdown-wrap {
   flex-shrink: 0;
   display: flex;

@@ -13,6 +13,9 @@ import axios from 'axios';
 const Navbar = ({ setShowLogin }) => {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [navHidden, setNavHidden] = useState(false);
+  const lastScrollY = useRef(0);
 
   const { token, logout } = useContext(StoreContext);
   const navigate = useNavigate();
@@ -105,8 +108,23 @@ const Navbar = ({ setShowLogin }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 50);
+      if (y > lastScrollY.current && y > 120) {
+        setNavHidden(true);
+      } else {
+        setNavHidden(false);
+      }
+      lastScrollY.current = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <header className="navbar-container">
+    <header className={`navbar-container${scrolled ? ' navbar-scrolled' : ''}${navHidden ? ' navbar-hidden' : ''}`}>
       <div className="navbar-brand">
         <Link to='/' onClick={handleNavClick}>
           <img src={logoimg} alt="Stone & Minerals Co." className="logo" />

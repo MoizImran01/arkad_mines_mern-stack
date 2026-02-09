@@ -14,7 +14,6 @@ import {
 
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
-// Orders list with filters, tracking modal, payment proof upload, and CAPTCHA/MFA flows.
 const Orders = () => {
   const { token, url, replaceQuoteItems, setActiveQuoteId } = useContext(StoreContext);
   
@@ -87,6 +86,100 @@ const Orders = () => {
       setFilteredOrders(orders.filter((order) => order.status === activeTab));
     }
   }, [activeTab, orders]);
+
+  useEffect(() => {
+    const hasModalOpen = trackingOrderNumber || showCaptchaModal || showMfaModal;
+    const lenisInstance = window.lenisInstance;
+    let scrollY = 0;
+    
+    if (hasModalOpen) {
+      scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${scrollY}px`;
+      if (lenisInstance) {
+        lenisInstance.stop();
+        lenisInstance.options.smoothWheel = false;
+      }
+    } else {
+      const savedScrollY = parseInt(document.body.style.top || '0') * -1;
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      if (savedScrollY) {
+        window.scrollTo(0, savedScrollY);
+      }
+      if (lenisInstance) {
+        lenisInstance.options.smoothWheel = true;
+        lenisInstance.start();
+      }
+    }
+
+    return () => {
+      if (!trackingOrderNumber && !showCaptchaModal && !showMfaModal) {
+        const savedScrollY = parseInt(document.body.style.top || '0') * -1;
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
+        if (savedScrollY) {
+          window.scrollTo(0, savedScrollY);
+        }
+        if (lenisInstance) {
+          lenisInstance.options.smoothWheel = true;
+          lenisInstance.start();
+        }
+      }
+    };
+  }, [trackingOrderNumber, showCaptchaModal, showMfaModal]);
+
+  useEffect(() => {
+    if (!trackingOrderNumber && !showCaptchaModal && !showMfaModal) return;
+
+    const modalBodies = document.querySelectorAll('.modal-body');
+    const lenisInstance = window.lenisInstance;
+    
+    if (lenisInstance) {
+      lenisInstance.options.smoothWheel = false;
+      lenisInstance.stop();
+    }
+    
+    const handleWheel = (e) => {
+      if (!e.currentTarget.classList.contains('modal-body')) return;
+      
+      const target = e.currentTarget;
+      const scrollAmount = e.deltaY;
+      const currentScroll = target.scrollTop;
+      const maxScroll = target.scrollHeight - target.clientHeight;
+      
+      const canScrollUp = currentScroll > 0;
+      const canScrollDown = currentScroll < maxScroll;
+      
+      if ((scrollAmount < 0 && canScrollUp) || (scrollAmount > 0 && canScrollDown)) { 
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        target.scrollTop += scrollAmount * 0.5;
+        e.preventDefault();
+        return false;
+      } else {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    };
+
+    modalBodies.forEach(body => {
+      body.addEventListener('wheel', handleWheel, { passive: false, capture: true });
+    });
+
+    return () => {
+      modalBodies.forEach(body => {
+        body.removeEventListener('wheel', handleWheel, { capture: true });
+      });
+      if (lenisInstance) {
+        lenisInstance.options.smoothWheel = true;
+        lenisInstance.start();
+      }
+    };
+  }, [trackingOrderNumber, showCaptchaModal, showMfaModal]);
 
   const openTrackingView = (orderNumber) => {
     const order = orders.find(o => o.orderNumber === orderNumber);
@@ -684,8 +777,14 @@ const Orders = () => {
           className="modal-overlay" 
           role="dialog"
           aria-modal="true"
+          data-lenis-prevent="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              closeTrackingView();
+            }
+          }}
         >
-          <div className="tracking-modal" role="document">
+          <div className="tracking-modal" role="document" onClick={(e) => e.stopPropagation()} data-lenis-prevent="true">
             
             <div className="modal-header">
               <div>
@@ -718,7 +817,7 @@ const Orders = () => {
               </button>
             </div>
 
-            <div className="modal-body">
+            <div className="modal-body" data-lenis-prevent="true">
               {modalTab === "tracking" && (
                 <>
                   <div className="timeline-section">
@@ -1012,8 +1111,9 @@ const Orders = () => {
           className="modal-overlay" 
           role="dialog"
           aria-modal="true"
+          data-lenis-prevent="true"
         >
-          <div className="modal-content" role="document">
+          <div className="modal-content" role="document" data-lenis-prevent="true">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -1029,7 +1129,7 @@ const Orders = () => {
                 <FiX />
               </button>
             </div>
-            <div className="modal-body">
+            <div className="modal-body" data-lenis-prevent="true">
               <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
                 <FiAlertTriangle style={{ marginRight: '8px', verticalAlign: 'middle' }} />
                 For security purposes, please complete the CAPTCHA verification and enter your password to submit this payment.
@@ -1102,8 +1202,9 @@ const Orders = () => {
           className="modal-overlay" 
           role="dialog"
           aria-modal="true"
+          data-lenis-prevent="true"
         >
-          <div className="modal-content" role="document">
+          <div className="modal-content" role="document" data-lenis-prevent="true">
             <div className="modal-header">
               <h3>
                 <FiLock />
@@ -1120,7 +1221,7 @@ const Orders = () => {
                 <FiX />
               </button>
             </div>
-            <div className="modal-body">
+            <div className="modal-body" data-lenis-prevent="true">
               <p style={{ color: '#e74c3c', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <FiAlertTriangle />
                 For security purposes, please confirm your password to submit this payment.
