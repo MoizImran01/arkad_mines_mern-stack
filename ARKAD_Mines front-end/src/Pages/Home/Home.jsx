@@ -373,8 +373,9 @@ const Home = () => {
             </h2>
             <div className="rule-anim section-rule" />
             <p className="fade-up">
-              We connect global extraction with local delivery, ensuring your
-              stone and mineral programs stay consistent from quarry to jobsite.
+            Streamlining procurement with a unified digital platform. Access real-time stock levels 
+    from our quarries, generate instant quotes, and track your orders from dispatch to 
+    delivery with total transparency
             </p>
           </div>
           <div className="intro-stats stagger-up">
