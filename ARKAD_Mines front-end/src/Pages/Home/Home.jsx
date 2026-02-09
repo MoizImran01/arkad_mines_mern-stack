@@ -280,14 +280,12 @@ const Home = () => {
         <div className="landing-container hero-grid">
           <div className="hero-copy">
             <div className="hero-eyebrow-mask">
-              <span className="hero-eyebrow-inner eyebrow">
-                Unearthing what&apos;s next
-              </span>
+            
             </div>
 
             <h1 className="hero-title">
               {hw(
-                'Engineered stone solutions for the world’s infrastructure.'
+                'Premium Stone & Minerals. Tracked from Quarry to Port.'
               )}
             </h1>
 
@@ -301,8 +299,7 @@ const Home = () => {
               </div>
               <div className="lede-mask">
                 <span className="hero-lede-line">
-                  Sustainable sourcing for construction, manufacturing, and
-                  energy.
+                Browse real-time inventory, and get instant B2B quotes.
                 </span>
               </div>
               <div className="lede-mask">
@@ -323,7 +320,7 @@ const Home = () => {
 
             <div className="hero-meta">
               <div>
-                <strong>50+ years</strong>
+                <strong>10+ years</strong>
                 <span>of combined mining expertise</span>
               </div>
               <div>
@@ -372,7 +369,7 @@ const Home = () => {
         <div className="landing-container intro-grid">
           <div className="intro-card">
             <h2 className="scroll-words st">
-              {scrollW('Arkad Mines at a glance')}
+              {scrollW("Pakistan's First Tech-Enabled Mineral Marketplace")}
             </h2>
             <div className="rule-anim section-rule" />
             <p className="fade-up">
@@ -390,12 +387,12 @@ const Home = () => {
               <p>Average turnaround from spec to shipment.</p>
             </div>
             <div className="stat su-item">
-              <h3>18 countries</h3>
-              <p>Global logistics and sourcing partnerships.</p>
+              <h3>4+ regions</h3>
+              <p>Operations across Pakistan.</p>
             </div>
             <div className="stat su-item">
-              <h3>12 labs</h3>
-              <p>Testing and compliance validation worldwide.</p>
+              <h3>24/7 Support</h3>
+              <p>For authorized users</p>
             </div>
           </div>
         </div>
@@ -480,45 +477,35 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="landing-podcasts">
-        <div className="landing-container">
-          <div className="section-header">
-            <span className="eyebrow fade-up">Arkad Insights</span>
-            <h2 className="scroll-words st">
-              {scrollW(
-                'Leadership conversations from the mineral supply chain.'
-              )}
-            </h2>
-            <div className="rule-anim section-rule" />
-          </div>
-          <div className="podcast-grid stagger-up">
-            <article className="podcast-card su-item">
-              <p className="podcast-series">Series 2, Episode 8</p>
-              <h3>Building resilient supply networks</h3>
-              <p>
-                A candid discussion on balancing sustainability with global
-                demand, featuring our head of operations.
-              </p>
-            </article>
-            <article className="podcast-card su-item">
-              <p className="podcast-series">Series 2, Episode 4</p>
-              <h3>Innovation in stone processing</h3>
-              <p>
-                Exploring precision finishing and quality metrics that drive
-                long-term performance.
-              </p>
-            </article>
-            <article className="podcast-card su-item">
-              <p className="podcast-series">Series 2, Episode 1</p>
-              <h3>Future-ready infrastructure materials</h3>
-              <p>
-                How engineered minerals are supporting next-generation building
-                standards worldwide.
-              </p>
-            </article>
-          </div>
-        </div>
-      </section>
+      <section className="landing-tech">
+  <div className="landing-container">
+    <div className="section-header">
+      <span className="eyebrow fade-up">Powered by Intelligence</span>
+      <h2 className="scroll-words st">
+        {scrollW('A modern stack for a traditional industry.')}
+      </h2>
+      {/* Added the separator line for consistency */}
+      <div className="rule-anim section-rule" />
+    </div>
+
+    <div className="offer-grid stagger-up"> 
+      <article className="offer-card su-item">
+        <h3>AI Forecasting</h3>
+        <p>Our predictive models optimize stock levels to ensure we always have what you need.</p>
+      </article>
+
+      <article className="offer-card su-item">
+        <h3>Instant B2B Quotes</h3>
+        <p>Get instant quotes for your projects in real-time.</p>
+      </article>
+
+      <article className="offer-card su-item">
+        <h3>Live Dashboards</h3>
+        <p>Real-time financial reporting and order status tracking for total transparency.</p>
+      </article>
+    </div>
+  </div>
+</section>
 
       <section className="landing-contact">
         <div className="landing-container contact-grid">
@@ -535,34 +522,34 @@ const Home = () => {
             <div className="contact-details fade-up">
               <div>
                 <strong>Head Office</strong>
-                <span>Dubai Industrial City, UAE</span>
+                <span>DHA Phase 6, Lahore, Pakistan</span>
               </div>
               <div>
                 <strong>Operations</strong>
-                <span>Jebel Ali Port &bull; Karachi &bull; Muscat</span>
+                <span>Jebel Ali Port &bull; Karachi &bull; Islamabad</span>
               </div>
               <div>
                 <strong>Email</strong>
-                <span>hello@arkadmines.com</span>
+                <span>arkadmines@gmail.com</span>
               </div>
             </div>
           </div>
           <form className="contact-form fade-up">
             <label>
               First name
-              <input type="text" placeholder="Ayesha" />
+              <input type="text" placeholder="Your first name" />
             </label>
             <label>
               Surname
-              <input type="text" placeholder="Khan" />
+              <input type="text" placeholder="Your last name" />
             </label>
             <label>
               Company name
-              <input type="text" placeholder="Arkad Materials Ltd." />
+              <input type="text" placeholder="Your company name" />
             </label>
             <label>
               Email address
-              <input type="email" placeholder="you@company.com" />
+              <input type="email" placeholder="Your email address" />
             </label>
             <label>
               How can we help?

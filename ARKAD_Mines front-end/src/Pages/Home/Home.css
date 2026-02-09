@@ -92,6 +92,7 @@
 .hero-eyebrow-inner {
   display: inline-block;
   will-change: transform;
+  font-size: 1.2rem;
 }
 
 .lede-mask {
@@ -155,6 +156,7 @@
 
 .hero-eyebrow-mask {
   margin-top: 0.5rem;
+  
 }
 
 .hero-title {
@@ -829,5 +831,35 @@
   *::after {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+
+.landing-tech {
+  padding: 7rem 0;
+  position: relative;
+  overflow: hidden;
+  background: #f5f7f5;  
+}
+
+.landing-tech::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(118, 192, 143, 0.08),
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+.landing-tech .offer-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 1024px) {
+  .landing-tech .offer-grid {
+    grid-template-columns: 1fr;
   }
 }
