@@ -12,7 +12,6 @@ import {
   Calendar,
   Package,
   MapPin,
-  DollarSign,
   FileText,
   Hash,
   Layers
@@ -170,7 +169,7 @@ const PurchaseOrdersList = () => {
           <div className="po-stat-info"><h3>{stats.received}</h3><p>Received</p></div>
         </div>
         <div className="po-stat-card">
-          <div className="po-stat-icon cost"><DollarSign /></div>
+          <div className="po-stat-icon cost rupee-icon">₨</div>
           <div className="po-stat-info"><h3>{formatCurrency(stats.totalCost)}</h3><p>Total Value</p></div>
         </div>
       </div>
@@ -355,7 +354,7 @@ const PurchaseOrdersList = () => {
               </div>
 
               <div className="po-detail-section">
-                <h4><DollarSign className="po-section-icon" /> Financial Summary</h4>
+                <h4><span className="po-section-icon rupee-icon">₨</span> Financial Summary</h4>
                 <div className="po-detail-grid">
                   {detailModal.stones && detailModal.stones.length > 0 ? (
                     <>

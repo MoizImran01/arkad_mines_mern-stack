@@ -114,21 +114,46 @@ const getOrderDetails = async (req, res) => {
 const getUserOrders = async (req, res) => {
   try {
     const userId = req.user.id; 
-    const { status } = req.query; 
+    const { 
+      status,
+      page = 1,
+      limit = 20
+    } = req.query; 
 
     const query = { buyer: userId };
     const validStatuses = ["draft", "confirmed", "dispatched", "delivered", "cancelled"];
     
-
     if (status && typeof status === 'string' && validStatuses.includes(status)) {
        query.status = String(status);
     }
+
+    // Pagination
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit) || 20)); // Max 50 per page for users
+    const skip = (pageNum - 1) * limitNum;
+
+    // Get total count
+    const totalCount = await orderModel.countDocuments(query);
     
     const orders = await orderModel.find(query)
       .populate("buyer", "companyName email phone") 
-      .sort({ createdAt: -1 });
+      .select('-paymentProofs -paymentTimeline -timeline') // Exclude large arrays for list view
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean(); // Use lean() for better performance
 
-    res.json({ success: true, orders, count: orders.length });
+    res.json({ 
+      success: true, 
+      orders, 
+      count: orders.length,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalCount,
+        pages: Math.ceil(totalCount / limitNum)
+      }
+    });
 
   } catch (error) {
     console.error("Error fetching user orders:", error);
@@ -138,22 +163,70 @@ const getUserOrders = async (req, res) => {
 
 const getAllOrders = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { 
+      status, 
+      page = 1, 
+      limit = 20, 
+      search,
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+    
     const query = {};
     const validStatuses = ["draft", "confirmed", "dispatched", "delivered", "cancelled"];
     
+    // Status filter
     if (status && typeof status === 'string') {
       const safeStatus = String(status).trim();
       if (validStatuses.includes(safeStatus)) query.status = String(safeStatus);
     }
 
+    // Search filter (orderNumber or buyer companyName/email)
+    if (search && typeof search === 'string' && search.trim().length > 0) {
+      const searchRegex = { $regex: search.trim(), $options: 'i' };
+      query.$or = [
+        { orderNumber: searchRegex },
+        { 'buyer.companyName': searchRegex },
+        { 'buyer.email': searchRegex }
+      ];
+    }
+
+    // Pagination
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20)); // Max 100 per page
+    const skip = (pageNum - 1) * limitNum;
+
+    // Sort options
+    const sortOptions = {};
+    const validSortFields = ['createdAt', 'orderNumber', 'financials.grandTotal', 'status'];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    sortOptions[sortField] = sortOrder === 'asc' ? 1 : -1;
+
+    // Get total count for pagination metadata
+    const totalCount = await orderModel.countDocuments(query);
+
+    // Fetch orders with pagination, select only needed fields
     const orders = await orderModel
       .find(query)
       .populate("buyer", "companyName email phone")
       .populate("quotation", "referenceNumber")
-      .sort({ createdAt: -1 });
+      .select('-paymentProofs -paymentTimeline -timeline') // Exclude large arrays for list view
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(limitNum)
+      .lean(); // Use lean() for better performance
 
-    res.json({ success: true, orders, count: orders.length });
+    res.json({ 
+      success: true, 
+      orders, 
+      count: orders.length,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalCount,
+        pages: Math.ceil(totalCount / limitNum)
+      }
+    });
 
   } catch (error) {
     console.error("Error fetching all orders:", error);

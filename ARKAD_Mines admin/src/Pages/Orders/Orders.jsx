@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import {
-  FiPackage, FiCheckCircle, FiXCircle, FiClock, FiDollarSign,
+  FiPackage, FiCheckCircle, FiXCircle, FiClock,
   FiUser, FiMapPin, FiPhone, FiCalendar, FiTruck, FiEdit2,
-  FiX, FiCheck, FiDownload, FiFileText, FiHome, FiBox, FiRefreshCw
+  FiX, FiCheck, FiDownload, FiFileText, FiHome, FiBox, FiRefreshCw,
+  FiChevronLeft, FiChevronRight
 } from 'react-icons/fi'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000"
@@ -32,6 +33,25 @@ const Orders = () => {
     reason: '' 
   })
   const [refreshing, setRefreshing] = useState(false)
+  
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    pages: 0
+  })
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [totalStats, setTotalStats] = useState({
+    total: 0,
+    draft: 0,
+    confirmed: 0,
+    dispatched: 0,
+    delivered: 0,
+    cancelled: 0,
+    revenue: 0
+  })
 
   // Status options for order model
   const statusOptions = [
@@ -58,17 +78,29 @@ const Orders = () => {
     return `${API_URL}/images/${imagePath}`
   }
 
-  // Fetch all orders from backend
-  const fetchAllOrders = async () => {
+  // Fetch all orders from backend with pagination
+  const fetchAllOrders = async (page = pagination.page, status = statusFilter, search = searchQuery) => {
     try {
       setLoading(true)
       setRefreshing(true)
       const token = localStorage.getItem('adminToken')
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
-      const response = await axios.get(`${API_URL}/api/orders/admin/all`, { headers })
+      
+      // Build query params
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pagination.limit.toString()
+      })
+      if (status) params.append('status', status)
+      if (search) params.append('search', search)
+      
+      const response = await axios.get(`${API_URL}/api/orders/admin/all?${params.toString()}`, { headers })
       
       if (response.data.success) {
         setOrders(response.data.orders)
+        if (response.data.pagination) {
+          setPagination(response.data.pagination)
+        }
       } else {
         toast.error("Error loading orders")
       }
@@ -78,6 +110,47 @@ const Orders = () => {
     } finally {
       setLoading(false)
       setRefreshing(false)
+    }
+  }
+
+  // Fetch total stats separately (lightweight query)
+  const fetchStats = async () => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      
+      // Fetch stats for each status
+      const [allRes, draftRes, confirmedRes, dispatchedRes, deliveredRes] = await Promise.all([
+        axios.get(`${API_URL}/api/orders/admin/all?limit=1`, { headers }),
+        axios.get(`${API_URL}/api/orders/admin/all?status=draft&limit=1`, { headers }),
+        axios.get(`${API_URL}/api/orders/admin/all?status=confirmed&limit=1`, { headers }),
+        axios.get(`${API_URL}/api/orders/admin/all?status=dispatched&limit=1`, { headers }),
+        axios.get(`${API_URL}/api/orders/admin/all?status=delivered&limit=1`, { headers })
+      ])
+      
+      // Calculate revenue from delivered orders
+      let totalRevenue = 0
+      try {
+        const revenueRes = await axios.get(`${API_URL}/api/orders/admin/all?status=delivered&limit=1000`, { headers })
+        if (revenueRes.data.orders && Array.isArray(revenueRes.data.orders)) {
+          totalRevenue = revenueRes.data.orders.reduce((sum, order) => {
+            return sum + (order.financials?.grandTotal || 0)
+          }, 0)
+        }
+      } catch (revenueError) {
+        console.error("Error fetching revenue:", revenueError)
+      }
+      
+      setTotalStats({
+        total: allRes.data.pagination?.total || 0,
+        draft: draftRes.data.pagination?.total || 0,
+        confirmed: confirmedRes.data.pagination?.total || 0,
+        dispatched: dispatchedRes.data.pagination?.total || 0,
+        delivered: deliveredRes.data.pagination?.total || 0,
+        revenue: totalRevenue
+      })
+    } catch (error) {
+      console.error("Error fetching stats:", error)
     }
   }
 
@@ -112,7 +185,7 @@ const Orders = () => {
           courierLink: '',
           notes: ''
         })
-        fetchAllOrders()
+        fetchAllOrders(pagination.page, statusFilter, searchQuery)
       } else {
         toast.error(response.data.message || "Failed to update order status")
       }
@@ -153,7 +226,7 @@ const Orders = () => {
           courierLink: '',
           notes: ''
         })
-        fetchAllOrders()
+        fetchAllOrders(pagination.page, statusFilter, searchQuery)
       } else {
         toast.error(response.data.message || "Failed to update payment status")
       }
@@ -176,7 +249,7 @@ const Orders = () => {
       
       if (response.data.success) {
         toast.success('Payment approved')
-        fetchAllOrders()
+        fetchAllOrders(pagination.page, statusFilter, searchQuery)
       } else {
         toast.error(response.data.message || 'Failed to approve payment')
       }
@@ -200,7 +273,7 @@ const Orders = () => {
       if (response.data.success) {
         toast.success('Payment rejected')
         setRejectModal({ show: false, orderId: null, proofIndex: null, reason: '' })
-        fetchAllOrders()
+        fetchAllOrders(pagination.page, statusFilter, searchQuery)
       } else {
         toast.error(response.data.message || 'Failed to reject payment')
       }
@@ -210,9 +283,39 @@ const Orders = () => {
     }
   }
 
+  // Fetch full order details when expanding
+  const fetchOrderDetails = async (orderId) => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const response = await axios.get(`${API_URL}/api/orders/details/${orderId}`, { headers })
+      
+      if (response.data.success && response.data.order) {
+        // Update the order in the list with full details
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order._id === orderId ? response.data.order : order
+          )
+        )
+      }
+    } catch (error) {
+      console.error("Error fetching order details:", error)
+      toast.error("Failed to load order details")
+    }
+  }
+
   // Helper functions
-  const toggleOrderExpand = (orderId) => {
-    setExpandedOrder(expandedOrder === orderId ? null : orderId)
+  const toggleOrderExpand = async (orderId) => {
+    if (expandedOrder === orderId) {
+      setExpandedOrder(null)
+    } else {
+      setExpandedOrder(orderId)
+      // Fetch full details if not already loaded
+      const order = orders.find(o => o._id === orderId)
+      if (order && !order.paymentProofs) {
+        await fetchOrderDetails(orderId)
+      }
+    }
   }
 
   const openStatusModal = (order) => {
@@ -277,23 +380,30 @@ const Orders = () => {
 
   // Initialize
   useEffect(() => {
-    fetchAllOrders()
+    fetchAllOrders(1, '', '')
+    fetchStats()
   }, [])
 
-  // Calculate stats
-  const stats = {
-    total: orders.length,
-    draft: orders.filter(o => o.status === 'draft').length,
-    confirmed: orders.filter(o => o.status === 'confirmed').length,
-    dispatched: orders.filter(o => o.status === 'dispatched').length,
-    delivered: orders.filter(o => o.status === 'delivered').length,
-    cancelled: orders.filter(o => o.status === 'cancelled').length,
-    revenue: orders.reduce((sum, order) => {
-      return (order.status === "dispatched" || order.status === "confirmed" || order.status === "delivered") 
-        ? sum + (order.financials?.grandTotal || 0) 
-        : sum
-    }, 0)
-  }
+  // Handle search with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery !== undefined) {
+        fetchAllOrders(1, statusFilter, searchQuery)
+        setPagination(prev => ({ ...prev, page: 1 }))
+      }
+    }, 500) // 500ms debounce
+    
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // Handle status filter change
+  useEffect(() => {
+    fetchAllOrders(1, statusFilter, searchQuery)
+    setPagination(prev => ({ ...prev, page: 1 }))
+  }, [statusFilter])
+
+  // Use totalStats instead of calculating from current page
+  const stats = totalStats
 
   if (loading) {
     return (
@@ -313,13 +423,34 @@ const Orders = () => {
             <h1>
               <FiPackage className="header-icon" /> Orders Management
             </h1>
-            <button className="refresh-btn header-refresh-btn" onClick={fetchAllOrders} disabled={refreshing || loading}>
+            <button className="refresh-btn header-refresh-btn" onClick={() => fetchAllOrders(pagination.page, statusFilter, searchQuery)} disabled={refreshing || loading}>
               <FiRefreshCw className={refreshing ? 'spin' : ''} />
               Refresh
             </button>
           </div>
           <p>Manage and track all customer orders</p>
         </div>
+      </div>
+
+      {/* Search and Filter Bar */}
+      <div className="orders-filters" style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <input
+          type="text"
+          placeholder="Search by order number, customer name, or email..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+        >
+          <option value="">All Statuses</option>
+          {statusOptions.map(option => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
       </div>
 
       {/* Statistics Cards */}
@@ -371,10 +502,10 @@ const Orders = () => {
         </div>
         <div className="stat-card">
           <div className="stat-icon revenue">
-PKR
+            ₨
           </div>
           <div className="stat-info">
-            <h3>{formatCurrency(stats.revenue)}</h3>
+            <h3 className="revenue-value">{formatCurrency(stats.revenue)}</h3>
             <p>Total Revenue</p>
           </div>
         </div>
@@ -897,6 +1028,57 @@ PKR
           </table>
         </div>
       </div>
+
+      {/* Pagination Controls */}
+      {pagination.pages > 1 && (
+        <div className="orders-pagination">
+          <div className="pagination-info">
+            <span>
+              Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} orders
+            </span>
+          </div>
+          <div className="pagination-controls">
+            <button
+              className="pagination-btn"
+              onClick={() => fetchAllOrders(pagination.page - 1, statusFilter, searchQuery)}
+              disabled={pagination.page === 1 || loading}
+            >
+              <FiChevronLeft /> Previous
+            </button>
+            <div className="pagination-numbers">
+              {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                let pageNum;
+                if (pagination.pages <= 5) {
+                  pageNum = i + 1;
+                } else if (pagination.page <= 3) {
+                  pageNum = i + 1;
+                } else if (pagination.page >= pagination.pages - 2) {
+                  pageNum = pagination.pages - 4 + i;
+                } else {
+                  pageNum = pagination.page - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    className={`pagination-number ${pagination.page === pageNum ? 'active' : ''}`}
+                    onClick={() => fetchAllOrders(pageNum, statusFilter, searchQuery)}
+                    disabled={loading}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              className="pagination-btn"
+              onClick={() => fetchAllOrders(pagination.page + 1, statusFilter, searchQuery)}
+              disabled={pagination.page === pagination.pages || loading}
+            >
+              Next <FiChevronRight />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Status Update Modal */}
       {statusModalOrder && (

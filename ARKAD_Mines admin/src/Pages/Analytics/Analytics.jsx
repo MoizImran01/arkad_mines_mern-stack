@@ -4,7 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { AdminAuthContext } from '../../context/AdminAuthContext';
-import { FiLock, FiX, FiAlertTriangle, FiDollarSign, FiClock, FiPackage, FiFileText, FiUsers, FiBox, FiTrendingUp, FiRefreshCw } from 'react-icons/fi';
+import { FiLock, FiX, FiAlertTriangle, FiClock, FiPackage, FiFileText, FiUsers, FiBox, FiTrendingUp, FiRefreshCw } from 'react-icons/fi';
 import './Analytics.css';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -1249,8 +1249,8 @@ const Analytics = () => {
       {/* Summary Cards */}
       <div className="summary-grid">
         <button type="button" className="summary-card revenue clickable" onClick={() => navigate('/orders')} title="View Orders">
-          <div className="card-icon">
-            <FiDollarSign />
+          <div className="card-icon rupee-icon">
+            ₨
           </div>
           <div className="card-content">
             <h3>Total Revenue</h3>

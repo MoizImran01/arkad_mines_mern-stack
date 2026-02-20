@@ -16,6 +16,8 @@ import {
   ChevronUp,
   Search
 } from 'lucide-react';
+import ForecastingAnalytics from './ForecastingAnalytics';
+import ForecastTrendChart from './ForecastTrendChart';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -306,6 +308,12 @@ const Forecasting = () => {
             />
           </div>
         )}
+
+        {/* Forecasting Analytics Charts */}
+        {!loading && <ForecastingAnalytics forecasts={forecasts} />}
+
+        {/* Forecast Trend Chart */}
+        {!loading && <ForecastTrendChart forecasts={forecasts} />}
 
         {/* Table */}
         <div className="forecast-table-wrapper">

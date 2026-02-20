@@ -565,6 +565,17 @@ textarea.cpo-form-input {
   width: 16px;
   height: 16px;
   color: #536438;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.cpo-total-icon.rupee-icon {
+  font-size: 1.1rem;
+  width: auto;
+  height: auto;
 }
 
 .cpo-total-label {

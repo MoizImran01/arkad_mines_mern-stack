@@ -11,7 +11,6 @@ import {
   Search,
   Package,
   Layers,
-  DollarSign,
   Hash,
   MapPin,
   RefreshCw
@@ -464,7 +463,7 @@ const CreatePurchaseOrder = () => {
                           />
                         </div>
                         <div className="cpo-stone-item-total">
-                          <DollarSign className="cpo-total-icon" />
+                          <span className="cpo-total-icon rupee-icon">₨</span>
                           <span className="cpo-total-label">Subtotal:</span>
                           <span className="cpo-total-value">
                             {stoneQuantities[stone._id] && stonePrices[stone._id]

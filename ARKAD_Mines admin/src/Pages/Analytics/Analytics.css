@@ -201,6 +201,11 @@
   min-width: 48px;
   min-height: 48px;
   transition: all 0.2s ease;
+  font-weight: 600;
+}
+
+.card-icon.rupee-icon {
+  font-size: 1.8rem;
 }
 
 .summary-card:hover .card-icon {

@@ -178,11 +178,17 @@
   justify-content: center;
   color: #fff;
   flex-shrink: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
 .po-stat-icon svg {
   width: 22px;
   height: 22px;
+}
+
+.po-stat-icon.rupee-icon {
+  font-size: 1.8rem;
 }
 
 .po-stat-icon.total    { background: linear-gradient(135deg, #536438, #6b8248); }
@@ -654,6 +660,17 @@
   width: 18px;
   height: 18px;
   color: #536438;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.po-section-icon.rupee-icon {
+  font-size: 1.2rem;
+  width: auto;
+  height: auto;
 }
 
 .po-detail-grid {
