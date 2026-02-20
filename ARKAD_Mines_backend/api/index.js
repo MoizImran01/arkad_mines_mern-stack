@@ -79,11 +79,8 @@ app.use("/api/forecasting", forecastingRouter);
 app.use("/api/procurement", procurementRouter);
 app.get("/", (req, res) => res.status(200).send(" Server running successfully"));
 
-// Export serverless handler for Vercel (default export)
-export default serverless(app);
-
-// Also export app for potential direct use
-export { app };
+// Vercel supports Express apps natively - export app directly
+export default app;
 
 if (!process.env.VERCEL) {
   const port = process.env.PORT || 4000;
