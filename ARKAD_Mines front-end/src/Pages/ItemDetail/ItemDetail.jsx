@@ -42,7 +42,6 @@ const ItemDetail = () => {
 
       try {
         const response = await axios.get(`${url}/api/stones/${id}`);
-        
         if (response.data.success) {
           setStone(response.data.stone);
         } else {
@@ -197,13 +196,14 @@ const ItemDetail = () => {
             </div>
 
             <div className="info-section">
-              <h3>Location</h3>
-              {stone.location ? (
-                <p>{stone.location}</p>
-              ) : (
-                <p className="no-data">Location not specified</p>
-              )}
+              <h3>Stone Type</h3>
+              <p>{stone.subcategory}</p>
             </div>
+            <div className="info-section">
+              <h3>Stone Category</h3>
+              <p>{stone.category}</p>
+            </div>
+
 
             <div className="info-section">
               <h3>Notes</h3>

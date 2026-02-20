@@ -6,6 +6,33 @@ import { toast } from 'react-toastify';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
+const STONE_NAMES = [
+  "Cheeta White",
+  "Chitral White",
+  "Diamond Blue",
+  "Imperial White",
+  "Jebrana",
+  "Pradeso",
+  "Sado Gray",
+  "Sado Pink",
+  "Tiger Gray",
+];
+
+const CATEGORIES = [
+  { value: "Marble", label: "Marble" },
+  { value: "Granite", label: "Granite" },
+];
+
+const SUBCATEGORIES = [
+  { value: "Slab", label: "Slab" },
+  { value: "Block", label: "Block" },
+  { value: "Crushed Stone", label: "Crushed Stone" },
+  { value: "Top Stripe", label: "Top Stripe" },
+  { value: "Top Plain", label: "Top Plain" },
+  { value: "Bottom Stripe", label: "Bottom Stripe" },
+  { value: "Bottom Plain", label: "Bottom Plain" },
+];
+
 export const AddProduct = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -14,9 +41,9 @@ export const AddProduct = () => {
     stoneName: "",
     dimensions: "",
     price: "",
-    priceUnit: "per sqm",
-    category: "chatral_white",
-    subcategory: "slabs",
+    priceUnit: "per ton",
+    category: "Marble",
+    subcategory: "Slab",
     stockAvailability: "In Stock",
     stockQuantity: "",
     location: "",
@@ -80,9 +107,9 @@ export const AddProduct = () => {
           stoneName: "",
           dimensions: "",
           price: "",
-          priceUnit: "per sqm",
-          category: "chatral_white",
-          subcategory: "slabs",
+          priceUnit: "per ton",
+          category: "Marble",
+          subcategory: "Slab",
           stockAvailability: "In Stock",
           stockQuantity: "",
           location: "",
@@ -122,13 +149,16 @@ export const AddProduct = () => {
 
         <div className="add-product-name flex-col">
           <p>Stone Name</p>
-          <input
-            type='text'
+          <select
             name='stoneName'
-            placeholder='e.g., Premium White Marble, Absolute Black Granite'
             onChange={handleDetailChange}
             value={productDetails.stoneName}
-          />
+          >
+            <option value="">Select Stone Name</option>
+            {STONE_NAMES.map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
         </div>
 
         <div className="add-product-dimensions flex-col">
@@ -150,17 +180,9 @@ export const AddProduct = () => {
               onChange={handleDetailChange}
               value={productDetails.category}
             >
-              <option value="chatral_white">Chatral White</option> 
-              <option value="cheeta_white">Cheeta White</option> 
-              <option value="pradeso">Pradeso</option> 
-              <option value="tiger_gray">Tiger Gray</option> 
-              <option value="imperial_white">Imperial White</option> 
-              <option value="fantasy">Fantasy</option> 
-              <option value="sado_pink">Sado Pink</option> 
-              <option value="jebrana">Jebrana</option> 
-              <option value="gray">Gray</option>
-              <option value="black">Black</option>
-              <option value="sado_gray">Sado Gray</option>
+              {CATEGORIES.map((cat) => (
+                <option key={cat.value} value={cat.value}>{cat.label}</option>
+              ))}
             </select>
           </div>
 
@@ -171,14 +193,9 @@ export const AddProduct = () => {
               onChange={handleDetailChange}
               value={productDetails.subcategory}
             >
-              <option value="slabs">Slabs</option>
-              <option value="tiles">Tiles</option>
-              <option value="blocks">Blocks</option>
-              <option value="crushed">Crushed Stone</option>
-              <option value="top_stripe">Top Stripe</option>
-              <option value="top_plain">Top Plain</option>
-              <option value="bottom_stripe">Bottom Stripe</option>
-              <option value="bottom_plain">Bottom Plain</option>
+              {SUBCATEGORIES.map((sub) => (
+                <option key={sub.value} value={sub.value}>{sub.label}</option>
+              ))}
             </select>
           </div>
 
@@ -200,11 +217,7 @@ export const AddProduct = () => {
               onChange={handleDetailChange}
               value={productDetails.priceUnit}
             >
-              <option value="per sqm">Per SQM</option>
               <option value="per ton">Per Ton</option>
-              <option value="per slab">Per Slab</option>
-              <option value="per block">Per Block</option>
-              <option value="per cubic meter">Per Cubic Meter</option>
             </select>
           </div>
         </div>

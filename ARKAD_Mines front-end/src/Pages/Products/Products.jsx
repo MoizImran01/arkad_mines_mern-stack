@@ -30,29 +30,19 @@ const Products = () => {
 
   const categories = [
     { value: 'all', label: 'All Categories' },
-    { value: 'chatral_white', label: 'Chatral White' },
-    { value: 'cheeta_white', label: 'Cheeta White' },
-    { value: 'pradeso', label: 'Pradeso' },
-    { value: 'tiger_gray', label: 'Tiger Gray' },
-    { value: 'imperial_white', label: 'Imperial White' },
-    { value: 'fantasy', label: 'Fantasy' },
-    { value: 'sado_pink', label: 'Sado Pink' },
-    { value: 'jebrana', label: 'Jebrana' },
-    { value: 'gray', label: 'Gray' },
-    { value: 'black', label: 'Black' },
-    { value: 'sado_gray', label: 'Sado Gray' }
+    { value: 'Marble', label: 'Marble' },
+    { value: 'Granite', label: 'Granite' },
   ];
 
   const subcategories = [
     { value: 'all', label: 'All Types' },
-    { value: 'slabs', label: 'Slabs' },
-    { value: 'tiles', label: 'Tiles' },
-    { value: 'blocks', label: 'Blocks' },
-    { value: 'crushed', label: 'Crushed Stone' },
-    { value: 'top_stripe', label: 'Top Stripe' },
-    { value: 'top_plain', label: 'Top Plain' },
-    { value: 'bottom_stripe', label: 'Bottom Stripe' },
-    { value: 'bottom_plain', label: 'Bottom Plain' }
+    { value: 'Slab', label: 'Slab' },
+    { value: 'Block', label: 'Block' },
+    { value: 'Crushed Stone', label: 'Crushed Stone' },
+    { value: 'Top Stripe', label: 'Top Stripe' },
+    { value: 'Top Plain', label: 'Top Plain' },
+    { value: 'Bottom Stripe', label: 'Bottom Stripe' },
+    { value: 'Bottom Plain', label: 'Bottom Plain' },
   ];
 
   const availabilityOptions = [

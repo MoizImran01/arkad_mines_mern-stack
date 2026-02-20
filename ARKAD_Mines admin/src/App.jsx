@@ -14,6 +14,9 @@ import Users from './Pages/Users/Users'
 import Dispatch from './Pages/Dispatch/Dispatch'
 import Quotations from './Pages/Quotations/Quotations'
 import Analytics from './Pages/Analytics/Analytics'
+import Forecasting from './Pages/Forecasting/Forecasting'
+import PurchaseOrdersList from './Pages/PurchaseOrders/PurchaseOrdersList'
+import CreatePurchaseOrder from './Pages/PurchaseOrders/CreatePurchaseOrder'
 
 const App = () => {
   const { token, adminUser, loading } = useContext(AdminAuthContext);
@@ -144,6 +147,45 @@ const App = () => {
               <div className="app-content">
                 <Siderbar/>
                 <Analytics/>
+              </div>
+            </>
+          </ProtectedRoute>
+        }/>
+        
+        <Route path="/purchase-orders" element={
+          <ProtectedRoute>
+            <>
+              <Navbar/>
+              <hr/>
+              <div className="app-content">
+                <Siderbar/>
+                <PurchaseOrdersList/>
+              </div>
+            </>
+          </ProtectedRoute>
+        }/>
+        
+        <Route path="/create-purchase-order" element={
+          <ProtectedRoute>
+            <>
+              <Navbar/>
+              <hr/>
+              <div className="app-content">
+                <Siderbar/>
+                <CreatePurchaseOrder/>
+              </div>
+            </>
+          </ProtectedRoute>
+        }/>
+        
+        <Route path="/forecasting" element={
+          <ProtectedRoute>
+            <>
+              <Navbar/>
+              <hr/>
+              <div className="app-content">
+                <Siderbar/>
+                <Forecasting/>
               </div>
             </>
           </ProtectedRoute>

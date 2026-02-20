@@ -82,7 +82,11 @@ const stonesSchema = new mongoose.Schema({
         quantityDispatched: Number,
         dispatchedAt: { type: Date, default: Date.now },
         orderNumber: String
-    }]
+    }],
+    markedForPO: {
+        type: Boolean,
+        default: false
+    }
 }, {
     timestamps: true
 });

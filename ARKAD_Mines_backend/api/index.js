@@ -12,7 +12,8 @@ import notificationRouter from "../Routes/NotificationRoutes/notificationRouter.
 import orderRouter from "../Routes/OrderRoutes/OrderRoutes.js";
 import documentRouter from "../Routes/DocumentRoutes/DocumentRoutes.js";
 import customerRouter from "../Routes/CustomerRoutes/customerRouter.js";
-
+import forecastingRouter from "../Routes/ForecastingRoute/ForecastingRoute.js";
+import procurementRouter from "../Routes/ProcurementRoute/ProcurementRoute.js";
 const app = express();
 
 // CORS allowed origins: CLIENT_URL plus localhost dev URLs.
@@ -74,10 +75,15 @@ app.use("/api/notifications", notificationRouter);
 app.use("/api/orders", orderRouter);
 app.use("/api/documents", documentRouter);
 app.use("/api/customers", customerRouter);
-
+app.use("/api/forecasting", forecastingRouter);
+app.use("/api/procurement", procurementRouter);
 app.get("/", (req, res) => res.status(200).send(" Server running successfully"));
 
-export default app;
+// Export serverless handler for Vercel (default export)
+export default serverless(app);
+
+// Also export app for potential direct use
+export { app };
 
 if (!process.env.VERCEL) {
   const port = process.env.PORT || 4000;

@@ -470,4 +470,69 @@ const filterStones = async (req, res) => {
     }
 }
 
-export { addStones, listStones, removeStones, dispatchBlock, getStoneById, getBlockByQRCode, filterStones };
+// Marks a stone for purchase order by SKU (stoneName + subcategory match)
+const markStoneForPO = async (req, res) => {
+    const clientIp = getClientIp(req);
+    try {
+        const { sku, stoneName, subcategory } = req.body;
+
+        if (!stoneName || !subcategory) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Stone name and subcategory are required' 
+            });
+        }
+
+        // Find stone by stoneName and subcategory (matching the forecasting data structure)
+        const stone = await stonesModel.findOne({ 
+            stoneName: stoneName,
+            subcategory: subcategory
+        });
+
+        if (!stone) {
+            logAudit({
+                userId: req.user?.id,
+                role: normalizeRole(req.user?.role),
+                action: 'MARK_STONE_FOR_PO',
+                status: 'FAILED_VALIDATION',
+                clientIp,
+                details: `Stone not found: stoneName=${stoneName}, subcategory=${subcategory}`
+            });
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Stone not found in database' 
+            });
+        }
+
+        stone.markedForPO = true;
+        await stone.save();
+
+        logAudit({
+            userId: req.user?.id,
+            role: normalizeRole(req.user?.role),
+            action: 'MARK_STONE_FOR_PO',
+            status: 'SUCCESS',
+            resourceId: stone._id.toString(),
+            clientIp,
+            details: `stoneName=${stoneName}, subcategory=${subcategory}, sku=${sku || 'N/A'}`
+        });
+
+        res.json({ 
+            success: true, 
+            message: 'Stone marked for purchase order',
+            stone: stone
+        });
+    } catch (error) {
+        logError(error, {
+            action: 'MARK_STONE_FOR_PO',
+            userId: req.user?.id,
+            clientIp
+        });
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error marking stone for PO' 
+        });
+    }
+}
+
+export { addStones, listStones, removeStones, dispatchBlock, getStoneById, getBlockByQRCode, filterStones, markStoneForPO };

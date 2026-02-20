@@ -1,5 +1,6 @@
 import express from "express"
-import { addStones, listStones, removeStones, dispatchBlock, getStoneById, getBlockByQRCode, filterStones } from "../../Controllers/stonesController/stonesController.js"
+import { addStones, listStones, removeStones, dispatchBlock, getStoneById, getBlockByQRCode, filterStones, markStoneForPO } from "../../Controllers/stonesController/stonesController.js"
+import stonesModel from "../../Models/stonesModel/stonesModel.js"
 import { upload } from "../../config/cloudinary.js"
 import { verifyToken, authorizeRoles } from "../../Middlewares/auth.js"
 import { createRateLimiter } from "../../Middlewares/genericRateLimiting.js"
@@ -28,6 +29,15 @@ stonesRouter.post("/dispatch", verifyToken, authorizeRoles('admin'), dispatchBlo
 
 stonesRouter.get("/list", listStones)
 stonesRouter.get("/filter", catalogRateLimiter.userLimiter, catalogRateLimiter.ipLimiter, filterStones)
+stonesRouter.get("/marked-for-po", verifyToken, authorizeRoles('admin'), async (req, res) => {
+    try {
+        const stones = await stonesModel.find({ markedForPO: true }).sort({ createdAt: -1 });
+        res.json({ success: true, stones });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error fetching marked stones' });
+    }
+})
+stonesRouter.post("/mark-for-po", verifyToken, authorizeRoles('admin'), markStoneForPO)
 stonesRouter.get("/qr/:qrCode", getBlockByQRCode)
 stonesRouter.get("/:id", catalogRateLimiter.userLimiter, catalogRateLimiter.ipLimiter, getStoneById)
 export default stonesRouter;
