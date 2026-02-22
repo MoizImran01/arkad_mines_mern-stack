@@ -47,7 +47,7 @@ const CreatePurchaseOrder = () => {
       // Fetch both marked stones and forecasting data
       const [stonesRes, forecastRes] = await Promise.all([
         axios.get(`${API_URL}/api/stones/marked-for-po`, { headers: authHeaders() }),
-        axios.get(`${API_URL}/api/forecasting/forecast`)
+        axios.get(`${API_URL}/api/forecasting/forecast`, { headers: authHeaders() })
       ]);
 
       if (stonesRes.data.success) {

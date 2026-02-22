@@ -125,7 +125,10 @@ const Forecasting = () => {
     else setLoading(true);
 
     try {
-      const response = await axios.get(`${API_URL}/api/forecasting/forecast`);
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.get(`${API_URL}/api/forecasting/forecast`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       const payload = response.data;
       const items = payload.forecasts || payload.data || [];
 

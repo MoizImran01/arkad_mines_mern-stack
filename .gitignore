@@ -28,3 +28,6 @@ npm-debug.log*
 
 ARKAD_Mines_backend/logs/
 ARKAD_Mines_backend/uploads/
+
+# Local STRIDE documentation (not for repo)
+STRIDE_IMPLEMENTATION_DOCS.txt
