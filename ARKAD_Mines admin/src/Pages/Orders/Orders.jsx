@@ -34,7 +34,6 @@ const Orders = () => {
   })
   const [refreshing, setRefreshing] = useState(false)
   
-  // Pagination state
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -53,7 +52,6 @@ const Orders = () => {
     revenue: 0
   })
 
-  // Status options for order model
   const statusOptions = [
     { value: 'draft', label: 'Draft', color: '#6b7280' },
     { value: 'confirmed', label: 'Confirmed', color: '#3b82f6' },
@@ -62,14 +60,12 @@ const Orders = () => {
     { value: 'cancelled', label: 'Cancelled', color: '#ef4444' }
   ]
 
-  // Payment status options
   const paymentStatusOptions = [
     { value: 'pending', label: 'Pending', color: '#f59e0b' },
     { value: 'payment_in_progress', label: 'Payment In Progress', color: '#3b82f6' },
     { value: 'fully_paid', label: 'Fully Paid', color: '#10b981' }
   ]
 
-  // Get image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/50?text=No+Image'
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
@@ -78,7 +74,6 @@ const Orders = () => {
     return `${API_URL}/images/${imagePath}`
   }
 
-  // Fetch all orders from backend with pagination
   const fetchAllOrders = async (page = pagination.page, status = statusFilter, search = searchQuery) => {
     try {
       setLoading(true)
@@ -86,7 +81,6 @@ const Orders = () => {
       const token = localStorage.getItem('adminToken')
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
       
-      // Build query params
       const params = new URLSearchParams({
         page: page.toString(),
         limit: pagination.limit.toString()
@@ -113,13 +107,11 @@ const Orders = () => {
     }
   }
 
-  // Fetch total stats separately (lightweight query)
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('adminToken')
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
       
-      // Fetch stats for each status
       const [allRes, draftRes, confirmedRes, dispatchedRes, deliveredRes] = await Promise.all([
         axios.get(`${API_URL}/api/orders/admin/all?limit=1`, { headers }),
         axios.get(`${API_URL}/api/orders/admin/all?status=draft&limit=1`, { headers }),
@@ -128,7 +120,6 @@ const Orders = () => {
         axios.get(`${API_URL}/api/orders/admin/all?status=delivered&limit=1`, { headers })
       ])
       
-      // Calculate revenue from delivered orders
       let totalRevenue = 0
       try {
         const revenueRes = await axios.get(`${API_URL}/api/orders/admin/all?status=delivered&limit=1000`, { headers })
@@ -154,7 +145,6 @@ const Orders = () => {
     }
   }
 
-  // Update order status
   const updateOrderStatus = async (orderId) => {
     try {
       if (statusForm.status === 'dispatched' && (!statusForm.courierService || !statusForm.trackingNumber)) {
@@ -195,7 +185,6 @@ const Orders = () => {
     }
   }
 
-  // Update payment status
   const updatePaymentStatus = async (orderId) => {
     try {
       if (!statusForm.paymentStatus) {
@@ -236,7 +225,6 @@ const Orders = () => {
     }
   }
 
-  // Approve a payment proof
   const approvePayment = async (orderId, proofIndex) => {
     try {
       const token = localStorage.getItem('adminToken')
@@ -259,7 +247,6 @@ const Orders = () => {
     }
   }
 
-  // Reject a payment proof
   const rejectPayment = async (orderId, proofIndex, rejectionReason) => {
     try {
       const token = localStorage.getItem('adminToken')
@@ -283,7 +270,6 @@ const Orders = () => {
     }
   }
 
-  // Fetch full order details when expanding
   const fetchOrderDetails = async (orderId) => {
     try {
       const token = localStorage.getItem('adminToken')
@@ -291,7 +277,6 @@ const Orders = () => {
       const response = await axios.get(`${API_URL}/api/orders/details/${orderId}`, { headers })
       
       if (response.data.success && response.data.order) {
-        // Update the order in the list with full details
         setOrders(prevOrders => 
           prevOrders.map(order => 
             order._id === orderId ? response.data.order : order
@@ -304,13 +289,11 @@ const Orders = () => {
     }
   }
 
-  // Helper functions
   const toggleOrderExpand = async (orderId) => {
     if (expandedOrder === orderId) {
       setExpandedOrder(null)
     } else {
       setExpandedOrder(orderId)
-      // Fetch full details if not already loaded
       const order = orders.find(o => o._id === orderId)
       if (order && !order.paymentProofs) {
         await fetchOrderDetails(orderId)
@@ -378,31 +361,27 @@ const Orders = () => {
     return `Rs ${(amount || 0).toLocaleString()}`
   }
 
-  // Initialize
   useEffect(() => {
     fetchAllOrders(1, '', '')
     fetchStats()
   }, [])
 
-  // Handle search with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery !== undefined) {
         fetchAllOrders(1, statusFilter, searchQuery)
         setPagination(prev => ({ ...prev, page: 1 }))
       }
-    }, 500) // 500ms debounce
+    }, 500) 
     
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  // Handle status filter change
   useEffect(() => {
     fetchAllOrders(1, statusFilter, searchQuery)
     setPagination(prev => ({ ...prev, page: 1 }))
   }, [statusFilter])
 
-  // Use totalStats instead of calculating from current page
   const stats = totalStats
 
   if (loading) {
@@ -735,7 +714,6 @@ const Orders = () => {
                                 <h4> Payment Timeline</h4>
                                 <div className="timeline">
                                   {order.paymentTimeline.map((entry, idx) => {
-                                    // Find corresponding payment proof if any
                                     const proofIndex = order.paymentProofs?.findIndex(p => 
                                       p.proofFile === entry.proofFile || 
                                       p.uploadedAt === entry.timestamp

@@ -15,17 +15,15 @@ export const createPurchaseOrder = async (req, res) => {
   try {
     const {
       supplierName,
-      stones, // Array of stones with quantities
-      stoneDetails, // Legacy: single stone
-      quantityOrdered, // Legacy
-      pricePerTon, // Legacy
+      stones, 
+      stoneDetails, 
+      quantityOrdered, 
+      pricePerTon,
       expectedDeliveryDate,
       notes
     } = req.body;
 
-    // Support both new multi-stone format and legacy single-stone format
     if (stones && Array.isArray(stones) && stones.length > 0) {
-      // New format: multiple stones
       if (!supplierName) {
         return res.status(400).json({ success: false, message: 'Supplier name is required' });
       }
@@ -44,7 +42,6 @@ export const createPurchaseOrder = async (req, res) => {
         const stoneCost = Number(stoneItem.quantityOrdered) * Number(stoneItem.pricePerTon);
         totalCost += stoneCost;
 
-        // Find the stone in database to get its ID
         const stone = await stonesModel.findOne({
           stoneName: stoneItem.stoneName,
           category: stoneItem.category,
@@ -61,7 +58,6 @@ export const createPurchaseOrder = async (req, res) => {
           suggestedQuantity: stoneItem.suggestedQuantity ? Number(stoneItem.suggestedQuantity) : undefined
         });
 
-        // Unmark the stone from PO list
         if (stone) {
           stone.markedForPO = false;
           await stone.save();
@@ -80,7 +76,6 @@ export const createPurchaseOrder = async (req, res) => {
       await po.save();
       res.json({ success: true, message: 'Purchase order created', purchaseOrder: po });
     } else {
-      // Legacy format: single stone
       if (!supplierName || !stoneDetails?.stoneName || !stoneDetails?.category || !stoneDetails?.subcategory || !quantityOrdered || !pricePerTon) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
       }

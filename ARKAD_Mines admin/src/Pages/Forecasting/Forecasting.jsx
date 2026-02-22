@@ -137,7 +137,7 @@ const Forecasting = () => {
         return;
       }
 
-      // Attach actual stock values from database
+      //Attach actual stock values from database
       const forecastsWithStock = await attachActualStock(items);
       setForecasts(forecastsWithStock);
       setLastUpdated(new Date());

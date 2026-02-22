@@ -1,8 +1,4 @@
-/* ================================================================
-   Purchase Orders List – matches Orders.css design language
-   ================================================================ */
 
-/* ── Loading ── */
 .po-loading-container {
   display: flex;
   flex-direction: column;
@@ -30,7 +26,6 @@
   animation: po-spin 1s linear infinite;
 }
 
-/* ── Container ── */
 .po-container {
   padding: 1.5rem;
   width: 100%;
@@ -41,7 +36,6 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* ── Header ── */
 .po-header {
   display: flex;
   flex-wrap: wrap;
@@ -143,7 +137,6 @@
   height: 18px;
 }
 
-/* ── Stats grid ── */
 .po-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -211,7 +204,6 @@
   margin: 0;
 }
 
-/* ── Search ── */
 .po-search-bar {
   position: relative;
   margin-bottom: 1.25rem;
@@ -251,7 +243,6 @@
   box-shadow: 0 0 0 3px rgba(83, 100, 56, 0.1);
 }
 
-/* ── Table ── */
 .po-table-container {
   background: #fff;
   border-radius: 12px;
@@ -303,7 +294,6 @@
   background-color: #f9fafb;
 }
 
-/* ── Cell styles ── */
 .po-number-cell {
   font-weight: 600;
   color: #536438;
@@ -422,7 +412,6 @@
   font-size: 13px;
 }
 
-/* ── Status dropdown ── */
 .po-status-select {
   appearance: none;
   -webkit-appearance: none;
@@ -482,7 +471,6 @@
   border-color: #fca5a5;
 }
 
-/* ── View button ── */
 .po-actions-cell {
   white-space: nowrap;
 }
@@ -513,7 +501,6 @@
   height: 16px;
 }
 
-/* ── Empty state ── */
 .po-empty-cell {
   padding: 3.5rem 1rem !important;
   text-align: center;
@@ -545,9 +532,6 @@
   margin: 0;
 }
 
-/* ================================================================
-   Modals (Detail + Create)
-   ================================================================ */
 .po-modal-overlay {
   position: fixed;
   top: 0;
@@ -628,7 +612,6 @@
   border-top: 1px solid #e5e7eb;
 }
 
-/* ── Detail sections ── */
 .po-detail-section {
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -727,7 +710,6 @@
   white-space: pre-wrap;
 }
 
-/* Multi-stone display in modal */
 .po-stones-list-modal {
   display: flex;
   flex-direction: column;
@@ -768,7 +750,6 @@
   }
 }
 
-/* ── Form controls ── */
 .po-form-group {
   display: flex;
   flex-direction: column;
@@ -825,7 +806,6 @@ textarea.po-form-input {
   margin-bottom: 1rem;
 }
 
-/* ── Modal buttons ── */
 .po-btn-primary {
   display: inline-flex;
   align-items: center;
@@ -876,7 +856,6 @@ textarea.po-form-input {
   background: #d1d5db;
 }
 
-/* ── Responsive ── */
 @media (max-width: 768px) {
   .po-container {
     padding: 1rem;

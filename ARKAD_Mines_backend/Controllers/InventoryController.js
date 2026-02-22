@@ -1,4 +1,3 @@
-// In your Express controllers/inventoryController.js
 import axios from 'axios';
 
 const FORECAST_API_URL = process.env.FORECASTING_API_URL || 'https://nonethereally-pushiest-coleman.ngrok-free.dev/api/forecast';

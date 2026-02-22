@@ -11,21 +11,19 @@ const List = () => {
 
   const [qrModal, setQrModal] = useState({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null });
 
-  // Get image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/100x100?text=No+Image';
-    // If it's already a full URL (Cloudinary), return as is
+    
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath;
     }
-    // Otherwise, construct local URL for legacy images
+    
     return `${API_URL}/images/${imagePath}`;
   };
 
 
   const fetchList = async ()=>{
       try{
-      //make GET request to fetch all stone items
       const response = await axios.get(`${API_URL}/api/stones/list`);
 
       if(response.data.success)
@@ -44,7 +42,6 @@ const List = () => {
       }
   }
 
-  //function to remove a specific stone item by its ID
   const removeStoneItem = async (stoneID)=>{
       try{
 

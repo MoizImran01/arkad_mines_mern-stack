@@ -17,30 +17,25 @@ const fmt = (n) => {
 };
 
 const ForecastTrendChart = ({ forecasts = [] }) => {
-  // Filter forecasts that have chart_data
   const forecastsWithChartData = useMemo(() => {
     return forecasts.filter((f) => f.chart_data && Array.isArray(f.chart_data) && f.chart_data.length > 0);
   }, [forecasts]);
 
-  // State for selected SKU
   const [selectedSku, setSelectedSku] = useState(() => {
     return forecastsWithChartData.length > 0 ? forecastsWithChartData[0].sku : '';
   });
 
-  // Get the selected forecast's chart data
   const selectedForecast = useMemo(() => {
     return forecastsWithChartData.find((f) => f.sku === selectedSku) || forecastsWithChartData[0];
   }, [forecastsWithChartData, selectedSku]);
 
   const chartData = selectedForecast?.chart_data || [];
 
-  // Custom tooltip
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const actualData = payload.find((p) => p.dataKey === 'actual');
       const forecastData = payload.find((p) => p.dataKey === 'forecast');
       
-      // Determine if this is historical or future data
       const isHistorical = actualData?.value !== null && actualData?.value !== undefined;
       
       return (
@@ -72,7 +67,6 @@ const ForecastTrendChart = ({ forecasts = [] }) => {
     return null;
   };
 
-  // Custom legend formatter
   const renderLegend = (props) => {
     const { payload } = props;
     return (

@@ -52,7 +52,6 @@ body {
   line-height: 1.5;
 }
 
-/* Loading */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -77,7 +76,6 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* Container */
 .orders-admin-container {
   padding: 1.5rem;
   width: 100%;
@@ -89,7 +87,6 @@ body {
   min-width: 0;
 }
 
-/* Header */
 .orders-header {
   margin-bottom: 2rem;
 }
@@ -174,7 +171,6 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* Stats Cards */
 .orders-stats {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -239,7 +235,6 @@ body {
   font-size: 0.875rem;
 }
 
-/* Table Container */
 .orders-refresh-section {
   display: flex;
   justify-content: flex-end;
@@ -258,7 +253,6 @@ body {
   margin-bottom: 1.5rem;
 }
 
-/* Pagination Controls */
 .orders-pagination {
   display: flex;
   justify-content: space-between;
@@ -413,7 +407,6 @@ body {
   background-color: var(--gray-50);
 }
 
-/* Table Cells */
 .order-id {
   font-weight: 600;
   color: var(--primary-color);
@@ -456,7 +449,6 @@ body {
 
 }
 
-/* Status Badges */
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -509,7 +501,6 @@ body {
   border: 1px solid var(--danger-light);
 }
 
-/* Payment Badges */
 .payment-badge {
   display: inline-flex;
   align-items: center;
@@ -545,7 +536,6 @@ body {
   border: 1px solid var(--danger-light);
 }
 
-/* Balance Badge */
 .balance-badge {
   display: inline-flex;
   align-items: center;
@@ -565,7 +555,6 @@ body {
   color: var(--success-color);
 }
 
-/* Buttons */
 .details-btn {
   background-color: var(--white);
   color: var(--primary-color);
@@ -608,7 +597,6 @@ body {
   transform: translateY(-1px);
 }
 
-/* Order Details */
 .order-details {
   padding: 1.5rem;
   background-color: var(--gray-50);
@@ -642,7 +630,6 @@ body {
   font-size: 1.25rem;
 }
 
-/* Grid Layouts */
 .details-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -666,7 +653,6 @@ body {
   color: var(--gray-700);
 }
 
-/* Order Items */
 .order-items {
   border: 1px solid var(--border-color);
   border-radius: var(--radius);
@@ -722,7 +708,6 @@ body {
   color: var(--dark-color);
 }
 
-/* Summary */
 .summary-details {
   max-width: 300px;
 }
@@ -747,7 +732,6 @@ body {
   border-top: 2px solid var(--border-color);
 }
 
-/* Timeline Sections - Clean White Design */
 .payment-timeline-section,
 .order-timeline-section {
   background: var(--white);
@@ -848,7 +832,6 @@ body {
   margin-top: 0.25rem !important;
 }
 
-/* Timeline Header with Status */
 .timeline-header {
   display: flex;
   justify-content: space-between;
@@ -856,7 +839,6 @@ body {
   margin-bottom: 0.5rem;
 }
 
-/* Action Buttons */
 .proof-actions {
   display: flex;
   gap: 0.5rem;
@@ -923,7 +905,6 @@ body {
   transform: translateY(-1px);
 }
 
-/* Payment Proof Status */
 .proof-status {
   padding: 0.125rem 0.5rem;
   border-radius: 9999px;
@@ -948,7 +929,6 @@ body {
   color: var(--danger-color);
 }
 
-/* Rejection Reason */
 .rejection-reason {
   background-color: var(--danger-light);
   border: 1px solid var(--danger-light);
@@ -966,7 +946,6 @@ body {
   font-size: 0.75rem;
 }
 
-/* Courier Section */
 .courier-section {
   background: var(--white);
   border: 1px solid var(--border-color);
@@ -995,7 +974,6 @@ body {
   text-decoration: underline;
 }
 
-/* Status Update Form */
 .status-update-section {
   background: var(--white);
   border: 1px solid var(--border-color);
@@ -1080,7 +1058,6 @@ textarea.form-control {
   transform: translateY(-1px);
 }
 
-/* Modal */
 .status-modal-overlay {
   position: fixed;
   top: 0;
@@ -1153,7 +1130,6 @@ textarea.form-control {
   flex-shrink: 0;
 }
 
-/* Empty State */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -1173,7 +1149,6 @@ textarea.form-control {
   text-align: center;
 }
 
-/* Icons */
 .info-icon {
   color: var(--gray-500);
   font-size: 0.875rem;
@@ -1184,7 +1159,6 @@ textarea.form-control {
   font-size: 1.5rem;
 }
 
-/* Help Text */
 .help-text {
   font-size: 0.75rem;
   color: var(--gray-500);
@@ -1192,14 +1166,12 @@ textarea.form-control {
   font-style: italic;
 }
 
-/* Payment Status Display */
 .payment-status-display {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .orders-admin-container {
     padding: 1rem;
@@ -1354,7 +1326,6 @@ textarea.form-control {
   }
 }
 
-/* Utility Classes */
 .highlight-red {
   color: var(--danger-color);
   font-weight: 600;
@@ -1365,7 +1336,6 @@ textarea.form-control {
   font-weight: 600;
 }
 
-/* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -1385,7 +1355,6 @@ textarea.form-control {
   background: var(--gray-500);
 }
 
-/* Selection */
 ::selection {
   background-color: rgba(83, 100, 56, 0.2);
   color: var(--dark-color);

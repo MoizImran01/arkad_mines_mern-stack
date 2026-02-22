@@ -18,7 +18,6 @@ import './ForecastingAnalytics.css';
 const fmt = (n) => Number(n).toFixed(2);
 
 const ForecastingAnalytics = ({ forecasts = [] }) => {
-  // Process data for Top Forecasted Demand (Bar Chart)
   const topDemandData = useMemo(() => {
     if (!forecasts.length) return [];
     
@@ -30,10 +29,9 @@ const ForecastingAnalytics = ({ forecasts = [] }) => {
       }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 7)
-      .reverse(); // Reverse for better bar chart display (lowest to highest)
+      .reverse();
   }, [forecasts]);
 
-  // Process data for Safety Stock vs Reorder Point (Grouped Bar Chart)
   const safetyStockReorderPointData = useMemo(() => {
     if (!forecasts.length) return [];
     
@@ -54,7 +52,6 @@ const ForecastingAnalytics = ({ forecasts = [] }) => {
       .reverse();
   }, [forecasts]);
 
-  // Process data for Category Purchasing Breakdown (Donut Chart)
   const categoryData = useMemo(() => {
     if (!forecasts.length) return [];
     
@@ -71,15 +68,13 @@ const ForecastingAnalytics = ({ forecasts = [] }) => {
     }));
   }, [forecasts]);
 
-  // Color palette for charts
   const COLORS = {
-    primary: '#4f46e5', // Indigo
-    safetyStock: '#f59e0b', // Amber/Yellow
-    reorderPoint: '#14b8a6', // Teal/Green
+    primary: '#4f46e5', 
+    safetyStock: '#f59e0b', 
+    reorderPoint: '#14b8a6', 
     category: ['#4f46e5', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1']
   };
 
-  // Custom tooltip for bar charts
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -97,7 +92,6 @@ const ForecastingAnalytics = ({ forecasts = [] }) => {
     return null;
   };
 
-  // Custom tooltip for pie chart
   const PieTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (

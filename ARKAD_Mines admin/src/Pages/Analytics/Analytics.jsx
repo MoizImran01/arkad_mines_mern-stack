@@ -9,7 +9,7 @@ import './Analytics.css';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-// Helper function for formatting numbers
+//formatting numbers
 const formatNumber = (num) => {
   if (num === undefined || num === null) return '0';
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -22,7 +22,7 @@ const formatCurrency = (num) => {
   return 'PKR ' + num.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
-// Improved Bar Chart with better sizing
+
 const BarChart = ({ data, dataKey, nameKey, fill, height = 300, expanded = false }) => {
   if (!data || data.length === 0) return <div className="no-data">No data available</div>;
   
@@ -117,7 +117,6 @@ BarChart.propTypes = {
   expanded: PropTypes.bool,
 };
 
-// Improved Pie Chart that handles single items
 const PieChart = ({ data, dataKey, nameKey, colors, size = 200, expanded = false }) => {
   if (!data || data.length === 0) return <div className="no-data">No data available</div>;
   
@@ -131,7 +130,6 @@ const PieChart = ({ data, dataKey, nameKey, colors, size = 200, expanded = false
   const innerRadius = radius * 0.5;
   const fontSize = expanded ? 14 : 11;
   
-  // Handle single item case (100%)
   if (data.length === 1) {
     return (
       <div className="pie-chart-container">
@@ -254,7 +252,6 @@ PieChart.propTypes = {
   expanded: PropTypes.bool,
 };
 
-// Improved Line Chart
 const LineChart = ({ data, dataKey, nameKey, stroke, height = 250, expanded = false }) => {
   if (!data || data.length === 0) return <div className="no-data">No data available</div>;
   
@@ -357,7 +354,6 @@ LineChart.propTypes = {
   expanded: PropTypes.bool,
 };
 
-// Improved Horizontal Bar Chart
 const HorizontalBarChart = ({ data, dataKey, nameKey, fill, height = 300, expanded = false }) => {
   if (!data || data.length === 0) return <div className="no-data">No data available</div>;
   
@@ -425,7 +421,6 @@ HorizontalBarChart.propTypes = {
   expanded: PropTypes.bool,
 };
 
-// Chart Modal Component
 const ChartModal = ({ isOpen, onClose, title, description, children }) => {
   if (!isOpen) return null;
   
@@ -462,7 +457,6 @@ ChartModal.propTypes = {
   children: PropTypes.node,
 };
 
-// Clickable Chart Card Component
 const ChartCard = ({ title, description, children, expandedContent, detailView, data }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -524,10 +518,8 @@ const Analytics = () => {
   const { token } = useContext(AdminAuthContext);
   const navigate = useNavigate();
 
-  // High-contrast color palette for pie charts
   const pieColors = ['#2d8659', '#e74c3c', '#3498db', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'];
   
-  // Distinct status colors with high contrast
   const statusColors = {
     draft: '#95a5a6',
     confirmed: '#3498db',
@@ -550,10 +542,9 @@ const Analytics = () => {
     refunded: '#e74c3c'
   };
 
-  // MFA Session Management - 30 minutes validity
-  const MFA_SESSION_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+  const MFA_SESSION_DURATION = 30 * 60 * 1000; 
   const MFA_SESSION_KEY = 'analytics_mfa_session';
-  const MFA_PASSWORD_KEY = 'analytics_mfa_password'; // Store password in localStorage to persist across navigations
+  const MFA_PASSWORD_KEY = 'analytics_mfa_password';
 
   const isMFASessionValid = () => {
     const sessionData = localStorage.getItem(MFA_SESSION_KEY);
@@ -564,7 +555,6 @@ const Analytics = () => {
       const now = Date.now();
       const isValid = (now - timestamp) < MFA_SESSION_DURATION;
       if (!isValid) {
-        // Clear expired session
         clearMFASession();
       }
       return isValid;
@@ -590,9 +580,6 @@ const Analytics = () => {
   const setMFASession = (password) => {
     const timestamp = Date.now();
     localStorage.setItem(MFA_SESSION_KEY, JSON.stringify({ timestamp }));
-    // Store password in localStorage to persist across page navigations
-    // Note: This is a security trade-off for UX - password is stored in plain text in localStorage
-    // In production, consider using a more secure approach like backend session tokens
     if (password) {
       localStorage.setItem(MFA_PASSWORD_KEY, password);
     }
@@ -604,7 +591,6 @@ const Analytics = () => {
   };
 
   useEffect(() => {
-    // Check MFA session before fetching
     if (isMFASessionValid()) {
       const storedPassword = getStoredPassword();
       if (storedPassword) {
@@ -620,14 +606,12 @@ const Analytics = () => {
   }, [token]);
 
   useEffect(() => {
-    // MFA modal visibility change - no action needed
   }, [showMFAModal]);
 
   const fetchAnalytics = async (passwordConfirmation = null, skipMFACheck = false) => {
     try {
       setLoading(true);
       
-      // If MFA session is valid and no password provided, try without password first
       if (!passwordConfirmation && !skipMFACheck && isMFASessionValid()) {
         console.log("MFA session valid, attempting request without password");
       }
@@ -648,12 +632,9 @@ const Analytics = () => {
           setShowMFAModal(false);
           setMfaPassword("");
         }
-        // Set MFA session after successful authentication
-        // Store the password so we can reuse it for subsequent requests
         if (passwordConfirmation) {
           setMFASession(passwordConfirmation);
         } else if (isMFASessionValid()) {
-          // If we used stored password and it worked, refresh the session timestamp
           const storedPassword = getStoredPassword();
           if (storedPassword) {
             setMFASession(storedPassword);
@@ -672,11 +653,9 @@ const Analytics = () => {
       if (error.response?.status === 429) {
         toast.error('Rate limit exceeded. Please wait before trying again.');
         setLoading(false);
-        // Don't show MFA modal for rate limit errors
         return;
       }
       
-      // Handle network errors or errors without response
       if (!error.response) {
         toast.error('Network error. Please check your connection.');
         setLoading(false);
@@ -705,8 +684,6 @@ const Analytics = () => {
       
       const hasPasswordProvided = passwordConfirmation && typeof passwordConfirmation === 'string' && passwordConfirmation.trim().length > 0;
       
-      // If MFA is required and we have a valid session but no password, clear session and show modal
-      // This handles the case where backend session expired but frontend session is still valid
       if (requiresMFA && !hasPasswordProvided) {
         if (isMFASessionValid()) {
           console.log("Backend requires MFA but frontend session valid - clearing session and showing modal");
@@ -724,7 +701,6 @@ const Analytics = () => {
       }
       
       if (error.response?.status === 401 && !hasPasswordProvided) {
-        // If we have a valid session but got 401, clear it and show modal
         if (isMFASessionValid()) {
           console.log("Got 401 with valid session - clearing session");
           clearMFASession();
@@ -735,13 +711,10 @@ const Analytics = () => {
         return;
       }
       
-      // Only show generic error if it's not an MFA/401 issue
       if (!requiresMFA && error.response?.status !== 401) {
         toast.error(responseData.message || 'Error fetching analytics');
       }
     } finally {
-      // Always set loading to false in finally block
-      // The MFA cases set it before returning, but this ensures it's always cleared
       setLoading(false);
     }
   };
@@ -754,10 +727,8 @@ const Analytics = () => {
     }
     setLoading(true);
     await fetchAnalytics(mfaPassword);
-    // Session will be set in fetchAnalytics if successful
   };
 
-  // Generate CSV data
   const generateCSVData = () => {
     if (!analytics) return '';
     
@@ -796,7 +767,6 @@ const Analytics = () => {
       ''
     ];
     
-    // Add remaining sections
     csv.push(
       '=== ORDER STATUS DISTRIBUTION ===',
       'Status,Count',
@@ -981,7 +951,6 @@ const Analytics = () => {
     toast.success('Report preview opened - use buttons to print or close');
   };
 
-  // Get CSV preview
   const getCSVPreview = () => {
     const csvData = generateCSVData();
     return csvData.split('\n').slice(0, 35).join('\n') + '\n... (more data below)';
@@ -1120,7 +1089,6 @@ const Analytics = () => {
   const weeklySalesPattern = analytics?.weeklySalesPattern || [];
   const stockStatus = analytics?.stockStatus || [];
 
-  // Transform data for charts
   const orderStatusData = orderStatusDistribution?.map(item => ({
     name: item._id || 'Unknown',
     value: item.count
@@ -1147,7 +1115,6 @@ const Analytics = () => {
     value: item.totalRevenue
   })) || [];
 
-  // Chart descriptions
   const chartDescriptions = {
     monthlySales: "Shows your total sales revenue month by month over the last 12 months. Helps identify seasonal trends and growth patterns.",
     topClients: "Displays your highest-value customers ranked by total purchase amount. Use this to identify and nurture key business relationships.",
@@ -1359,7 +1326,7 @@ const Analytics = () => {
                 <tbody>
                   {(monthlySales || []).map((sale, index) => {
                     const avgOrderValue = sale.orderCount > 0 ? (sale.totalSales || 0) / sale.orderCount : 0;
-                    // Format month display (e.g., "2024-01" -> "January 2024")
+                    
                     const monthDisplay = sale.month ? (() => {
                       const [year, month] = sale.month.split('-');
                       const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 
