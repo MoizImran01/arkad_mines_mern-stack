@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  GHCR_IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
 
 jobs:
   build-and-push-image:
@@ -29,26 +29,32 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      #BUILD BACKEND
+      # Build and push Backend (tag with sha for CD and latest)
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
           context: ./ARKAD_Mines_backend
           push: true
-          tags: ghcr.io/moizimran01/arkad-backend:latest
-          
-      #BUILD FRONTEND ---
+          tags: |
+            ${{ env.GHCR_IMAGE_PREFIX }}/backend:${{ github.sha }}
+            ${{ env.GHCR_IMAGE_PREFIX }}/backend:latest
+
+      # Build and push Frontend (production build; use relative /api in prod)
       - name: Build and push Frontend
         uses: docker/build-push-action@v5
         with:
           context: "./ARKAD_Mines front-end"
           push: true
-          tags: ghcr.io/moizimran01/arkad-frontend:latest
+          tags: |
+            ${{ env.GHCR_IMAGE_PREFIX }}/frontend:${{ github.sha }}
+            ${{ env.GHCR_IMAGE_PREFIX }}/frontend:latest
 
-      #BUILD ADMIN ---
+      # Build and push Admin (production build; use relative /api in prod)
       - name: Build and push Admin
         uses: docker/build-push-action@v5
         with:
-          context: "./ARKAD_Mines admin" 
+          context: "./ARKAD_Mines admin"
           push: true
-          tags: ghcr.io/moizimran01/arkad-admin:latest
+          tags: |
+            ${{ env.GHCR_IMAGE_PREFIX }}/admin:${{ github.sha }}
+            ${{ env.GHCR_IMAGE_PREFIX }}/admin:latest

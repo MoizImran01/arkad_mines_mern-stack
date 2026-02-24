@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-pvc
+  namespace: sproj-app
+spec:
+  accessModes:
+    - ReadWriteOnce  # The volume can be mounted as read/write by a single node.
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: oci-bv  # Refers to a block volume storage class in Oracle Cloud Kubernetes Engine (OKE)

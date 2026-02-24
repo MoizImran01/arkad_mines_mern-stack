@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-init-script
+  namespace: sproj-app
+data:
+  init-mongo.js: |
+    db = db.getSiblingDB("arkad_mines");
+
+    const collections = db.getCollectionNames();
+
+    if (!collections.includes("users")) {
+      db.createCollection("users");
+      print("Users collection created for arkad_mines");
+    } else {
+      print("Users collection already exists, skipping");
+    }

@@ -1,0 +1,139 @@
+name: CD - Deploy SPROJ to OKE
+
+on:
+  workflow_run:
+    workflows: ["CI-GHCR"]
+    types:
+      - completed
+
+permissions:
+  contents: read  # can read repository files (needed for checkout).
+  packages: read  # can pull Docker images from GitHub Container Registry.
+
+env:
+  GHCR_IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
+  IMAGE_TAG: ${{ workflow_run.head_sha }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ workflow_run.conclusion == 'success' }}
+
+    steps:
+      # 1️⃣ Checkout the repo
+      - uses: actions/checkout@v4
+
+      # 2️⃣ Install kubectl
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "v1.28.0"
+
+      # 3️⃣ Downloads and installs Oracle Cloud Infrastructure (OCI) CLI.
+      - name: Install OCI CLI
+        run: |
+          curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh | bash -s -- --accept-all-defaults
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      # 4️⃣ Configure OCI
+      - name: Configure OCI
+        run: |
+          mkdir -p ~/.oci
+          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
+
+          echo "[DEFAULT]" > ~/.oci/config
+          echo "user=${{ secrets.OCI_USER_OCID }}" >> ~/.oci/config
+          echo "fingerprint=${{ secrets.OCI_FINGERPRINT }}" >> ~/.oci/config
+          echo "tenancy=${{ secrets.OCI_TENANCY_OCID }}" >> ~/.oci/config
+          echo "region=${{ secrets.OCI_REGION }}" >> ~/.oci/config
+          echo "key_file=~/.oci/oci_api_key.pem" >> ~/.oci/config
+
+          chmod 600 ~/.oci/oci_api_key.pem
+
+      # 5️⃣ Generate kubeconfig for OKE. Required to run kubectl commands against your cluster.
+      - name: Get kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          oci ce cluster create-kubeconfig \
+            --cluster-id ${{ secrets.OKE_CLUSTER_OCID }} \
+            --file $HOME/.kube/config \
+            --region ${{ secrets.OCI_REGION }} \
+            --token-version 2.0.0 \
+            --kube-endpoint PUBLIC_ENDPOINT
+          chmod 600 $HOME/.kube/config
+      - name: Set KUBECONFIG environment
+        run: echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
+
+      # 6️⃣ Verify cluster connectivity
+      - name: Verify cluster connectivity
+        run: |
+          kubectl get nodes
+          kubectl get namespaces
+
+      # 7️⃣ Create namespace if not exists
+      - name: Create namespace
+        run: kubectl create namespace sproj-app || echo "Namespace exists"
+
+      # 8️⃣ Create GHCR pull secret
+      - name: Create image pull secret
+        run: |
+          kubectl create secret docker-registry ghcr-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ secrets.GHCR_USERNAME }} \
+            --docker-password=${{ secrets.GHCR_PAT }} \
+            -n sproj-app || echo "Secret exists"
+
+      # 9️⃣ Apply MongoDB PVC and init ConfigMap
+      - name: Apply MongoDB PVC
+        run: |
+          kubectl apply -f k8s/mongodb-pvc.yaml -n sproj-app
+      - name: Apply MongoDB init ConfigMap
+        run: |
+          kubectl apply -f k8s/mongo-init-script.yaml -n sproj-app
+
+      # 🔟 Deploy MongoDB
+      - name: Deploy MongoDB
+        run: |
+          kubectl apply -f k8s/mongodb-deployment.yaml -n sproj-app
+          kubectl apply -f k8s/mongodb-service.yaml -n sproj-app
+          kubectl rollout status deployment/mongodb -n sproj-app
+
+      # 1️⃣1️⃣ Deploy Backend
+      - name: Deploy Backend
+        run: |
+          kubectl apply -f k8s/backend-deployment.yaml -n sproj-app
+          kubectl set image deployment/backend backend=$GHCR_IMAGE_PREFIX/backend:${{ env.IMAGE_TAG }} -n sproj-app
+          kubectl rollout status deployment/backend -n sproj-app
+          kubectl apply -f k8s/backend-service.yaml -n sproj-app
+
+      # 1️⃣2️⃣ Deploy Frontend
+      - name: Deploy Frontend
+        run: |
+          kubectl apply -f k8s/frontend-deployment.yaml -n sproj-app
+          kubectl set image deployment/frontend frontend=$GHCR_IMAGE_PREFIX/frontend:${{ env.IMAGE_TAG }} -n sproj-app
+          kubectl rollout status deployment/frontend -n sproj-app
+          kubectl apply -f k8s/frontend-service.yaml -n sproj-app
+
+      # 1️⃣3️⃣ Deploy Admin
+      - name: Deploy Admin
+        run: |
+          kubectl apply -f k8s/admin-deployment.yaml -n sproj-app
+          kubectl set image deployment/admin admin=$GHCR_IMAGE_PREFIX/admin:${{ env.IMAGE_TAG }} -n sproj-app
+          kubectl rollout status deployment/admin -n sproj-app
+          kubectl apply -f k8s/admin-service.yaml -n sproj-app
+
+      # 1️⃣4️⃣ Install NGINX Ingress Controller (if not exists)
+      - name: Install NGINX Ingress Controller
+        run: |
+          kubectl get namespace ingress-nginx || \
+          kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.1/deploy/static/provider/cloud/deploy.yaml
+          kubectl wait --namespace ingress-nginx \
+            --for=condition=ready pod \
+            --selector=app.kubernetes.io/component=controller \
+            --timeout=180s
+
+      # 1️⃣5️⃣ Apply ingress
+      - name: Apply ingress
+        run: |
+          kubectl apply -f k8s/ingress.yaml -n sproj-app
+          kubectl get ingress -n sproj-app
