@@ -76,10 +76,10 @@ const handleSubmit = async (event) => {
         localStorage.setItem("userRole", user.role);
 
       if (user.role === "admin") {
-        window.location.href = import.meta.env.VITE_ADMIN_URL || "http://localhost:5174"; 
+        globalThis.location.href = import.meta.env.VITE_ADMIN_URL || "http://localhost:5174";
       } else {
-          window.location.href = "/";
-        }
+        globalThis.location.href = "/";
+      }
 
         setShowLogin(false);
         setFormData({ name: "", email: "", password: "" });
@@ -116,23 +116,19 @@ const handleSubmit = async (event) => {
         setCaptchaToken(null)
     }
 
-    const handleOverlayClick = (e) => {
-        if (e.target === e.currentTarget) {
-            setShowLogin(false);
-        }
-    };
+    const submitButtonLabel = currentState === "Sign Up" ? "Create Business Account" : "Login to Dashboard";
 
     return (
+        <dialog open className="login-overlay" aria-modal="true">
+            <button
+                type="button"
+                className="login-backdrop"
+                onClick={() => setShowLogin(false)}
+                aria-label="Close"
+            />
+            <div className="login-modal">
 
-        <div 
-            className='login-overlay' 
-            role="dialog"
-            aria-modal="true"
-            onClick={handleOverlayClick}
-        >
-            <div className='login-modal' role="document" onClick={(e) => e.stopPropagation()}>
-
-                <form onSubmit={handleSubmit} className='login-form'>
+                <form onSubmit={handleSubmit} className="login-form">
 
                     <div className="modal-header">
                         <div className="header-content">
@@ -223,15 +219,14 @@ const handleSubmit = async (event) => {
                     </div>
 
                     <button 
-                        type='submit' 
+                        type="submit" 
                         className={`submit-btn ${isLoading ? 'loading' : ''}`}
                         disabled={isLoading || !captchaToken}
                     >
-
                         {isLoading ? (
                             <div className="spinner"></div>
                         ) : (
-                            currentState === "Sign Up" ? "Create Business Account" : "Login to Dashboard"
+                            submitButtonLabel
                         )}
                     </button>
 
@@ -258,8 +253,8 @@ const handleSubmit = async (event) => {
                     </div>
                 </form>
             </div>
-        </div>
-    )
+        </dialog>
+    );
 }
 
 LoginPopup.propTypes = {

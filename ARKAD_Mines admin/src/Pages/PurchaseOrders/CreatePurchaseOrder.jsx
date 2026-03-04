@@ -320,42 +320,37 @@ const CreatePurchaseOrder = () => {
               {filteredStones.map((stone) => {
                 const isSelected = selectedStoneIds.has(stone._id);
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={stone._id}
-                    role="button"
-                    tabIndex={0}
                     className={`cpo-stone-card ${isSelected ? 'selected' : ''}`}
                     onClick={() => toggleStoneSelection(stone._id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        toggleStoneSelection(stone._id);
-                      }
-                    }}
                   >
-                    <div className="cpo-stone-checkbox">
+                    <span className="cpo-stone-checkbox">
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleStoneSelection(stone._id)}
                         onClick={(e) => e.stopPropagation()}
+                        aria-hidden="true"
+                        tabIndex={-1}
                       />
-                    </div>
-                    <div className="cpo-stone-content">
-                      <h3 className="cpo-stone-name">{stone.stoneName}</h3>
-                      <div className="cpo-stone-badges">
+                    </span>
+                    <span className="cpo-stone-content">
+                      <span className="cpo-stone-name">{stone.stoneName}</span>
+                      <span className="cpo-stone-badges">
                         <span className={`cpo-cat-badge ${stone.category === 'Marble' ? 'marble' : 'granite'}`}>
                           {stone.category}
                         </span>
                         <span className="cpo-sub-badge">{stone.subcategory}</span>
-                      </div>
+                      </span>
                       {(stone.dynamic_reorder_point || stone.suggested_po_quantity) && (
-                        <div className="cpo-suggested-qty">
+                        <span className="cpo-suggested-qty">
                           Suggested: {Math.ceil(stone.suggested_po_quantity || stone.dynamic_reorder_point)} Tons
-                        </div>
+                        </span>
                       )}
-                    </div>
-                  </div>
+                    </span>
+                  </button>
                 );
               })}
             </div>
@@ -365,12 +360,13 @@ const CreatePurchaseOrder = () => {
 
       {/* Create PO Modal */}
       {createModal && (
-        <dialog
-          className="cpo-modal-overlay"
-          open
-          aria-modal="true"
-          onClick={(e) => e.target === e.currentTarget && setCreateModal(false)}
-        >
+        <dialog className="cpo-modal-overlay" open aria-modal="true">
+          <button
+            type="button"
+            className="cpo-modal-backdrop"
+            onClick={() => setCreateModal(false)}
+            aria-label="Close modal"
+          />
           <div className="cpo-modal">
             <div className="cpo-modal-header">
               <h3>Create Purchase Order</h3>

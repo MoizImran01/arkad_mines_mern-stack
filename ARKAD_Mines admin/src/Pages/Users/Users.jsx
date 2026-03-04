@@ -5,8 +5,21 @@ import axios from 'axios'
 import { AdminAuthContext } from '../../context/AdminAuthContext'
 import { FiUser, FiMail, FiBriefcase, FiTrash2, FiShield, FiClock, FiFileText, FiPackage, FiDownload, FiX } from 'react-icons/fi'
 
-const Users = () => {
+const getRoleBadgeColor = (role) => {
+  switch (role) {
+    case 'admin': return 'role-admin';
+    case 'employee': return 'role-employee';
+    case 'customer': return 'role-customer';
+    default: return '';
+  }
+};
 
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [historyModalUserId, setHistoryModalUserId] = useState(null);
@@ -64,7 +77,7 @@ const Users = () => {
 
   const deleteUser = async (userId, userName) => {
 
-    if (!window.confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
+    if (!globalThis.confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
       return;
     }
 
@@ -86,29 +99,6 @@ const Users = () => {
       console.error("Error deleting user:", error);
       toast.error(error.response?.data?.message || "Error deleting user");
     }
-  };
-
-  const getRoleBadgeColor = (role) => {
-    switch (role) {
-      case 'admin':
-        return 'role-admin';
-      case 'employee':
-        return 'role-employee';
-      case 'customer':
-        return 'role-customer';
-      default:
-        return '';
-    }
-  };
-
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
   };
 
   const openHistoryModal = async (userId) => {
@@ -307,8 +297,9 @@ const Users = () => {
 
       {/* Customer History Modal */}
       {historyModalUserId && (
-        <div className="history-modal-overlay" onClick={closeHistoryModal}>
-          <div className="history-modal" onClick={e => e.stopPropagation()}>
+        <dialog open className="history-modal-overlay">
+          <button type="button" className="history-modal-backdrop" onClick={closeHistoryModal} aria-label="Close" />
+          <div className="history-modal">
             <div className="history-modal-header">
               <h2><FiClock /> Customer History</h2>
               <button type="button" className="history-modal-close" onClick={closeHistoryModal} aria-label="Close">
@@ -316,19 +307,20 @@ const Users = () => {
               </button>
             </div>
             <div className="history-modal-body">
-              {historyLoading ? (
+              {historyLoading && (
                 <div className="history-modal-loading">
                   <div className="spinner" />
                   <p>Loading...</p>
                 </div>
-              ) : historyData ? (
+              )}
+              {!historyLoading && historyData && (
                 <>
                   <div className="history-section">
                     <h3><FiUser /> Contact</h3>
                     <div className="history-contact">
-                      <p><strong>Company:</strong> {historyData.contact?.companyName || '—'}</p>
-                      <p><strong>Email:</strong> {historyData.contact?.email || '—'}</p>
-                      <p><strong>Role:</strong> {historyData.contact?.role || '—'}</p>
+                      <p><strong>Company:</strong> {historyData.contact?.companyName ?? '—'}</p>
+                      <p><strong>Email:</strong> {historyData.contact?.email ?? '—'}</p>
+                      <p><strong>Role:</strong> {historyData.contact?.role ?? '—'}</p>
                     </div>
                   </div>
                   <div className="history-section">
@@ -397,10 +389,10 @@ const Users = () => {
                     </button>
                   </div>
                 </>
-              ) : null}
+              )}
             </div>
           </div>
-        </div>
+        </dialog>
       )}
     </div>
   );

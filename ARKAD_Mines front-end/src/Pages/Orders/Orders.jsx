@@ -40,8 +40,9 @@ const Orders = () => {
   const [showCaptchaModal, setShowCaptchaModal] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
   const [captchaPassword, setCaptchaPassword] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
   const recaptchaRef = useRef(null);
-  
+
   const navigate = useNavigate();
 
   const ORDER_STATUSES = ["draft", "confirmed", "dispatched", "delivered", "cancelled"];
@@ -89,11 +90,11 @@ const Orders = () => {
 
   useEffect(() => {
     const hasModalOpen = trackingOrderNumber || showCaptchaModal || showMfaModal;
-    const lenisInstance = window.lenisInstance;
+    const lenisInstance = globalThis.lenisInstance;
     let scrollY = 0;
-    
+
     if (hasModalOpen) {
-      scrollY = window.scrollY;
+      scrollY = globalThis.scrollY;
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
       document.body.style.top = `-${scrollY}px`;
@@ -102,12 +103,12 @@ const Orders = () => {
         lenisInstance.options.smoothWheel = false;
       }
     } else {
-      const savedScrollY = parseInt(document.body.style.top || '0') * -1;
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
+      const savedScrollY = Number.parseInt(document.body.style.top || "0", 10) * -1;
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
       if (savedScrollY) {
-        window.scrollTo(0, savedScrollY);
+        globalThis.scrollTo(0, savedScrollY);
       }
       if (lenisInstance) {
         lenisInstance.options.smoothWheel = true;
@@ -117,12 +118,12 @@ const Orders = () => {
 
     return () => {
       if (!trackingOrderNumber && !showCaptchaModal && !showMfaModal) {
-        const savedScrollY = parseInt(document.body.style.top || '0') * -1;
-        document.body.style.position = '';
-        document.body.style.width = '';
-        document.body.style.top = '';
+        const savedScrollY = Number.parseInt(document.body.style.top || "0", 10) * -1;
+        document.body.style.position = "";
+        document.body.style.width = "";
+        document.body.style.top = "";
         if (savedScrollY) {
-          window.scrollTo(0, savedScrollY);
+          globalThis.scrollTo(0, savedScrollY);
         }
         if (lenisInstance) {
           lenisInstance.options.smoothWheel = true;
@@ -135,8 +136,8 @@ const Orders = () => {
   useEffect(() => {
     if (!trackingOrderNumber && !showCaptchaModal && !showMfaModal) return;
 
-    const modalBodies = document.querySelectorAll('.modal-body');
-    const lenisInstance = window.lenisInstance;
+    const modalBodies = document.querySelectorAll(".modal-body");
+    const lenisInstance = globalThis.lenisInstance;
     
     if (lenisInstance) {
       lenisInstance.options.smoothWheel = false;
@@ -619,30 +620,12 @@ const Orders = () => {
 
   const isStepCompleted = (currentStatus, stepStatus) => {
     const statusOrder = ["draft", "confirmed", "dispatched", "delivered"];
-    if (currentStatus === "cancelled") return false; 
-    
+    if (currentStatus === "cancelled") return false;
+
     const currentIndex = statusOrder.indexOf(currentStatus);
     const stepIndex = statusOrder.indexOf(stepStatus);
-    
+
     return currentIndex >= stepIndex;
-  };
-
-  const formatAddress = (deliveryAddress, buyer) => {
-    if (!deliveryAddress || !deliveryAddress.street) {
-      return null;
-    }
-
-    const parts = [];
-    parts.push(buyer?.companyName || "Customer");
-    
-    if (deliveryAddress.street) parts.push(deliveryAddress.street);
-    if (deliveryAddress.city) parts.push(deliveryAddress.city);
-    if (deliveryAddress.state) parts.push(deliveryAddress.state);
-    if (deliveryAddress.zipCode) parts.push(deliveryAddress.zipCode);
-    if (deliveryAddress.country) parts.push(deliveryAddress.country);
-    if (deliveryAddress.phone) parts.push(`Phone: ${deliveryAddress.phone}`);
-
-    return parts.join(", ");
   };
 
   if (!token) {
@@ -654,8 +637,6 @@ const Orders = () => {
       </div>
     );
   }
-
-  const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -749,8 +730,8 @@ const Orders = () => {
                   </td>
                   <td>Rs {order.financials?.grandTotal?.toLocaleString()}</td>
                   <td>
-                    <span className={`balance-badge ${order.outstandingBalance > 0 ? 'pending' : 'paid'}`}>
-                      Rs {(order.outstandingBalance || 0).toLocaleString()}
+                    <span className={`balance-badge ${(order.outstandingBalance ?? 0) > 0 ? "pending" : "paid"}`}>
+                      Rs {((order.outstandingBalance ?? 0)).toLocaleString()}
                     </span>
                   </td>
                   <td>
@@ -773,18 +754,9 @@ const Orders = () => {
       )}
 
       {trackingOrderNumber && trackingOrderDetails && (
-        <div 
-          className="modal-overlay" 
-          role="dialog"
-          aria-modal="true"
-          data-lenis-prevent="true"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              closeTrackingView();
-            }
-          }}
-        >
-          <div className="tracking-modal" role="document" onClick={(e) => e.stopPropagation()} data-lenis-prevent="true">
+        <dialog open className="modal-overlay" aria-modal="true" data-lenis-prevent="true">
+          <button type="button" className="modal-backdrop" onClick={closeTrackingView} aria-label="Close" />
+          <div className="tracking-modal" data-lenis-prevent="true">
             
             <div className="modal-header">
               <div>
@@ -922,7 +894,7 @@ const Orders = () => {
                     <h3><FiPackage /> Items ({trackingOrderDetails.items?.length || 0})</h3>
                     <div className="order-items-grid">
                       {trackingOrderDetails.items?.map((item, index) => (
-                        <div key={index} className="order-item">
+                        <div key={item._id ?? `item-${trackingOrderDetails._id}-${index}`} className="order-item">
                           <img src={item.image} alt={item.stoneName} className="order-item-image" />
                           <div className="order-item-info">
                             <div className="order-item-name">{item.stoneName}</div>
@@ -988,7 +960,7 @@ const Orders = () => {
                       </div>
                       <div className="payment-detail-card">
                         <span className="detail-label">Outstanding Balance:</span>
-                        <span className={`detail-value ${trackingOrderDetails.outstandingBalance > 0 ? 'highlight-red' : 'highlight-green'}`}>
+                        <span className={`detail-value ${(trackingOrderDetails.outstandingBalance ?? 0) > 0 ? "highlight-red" : "highlight-green"}`}>
                           Rs {(trackingOrderDetails.outstandingBalance || 0).toLocaleString()}
                         </span>
                       </div>
@@ -1045,28 +1017,25 @@ const Orders = () => {
                         </div>
                         <div className="payment-timeline">
                           {trackingOrderDetails.paymentTimeline.map((entry, idx) => (
-                            <div key={idx} className="payment-timeline-entry">
+                            <div key={`${entry.timestamp}-${entry.action ?? "payment"}-${idx}`} className="payment-timeline-entry">
                               <div className={`timeline-indicator ${entry.action}`} />
                               <div className="timeline-details">
                                 <strong>{entry.action?.replaceAll('_', ' ').toUpperCase()}</strong>
                                 <p className="timeline-date">{new Date(entry.timestamp).toLocaleDateString()}</p>
                                   {entry.amountPaid !== undefined && <p className="timeline-amount">Amount: Rs {entry.amountPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}
                                   <p className="timeline-notes">
-                                    {entry.action === 'payment_rejected' && entry.notes 
-                                      ? (entry.notes.includes('Reason:') 
-                                          ? entry.notes.split('Reason:')[1]?.trim() || 'N/A'
-                                          : entry.notes)
-                                      : (entry.notes || 'N/A')}
+                                    {entry.action === "payment_rejected" && entry.notes
+                                      ? (entry.notes.includes("Reason:") ? (entry.notes.split("Reason:")[1]?.trim() ?? "N/A") : entry.notes)
+                                      : (entry.notes ?? "N/A")}
                                   </p>
-                                  {entry.action === 'payment_rejected' && (
-                                    <div className="rejection-notice">
-                                      <strong>Rejection Reason:</strong> {
-                                        entry.notes && entry.notes.includes('Reason:')
-                                          ? entry.notes.split('Reason:')[1]?.trim() || 'N/A'
-                                          : (entry.notes || 'N/A')
-                                      }
-                                    </div>
-                                  )}
+                                  {entry.action === "payment_rejected" && (() => {
+                                    const rejectionReason = entry.notes?.includes("Reason:") ? (entry.notes.split("Reason:")[1]?.trim() ?? "N/A") : (entry.notes ?? "N/A");
+                                    return (
+                                      <div className="rejection-notice">
+                                        <strong>Rejection Reason:</strong> {rejectionReason}
+                                      </div>
+                                    );
+                                  })()}
                                   {entry.proofFile && (
                                     <button
                                       onClick={async () => {
@@ -1074,14 +1043,14 @@ const Orders = () => {
                                           const proofUrl = (entry.proofFile && entry.proofFile.toString().startsWith('http')) ? entry.proofFile : `${url}/images/${entry.proofFile}`;
                                           const response = await fetch(proofUrl);
                                           const blob = await response.blob();
-                                          const downloadUrl = window.URL.createObjectURL(blob);
-                                          const a = document.createElement('a');
+                                          const downloadUrl = globalThis.URL.createObjectURL(blob);
+                                          const a = document.createElement("a");
                                           a.href = downloadUrl;
-                                          a.download = `payment-invoice-${trackingOrderDetails.orderNumber}-${new Date(entry.timestamp).getTime()}.${blob.type.includes('png') ? 'png' : 'jpg'}`;
+                                          a.download = `payment-invoice-${trackingOrderDetails.orderNumber}-${new Date(entry.timestamp).getTime()}.${blob.type.includes("png") ? "png" : "jpg"}`;
                                           document.body.appendChild(a);
                                           a.click();
-                                          window.URL.revokeObjectURL(downloadUrl);
-                                          document.body.removeChild(a);
+                                          globalThis.URL.revokeObjectURL(downloadUrl);
+                                          a.remove();
                                         } catch (error) {
                                           console.error('Error downloading invoice:', error);
                                           toast.error('Failed to download payment invoice');
@@ -1103,17 +1072,13 @@ const Orders = () => {
               )}
             </div>
           </div>
-        </div>
+        </dialog>
       )}
 
       {showCaptchaModal && (
-        <div 
-          className="modal-overlay" 
-          role="dialog"
-          aria-modal="true"
-          data-lenis-prevent="true"
-        >
-          <div className="modal-content" role="document" data-lenis-prevent="true">
+        <dialog open className="modal-overlay" aria-modal="true" data-lenis-prevent="true">
+          <button type="button" className="modal-backdrop" onClick={() => { setShowCaptchaModal(false); setCaptchaToken(null); setCaptchaPassword(""); recaptchaRef.current?.reset(); setPendingPayment(null); }} aria-label="Close" />
+          <div className="modal-content" data-lenis-prevent="true">
             <div className="modal-header">
               <h3>
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -1194,17 +1159,13 @@ const Orders = () => {
               </form>
             </div>
           </div>
-        </div>
+        </dialog>
       )}
 
       {showMfaModal && (
-        <div 
-          className="modal-overlay" 
-          role="dialog"
-          aria-modal="true"
-          data-lenis-prevent="true"
-        >
-          <div className="modal-content" role="document" data-lenis-prevent="true">
+        <dialog open className="modal-overlay" aria-modal="true" data-lenis-prevent="true">
+          <button type="button" className="modal-backdrop" onClick={() => { setShowMfaModal(false); setMfaPassword(""); setPendingPayment(null); }} aria-label="Close" />
+          <div className="modal-content" data-lenis-prevent="true">
             <div className="modal-header">
               <h3>
                 <FiLock />
@@ -1271,7 +1232,7 @@ const Orders = () => {
               </form>
             </div>
           </div>
-        </div>
+        </dialog>
       )}
     </div>
   );
