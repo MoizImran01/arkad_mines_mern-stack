@@ -13,14 +13,22 @@ spec:
       labels:
         app: frontend
     spec:
+      automountServiceAccountToken: false
       imagePullSecrets:
         - name: ghcr-secret
       containers:
         - name: frontend
-          image: ghcr.io/arkad-mines/frontend:latest
-          imagePullPolicy: Always
+          image: ghcr.io/arkad-mines/frontend:1.0.0
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5173
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+              ephemeral-storage: "128Mi"
+            limits:
+              memory: "256Mi"
           env:
             - name: VITE_API_URL
               value: ""

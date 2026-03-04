@@ -13,14 +13,22 @@ spec:
       labels:
         app: backend
     spec:
+      automountServiceAccountToken: false
       imagePullSecrets:
         - name: ghcr-secret
       containers:
         - name: backend
-          image: ghcr.io/arkad-mines/backend:latest
-          imagePullPolicy: Always
+          image: ghcr.io/arkad-mines/backend:1.0.0
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4000
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+              ephemeral-storage: "256Mi"
+            limits:
+              memory: "512Mi"
           env:
             - name: MONGO_URI
               value: "mongodb://mongo-svc:27017/arkad_mines"
