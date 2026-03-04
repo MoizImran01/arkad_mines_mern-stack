@@ -6,7 +6,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  GHCR_IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
 
 jobs:
   build-and-push-image:
@@ -18,6 +17,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # OCI/GHCR requires lowercase repository names
+      - name: Set GHCR image prefix (lowercase)
+        run: echo "GHCR_IMAGE_PREFIX=ghcr.io/$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
