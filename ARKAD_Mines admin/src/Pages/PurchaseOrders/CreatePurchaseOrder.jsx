@@ -11,7 +11,6 @@ import {
   Search,
   Package,
   Layers,
-  Hash,
   MapPin,
   RefreshCw
 } from 'lucide-react';
@@ -323,8 +322,16 @@ const CreatePurchaseOrder = () => {
                 return (
                   <div
                     key={stone._id}
+                    role="button"
+                    tabIndex={0}
                     className={`cpo-stone-card ${isSelected ? 'selected' : ''}`}
                     onClick={() => toggleStoneSelection(stone._id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleStoneSelection(stone._id);
+                      }
+                    }}
                   >
                     <div className="cpo-stone-checkbox">
                       <input
@@ -358,8 +365,13 @@ const CreatePurchaseOrder = () => {
 
       {/* Create PO Modal */}
       {createModal && (
-        <div className="cpo-modal-overlay" role="dialog" aria-modal="true">
-          <div className="cpo-modal" role="document">
+        <dialog
+          className="cpo-modal-overlay"
+          open
+          aria-modal="true"
+          onClick={(e) => e.target === e.currentTarget && setCreateModal(false)}
+        >
+          <div className="cpo-modal">
             <div className="cpo-modal-header">
               <h3>Create Purchase Order</h3>
               <button className="cpo-modal-close" onClick={() => setCreateModal(false)}>
@@ -372,8 +384,9 @@ const CreatePurchaseOrder = () => {
               <div className="cpo-form-section">
                 <h4><MapPin className="cpo-section-icon" /> Supplier Information</h4>
                 <div className="cpo-form-group">
-                  <label>Supplier Name *</label>
+                  <label htmlFor="cpo-supplier-name">Supplier Name *</label>
                   <input
+                    id="cpo-supplier-name"
                     type="text"
                     className="cpo-form-input"
                     placeholder="e.g., Chitral Quarry Alpha"
@@ -384,8 +397,9 @@ const CreatePurchaseOrder = () => {
                 </div>
                 <div className="cpo-form-row">
                   <div className="cpo-form-group">
-                    <label>Expected Delivery Date</label>
+                    <label htmlFor="cpo-expected-delivery-date">Expected Delivery Date</label>
                     <input
+                      id="cpo-expected-delivery-date"
                       type="date"
                       className="cpo-form-input"
                       value={expectedDeliveryDate}
@@ -394,8 +408,9 @@ const CreatePurchaseOrder = () => {
                   </div>
                 </div>
                 <div className="cpo-form-group">
-                  <label>Notes</label>
+                  <label htmlFor="cpo-notes">Notes</label>
                   <textarea
+                    id="cpo-notes"
                     className="cpo-form-input"
                     rows="3"
                     placeholder="Phone call notes, agreed terms, etc."
@@ -429,8 +444,9 @@ const CreatePurchaseOrder = () => {
                       </div>
                       <div className="cpo-stone-item-fields">
                         <div className="cpo-form-group">
-                          <label>Quantity (Tons) *</label>
+                          <label htmlFor={`cpo-qty-${stone._id}`}>Quantity (Tons) *</label>
                           <input
+                            id={`cpo-qty-${stone._id}`}
                             type="number"
                             className="cpo-form-input"
                             placeholder="Enter quantity"
@@ -446,8 +462,9 @@ const CreatePurchaseOrder = () => {
                           />
                         </div>
                         <div className="cpo-form-group">
-                          <label>Price per Ton (Rs) *</label>
+                          <label htmlFor={`cpo-price-${stone._id}`}>Price per Ton (Rs) *</label>
                           <input
+                            id={`cpo-price-${stone._id}`}
                             type="number"
                             className="cpo-form-input"
                             placeholder="Enter price"
@@ -512,7 +529,7 @@ const CreatePurchaseOrder = () => {
               </button>
             </div>
           </div>
-        </div>
+        </dialog>
       )}
     </div>
   );

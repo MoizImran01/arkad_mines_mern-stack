@@ -32,13 +32,11 @@ export const validatePaymentFileSize = async (req, res, next) => {
     }
     
     const estimatedSize = estimateBase64Size(proofBase64);
-    const sizeMB = (estimatedSize / (1024 * 1024)).toFixed(2);
-    
-    console.log(`[FILE_SIZE_VALIDATION] Order: ${orderId}, Estimated size: ${sizeMB}MB, Limit: 5MB`);
-    
+
     if (estimatedSize > MAX_FILE_SIZE_BYTES) {
       const maxMB = (MAX_FILE_SIZE_BYTES / (1024 * 1024)).toFixed(2);
-      
+      const sizeMB = (estimatedSize / (1024 * 1024)).toFixed(2);
+
       await logAudit({
         userId: userId || null,
         role: normalizeRole(req.user?.role),
@@ -47,8 +45,7 @@ export const validatePaymentFileSize = async (req, res, next) => {
         resourceId: orderId,
         clientIp,
         userAgent,
-        requestPayload: { 
-          orderId,
+        requestPayload: {
           estimatedSizeMB: sizeMB,
           maxSizeMB: maxMB,
           base64Length: proofBase64?.length || 0
