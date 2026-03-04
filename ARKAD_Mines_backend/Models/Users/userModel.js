@@ -43,8 +43,11 @@ const userSchema = new mongoose.Schema({
     default: null
   }
 }, {
-  timestamps: true 
+  timestamps: true
 });
+
+// Text index for safe search on email and companyName (no RegExp from user input).
+userSchema.index({ email: "text", companyName: "text" });
 
 const userModel = mongoose.models.user || mongoose.model("user", userSchema);
 

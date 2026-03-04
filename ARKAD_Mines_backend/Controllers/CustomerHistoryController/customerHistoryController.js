@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import userModel from "../../Models/Users/userModel.js";
 import quotationModel from "../../Models/quotationModel/quotationModel.js";
 import orderModel from "../../Models/orderModel/orderModel.js";
@@ -17,16 +18,12 @@ export const searchCustomers = async (req, res) => {
         message: "Search query must be at least 2 characters",
       });
     }
-
-    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const searchRegex = new RegExp(escaped, "i");
+    // Use MongoDB $text search so we never build a RegExp from user input (ReDoS-safe).
+    const safeSearch = q.replaceAll('"', " ").trim().slice(0, 100);
     const users = await userModel
       .find({
         role: "customer",
-        $or: [
-          { email: searchRegex },
-          { companyName: searchRegex },
-        ],
+        $text: { $search: safeSearch },
       })
       .select("companyName email role _id")
       .limit(50)
@@ -61,7 +58,8 @@ export const getCustomerHistory = async (req, res) => {
       return res.status(400).json({ success: false, message: "No record" });
     }
 
-    const customer = await userModel.findById(customerId).select("-password").lean();
+    const customerObjectId = new mongoose.Types.ObjectId(customerId);
+    const customer = await userModel.findById(customerObjectId).select("-password").lean();
     if (!customer) {
       await logAudit({
         userId: req.user?.id,
@@ -77,8 +75,8 @@ export const getCustomerHistory = async (req, res) => {
     }
 
     const [quotations, orders] = await Promise.all([
-      quotationModel.find({ buyer: customerId }).sort({ createdAt: -1 }).limit(100).lean(),
-      orderModel.find({ buyer: customerId }).sort({ createdAt: -1 }).limit(100).lean(),
+      quotationModel.find({ buyer: customerObjectId }).sort({ createdAt: -1 }).limit(100).lean(),
+      orderModel.find({ buyer: customerObjectId }).sort({ createdAt: -1 }).limit(100).lean(),
     ]);
 
     const dto = toCustomerHistoryDTO(customer, quotations, orders);
@@ -113,14 +111,15 @@ export const exportCustomerHistory = async (req, res) => {
       return res.status(400).json({ success: false, message: "No record" });
     }
 
-    const customer = await userModel.findById(customerId).select("-password").lean();
+    const customerObjectId = new mongoose.Types.ObjectId(customerId);
+    const customer = await userModel.findById(customerObjectId).select("-password").lean();
     if (!customer) {
       return res.status(404).json({ success: false, message: "No record" });
     }
 
     const [quotations, orders] = await Promise.all([
-      quotationModel.find({ buyer: customerId }).sort({ createdAt: -1 }).lean(),
-      orderModel.find({ buyer: customerId }).sort({ createdAt: -1 }).lean(),
+      quotationModel.find({ buyer: customerObjectId }).sort({ createdAt: -1 }).lean(),
+      orderModel.find({ buyer: customerObjectId }).sort({ createdAt: -1 }).lean(),
     ]);
 
     if (format === "pdf") {
