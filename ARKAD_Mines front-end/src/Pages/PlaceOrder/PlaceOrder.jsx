@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState, useRef } from 'react';
 import { StoreContext } from '../../context/StoreContext';
+import { compressImage } from '../../utils/compressImage';
 import './PlaceOrder.css';
 import axios from "axios";
 import { useNavigate, useParams } from 'react-router-dom';
@@ -128,106 +129,8 @@ const PlaceOrder = () => {
 
     setPaymentSubmitting(true);
     let base64 = null;
-    
+
     try {
-      const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              let width = img.width;
-              let height = img.height;
-
-              const aspectRatio = width / height;
-              if (width > height) {
-                if (width > maxWidth) {
-                  width = maxWidth;
-                  height = Math.round(width / aspectRatio);
-                }
-              } else {
-                if (height > maxHeight) {
-                  height = maxHeight;
-                  width = Math.round(height * aspectRatio);
-                }
-              }
-
-              canvas.width = width;
-              canvas.height = height;
-
-              const ctx = canvas.getContext('2d');
-              ctx.imageSmoothingEnabled = true;
-              ctx.imageSmoothingQuality = 'medium';
-              ctx.drawImage(img, 0, 0, width, height);
-
-              canvas.toBlob(
-                (blob) => {
-                  if (!blob) {
-                    reject(new Error('Failed to create blob from canvas'));
-                    return;
-                  }
-                  
-                  if (blob.size > 3 * 1024 * 1024) {
-                    const img2 = new Image();
-                    img2.onload = () => {
-                      const canvas2 = document.createElement('canvas');
-                      canvas2.width = Math.round(width * 0.8);
-                      canvas2.height = Math.round(height * 0.8);
-                      const ctx2 = canvas2.getContext('2d');
-                      ctx2.drawImage(img2, 0, 0, canvas2.width, canvas2.height);
-                      canvas2.toBlob(
-                        (blob2) => {
-                          const reader2 = new FileReader();
-                          reader2.onload = () => {
-                            const dataUrl = reader2.result;
-                            if (dataUrl && dataUrl.startsWith('data:image/')) {
-                              resolve(dataUrl);
-                            } else {
-                              reject(new Error('Invalid data URL format'));
-                            }
-                          };
-                          reader2.onerror = reject;
-                          reader2.readAsDataURL(blob2);
-                        },
-                        'image/jpeg',
-                        0.5
-                      );
-                    };
-                    img2.src = e.target.result;
-                    return;
-                  }
-                  
-                  const reader = new FileReader();
-                  reader.onload = () => {
-                    const dataUrl = reader.result;
-                    if (dataUrl && dataUrl.startsWith('data:image/')) {
-                      resolve(dataUrl);
-                    } else {
-                      reject(new Error('Invalid data URL format'));
-                    }
-                  };
-                  reader.onerror = reject;
-                  reader.readAsDataURL(blob);
-                },
-                'image/jpeg',
-                quality
-              );
-            };
-            img.onerror = (error) => {
-              console.error('Image load error:', error);
-              reject(new Error('Failed to load image'));
-            };
-            img.src = e.target.result;
-          };
-          reader.onerror = (error) => {
-            console.error('FileReader error:', error);
-            reject(new Error('Failed to read file'));
-          };
-          reader.readAsDataURL(file);
-        });
-      };
-
       try {
         base64 = await compressImage(paymentProofFile);
         if (!base64 || !base64.startsWith('data:image/')) {
@@ -280,62 +183,6 @@ const PlaceOrder = () => {
         
         if (!base64 && paymentProofFile) {
           try {
-            const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
-              return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                  const img = new Image();
-                  img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const aspectRatio = width / height;
-                    if (width > height) {
-                      if (width > maxWidth) {
-                        width = maxWidth;
-                        height = Math.round(width / aspectRatio);
-                      }
-                    } else {
-                      if (height > maxHeight) {
-                        height = maxHeight;
-                        width = Math.round(height * aspectRatio);
-                      }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'medium';
-                    ctx.drawImage(img, 0, 0, width, height);
-                    canvas.toBlob(
-                      (blob) => {
-                        if (!blob) {
-                          reject(new Error('Failed to create blob'));
-                          return;
-                        }
-                        const reader2 = new FileReader();
-                        reader2.onload = () => {
-                          const dataUrl = reader2.result;
-                          if (dataUrl && dataUrl.startsWith('data:image/')) {
-                            resolve(dataUrl);
-                          } else {
-                            reject(new Error('Invalid data URL format'));
-                          }
-                        };
-                        reader2.onerror = reject;
-                        reader2.readAsDataURL(blob);
-                      },
-                      'image/jpeg',
-                      quality
-                    );
-                  };
-                  img.onerror = reject;
-                  img.src = e.target.result;
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-              });
-            };
             base64 = await compressImage(paymentProofFile);
           } catch (compressionError) {
             console.error('Error compressing image for CAPTCHA:', compressionError);
@@ -344,7 +191,7 @@ const PlaceOrder = () => {
             return;
           }
         }
-        
+
         const pendingData = {
           orderId: orderData._id,
           amountPaid: Number.parseFloat(numericAmount.toFixed(2)),
@@ -374,62 +221,6 @@ const PlaceOrder = () => {
         
         if (!base64 && paymentProofFile) {
           try {
-            const compressImage = (file, maxWidth = 1000, maxHeight = 1000, quality = 0.6) => {
-              return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                  const img = new Image();
-                  img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const aspectRatio = width / height;
-                    if (width > height) {
-                      if (width > maxWidth) {
-                        width = maxWidth;
-                        height = Math.round(width / aspectRatio);
-                      }
-                    } else {
-                      if (height > maxHeight) {
-                        height = maxHeight;
-                        width = Math.round(height * aspectRatio);
-                      }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'medium';
-                    ctx.drawImage(img, 0, 0, width, height);
-                    canvas.toBlob(
-                      (blob) => {
-                        if (!blob) {
-                          reject(new Error('Failed to create blob'));
-                          return;
-                        }
-                        const reader2 = new FileReader();
-                        reader2.onload = () => {
-                          const dataUrl = reader2.result;
-                          if (dataUrl && dataUrl.startsWith('data:image/')) {
-                            resolve(dataUrl);
-                          } else {
-                            reject(new Error('Invalid data URL format'));
-                          }
-                        };
-                        reader2.onerror = reject;
-                        reader2.readAsDataURL(blob);
-                      },
-                      'image/jpeg',
-                      quality
-                    );
-                  };
-                  img.onerror = reject;
-                  img.src = e.target.result;
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-              });
-            };
             base64 = await compressImage(paymentProofFile);
           } catch (compressionError) {
             console.error('Error compressing image for MFA:', compressionError);
@@ -438,7 +229,7 @@ const PlaceOrder = () => {
             return;
           }
         }
-        
+
         const pendingData = {
           orderId: orderData._id,
           amountPaid: Number.parseFloat(numericAmount.toFixed(2)),

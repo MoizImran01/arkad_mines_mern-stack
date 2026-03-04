@@ -542,18 +542,16 @@ const Analytics = () => {
     refunded: '#e74c3c'
   };
 
-  const MFA_SESSION_DURATION = 30 * 60 * 1000; 
-  const MFA_SESSION_KEY = 'analytics_mfa_session';
-  const MFA_PASSWORD_KEY = 'analytics_mfa_password';
+  const MFA_SESSION_DURATION_MS = 30 * 60 * 1000;
+  const MFA_VERIFIED_AT_KEY = 'analytics_mfa_verified_at';
 
   const isMFASessionValid = () => {
-    const sessionData = localStorage.getItem(MFA_SESSION_KEY);
+    const sessionData = localStorage.getItem(MFA_VERIFIED_AT_KEY);
     if (!sessionData) return false;
-    
     try {
       const { timestamp } = JSON.parse(sessionData);
       const now = Date.now();
-      const isValid = (now - timestamp) < MFA_SESSION_DURATION;
+      const isValid = (now - timestamp) < MFA_SESSION_DURATION_MS;
       if (!isValid) {
         clearMFASession();
       }
@@ -564,58 +562,24 @@ const Analytics = () => {
     }
   };
 
-  const getStoredPassword = () => {
-    if (!isMFASessionValid()) {
-      return null;
-    }
-    try {
-      const password = localStorage.getItem(MFA_PASSWORD_KEY);
-      return password;
-    } catch (error) {
-      console.error('Error getting stored password:', error);
-      return null;
-    }
-  };
-
-  const setMFASession = (password) => {
-    const timestamp = Date.now();
-    localStorage.setItem(MFA_SESSION_KEY, JSON.stringify({ timestamp }));
-    if (password) {
-      localStorage.setItem(MFA_PASSWORD_KEY, password);
-    }
+  const setMFASession = () => {
+    localStorage.setItem(MFA_VERIFIED_AT_KEY, JSON.stringify({ timestamp: Date.now() }));
   };
 
   const clearMFASession = () => {
-    localStorage.removeItem(MFA_SESSION_KEY);
-    localStorage.removeItem(MFA_PASSWORD_KEY);
+    localStorage.removeItem(MFA_VERIFIED_AT_KEY);
   };
 
   useEffect(() => {
-    if (isMFASessionValid()) {
-      const storedPassword = getStoredPassword();
-      if (storedPassword) {
-        console.log("MFA session is valid, using stored password for analytics");
-        fetchAnalytics(storedPassword, true);
-      } else {
-        console.log("MFA session expired or password not found, fetching without password");
-        fetchAnalytics();
-      }
-    } else {
-      fetchAnalytics();
-    }
+    fetchAnalytics();
   }, [token]);
 
   useEffect(() => {
   }, [showMFAModal]);
 
-  const fetchAnalytics = async (passwordConfirmation = null, skipMFACheck = false) => {
+  const fetchAnalytics = async (passwordConfirmation = null) => {
     try {
       setLoading(true);
-      
-      if (!passwordConfirmation && !skipMFACheck && isMFASessionValid()) {
-        console.log("MFA session valid, attempting request without password");
-      }
-      
       const params = {};
       if (passwordConfirmation && typeof passwordConfirmation === 'string') {
         params.passwordConfirmation = passwordConfirmation;
@@ -624,7 +588,7 @@ const Analytics = () => {
         headers: { Authorization: `Bearer ${token}` },
         params
       });
-      
+
       if (response.data.success) {
         setAnalytics(response.data.data);
         setLoading(false);
@@ -633,14 +597,8 @@ const Analytics = () => {
           setMfaPassword("");
         }
         if (passwordConfirmation) {
-          setMFASession(passwordConfirmation);
-        } else if (isMFASessionValid()) {
-          const storedPassword = getStoredPassword();
-          if (storedPassword) {
-            setMFASession(storedPassword);
-          }
+          setMFASession();
         }
-        console.log(response.data.data);
       } else {
         toast.error('Failed to fetch analytics');
         setLoading(false);
@@ -670,17 +628,6 @@ const Analytics = () => {
                            responseData.message.toLowerCase().includes('password') ||
                            responseData.message.toLowerCase().includes('confirm this action')
                          ));
-      
-      console.log("Error check:", {
-        status: error.response?.status,
-        requiresMFAFlag: responseData.requiresMFA,
-        requiresReauthFlag: responseData.requiresReauth,
-        message: responseData.message,
-        hasPassword: !!passwordConfirmation,
-        passwordConfirmation: passwordConfirmation,
-        requiresMFA: requiresMFA,
-        fullResponse: responseData
-      });
       
       const hasPasswordProvided = passwordConfirmation && typeof passwordConfirmation === 'string' && passwordConfirmation.trim().length > 0;
       
