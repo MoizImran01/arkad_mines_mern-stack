@@ -11,7 +11,7 @@ const addStones = async (req, res) => {
     try {
 
         if (req.fileError) {
-            logAudit({
+            await logAudit({
                 userId: req.user?.id,
                 role: normalizeRole(req.user?.role),
                 action: 'ADD_STONE',
@@ -24,7 +24,7 @@ const addStones = async (req, res) => {
         
 
         if (!req.file) {
-            logAudit({
+            await logAudit({
                 userId: req.user?.id,
                 role: normalizeRole(req.user?.role),
                 action: 'ADD_STONE',
@@ -39,7 +39,7 @@ const addStones = async (req, res) => {
         
         if (!image_url) {
             console.error('req.file structure:', JSON.stringify(req.file, null, 2));
-            logAudit({
+            await logAudit({
                 userId: req.user?.id,
                 role: normalizeRole(req.user?.role),
                 action: 'ADD_STONE',
@@ -101,7 +101,7 @@ const addStones = async (req, res) => {
 
         await stones.save();
         
-        logAudit({
+        await logAudit({
             userId: req.user?.id,
             role: normalizeRole(req.user?.role),
             action: 'ADD_STONE',
@@ -126,7 +126,7 @@ const addStones = async (req, res) => {
             details: `Error: ${error.message}, stack: ${error.stack?.substring(0, 200)}`
         });
         
-        logAudit({
+        await logAudit({
             userId: req.user?.id,
             role: normalizeRole(req.user?.role),
             action: 'ADD_STONE',
@@ -135,9 +135,9 @@ const addStones = async (req, res) => {
             details: `Unexpected error: ${error.message}`
         });
         
-        res.status(500).json({ 
-            success: false, 
-            message: "Failed to add stone. Please check server logs for details." 
+        res.status(500).json({
+            success: false,
+            message: "Failed to add stone. Please try again later."
         });
     }
 }
@@ -161,65 +161,73 @@ const listStones = async (req, res) => {
 const removeStones = async (req, res) => {
     const clientIp = getClientIp(req);
     try {
-        const stones = await stonesModel.findById(req.body.id); 
-        
-        if (!stones) {
-            logAudit({
+        const id = req.body?.id;
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+            await logAudit({
                 userId: req.user?.id,
                 role: normalizeRole(req.user?.role),
                 action: 'REMOVE_STONE',
                 status: 'FAILED_VALIDATION',
-                resourceId: req.body.id,
+                resourceId: id ?? null,
+                clientIp,
+                details: 'Invalid or missing stone id'
+            });
+            return res.status(400).json({ success: false, message: "Invalid stone id" });
+        }
+
+        const stones = await stonesModel.findById(id);
+
+        if (!stones) {
+            await logAudit({
+                userId: req.user?.id,
+                role: normalizeRole(req.user?.role),
+                action: 'REMOVE_STONE',
+                status: 'FAILED_VALIDATION',
+                resourceId: id,
                 clientIp,
                 details: 'Stone not found'
             });
             return res.json({ success: false, message: "Stone not found" });
         }
-        
-        await stonesModel.findByIdAndDelete(req.body.id);
-        
-        logAudit({
+
+        if (stones.image) {
+            const imagePublicId = getPublicIdFromUrl(stones.image);
+            if (imagePublicId) {
+                deleteImage(imagePublicId).catch(err => {
+                    console.log("Background: Error deleting image from Cloudinary:", err);
+                });
+            }
+        }
+        if (stones.qrCodeImage) {
+            const qrPublicId = getPublicIdFromUrl(stones.qrCodeImage);
+            if (qrPublicId) {
+                deleteImage(qrPublicId).catch(err => {
+                    console.log("Background: Error deleting QR code from Cloudinary:", err);
+                });
+            }
+        }
+
+        await stonesModel.findByIdAndDelete(id);
+
+        await logAudit({
             userId: req.user?.id,
             role: normalizeRole(req.user?.role),
             action: 'REMOVE_STONE',
             status: 'SUCCESS',
-            resourceId: req.body.id,
+            resourceId: id,
             clientIp,
             details: `stoneName=${stones.stoneName}, qrCode=${stones.qrCode}`
         });
-        
 
         res.json({ success: true, message: "Stone Removed" });
-
-
-        if (stones) {
-
-            if (stones.image) {
-                const imagePublicId = getPublicIdFromUrl(stones.image);
-                if (imagePublicId) {
-                    deleteImage(imagePublicId).catch(err => {
-                        console.log("Background: Error deleting image from Cloudinary:", err);
-                    });
-                }
-            }
-
-            if (stones.qrCodeImage) {
-                const qrPublicId = getPublicIdFromUrl(stones.qrCodeImage);
-                if (qrPublicId) {
-                    deleteImage(qrPublicId).catch(err => {
-                        console.log("Background: Error deleting QR code from Cloudinary:", err);
-                    });
-                }
-            }
-        }
     } catch (error) {
         logError(error, {
             action: 'REMOVE_STONE',
             userId: req.user?.id,
-            resourceId: req.body.id,
+            resourceId: req.body?.id,
             clientIp
         });
-        res.json({ success: false, message: "Error removing stone" });
+        res.status(500).json({ success: false, message: "Error removing stone" });
     }
 }
 
@@ -240,7 +248,7 @@ const dispatchBlock = async (req, res) => {
         });
         res.status(500).json({
             success: false,
-            message: "Error: " + error.message
+            message: "Error processing request"
         });
     }
 }
@@ -255,7 +263,7 @@ const getStoneById = async (req, res) => {
         const stone = await stonesModel.findById(id).select('-__v');
 
         if (!stone) {
-            logAudit({
+            await logAudit({
                 userId: req.user?.id || null,
                 role: req.user ? normalizeRole(req.user.role) : 'GUEST',
                 action: 'VIEW_ITEM_DETAILS',
@@ -276,7 +284,7 @@ const getStoneById = async (req, res) => {
             ? `viewed item=${id}, stoneName=${stone.stoneName}, qaNotesViewed=true, qaNotesLength=${stone.qaNotes.length}`
             : `viewed item=${id}, stoneName=${stone.stoneName}, qaNotesViewed=false`;
         
-        logAudit({
+        await logAudit({
             userId: req.user?.id || null,
             role: req.user ? normalizeRole(req.user.role) : 'GUEST',
             action: 'VIEW_ITEM_DETAILS',
@@ -331,7 +339,7 @@ const getBlockByQRCode = async (req, res) => {
         });
         res.status(500).json({
             success: false,
-            message: "Error fetching block: " + error.message
+            message: "Error fetching block"
         });
     }
 }
@@ -465,7 +473,7 @@ const filterStones = async (req, res) => {
         });
         res.status(500).json({
             success: false,
-            message: "Error filtering stones: " + error.message
+            message: "Error filtering stones"
         });
     }
 }
@@ -490,7 +498,7 @@ const markStoneForPO = async (req, res) => {
         });
 
         if (!stone) {
-            logAudit({
+            await logAudit({
                 userId: req.user?.id,
                 role: normalizeRole(req.user?.role),
                 action: 'MARK_STONE_FOR_PO',
@@ -507,7 +515,7 @@ const markStoneForPO = async (req, res) => {
         stone.markedForPO = true;
         await stone.save();
 
-        logAudit({
+        await logAudit({
             userId: req.user?.id,
             role: normalizeRole(req.user?.role),
             action: 'MARK_STONE_FOR_PO',

@@ -2,8 +2,7 @@ import userModel from "../../Models/Users/userModel.js";
 import quotationModel from "../../Models/quotationModel/quotationModel.js";
 import orderModel from "../../Models/orderModel/orderModel.js";
 import validator from "validator";
-import { logAudit, getClientIp, getUserAgent, normalizeRole } from "../../logger/auditLogger.js";
-import { logError } from "../../logger/auditLogger.js";
+import { logAudit, getClientIp, getUserAgent, normalizeRole, logError } from "../../logger/auditLogger.js";
 import { toCustomerHistoryDTO, toCustomerSearchResultDTO } from "../../Utils/DTOs/customerHistoryDTO.js";
 import { generateCustomerHistoryPDF } from "../../Utils/pdfGenerator.js";
 
