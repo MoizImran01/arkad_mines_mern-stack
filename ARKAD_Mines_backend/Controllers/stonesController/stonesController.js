@@ -344,137 +344,100 @@ const getBlockByQRCode = async (req, res) => {
     }
 }
 
+const VALID_STOCK_AVAILABILITY = ['in_stock', 'out_of_stock', 'low_stock'];
+
+function applyCategoryFilter(query, category) {
+    if (category && category !== 'all' && typeof category === 'string') {
+        query.category = String(category).trim();
+    }
+}
+
+function applySubcategoryFilter(query, subcategory) {
+    if (subcategory && subcategory !== 'all' && typeof subcategory === 'string') {
+        query.subcategory = String(subcategory).trim();
+    }
+}
+
+function applyPriceFilter(query, minPrice, maxPrice) {
+    if (!minPrice && !maxPrice) return;
+    query.price = {};
+    if (minPrice) {
+        const n = Number(minPrice);
+        if (!Number.isNaN(n) && n >= 0) query.price.$gte = n;
+    }
+    if (maxPrice) {
+        const n = Number(maxPrice);
+        if (!Number.isNaN(n) && n >= 0) query.price.$lte = n;
+    }
+}
+
+function applyStockFilter(query, stockAvailability) {
+    if (!stockAvailability || stockAvailability === 'all' || typeof stockAvailability !== 'string') return;
+    const safe = String(stockAvailability).trim();
+    if (VALID_STOCK_AVAILABILITY.includes(safe)) query.stockAvailability = safe;
+}
+
+function applyKeywordsFilter(query, keywords) {
+    if (!keywords || typeof keywords !== 'string' || keywords.trim().length === 0) return;
+    const safeSearch = keywords.trim().replaceAll('"', ' ').slice(0, 100);
+    query.$text = { $search: safeSearch };
+}
+
+function applySourceFilter(query, source, category) {
+    if (source && source !== 'all' && !category && typeof source === 'string') {
+        query.category = String(source).trim();
+    }
+}
+
+function buildFilterQuery(params) {
+    const query = {};
+    applyCategoryFilter(query, params.category);
+    applySubcategoryFilter(query, params.subcategory);
+    applyPriceFilter(query, params.minPrice, params.maxPrice);
+    applyStockFilter(query, params.stockAvailability);
+    applyKeywordsFilter(query, params.keywords);
+    applySourceFilter(query, params.source, params.category);
+    return query;
+}
+
+function getSortOptions(sortBy) {
+    const defaultSort = { createdAt: -1 };
+    const map = {
+        newest: { createdAt: -1 },
+        oldest: { createdAt: 1 },
+        price_low: { price: 1 },
+        price_high: { price: -1 },
+        name_asc: { stoneName: 1 },
+        name_desc: { stoneName: -1 }
+    };
+    const sortQuery = (sortBy && map[sortBy]) ? map[sortBy] : defaultSort;
+    const needsCaseInsensitiveSort = sortBy === 'name_asc' || sortBy === 'name_desc';
+    return { sortQuery, needsCaseInsensitiveSort, sortBy };
+}
+
+function sortStonesByName(stones, sortBy) {
+    if (sortBy !== 'name_asc' && sortBy !== 'name_desc') return stones;
+    return [...stones].sort((a, b) => {
+        const nameA = a.stoneName.toLowerCase();
+        const nameB = b.stoneName.toLowerCase();
+        return sortBy === 'name_asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+    });
+}
+
 // Filters stones by category, price, stock, keywords, sort; sanitizes query.
 const filterStones = async (req, res) => {
     try {
-        const {
-            category,
-            subcategory,
-            minPrice,
-            maxPrice,
-            stockAvailability,
-            keywords,
-            sortBy,
-            source
-        } = req.query;
+        const params = req.query;
+        const query = buildFilterQuery(params);
+        const { sortQuery, needsCaseInsensitiveSort, sortBy } = getSortOptions(params.sortBy);
 
-        let query = {};
+        let stones = await stonesModel.find(query).select('-__v').sort(sortQuery);
+        if (needsCaseInsensitiveSort) stones = sortStonesByName(stones, sortBy);
 
-        if (category && category !== 'all' && typeof category === 'string') {
-            query.category = String(category).trim();
-        }
-
-        if (subcategory && subcategory !== 'all' && typeof subcategory === 'string') {
-            query.subcategory = String(subcategory).trim();
-        }
-
-        if (minPrice || maxPrice) {
-            query.price = {};
-            if (minPrice) {
-                const minPriceNum = Number(minPrice);
-                if (!Number.isNaN(minPriceNum) && minPriceNum >= 0) {
-                    query.price.$gte = minPriceNum;
-                }
-            }
-            if (maxPrice) {
-                const maxPriceNum = Number(maxPrice);
-                if (!Number.isNaN(maxPriceNum) && maxPriceNum >= 0) {
-                    query.price.$lte = maxPriceNum;
-                }
-            }
-        }
-
-        const validStockAvailability = ['in_stock', 'out_of_stock', 'low_stock'];
-        if (stockAvailability && stockAvailability !== 'all' && typeof stockAvailability === 'string') {
-            const safeStockAvailability = String(stockAvailability).trim();
-            if (validStockAvailability.includes(safeStockAvailability)) {
-                query.stockAvailability = safeStockAvailability;
-            }
-        }
-
-        if (keywords && typeof keywords === 'string' && keywords.trim().length > 0) {
-            const safeKeywords = keywords.trim().slice(0, 50);
-            const escapedKeywords = safeKeywords.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regexQuery = { $regex: escapedKeywords, $options: 'i' };
-            query.$or = [
-                { stoneName: regexQuery },
-                { dimensions: regexQuery },
-                { category: regexQuery },
-                { subcategory: regexQuery }
-            ];
-        }
-
-        if (source && source !== 'all' && !category && typeof source === 'string') {
-            query.category = String(source).trim();
-        }
-
-
-        let sortQuery = {};
-        let needsCaseInsensitiveSort = false;
-        
-        if (sortBy) {
-            switch (sortBy) {
-                case 'newest':
-                    sortQuery.createdAt = -1; 
-                    break;
-                case 'oldest':
-                    sortQuery.createdAt = 1; 
-                    break;
-                case 'price_low':
-                    sortQuery.price = 1; 
-                    break;
-                case 'price_high':
-                    sortQuery.price = -1; 
-                    break;
-                case 'name_asc':
-                    sortQuery.stoneName = 1; 
-                    needsCaseInsensitiveSort = true;
-                    break;
-                case 'name_desc':
-                    sortQuery.stoneName = -1; 
-                    needsCaseInsensitiveSort = true;
-                    break;
-                default:
-                    sortQuery.createdAt = -1; 
-            }
-        } else {
-            sortQuery.createdAt = -1; 
-        }
-
-
-        let stones = await stonesModel.find(query)
-            .select('-__v')
-            .sort(sortQuery);
-
-
-        if (needsCaseInsensitiveSort) {
-            stones = stones.sort((a, b) => {
-                const nameA = a.stoneName.toLowerCase();
-                const nameB = b.stoneName.toLowerCase();
-                if (sortBy === 'name_asc') {
-                    return nameA.localeCompare(nameB);
-                } else if (sortBy === 'name_desc') {
-                    return nameB.localeCompare(nameA);
-                }
-                return 0;
-            });
-        }
-
-        res.json({
-            success: true,
-            count: stones.length,
-            stones: stones
-        });
+        res.json({ success: true, count: stones.length, stones });
     } catch (error) {
-        logError(error, {
-            action: 'FILTER_STONES',
-            userId: req.user?.id,
-            clientIp: getClientIp(req)
-        });
-        res.status(500).json({
-            success: false,
-            message: "Error filtering stones"
-        });
+        logError(error, { action: 'FILTER_STONES', userId: req.user?.id, clientIp: getClientIp(req) });
+        res.status(500).json({ success: false, message: "Error filtering stones" });
     }
 }
 
@@ -491,10 +454,12 @@ const markStoneForPO = async (req, res) => {
             });
         }
 
-        // Find stone by stoneName and subcategory (matching the forecasting data structure)
+        const safeStoneName = String(stoneName).trim().slice(0, 200);
+        const safeSubcategory = String(subcategory).trim().slice(0, 100);
+
         const stone = await stonesModel.findOne({ 
-            stoneName: stoneName,
-            subcategory: subcategory
+            stoneName: safeStoneName,
+            subcategory: safeSubcategory
         });
 
         if (!stone) {
@@ -504,7 +469,7 @@ const markStoneForPO = async (req, res) => {
                 action: 'MARK_STONE_FOR_PO',
                 status: 'FAILED_VALIDATION',
                 clientIp,
-                details: `Stone not found: stoneName=${stoneName}, subcategory=${subcategory}`
+                details: `Stone not found: stoneName=${safeStoneName}, subcategory=${safeSubcategory}`
             });
             return res.status(404).json({ 
                 success: false, 
@@ -522,7 +487,7 @@ const markStoneForPO = async (req, res) => {
             status: 'SUCCESS',
             resourceId: stone._id.toString(),
             clientIp,
-            details: `stoneName=${stoneName}, subcategory=${subcategory}, sku=${sku || 'N/A'}`
+            details: `stoneName=${safeStoneName}, subcategory=${safeSubcategory}, sku=${sku || 'N/A'}`
         });
 
         res.json({ 

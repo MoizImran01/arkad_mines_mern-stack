@@ -91,6 +91,14 @@ const stonesSchema = new mongoose.Schema({
     timestamps: true
 });
 
+// Text index for safe keyword search (no RegExp from user input).
+stonesSchema.index({
+    stoneName: "text",
+    dimensions: "text",
+    category: "text",
+    subcategory: "text"
+});
+
 const stonesModel = mongoose.models.stones || mongoose.model("stones", stonesSchema);
 
 export default stonesModel;
