@@ -37,7 +37,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./ARKAD_Mines_backend
-          file: Dockerfile.prod
+          file: ./ARKAD_Mines_backend/Dockerfile.prod
           push: true
           tags: |
             ${{ env.GHCR_IMAGE_PREFIX }}/backend:${{ github.sha }}
@@ -48,7 +48,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: "./ARKAD_Mines front-end"
-          file: Dockerfile.prod
+          file: "./ARKAD_Mines front-end/Dockerfile.prod"
           push: true
           tags: |
             ${{ env.GHCR_IMAGE_PREFIX }}/frontend:${{ github.sha }}
@@ -59,7 +59,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: "./ARKAD_Mines admin"
-          file: Dockerfile.prod
+          file: "./ARKAD_Mines admin/Dockerfile.prod"
           push: true
           tags: |
             ${{ env.GHCR_IMAGE_PREFIX }}/admin:${{ github.sha }}
