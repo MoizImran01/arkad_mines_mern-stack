@@ -11,12 +11,12 @@ permissions:
   packages: read  # can pull Docker images from GitHub Container Registry.
 
 env:
-  IMAGE_TAG: ${{ workflow_run.head_sha }}
+  IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: ${{ workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       # 1️⃣ Checkout the repo
