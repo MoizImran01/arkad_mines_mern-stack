@@ -124,6 +124,7 @@ jobs:
           kubectl set image deployment/admin admin=$GHCR_IMAGE_PREFIX/admin:${{ env.IMAGE_TAG }} -n sproj-app
           kubectl rollout status deployment/admin -n sproj-app
           kubectl apply -f k8s/admin-service.yaml -n sproj-app
+          kubectl apply -f k8s/admin-loadbalancer.yaml -n sproj-app
 
       # 1️⃣4️⃣ Install NGINX Ingress Controller (if not exists)
       - name: Install NGINX Ingress Controller
@@ -139,5 +140,4 @@ jobs:
       - name: Apply ingress
         run: |
           kubectl apply -f k8s/ingress.yaml -n sproj-app
-          kubectl apply -f k8s/admin-ingress.yaml -n sproj-app
           kubectl get ingress -n sproj-app
