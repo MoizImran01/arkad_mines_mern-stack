@@ -139,4 +139,5 @@ jobs:
       - name: Apply ingress
         run: |
           kubectl apply -f k8s/ingress.yaml -n sproj-app
+          kubectl apply -f k8s/admin-ingress.yaml -n sproj-app
           kubectl get ingress -n sproj-app
