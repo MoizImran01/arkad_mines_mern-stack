@@ -16,7 +16,7 @@ import forecastingRouter from "../Routes/ForecastingRoute/ForecastingRoute.js";
 import procurementRouter from "../Routes/ProcurementRoute/ProcurementRoute.js";
 const app = express();
 
-// CORS allowed origins: CLIENT_URL plus localhost dev URLs.
+// CORS allowed origins: CLIENT_URL plus localhost dev URLs and OKE deployment URLs.
 const configuredOrigins = process.env.CLIENT_URL 
   ? process.env.CLIENT_URL.split(',') 
   : [];
@@ -26,7 +26,11 @@ const localOrigins = [
   'http://localhost:5174',
   'http://localhost:4000'
 ];
-const allowedOrigins = [...configuredOrigins, ...localOrigins];
+const productionOrigins = [
+  'http://80.225.198.154',
+  'http://80.225.255.14'
+];
+const allowedOrigins = [...configuredOrigins, ...localOrigins, ...productionOrigins];
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
