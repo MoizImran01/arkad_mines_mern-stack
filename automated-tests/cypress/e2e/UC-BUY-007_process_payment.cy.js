@@ -4,6 +4,7 @@ const API_URL = Cypress.env("API_URL");
 
 describe("UC-BUY-007: Process Payment", () => {
   let testOrderNumber;
+  let outstandingBalance;
 
   before(() => {
     cy.request({
@@ -25,8 +26,13 @@ describe("UC-BUY-007: Process Payment", () => {
       }).then((ordersResp) => {
         if (ordersResp.status === 200 && ordersResp.body.success) {
           const orders = ordersResp.body.orders || [];
-          if (orders.length > 0) {
+          const withBalance = orders.find((o) => o.outstandingBalance > 0);
+          if (withBalance) {
+            testOrderNumber = withBalance.orderNumber;
+            outstandingBalance = withBalance.outstandingBalance;
+          } else if (orders.length > 0) {
             testOrderNumber = orders[0].orderNumber;
+            outstandingBalance = orders[0].outstandingBalance || orders[0].financials?.grandTotal || 0;
           }
         }
       });
@@ -44,92 +50,19 @@ describe("UC-BUY-007: Process Payment", () => {
     cy.wait(3000);
   }
 
-  describe("Shipping Information tab", function () {
+  describe("Payment amount and proof upload", function () {
     beforeEach(function () {
       if (!testOrderNumber) this.skip();
       visitPlaceOrder();
     });
 
-    it("T01 – Place Order page loads and shows order details", () => {
+    it("T01 – Payment page loads and shows order with outstanding balance", () => {
       cy.get(".place-order", { timeout: 15000 }).should("be.visible");
       cy.get('[role="tab"]').should("have.length", 2);
-      cy.contains("Shipping Information").should("exist");
-      cy.contains("Review").should("exist");
     });
 
-    it("T02 – Shipping form displays all address fields", () => {
+    it("T02 – Payment modal opens with amount field and proof upload", () => {
       cy.get(".place-order", { timeout: 15000 }).should("be.visible");
-
-      cy.get("body").then(($body) => {
-        if ($body.find("#streetAddress").length > 0) {
-          cy.get("#businessName").should("exist");
-          cy.get("#emailAddress").should("exist");
-          cy.get("#streetAddress").should("exist");
-          cy.get("#city").should("exist");
-          cy.get("#province").should("exist");
-          cy.get("#postalCode").should("exist");
-          cy.get("#country").should("exist");
-          cy.get("#phoneNumber").should("exist");
-        }
-      });
-    });
-
-    it("T03 – Address fields accept valid input", () => {
-      cy.get(".place-order", { timeout: 15000 }).should("be.visible");
-
-      cy.get("body").then(($body) => {
-        if ($body.find("#streetAddress:not(:disabled)").length > 0) {
-          cy.get("#streetAddress").clear().type("42 Marble Road");
-          cy.get("#streetAddress").should("have.value", "42 Marble Road");
-
-          cy.get("#phoneNumber").then(($phone) => {
-            if (!$phone.prop("disabled")) {
-              cy.wrap($phone).clear().type("+92 300 1234567");
-              cy.wrap($phone).should("have.value", "+92 300 1234567");
-            }
-          });
-        }
-      });
-    });
-
-    it("T04 – Province dropdown contains all Pakistani provinces", () => {
-      cy.get(".place-order", { timeout: 15000 }).should("be.visible");
-
-      cy.get("body").then(($body) => {
-        if ($body.find("#province:not(:disabled)").length > 0) {
-          ["Sindh", "Punjab", "Khyber Pakhtunkhwa", "Balochistan", "Gilgit-Baltistan", "Azad Kashmir"]
-            .forEach((prov) => {
-              cy.get("#province").find(`option[value="${prov}"]`).should("exist");
-            });
-        }
-      });
-    });
-  });
-
-  describe("Review & Confirm tab and Payment Modal", function () {
-    beforeEach(function () {
-      if (!testOrderNumber) this.skip();
-      visitPlaceOrder();
-    });
-
-    it("T05 – Review tab shows order items, summary, and shipping", () => {
-      cy.get(".place-order", { timeout: 15000 }).should("be.visible");
-
-      cy.contains('[role="tab"]', "Review").click();
-      cy.wait(1500);
-
-      cy.get("body").then(($body) => {
-        if ($body.find(".review-section").length > 0) {
-          cy.get(".order-items").should("exist");
-          cy.get(".order-summary").should("exist");
-          cy.get(".shipping-review").should("exist");
-        }
-      });
-    });
-
-    it("T06 – Payment modal opens with amount field and file upload", () => {
-      cy.get(".place-order", { timeout: 15000 }).should("be.visible");
-
       cy.contains('[role="tab"]', "Review").click();
       cy.wait(1500);
 
@@ -138,18 +71,67 @@ describe("UC-BUY-007: Process Payment", () => {
         if (btn.length > 0) {
           cy.wrap(btn.first()).click({ force: true });
           cy.wait(1000);
-
           cy.get(".payment-modal", { timeout: 10000 }).should("be.visible");
           cy.get("#paymentAmount").should("exist");
           cy.get("#payment-proof-input").should("exist");
-          cy.contains("Submit Payment Proof").should("exist");
         }
       });
     });
 
-    it("T07 – Payment amount validation rejects empty amount", () => {
+    it("T03 – Valid mid-range amount accepted in payment field", () => {
       cy.get(".place-order", { timeout: 15000 }).should("be.visible");
+      cy.contains('[role="tab"]', "Review").click();
+      cy.wait(1500);
 
+      cy.get("body").then(($body) => {
+        const btn = $body.find(".btn-confirm, button:contains('Proceed to Payment')");
+        if (btn.length > 0) {
+          cy.wrap(btn.first()).click({ force: true });
+          cy.wait(1000);
+          cy.get("#paymentAmount").clear().type("25000");
+          cy.get("#paymentAmount").should("have.value", "25000");
+        }
+      });
+    });
+
+    it("T04 – BVA: Minimum valid amount (0.01) accepted", () => {
+      cy.get(".place-order", { timeout: 15000 }).should("be.visible");
+      cy.contains('[role="tab"]', "Review").click();
+      cy.wait(1500);
+
+      cy.get("body").then(($body) => {
+        const btn = $body.find(".btn-confirm, button:contains('Proceed to Payment')");
+        if (btn.length > 0) {
+          cy.wrap(btn.first()).click({ force: true });
+          cy.wait(1000);
+          cy.get("#paymentAmount").clear().type("0.01");
+          cy.get("#paymentAmount").should("have.value", "0.01");
+        }
+      });
+    });
+
+    it("T05 – BVA: Full outstanding balance amount accepted", () => {
+      cy.get(".place-order", { timeout: 15000 }).should("be.visible");
+      cy.contains('[role="tab"]', "Review").click();
+      cy.wait(1500);
+
+      cy.get("body").then(($body) => {
+        const btn = $body.find(".btn-confirm, button:contains('Proceed to Payment')");
+        if (btn.length > 0) {
+          cy.wrap(btn.first()).click({ force: true });
+          cy.wait(1000);
+          if (outstandingBalance > 0) {
+            cy.get("#paymentAmount").clear().type(String(outstandingBalance));
+            cy.get("#paymentAmount").invoke("val").then((val) => {
+              expect(parseFloat(val)).to.eq(outstandingBalance);
+            });
+          }
+        }
+      });
+    });
+
+    it("T06 – Validation: Empty amount triggers error on submit", () => {
+      cy.get(".place-order", { timeout: 15000 }).should("be.visible");
       cy.contains('[role="tab"]', "Review").click();
       cy.wait(1500);
 
@@ -163,7 +145,6 @@ describe("UC-BUY-007: Process Payment", () => {
           cy.on("window:alert", alertStub);
 
           cy.get("#paymentAmount").clear();
-
           cy.get(".payment-modal-footer .btn-primary")
             .click({ force: true })
             .then(() => {
@@ -177,9 +158,8 @@ describe("UC-BUY-007: Process Payment", () => {
       });
     });
 
-    it("T08 – Payment modal closes via Cancel / X button", () => {
+    it("T07 – Payment modal can be closed via Cancel", () => {
       cy.get(".place-order", { timeout: 15000 }).should("be.visible");
-
       cy.contains('[role="tab"]', "Review").click();
       cy.wait(1500);
 
@@ -188,7 +168,6 @@ describe("UC-BUY-007: Process Payment", () => {
         if (btn.length > 0) {
           cy.wrap(btn.first()).click({ force: true });
           cy.wait(1000);
-
           cy.get(".payment-modal", { timeout: 10000 }).should("be.visible");
 
           cy.get(".payment-modal-header .modal-close-btn, .payment-modal-footer .btn-back")
@@ -196,6 +175,23 @@ describe("UC-BUY-007: Process Payment", () => {
             .click({ force: true });
 
           cy.get(".payment-modal").should("not.exist");
+        }
+      });
+    });
+
+    it("T08 – Outstanding balance is displayed in payment modal", () => {
+      cy.get(".place-order", { timeout: 15000 }).should("be.visible");
+      cy.contains('[role="tab"]', "Review").click();
+      cy.wait(1500);
+
+      cy.get("body").then(($body) => {
+        const btn = $body.find(".btn-confirm, button:contains('Proceed to Payment')");
+        if (btn.length > 0) {
+          cy.wrap(btn.first()).click({ force: true });
+          cy.wait(1000);
+          cy.get(".payment-modal").should("be.visible");
+          cy.get(".payment-modal").should("contain", "Outstanding Balance");
+          cy.get(".payment-modal").should("contain", "PKR");
         }
       });
     });

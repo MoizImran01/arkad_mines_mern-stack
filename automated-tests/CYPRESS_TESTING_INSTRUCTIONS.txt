@@ -206,8 +206,8 @@
 
   To run a single use case instead of all 6, use these commands:
 
-    npm run test:002    UC-BUY-002: Search and Filter
-    npm run test:003    UC-BUY-003: View Item Details
+    npm run test:002    UC-BUY-002: Track Order and Notifications (Admin)
+    npm run test:003    UC-BUY-003: Register and Dispatch Granite Block (Admin)
     npm run test:004    UC-BUY-004: Request Quotation
     npm run test:007    UC-BUY-007: Process Payment
     npm run test:009    UC-BUY-009: Download Invoices
@@ -295,15 +295,15 @@
   USE CASE COVERAGE SUMMARY
 ================================================================================
 
-  Test File                                    Use Case                    Tests
-  ─────────────────────────────────────────────────────────────────────────────
-  UC-BUY-002_search_and_filter.cy.js           Search and Filter             8
-  UC-BUY-003_view_item_details.cy.js           View Item Details             7
-  UC-BUY-004_request_quotation.cy.js           Request Quotation             8
-  UC-BUY-007_process_payment.cy.js             Process Payment               9
-  UC-BUY-009_download_invoices.cy.js           Download Invoices             6
-  UC-BUY-010_manage_users.cy.js                Manage Users (Admin)          7
-  ─────────────────────────────────────────────────────────────────────────────
-  TOTAL                                                                     45
+  Test File                                        Use Case                        Tests
+  ───────────────────────────────────────────────────────────────────────────────────
+  UC-BUY-002_track_order_and_notifications.cy.js   Track Order & Notifications       8
+  UC-BUY-003_register_and_dispatch_block.cy.js     Register & Dispatch Block         8
+  UC-BUY-004_request_quotation.cy.js               Request Quotation                 8
+  UC-BUY-007_process_payment.cy.js                 Process Payment                   9
+  UC-BUY-009_download_invoices.cy.js               Download Invoices                 6
+  UC-BUY-010_manage_users.cy.js                    Manage Users (Admin)              7
+  ───────────────────────────────────────────────────────────────────────────────────
+  TOTAL                                                                             46
 
 ================================================================================
