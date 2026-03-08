@@ -6,12 +6,16 @@
     "cy:open": "cypress open",
     "cy:run": "cypress run",
     "cy:run:headed": "cypress run --headed",
+    "test:001": "cypress run --spec 'cypress/e2e/UC-BUY-001_browse_catalog.cy.js'",
     "test:002": "cypress run --spec 'cypress/e2e/UC-BUY-002_track_order_and_notifications.cy.js'",
     "test:003": "cypress run --spec 'cypress/e2e/UC-BUY-003_register_and_dispatch_block.cy.js'",
     "test:004": "cypress run --spec 'cypress/e2e/UC-BUY-004_request_quotation.cy.js'",
+    "test:005": "cypress run --spec 'cypress/e2e/UC-BUY-005_approve_reject_quotation.cy.js'",
+    "test:006": "cypress run --spec 'cypress/e2e/UC-BUY-006_place_order.cy.js'",
     "test:007": "cypress run --spec 'cypress/e2e/UC-BUY-007_process_payment.cy.js'",
     "test:009": "cypress run --spec 'cypress/e2e/UC-BUY-009_download_invoices.cy.js'",
-    "test:010": "cypress run --spec 'cypress/e2e/UC-BUY-010_manage_users.cy.js'"
+    "test:010": "cypress run --spec 'cypress/e2e/UC-BUY-010_manage_users.cy.js'",
+    "test:010b": "cypress run --spec 'cypress/e2e/UC-BUY-010_admin_create_quotation.cy.js'"
   },
   "devDependencies": {
     "cypress": "latest"
