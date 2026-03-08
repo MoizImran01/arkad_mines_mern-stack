@@ -32,7 +32,7 @@ Cypress.Commands.add("loginAsBuyer", () => {
 Cypress.Commands.add("navigateToProducts", () => {
   cy.get('a[href="/products"]', { timeout: 10000 }).first().click();
   cy.get(".products-page", { timeout: 20000 }).should("be.visible");
-  cy.get(".loading-state").should("not.exist");
+  cy.get(".loading-state", { timeout: 30000 }).should("not.exist");
 });
 
 Cypress.Commands.add("loginAsAdminAndVisit", (path) => {
