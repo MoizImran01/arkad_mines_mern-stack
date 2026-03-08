@@ -1,0 +1,19 @@
+{
+  "name": "arkad-mines-automated-tests",
+  "version": "1.0.0",
+  "description": "Cypress E2E automated tests for ARKAD Mines use cases",
+  "scripts": {
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "cy:run:headed": "cypress run --headed",
+    "test:002": "cypress run --spec 'cypress/e2e/UC-BUY-002_search_and_filter.cy.js'",
+    "test:003": "cypress run --spec 'cypress/e2e/UC-BUY-003_view_item_details.cy.js'",
+    "test:004": "cypress run --spec 'cypress/e2e/UC-BUY-004_request_quotation.cy.js'",
+    "test:007": "cypress run --spec 'cypress/e2e/UC-BUY-007_process_payment.cy.js'",
+    "test:009": "cypress run --spec 'cypress/e2e/UC-BUY-009_download_invoices.cy.js'",
+    "test:010": "cypress run --spec 'cypress/e2e/UC-BUY-010_manage_users.cy.js'"
+  },
+  "devDependencies": {
+    "cypress": "latest"
+  }
+}

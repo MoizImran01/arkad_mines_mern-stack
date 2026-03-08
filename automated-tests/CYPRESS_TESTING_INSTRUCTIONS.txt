@@ -1,0 +1,309 @@
+================================================================================
+  ARKAD MINES — CYPRESS AUTOMATED TESTING INSTRUCTIONS
+================================================================================
+
+  This guide walks you through setting up and running the Cypress-based
+  automated tests for the ARKAD Mines project from scratch. No prior
+  knowledge of Cypress is needed.
+
+================================================================================
+  TABLE OF CONTENTS
+================================================================================
+
+  1. PREREQUISITES
+  2. PROJECT STRUCTURE
+  3. STARTING THE SERVERS
+  4. INSTALLING CYPRESS
+  5. CONFIGURING CREDENTIALS
+  6. IMPORTANT: UC-BUY-007 REQUIREMENT (BUYER MUST HAVE AN ORDER)
+  7. RUNNING TESTS (HEADLESS)
+  8. RUNNING TESTS (HEADED / INTERACTIVE)
+  9. RUNNING INDIVIDUAL TEST SUITES
+  10. UNDERSTANDING TEST RESULTS
+  11. TROUBLESHOOTING
+
+================================================================================
+  1. PREREQUISITES
+================================================================================
+
+  Before you begin, make sure the following are installed on your machine:
+
+  a) Node.js (version 16 or higher)
+     - Download from: https://nodejs.org/
+     - Verify:  node --version
+                npm --version
+
+  b) Google Chrome browser (Cypress uses Chrome by default)
+
+  c) Git (to clone the repository)
+     - Download from: https://git-scm.com/
+
+  d) MongoDB Atlas connection
+     - The backend connects to a MongoDB Atlas cluster. Make sure your IP
+       address is whitelisted in the Atlas dashboard:
+       https://cloud.mongodb.com/ -> Network Access -> Add IP Address
+     - If you are on a different network (home, university, etc.), you need
+       to add your current public IP each time it changes.
+
+================================================================================
+  2. PROJECT STRUCTURE
+================================================================================
+
+  The Cypress tests live in the "automated-tests" folder at the project root:
+
+  automated-tests/
+  ├── cypress.config.js              <-- Configuration (URLs, credentials)
+  ├── package.json                   <-- Dependencies and run scripts
+  ├── CYPRESS_TESTING_INSTRUCTIONS.txt  <-- This file
+  └── cypress/
+      ├── support/
+      │   ├── e2e.js                 <-- Global setup (runs before all tests)
+      │   └── commands.js            <-- Custom commands (loginAsBuyer, etc.)
+      └── e2e/
+          ├── UC-BUY-002_search_and_filter.cy.js
+          ├── UC-BUY-003_view_item_details.cy.js
+          ├── UC-BUY-004_request_quotation.cy.js
+          ├── UC-BUY-007_process_payment.cy.js
+          ├── UC-BUY-009_download_invoices.cy.js
+          └── UC-BUY-010_manage_users.cy.js
+
+  Each .cy.js file corresponds to one use case and contains multiple test
+  cases (T01, T02, T03, etc.).
+
+================================================================================
+  3. STARTING THE SERVERS
+================================================================================
+
+  You need THREE servers running simultaneously before you run any tests.
+  Open three separate terminal windows/tabs:
+
+  TERMINAL 1 — Backend API (port 4000):
+  --------------------------------------
+    cd ARKAD_Mines_backend
+    npm install          (first time only)
+    npm run dev
+
+    You should see: "Server is running on port 4000" and "MongoDB Connected"
+    If MongoDB fails, check your IP is whitelisted in Atlas (see Prerequisites).
+
+  TERMINAL 2 — Frontend / Buyer App (port 5173):
+  -----------------------------------------------
+    cd "ARKAD_Mines front-end"
+    npm install          (first time only)
+    npm run dev
+
+    You should see: "Local: http://localhost:5173/"
+
+  TERMINAL 3 — Admin Panel (port 5174):
+  ---------------------------------------
+    cd "ARKAD_Mines admin"
+    npm install          (first time only)
+    npm run dev
+
+    You should see: "Local: http://localhost:5174/"
+
+  IMPORTANT: All three servers must be running before you start any tests.
+  The tests will fail immediately if the backend is not reachable.
+
+================================================================================
+  4. INSTALLING CYPRESS
+================================================================================
+
+  Open a FOURTH terminal window/tab:
+
+    cd automated-tests
+    npm install
+
+  This installs Cypress and all dependencies. The first time, it may also
+  download the Cypress binary (around 200-300 MB). This is normal.
+
+  If the binary download fails or you see "Cypress binary not found", run:
+
+    npx cypress install
+
+  This explicitly downloads and installs the Cypress binary.
+
+================================================================================
+  5. CONFIGURING CREDENTIALS
+================================================================================
+
+  The test credentials are stored in "automated-tests/cypress.config.js".
+  Open this file and verify the following values match your environment:
+
+    baseUrl:        http://localhost:5173    (frontend URL)
+    API_URL:        http://localhost:4000    (backend URL)
+    ADMIN_URL:      http://localhost:5174    (admin panel URL)
+    BUYER_EMAIL:    raahima@gmail.com        (a buyer account in the database)
+    BUYER_PASSWORD: raahima03               (that buyer's password)
+    ADMIN_EMAIL:    admin@arkadmin.com       (an admin account in the database)
+    ADMIN_PASSWORD: Admin12345!             (that admin's password)
+
+  If you are using different accounts, update these values accordingly.
+  The buyer account must have role "customer" and the admin account must
+  have role "admin" in the MongoDB users collection.
+
+================================================================================
+  6. IMPORTANT: UC-BUY-007 REQUIREMENT (BUYER MUST HAVE AN ORDER)
+================================================================================
+
+  UC-BUY-007 (Process Payment) tests the /place-order/:orderNumber page.
+  This page requires the buyer to have at least one existing order in the
+  system. If the buyer has zero orders, tests T01-T08 will be SKIPPED
+  (shown as grey circles, not failures).
+
+  To create an order for the buyer, the full flow must be completed:
+
+    1. Buyer submits a quotation request (via /request-quote)
+    2. Admin issues the quotation (via admin panel -> Quotations)
+    3. Buyer approves the issued quotation (via /quotations)
+    4. The system auto-converts the approved quotation to a sales order
+
+  You can do this manually through the UI, or you can skip UC-BUY-007
+  if the buyer does not have orders. The other 5 test suites (002, 003,
+  004, 009, 010) do NOT require existing orders and will work immediately.
+
+================================================================================
+  7. RUNNING TESTS (HEADLESS)
+================================================================================
+
+  Headless mode runs tests in the background without opening a visible
+  browser window. This is the fastest way to run tests.
+
+  From the automated-tests folder:
+
+    npm run cy:run
+
+  This runs ALL 6 test suites sequentially and prints results in the
+  terminal. Screenshots of failures are saved to "cypress/screenshots/".
+
+================================================================================
+  8. RUNNING TESTS (HEADED / INTERACTIVE)
+================================================================================
+
+  Headed mode opens a real Chrome browser window so you can watch the
+  tests execute step by step. This is useful for debugging or demos.
+
+  Option A — Interactive GUI (recommended for first-time users):
+
+    npm run cy:open
+
+    This opens the Cypress Test Runner GUI. From there:
+    1. Select "E2E Testing"
+    2. Select "Chrome" as the browser
+    3. Click "Start E2E Testing in Chrome"
+    4. Click on any test file to run it (e.g., UC-BUY-002_search_and_filter)
+    5. Watch the tests execute in real-time in the browser
+
+  Option B — Headed command line:
+
+    npm run cy:run:headed
+
+    This runs all tests in a visible Chrome window from the command line.
+
+================================================================================
+  9. RUNNING INDIVIDUAL TEST SUITES
+================================================================================
+
+  To run a single use case instead of all 6, use these commands:
+
+    npm run test:002    UC-BUY-002: Search and Filter
+    npm run test:003    UC-BUY-003: View Item Details
+    npm run test:004    UC-BUY-004: Request Quotation
+    npm run test:007    UC-BUY-007: Process Payment
+    npm run test:009    UC-BUY-009: Download Invoices
+    npm run test:010    UC-BUY-010: Manage Users (Admin)
+
+  Or use the Cypress CLI directly:
+
+    npx cypress run --spec "cypress/e2e/UC-BUY-002_search_and_filter.cy.js"
+
+  To run headed (visible browser) for a single test:
+
+    npx cypress run --headed --spec "cypress/e2e/UC-BUY-004_request_quotation.cy.js"
+
+================================================================================
+  10. UNDERSTANDING TEST RESULTS
+================================================================================
+
+  After a test run, you will see output like this in the terminal:
+
+    Spec                                       Tests  Passing  Failing
+    UC-BUY-002_search_and_filter.cy.js           8       8        0
+    UC-BUY-003_view_item_details.cy.js           7       7        0
+
+  - Tests:    Total number of test cases in the file
+  - Passing:  Tests that completed successfully (green checkmarks)
+  - Failing:  Tests that did not pass (red X marks)
+
+  Grey circles (pending/skipped) mean a test was intentionally skipped,
+  usually because a precondition was not met (e.g., no orders exist for
+  UC-BUY-007).
+
+  If tests fail, Cypress saves a screenshot in:
+    automated-tests/cypress/screenshots/
+
+  These screenshots show the exact state of the browser at the moment of
+  failure, which is very helpful for debugging.
+
+================================================================================
+  11. TROUBLESHOOTING
+================================================================================
+
+  PROBLEM: "Cypress binary not found" or "Cannot find module cypress"
+  SOLUTION: Run these commands in the automated-tests folder:
+    npm install
+    npx cypress install
+
+  PROBLEM: Tests fail immediately with "fetch failed" or "ECONNREFUSED"
+  SOLUTION: The backend server is not running. Start it:
+    cd ARKAD_Mines_backend && npm run dev
+
+  PROBLEM: "MongoDB Connection Error: queryTxt ETIMEDOUT"
+  SOLUTION: Your IP is not whitelisted in MongoDB Atlas.
+    Go to https://cloud.mongodb.com/ -> Network Access -> Add Current IP
+
+  PROBLEM: Tests get stuck on a login popup / never get past the home page
+  SOLUTION: The buyer credentials in cypress.config.js are wrong, or the
+    buyer account does not exist in the database. Verify by logging in
+    manually at http://localhost:5173 with those credentials.
+
+  PROBLEM: UC-BUY-010 fails with "Admin login failed: Business account not found"
+  SOLUTION: The admin email in cypress.config.js is incorrect. The correct
+    admin email is admin@arkadmin.com (not admin@gmail.com).
+
+  PROBLEM: UC-BUY-007 tests are all skipped (grey circles)
+  SOLUTION: The buyer has no orders. See Section 6 above for how to create
+    an order through the quotation flow.
+
+  PROBLEM: "TypeError: Cannot read properties of null" in the Cypress log
+  SOLUTION: This is an application-level error (not a test error) that
+    occurs during page transitions. It is suppressed globally and should
+    not affect test results. If it does, make sure all three servers are
+    running and the database is connected.
+
+  PROBLEM: Tests pass locally but you want to run on a different machine
+  SOLUTION: Follow this entire guide from Section 1 on the new machine.
+    Make sure to:
+    - Install Node.js
+    - Install Chrome
+    - Whitelist the new machine's IP in MongoDB Atlas
+    - Run npm install in all 4 folders (backend, frontend, admin, automated-tests)
+    - Start all 3 servers
+    - Update cypress.config.js if using different credentials
+
+================================================================================
+  USE CASE COVERAGE SUMMARY
+================================================================================
+
+  Test File                                    Use Case                    Tests
+  ─────────────────────────────────────────────────────────────────────────────
+  UC-BUY-002_search_and_filter.cy.js           Search and Filter             8
+  UC-BUY-003_view_item_details.cy.js           View Item Details             7
+  UC-BUY-004_request_quotation.cy.js           Request Quotation             8
+  UC-BUY-007_process_payment.cy.js             Process Payment               9
+  UC-BUY-009_download_invoices.cy.js           Download Invoices             6
+  UC-BUY-010_manage_users.cy.js                Manage Users (Admin)          7
+  ─────────────────────────────────────────────────────────────────────────────
+  TOTAL                                                                     45
+
+================================================================================
