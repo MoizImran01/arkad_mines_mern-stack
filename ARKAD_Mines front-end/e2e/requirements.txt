@@ -1,0 +1,6 @@
+# E2E tests - Process Payment & Document History (Selenium)
+selenium>=4.15.0
+webdriver-manager>=4.0.0
+pytest>=7.4.0
+python-dotenv>=1.0.0
+Pillow>=10.0.0

@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# E2E tests
+e2e/.env
+e2e/downloads/

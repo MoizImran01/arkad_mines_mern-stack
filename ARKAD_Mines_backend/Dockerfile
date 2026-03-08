@@ -4,4 +4,4 @@ COPY package.json package-lock.json* ./
 RUN npm install --omit=dev
 COPY . .
 EXPOSE 4000
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]
