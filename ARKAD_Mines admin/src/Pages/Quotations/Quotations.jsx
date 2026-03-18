@@ -1,16 +1,18 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState, useCallback } from "react";
 import "./Quotations.css";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { AdminAuthContext } from "../../context/AdminAuthContext";
-import { 
-  FiAlertTriangle, 
-  FiFileText, 
-  FiRefreshCw, 
-  FiX, 
-  FiCheckCircle, 
-  FiDollarSign, 
-  FiDownload 
+import {
+  FiAlertTriangle,
+  FiFileText,
+  FiRefreshCw,
+  FiX,
+  FiCheckCircle,
+  FiDollarSign,
+  FiDownload,
+  FiCpu,
+  FiTrendingUp
 } from "react-icons/fi";
 
 const Quotations = () => {
@@ -25,7 +27,6 @@ const Quotations = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
 
-  
   const [issueFormData, setIssueFormData] = useState({
     taxPercentage: 0,
     shippingCost: 0,
@@ -34,6 +35,11 @@ const Quotations = () => {
     itemPrices: {},
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // AI Pricing Suggestion State
+  const [priceSuggestions, setPriceSuggestions] = useState({});
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [pricingError, setPricingError] = useState(null);
 
   const headers = useMemo(
     () => ({
@@ -123,6 +129,82 @@ const Quotations = () => {
         itemPrices,
       });
     }
+  };
+
+  // Fetch AI pricing suggestions for the selected quotation's items
+  const fetchPriceSuggestions = useCallback(async (quote) => {
+    if (!quote?.items?.length) return;
+    const isEditable = ["draft", "submitted", "adjustment_required"].includes(quote.status);
+    if (!isEditable) return;
+
+    setPricingLoading(true);
+    setPricingError(null);
+    setPriceSuggestions({});
+
+    try {
+      // Fetch stone details to get category/subcategory/grade
+      const stoneIds = quote.items.map(item => item.stone).filter(Boolean);
+      let stoneDetails = {};
+
+      if (stoneIds.length > 0) {
+        try {
+          const stonesRes = await axios.get(`${url}/api/stones/list`, { headers });
+          if (stonesRes.data?.success) {
+            const allStones = stonesRes.data.data || stonesRes.data.stones || [];
+            allStones.forEach(s => {
+              stoneDetails[s._id] = s;
+            });
+          }
+        } catch {
+          // Proceed without stone details — use what's in the quotation
+        }
+      }
+
+      const items = quote.items.map(item => {
+        const stoneId = typeof item.stone === 'object' ? item.stone._id : item.stone;
+        const stoneMeta = stoneDetails[stoneId] || {};
+        return {
+          stoneName: item.stoneName,
+          category: stoneMeta.category || "Unknown",
+          subcategory: stoneMeta.subcategory || "Unknown",
+          grade: stoneMeta.grade || "Standard",
+          priceUnit: item.priceUnit,
+          requestedQuantity: item.requestedQuantity,
+          priceSnapshot: item.priceSnapshot,
+        };
+      });
+
+      const response = await axios.post(
+        `${url}/api/pricing/predict-prices`,
+        { items },
+        { headers }
+      );
+
+      if (response.data?.success) {
+        const suggestionsMap = {};
+        response.data.predictions.forEach((pred, idx) => {
+          suggestionsMap[idx] = pred;
+        });
+        setPriceSuggestions(suggestionsMap);
+      }
+    } catch (err) {
+      console.error("AI pricing error:", err);
+      const msg = err.response?.data?.message || "Pricing suggestions unavailable";
+      setPricingError(msg);
+    } finally {
+      setPricingLoading(false);
+    }
+  }, [url, headers]);
+
+  // Auto-fetch pricing when a quote is selected
+  useEffect(() => {
+    if (selectedQuote) {
+      fetchPriceSuggestions(selectedQuote);
+    }
+  }, [selectedQuote?._id]);
+
+  const handleApplySuggestedPrice = (itemIndex, price) => {
+    handleItemPriceChange(itemIndex, price);
   };
 
   const handleInputChange = (e) => {
@@ -452,6 +534,8 @@ const Quotations = () => {
                     : (item.finalUnitPrice || item.priceSnapshot || 0);
                   const isEditable = ["draft", "submitted", "adjustment_required"].includes(selectedQuote.status);
                   
+                  const suggestion = priceSuggestions[idx];
+
                   return (
                     <div key={idx} className="quote-item-card">
                       <div className="item-meta">
@@ -472,6 +556,30 @@ const Quotations = () => {
                               placeholder={item.priceSnapshot}
                             />
                             <small>Base: Rs {item.priceSnapshot}</small>
+
+                            {/* AI Price Badge */}
+                            {suggestion && (
+                              <div className="ai-price-badge" title={`Based on ${suggestion.based_on_samples} historical quotes`}>
+                                <FiCpu className="ai-badge-icon" />
+                                <span className="ai-badge-text">
+                                  AI: Rs {suggestion.price_range_low.toLocaleString()}–{suggestion.price_range_high.toLocaleString()}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="ai-apply-btn"
+                                  onClick={() => handleApplySuggestedPrice(idx, suggestion.suggested_price)}
+                                  title="Apply AI suggested price"
+                                >
+                                  Apply
+                                </button>
+                              </div>
+                            )}
+                            {pricingLoading && !suggestion && (
+                              <div className="ai-price-badge loading">
+                                <FiCpu className="ai-badge-icon spin" />
+                                <span className="ai-badge-text">Getting AI suggestion...</span>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <small>Price: Rs {currentPrice} (Base: Rs {item.priceSnapshot})</small>
@@ -483,7 +591,66 @@ const Quotations = () => {
               </div>
             </div>
 
-          
+
+            {/* AI Pricing Suggestion Card */}
+            {["draft", "submitted", "adjustment_required", "revision_requested"].includes(selectedQuote.status) && Object.keys(priceSuggestions).length > 0 && (
+              <div className="ai-pricing-card">
+                <div className="ai-pricing-header">
+                  <FiTrendingUp className="ai-card-icon" />
+                  <h4>AI Pricing Insight</h4>
+                  <span className="ai-confidence-badge">
+                    {priceSuggestions[0]?.confidence || 0}% confidence
+                  </span>
+                </div>
+                <p className="ai-pricing-desc">
+                  Based on {priceSuggestions[0]?.based_on_samples || 0} historical quotations, here are the suggested unit prices:
+                </p>
+                <div className="ai-suggestions-list">
+                  {selectedQuote.items?.map((item, idx) => {
+                    const s = priceSuggestions[idx];
+                    if (!s) return null;
+                    const currentPrice = issueFormData.itemPrices[idx] !== undefined
+                      ? issueFormData.itemPrices[idx]
+                      : (item.finalUnitPrice || item.priceSnapshot || 0);
+                    const diff = currentPrice > 0 ? ((s.suggested_price - currentPrice) / currentPrice * 100).toFixed(1) : 0;
+                    return (
+                      <div key={idx} className="ai-suggestion-row">
+                        <span className="ai-stone-name">{item.stoneName}</span>
+                        <span className="ai-suggested-val">Rs {s.suggested_price.toLocaleString()}</span>
+                        <span className={`ai-diff ${Number(diff) >= 0 ? 'up' : 'down'}`}>
+                          {Number(diff) >= 0 ? '+' : ''}{diff}%
+                        </span>
+                        <button
+                          type="button"
+                          className="ai-apply-btn-sm"
+                          onClick={() => handleApplySuggestedPrice(idx, s.suggested_price)}
+                        >
+                          Use
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  className="ai-apply-all-btn"
+                  onClick={() => {
+                    Object.entries(priceSuggestions).forEach(([idx, s]) => {
+                      handleApplySuggestedPrice(Number(idx), s.suggested_price);
+                    });
+                  }}
+                >
+                  <FiCpu /> Apply All Suggested Prices
+                </button>
+              </div>
+            )}
+
+            {pricingError && ["draft", "submitted", "adjustment_required"].includes(selectedQuote.status) && (
+              <div className="ai-pricing-error">
+                <FiAlertTriangle /> {pricingError}
+              </div>
+            )}
+
             {["draft", "submitted", "adjustment_required", "revision_requested"].includes(selectedQuote.status) && (
               <div className="admin-action-area">
                 <hr />

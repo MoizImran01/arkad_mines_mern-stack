@@ -1,9 +1,8 @@
 import axios from 'axios';
 
-const FORECAST_API_URL = process.env.FORECASTING_API_URL || 'http://127.0.0.1:8000/api/forecast';
-const FORECAST_TIMEOUT_MS = Number(process.env.FORECAST_TIMEOUT_MS) || 60 * 10000;
-
 export const getAIForecast = async (req, res) => {
+    const FORECAST_API_URL = process.env.FORECASTING_API_URL || 'https://nonethereally-pushiest-coleman.ngrok-free.dev/api/forecast';
+    const FORECAST_TIMEOUT_MS = Number(process.env.FORECAST_TIMEOUT_MS) || 15000;
     try {
         const response = await axios.get(FORECAST_API_URL, {
             timeout: FORECAST_TIMEOUT_MS,

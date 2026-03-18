@@ -31,3 +31,9 @@ ARKAD_Mines_backend/uploads/
 
 # Local STRIDE documentation (not for repo)
 STRIDE_IMPLEMENTATION_DOCS.txt
+
+# Python microservices - never commit venv or cache
+pricing-microservice/venv/
+pricing-microservice/__pycache__/
+pricing-microservice/*.pyc
+pricing-microservice/.env
