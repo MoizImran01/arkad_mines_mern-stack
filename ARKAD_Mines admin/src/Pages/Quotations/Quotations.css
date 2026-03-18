@@ -446,3 +446,191 @@
   cursor: not-allowed;
 }
 
+/* ── AI Pricing Badge (inline on each item) ─────────────────────── */
+.ai-price-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #eff6ff, #eef2ff);
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  font-size: 11px;
+  color: #4338ca;
+  width: fit-content;
+}
+
+.ai-price-badge.loading {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+
+.ai-badge-icon {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.ai-badge-text {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ai-apply-btn {
+  background: #4338ca;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ai-apply-btn:hover {
+  background: #3730a3;
+}
+
+/* ── AI Pricing Card (summary above issue form) ──────────────────── */
+.ai-pricing-card {
+  background: linear-gradient(135deg, #eef2ff, #f0f9ff);
+  border: 1px solid #c7d2fe;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-pricing-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-pricing-header h4 {
+  margin: 0;
+  font-size: 14px;
+  color: #312e81;
+  flex: 1;
+}
+
+.ai-card-icon {
+  color: #4338ca;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.ai-confidence-badge {
+  background: #4338ca;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ai-pricing-desc {
+  margin: 0;
+  font-size: 12px;
+  color: #6366f1;
+}
+
+.ai-suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ai-suggestion-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #e0e7ff;
+  font-size: 12px;
+}
+
+.ai-stone-name {
+  flex: 1;
+  font-weight: 600;
+  color: #475467;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-suggested-val {
+  font-weight: 700;
+  color: #312e81;
+  white-space: nowrap;
+}
+
+.ai-diff {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ai-diff.up {
+  color: #16a34a;
+}
+
+.ai-diff.down {
+  color: #dc2626;
+}
+
+.ai-apply-btn-sm {
+  background: #4338ca;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.ai-apply-btn-sm:hover {
+  background: #3730a3;
+}
+
+.ai-apply-all-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #4338ca;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  width: 100%;
+}
+
+.ai-apply-all-btn:hover {
+  background: #3730a3;
+}
+
+.ai-pricing-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #fef7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #9a3412;
+}
+
