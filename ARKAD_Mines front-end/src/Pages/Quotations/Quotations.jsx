@@ -853,7 +853,7 @@ const Quotations = () => {
             </div>
             <div className="modal-body">
               <p style={{ color: '#e74c3c', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FiAlertTriangle />
+                <FiAlertTriangle size={22} style={{ flexShrink: 0 }} />
                 For security purposes, please complete the CAPTCHA verification and enter your password to approve this quotation.
               </p>
               <form onSubmit={handleCaptchaSubmit}>
@@ -943,8 +943,8 @@ const Quotations = () => {
               )}
             </div>
             <div className="modal-body">
-              <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
-                <FiAlertTriangle style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+              <p style={{ color: '#e74c3c', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FiAlertTriangle size={22} style={{ flexShrink: 0 }} />
                 For security purposes, please confirm your password to approve this quotation.
               </p>
               <form onSubmit={handleReauthSubmit}>
