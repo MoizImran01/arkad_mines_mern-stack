@@ -2,10 +2,10 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StoreContext } from '../../context/StoreContext';
 import axios from 'axios';
+import { FiLoader } from 'react-icons/fi';
 import PurchaseTimeline from './Components/PurchaseTimeline';
 import MaterialPreferenceChart from './Components/MaterialPreferenceChart';
 import TopStonesPanel from './Components/TopStonesPanel';
-import DashboardSkeleton from './Components/DashboardSkeleton';
 import './Dashboard.css';
 
 // Client dashboard: orders, quotes, purchase timeline, material preferences, top stones.
@@ -203,7 +203,14 @@ const Dashboard = () => {
   const formatDate = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—');
   const formatMoney = (n) => (n != null ? Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00');
 
-  if (loading) return <DashboardSkeleton />;
+  if (loading) {
+    return (
+      <div className="dashboard-loading">
+        <FiLoader className="spin" size={24} />
+        <p>Loading dashboard...</p>
+      </div>
+    );
+  }
 
   if (error) {
     return (

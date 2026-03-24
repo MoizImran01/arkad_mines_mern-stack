@@ -224,7 +224,11 @@
   gap: 16px;
 }
 
-.documents-loading svg,
+.documents-loading svg {
+  font-size: 24px;
+  color: #6b7280;
+}
+
 .documents-empty svg {
   font-size: 48px;
   color: #cbd5e1;

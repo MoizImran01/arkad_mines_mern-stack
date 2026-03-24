@@ -301,8 +301,8 @@
 
 .loading-state .spin {
   animation: spin 1s linear infinite;
-  font-size: 3rem;
-  color: #007bff;
+  font-size: 24px;
+  color: #6b7280;
 }
 
 .error-state svg {

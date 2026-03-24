@@ -7,6 +7,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import { 
   FiAlertTriangle, 
   FiFileText, 
+  FiLoader,
   FiRefreshCw, 
   FiX, 
   FiCheckCircle, 
@@ -510,7 +511,7 @@ const Quotations = () => {
       <div className="quotations-content">
         <div className="quotations-table-wrapper">
           {loading ? (
-            <div className="quotations-loading"><FiRefreshCw className="spin" /><p>Loading...</p></div>
+            <div className="quotations-loading"><FiLoader className="spin" size={24} /><p>Loading...</p></div>
           ) : quotes.length === 0 ? (
             <div className="quotations-empty"><FiFileText /><p>No issued quotations found</p></div>
           ) : (

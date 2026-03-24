@@ -13,7 +13,7 @@ import {
   FiAlertCircle,
   FiCheckCircle,
   FiClock,
-  FiRefreshCw,
+  FiLoader,
 } from 'react-icons/fi';
 import './ItemDetail.css';
 
@@ -114,7 +114,7 @@ const ItemDetail = () => {
     return (
       <div className="item-detail-container">
         <div className="loading-state">
-          <FiRefreshCw className="spin" />
+          <FiLoader className="spin" size={24} />
           <p>Loading item details...</p>
         </div>
       </div>

@@ -6,7 +6,7 @@ import dashboard from '../../assets/dashboard.png'
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { StoreContext } from '../../context/StoreContext';
 import { assets } from '../../assets/assets.js';
-import { FiBell, FiFileText, FiFolder, FiRefreshCw } from 'react-icons/fi';
+import { FiBell, FiFileText, FiFolder, FiRefreshCw, FiUser } from 'react-icons/fi';
 import axios from 'axios';
 
 
@@ -253,6 +253,16 @@ const Navbar = ({ setShowLogin }) => {
                 >
                 <FiFileText style={{ fontSize: '18px', color: '#475467' }} />
                 <span>My Quotations</span>
+                </button>
+              </li>
+              <li className="dropdown-item-wrapper">
+                <button 
+                  type="button"
+                  onClick={() => navigate('/profile')} 
+                  className="dropdown-item"
+                >
+                <FiUser style={{ fontSize: '18px', color: '#475467' }} />
+                <span>My Profile</span>
                 </button>
               </li>
               <li className="dropdown-item-wrapper">

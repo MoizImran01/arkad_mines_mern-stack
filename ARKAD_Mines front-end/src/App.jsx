@@ -16,6 +16,8 @@ import Quotations from './Pages/Quotations/Quotations';
 import Documents from './Pages/Documents/Documents';
 import ItemDetail from './Pages/ItemDetail/ItemDetail';
 import Dashboard from './Pages/Dashboard/Dashboard';
+import Profile from './Pages/Profile/Profile';
+import EditProfile from './Pages/EditProfile/EditProfile';
 import Footer from './Components/Footer/Footer';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -153,6 +155,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/edit"
+            element={
+              <ProtectedRoute>
+                <EditProfile />
               </ProtectedRoute>
             }
           />

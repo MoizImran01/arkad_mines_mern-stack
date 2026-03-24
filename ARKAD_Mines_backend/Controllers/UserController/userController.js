@@ -535,4 +535,140 @@ const deleteUser = async (req, res) => {
   }
 };
 
-export { loginUser, registerUser, getAllUsers, updateUserRole, deleteUser };
+const getMyProfile = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const user = await userModel.findById(userId).select("-password");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        companyName: user.companyName,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error loading profile" });
+  }
+};
+
+const updateMyProfile = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const { companyName, email } = req.body;
+    const updates = {};
+
+    if (typeof companyName === "string") {
+      return res.status(400).json({ success: false, message: "Company name cannot be updated from profile settings." });
+    }
+
+    if (typeof email === "string") {
+      const normalizedEmail = email.toLowerCase().trim();
+      if (!validator.isEmail(normalizedEmail)) {
+        return res.status(400).json({ success: false, message: "Please enter a valid business email address." });
+      }
+
+      const existing = await userModel.findOne({ email: normalizedEmail, _id: { $ne: userId } });
+      if (existing) {
+        return res.status(409).json({ success: false, message: "This email is already in use by another account." });
+      }
+      updates.email = normalizedEmail;
+    }
+
+    if (!Object.keys(updates).length) {
+      return res.status(400).json({ success: false, message: "No profile changes provided." });
+    }
+
+    const updatedUser = await userModel.findByIdAndUpdate(
+      userId,
+      updates,
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser._id,
+        companyName: updatedUser.companyName,
+        email: updatedUser.email,
+        role: updatedUser.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error updating profile" });
+  }
+};
+
+const updateMyPassword = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ success: false, message: "All password fields are required." });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: "New password must be at least 8 characters long." });
+    }
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: "New password and confirm password do not match." });
+    }
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ success: false, message: "New password must be different from current password." });
+    }
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Current password is incorrect." });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error updating password" });
+  }
+};
+
+export {
+  loginUser,
+  registerUser,
+  getAllUsers,
+  updateUserRole,
+  deleteUser,
+  getMyProfile,
+  updateMyProfile,
+  updateMyPassword,
+};

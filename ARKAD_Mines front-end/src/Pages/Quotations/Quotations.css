@@ -397,6 +397,11 @@
   gap: 12px;
 }
 
+.quotations-loading .spin {
+  font-size: 24px;
+  color: #6b7280;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;

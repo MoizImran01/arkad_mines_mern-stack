@@ -6,6 +6,7 @@ import { StoreContext } from "../../context/StoreContext";
 import { 
   FiFileText, 
   FiRefreshCw, 
+  FiLoader,
   FiDownload,
   FiFilter,
   FiX,
@@ -401,7 +402,7 @@ const Documents = () => {
       <div className="documents-content">
         {loading ? (
           <div className="documents-loading">
-            <FiRefreshCw className="spin" />
+            <FiLoader className="spin" size={24} />
             <p>Loading documents...</p>
           </div>
         ) : filteredDocuments.length === 0 ? (
