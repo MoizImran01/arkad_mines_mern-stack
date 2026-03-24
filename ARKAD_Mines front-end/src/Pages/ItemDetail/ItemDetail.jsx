@@ -5,14 +5,7 @@ import { StoreContext } from '../../context/StoreContext';
 import { useContext } from 'react';
 import {
   FiArrowLeft,
-  FiZoomIn,
-  FiZoomOut,
-  FiPackage,
-  FiMapPin,
-  FiFileText,
   FiAlertCircle,
-  FiCheckCircle,
-  FiClock,
   FiLoader,
 } from 'react-icons/fi';
 import './ItemDetail.css';
@@ -26,8 +19,8 @@ const ItemDetail = () => {
   const [stone, setStone] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [imageZoom, setImageZoom] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
+  const [isImageHovering, setIsImageHovering] = useState(false);
+  const [imagePosition, setImagePosition] = useState({ x: 50, y: 50 });
 
   useEffect(() => {
     const fetchStone = async () => {
@@ -58,33 +51,14 @@ const ItemDetail = () => {
     fetchStone();
   }, [id, url]);
 
-  const handleImageClick = () => {
-    setImageZoom(!imageZoom);
-    setZoomLevel(1);
-  };
-
-  const handleZoomIn = (e) => {
-    e.stopPropagation();
-    setZoomLevel((prev) => Math.min(prev + 0.25, 3));
-  };
-
-  const handleZoomOut = (e) => {
-    e.stopPropagation();
-    setZoomLevel((prev) => Math.max(prev - 0.25, 0.5));
-  };
-
-  const formatCategory = (category) => {
-    if (!category) return 'N/A';
-    return category.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  };
-
-  const formatSubcategory = (subcategory) => {
-    if (!subcategory) return 'N/A';
-    return subcategory.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
+  const handleImageMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setImagePosition({
+      x: Math.max(0, Math.min(100, x)),
+      y: Math.max(0, Math.min(100, y)),
+    });
   };
 
   const getStockStatusColor = (status) => {
@@ -146,66 +120,69 @@ const ItemDetail = () => {
         <div className="item-detail-main">
           <div className="item-image-section">
             <div 
-              className={`item-image-wrapper ${imageZoom ? 'zoomed' : ''}`}
-              onClick={handleImageClick}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleImageClick(); }}
-              role="button"
-              tabIndex={0}
+              className="item-image-wrapper"
+              onMouseEnter={() => setIsImageHovering(true)}
+              onMouseLeave={() => {
+                setIsImageHovering(false);
+                setImagePosition({ x: 50, y: 50 });
+              }}
+              onMouseMove={handleImageMouseMove}
             >
               <img
                 src={getImageUrl(stone.image)}
                 alt={stone.stoneName}
-                style={{ transform: `scale(${zoomLevel})` }}
+                style={{
+                  transform: isImageHovering ? 'scale(1.9)' : 'scale(1)',
+                  transformOrigin: `${imagePosition.x}% ${imagePosition.y}%`,
+                }}
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = 'https://via.placeholder.com/800x600?text=No+Image';
                 }}
               />
-              {imageZoom && (
-                <div className="zoom-controls">
-                  <button onClick={handleZoomIn} title="Zoom In">
-                    <FiZoomIn />
-                  </button>
-                  <span>{Math.round(zoomLevel * 100)}%</span>
-                  <button onClick={handleZoomOut} title="Zoom Out">
-                    <FiZoomOut />
-                  </button>
-                </div>
-              )}
+              <div className={`zoom-indicator ${isImageHovering ? 'active' : ''}`}>
+                Hover to zoom
+              </div>
             </div>
-            {!imageZoom && (
-              <p className="image-hint">Click image to zoom</p>
-            )}
           </div>
 
           <div className="item-info-section">
-            <h1>{stone.stoneName}</h1>
-            
-            <div className="info-section">
-              <h3>Stock Status</h3>
-              <div className={`stock-status ${getStockStatusColor(stone.stockAvailability)}`}>
-                <span className="status-badge">
-                  {stone.stockAvailability || 'Unknown'}
-                </span>
+            <div className="item-heading-block">
+              <h1 className="item-title">{stone.stoneName}</h1>
+            </div>
+
+            <div className="detail-cards-grid">
+              <div className="info-section">
+                <h3>Stock Status</h3>
+                <div className={`stock-status ${getStockStatusColor(stone.stockAvailability)}`}>
+                  <span className="status-badge">
+                    {stone.stockAvailability || 'Unknown'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="info-section">
+                <h3>Dimensions</h3>
+                <p className="dimensions">{stone.dimensions || 'N/A'}</p>
+              </div>
+
+              <div className="info-section">
+                <h3>Stone Type</h3>
+                <p>{stone.subcategory || 'N/A'}</p>
+              </div>
+
+              <div className="info-section">
+                <h3>Stone Category</h3>
+                <p>{stone.category || 'N/A'}</p>
+              </div>
+
+              <div className="info-section">
+                <h3>Location</h3>
+                <p>{stone.location || 'N/A'}</p>
               </div>
             </div>
 
-            <div className="info-section">
-              <h3>Dimensions</h3>
-              <p className="dimensions">{stone.dimensions}</p>
-            </div>
-
-            <div className="info-section">
-              <h3>Stone Type</h3>
-              <p>{stone.subcategory}</p>
-            </div>
-            <div className="info-section">
-              <h3>Stone Category</h3>
-              <p>{stone.category}</p>
-            </div>
-
-
-            <div className="info-section">
+            <div className="info-section notes-panel">
               <h3>Notes</h3>
               {stone.qaNotes && (
                 <div className="notes-content">
@@ -225,7 +202,7 @@ const ItemDetail = () => {
             </div>
 
             <div className="item-actions">
-              {(stone.stockQuantity || 0) - (stone.quantityDelivered || 0) > 0 ? (
+              {(stone.stockQuantity || 0) - (stone.quantityDelivered || 0) > 0 && (
                 <button
                   className="primary-btn"
                   onClick={() => {
@@ -234,10 +211,6 @@ const ItemDetail = () => {
                   }}
                 >
                   Request Quote
-                </button>
-              ) : (
-                <button className="primary-btn disabled" disabled>
-                  Out of Stock
                 </button>
               )}
             </div>

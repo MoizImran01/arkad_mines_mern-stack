@@ -412,7 +412,7 @@ const Products = () => {
                     </div>
                   </div>
                   <div className="product-actions">
-                    {(product.stockQuantity || 0) - (product.quantityDelivered || 0) > 0 ? (
+                    {(product.stockQuantity || 0) - (product.quantityDelivered || 0) > 0 && (
                       <button
                         className="request-btn"
                         onClick={() => {
@@ -421,10 +421,6 @@ const Products = () => {
                         }}
                       >
                         Request Quote
-                      </button>
-                    ) : (
-                      <button className="request-btn disabled" disabled>
-                        Out of Stock
                       </button>
                     )}
                   </div>
