@@ -1064,6 +1064,36 @@
   width: 100%;
 }
 
+.orders-pagination-inline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #4b5563;
+  background: #fff;
+}
+
+.orders-pagination-inline-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.orders-pagination-inline-actions button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.orders-pagination-inline-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .spin {
   animation: spin 1s linear infinite;
 }

@@ -375,7 +375,7 @@ body {
 .orders-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 800px;
+  min-width: 920px;
 }
 
 .orders-table th {
@@ -1009,6 +1009,13 @@ body {
   background-color: var(--white);
   color: var(--text-color);
   transition: var(--transition);
+}
+
+.orders-filters select {
+  width: auto !important;
+  min-width: 180px !important;
+  max-width: 220px !important;
+  flex: 0 0 auto !important;
 }
 
 .form-control:focus {

@@ -6,6 +6,10 @@
   gap: 24px;
 }
 
+.request-quote-header h1 {
+  font-size: 28px;
+}
+
 .request-quote-header {
   display: flex;
   justify-content: space-between;
@@ -230,15 +234,20 @@
   align-items: center;
   gap: 8px;
   padding: 12px;
-  border-radius: 999px;
+  border-radius: 5px;
+  ;
   border: none;
   font-weight: 600;
   cursor: pointer;
 }
 
 .primary-btn {
-  background: #1d4ed8;
+  background: #2f5242;
   color: #fff;
+}
+
+.primary-btn:hover {
+  background: #1c3127;
 }
 
 .secondary-btn {
@@ -276,5 +285,176 @@
 @media (max-width: 1024px) {
   .quote-content {
     grid-template-columns: 1fr;
+  }
+}
+
+.quote-issued-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 12000;
+}
+
+.quote-issued-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.quote-issued-modal {
+  position: relative;
+  z-index: 1;
+  min-height: 300px;
+  width: min(500px, calc(100vw - 48px));
+  background: linear-gradient(180deg, #f8fbf9 0%, #ffffff 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(47, 82, 66, 0.22);
+  padding: 30px 28px;
+  box-shadow: 0 28px 45px rgba(15, 23, 42, 0.25);
+  animation: quoteModalIn 0.25s ease-out;
+}
+
+.quote-issued-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  color: #2f5242;
+  cursor: pointer;
+}
+
+.quote-issued-title {
+  color: #2f5242;
+  margin-bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.quote-issued-title svg {
+  width: 24px;
+  height: 24px;
+  color: #2f5242;
+}
+
+.quote-issued-ref {
+  margin-top: 0;
+  color: #111827;
+  font-size: 16px;
+}
+
+.quote-issued-ref-row {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quote-copy-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  border: 1px solid #2f5242;
+  background: #ffffff;
+  color: #2f5242;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quote-copy-icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.quote-copy-icon-btn:hover {
+  background: #eef4f0;
+}
+
+.quote-copy-icon-btn.copied {
+  background: #2f5242;
+  border-color: #2f5242;
+  color: #ffffff;
+  transform: scale(1.06);
+}
+
+.quote-issued-validity {
+  margin-top: 8px;
+  color: #475467;
+  padding-top: 12px;
+  border-top: 1px solid #d8e1db;
+}
+
+.quote-issued-actions {
+  margin-top: 28px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.quote-issued-actions .secondary-btn {
+  background: #ffffff;
+  color: #2f5242;
+  border: 1px solid #2f5242;
+}
+
+.quote-issued-actions .secondary-btn:hover {
+  background: #eef4f0;
+}
+
+.quote-issued-actions .primary-btn {
+  background: #2f5242;
+  width: 100%;
+  min-height: 44px;
+}
+.submit-request-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 12px;
+  background: #2f5242;
+  color: #ffffff;
+  border: 1px solid #2f5242;
+  border-radius: 5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submit-request-btn:hover {
+  background: #1c3127;
+  border-color: #1c3127;
+}
+
+.submit-request-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.quote-issued-actions .primary-btn:hover {
+  background: #1c3127;
+}
+
+@keyframes quoteModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }

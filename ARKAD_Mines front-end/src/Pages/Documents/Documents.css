@@ -229,6 +229,36 @@
   color: #6b7280;
 }
 
+.documents-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #4b5563;
+  background: #fff;
+}
+
+.documents-pagination-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.documents-pagination-actions button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.documents-pagination-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .documents-empty svg {
   font-size: 48px;
   color: #cbd5e1;

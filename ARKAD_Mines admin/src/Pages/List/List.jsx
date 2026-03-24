@@ -9,6 +9,9 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 const List = () => {
 
   const [list, setList] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   const [qrModal, setQrModal] = useState({ isOpen: false, qrCodeImage: null, qrCodeId: null, stoneName: null });
 
@@ -84,6 +87,26 @@ const List = () => {
   useEffect(()=>{
       fetchList();
   }, [])
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, list.length]);
+
+  const visibleList = list.filter((item) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      item.stoneName?.toLowerCase().includes(q) ||
+      item.category?.toLowerCase().includes(q) ||
+      item.subcategory?.toLowerCase().includes(q) ||
+      item.qrCode?.toLowerCase().includes(q)
+    );
+  });
+  const totalItems = visibleList.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const pageStart = (currentPage - 1) * ITEMS_PER_PAGE;
+  const pageEnd = pageStart + ITEMS_PER_PAGE;
+  const paginatedList = visibleList.slice(pageStart, pageEnd);
   
   return (
     <div className='list add flex-col'>
@@ -91,9 +114,19 @@ const List = () => {
           <FiBox className="header-icon" />
           Stone Product List
         </h1>
+        <div className="list-search-row">
+          <input
+            type="text"
+            className="list-search-input"
+            placeholder="Search by stone name, category, type or QR code..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
         <div className="list-table">
 
             <div className="list-table-format title">
+                <b>#</b>
                 <b>Image</b>
                 <b>Stone Name</b>
                 <b>Category</b>
@@ -106,11 +139,12 @@ const List = () => {
             </div>
             
 
-            {list.map((item, index) => {
+            {paginatedList.map((item, index) => {
               return (
 
                 <div key={item._id} className="list-row-wrapper">
                   <div className="list-table-format">
+                    <p>{pageStart + index + 1}</p>
 
                     <img src={getImageUrl(item.image)} alt={item.stoneName} />
                     <p>{item.stoneName}</p>
@@ -156,10 +190,43 @@ const List = () => {
                     </button>
                   </div>
 
-                  {index !== list.length - 1 && <hr className="row-separator" />}
+                  {index !== paginatedList.length - 1 && <hr className="row-separator" />}
                 </div>
               );
             })}
+            <div className="universal-pagination">
+              <div className="pagination-info">
+                <span>
+                  Showing {totalItems === 0 ? 0 : pageStart + 1} - {Math.min(pageEnd, totalItems)} of {totalItems} items
+                </span>
+              </div>
+              <div className="pagination-controls">
+                <button className="pagination-btn" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                  Previous
+                </button>
+                <div className="pagination-numbers">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) pageNum = i + 1;
+                    else if (currentPage <= 3) pageNum = i + 1;
+                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                    else pageNum = currentPage - 2 + i;
+                    return (
+                      <button
+                        key={pageNum}
+                        className={`pagination-number ${currentPage === pageNum ? "active" : ""}`}
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button className="pagination-btn" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                  Next
+                </button>
+              </div>
+            </div>
         </div>
 
         {/* QR Code Modal */}

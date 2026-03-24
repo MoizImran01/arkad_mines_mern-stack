@@ -496,6 +496,7 @@ const Orders = () => {
           <table className="orders-table">
             <thead>
               <tr>
+                <th>#</th>
                 <th>Order Number</th>
                 <th>Customer</th>
                 <th>Items</th>
@@ -510,7 +511,7 @@ const Orders = () => {
             <tbody>
               {orders.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="no-orders">
+                  <td colSpan="10" className="no-orders">
                     <div className="empty-state">
                       <FiPackage className="empty-icon" />
                       <p>No orders found</p>
@@ -518,7 +519,7 @@ const Orders = () => {
                   </td>
                 </tr>
               ) : (
-                orders.map(order => (
+                orders.map((order, index) => (
                   <React.Fragment key={order._id}>
                     <tr 
                       className="order-row" 
@@ -531,6 +532,7 @@ const Orders = () => {
                       tabIndex="0"
                       role="button"
                     >
+                      <td>{((pagination.page - 1) * pagination.limit) + index + 1}</td>
                       <td className="order-id">#{order.orderNumber}</td>
                       <td className="customer-info">
                         <div className="customer-name">
@@ -594,7 +596,7 @@ const Orders = () => {
                     {/* Expanded Order Details */}
                     {expandedOrder === order._id && (
                       <tr className="order-details-row">
-                        <td colSpan="9">
+                        <td colSpan="10">
                           <div className="order-details">
                             {/* Customer Information */}
                             <div className="details-section">

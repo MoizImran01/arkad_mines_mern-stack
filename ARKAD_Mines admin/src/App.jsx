@@ -47,7 +47,7 @@ const App = () => {
 
   return (
     <div>
-      <ToastContainer/>
+      <ToastContainer position="top-right" newestOnTop />
       <Routes>
 
         <Route path="/login" element={<AdminLogin />}/>

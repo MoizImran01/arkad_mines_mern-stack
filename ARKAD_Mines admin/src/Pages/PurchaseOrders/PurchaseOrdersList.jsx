@@ -43,6 +43,8 @@ const PurchaseOrdersList = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [detailModal, setDetailModal] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   const authHeaders = () => {
     const token = localStorage.getItem('adminToken');
@@ -70,6 +72,7 @@ const PurchaseOrdersList = () => {
   };
 
   useEffect(() => { fetchOrders(); }, []);
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, purchaseOrders.length]);
 
   const handleStatusChange = async (poId, newStatus) => {
     try {
@@ -104,6 +107,11 @@ const PurchaseOrdersList = () => {
       po.supplierName.toLowerCase().includes(q)
     );
   });
+  const totalItems = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const pageStart = (currentPage - 1) * ITEMS_PER_PAGE;
+  const pageEnd = pageStart + ITEMS_PER_PAGE;
+  const paginated = filtered.slice(pageStart, pageEnd);
 
   const stats = {
     total: purchaseOrders.length,
@@ -192,6 +200,7 @@ const PurchaseOrdersList = () => {
           <table className="po-table">
             <thead>
               <tr>
+                <th>#</th>
                 <th>PO Number</th>
                 <th>Supplier</th>
                 <th>Order Date</th>
@@ -204,7 +213,7 @@ const PurchaseOrdersList = () => {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="po-empty-cell">
+                  <td colSpan="8" className="po-empty-cell">
                     <div className="po-empty-state">
                       <ClipboardList className="po-empty-icon" />
                       <p className="po-empty-title">No purchase orders found</p>
@@ -213,8 +222,9 @@ const PurchaseOrdersList = () => {
                   </td>
                 </tr>
               ) : (
-                filtered.map((po) => (
+                paginated.map((po, index) => (
                   <tr key={po._id} className="po-row">
+                    <td>{pageStart + index + 1}</td>
                     <td className="po-number-cell">
                       <Hash className="po-cell-icon" />
                       {po.poNumber}
@@ -290,6 +300,39 @@ const PurchaseOrdersList = () => {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="universal-pagination">
+          <div className="pagination-info">
+            <span>
+              Showing {totalItems === 0 ? 0 : pageStart + 1} - {Math.min(pageEnd, totalItems)} of {totalItems} purchase orders
+            </span>
+          </div>
+          <div className="pagination-controls">
+            <button className="pagination-btn" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>
+              Previous
+            </button>
+            <div className="pagination-numbers">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) pageNum = i + 1;
+                else if (currentPage <= 3) pageNum = i + 1;
+                else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                else pageNum = currentPage - 2 + i;
+                return (
+                  <button
+                    key={pageNum}
+                    className={`pagination-number ${currentPage === pageNum ? "active" : ""}`}
+                    onClick={() => setCurrentPage(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            <button className="pagination-btn" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+              Next
+            </button>
+          </div>
         </div>
       </div>
 

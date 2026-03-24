@@ -43,6 +43,8 @@ const Quotations = () => {
   const [captchaPassword, setCaptchaPassword] = useState("");
   const [pendingCaptchaApproval, setPendingCaptchaApproval] = useState(null);
   const recaptchaRef = useRef(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   const headers = useMemo(
     () => ({
@@ -106,6 +108,9 @@ const Quotations = () => {
     fetchQuotes();
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, activeTab]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, quotes.length]);
 
   const handleSelectQuote = (quote) => {
     if (selectedQuote?._id === quote._id) {
@@ -446,6 +451,11 @@ const Quotations = () => {
       year: 'numeric'
     });
   };
+  const totalItems = quotes.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const pageStart = (currentPage - 1) * ITEMS_PER_PAGE;
+  const pageEnd = pageStart + ITEMS_PER_PAGE;
+  const paginatedQuotes = quotes.slice(pageStart, pageEnd);
 
   if (!token) {
     return (
@@ -516,9 +526,11 @@ const Quotations = () => {
           ) : quotes.length === 0 ? (
             <div className="quotations-empty"><FiFileText /><p>No issued quotations found</p></div>
           ) : (
+            <>
             <table className="quotations-table">
               <thead>
                 <tr>
+                  <th>#</th>
                   <th>Reference</th>
                   <th>Status</th>
                   <th>Total</th>
@@ -527,7 +539,7 @@ const Quotations = () => {
                 </tr>
               </thead>
               <tbody>
-                {quotes.map((quote) => (
+                {paginatedQuotes.map((quote, index) => (
                   <tr
                     key={quote._id}
                     className={selectedQuote?._id === quote._id ? "selected" : ""}
@@ -540,6 +552,7 @@ const Quotations = () => {
                     tabIndex="0"
                     role="button"
                   >
+                    <td>{pageStart + index + 1}</td>
                     <td>{quote.referenceNumber}</td>
                     <td>
                       <span className={`status-badge ${quote.status}`}>
@@ -559,6 +572,40 @@ const Quotations = () => {
                 ))}
               </tbody>
             </table>
+            <div className="universal-pagination">
+              <div className="pagination-info">
+                <span>
+                  Showing {totalItems === 0 ? 0 : pageStart + 1} - {Math.min(pageEnd, totalItems)} of {totalItems} quotations
+                </span>
+              </div>
+              <div className="pagination-controls">
+                <button className="pagination-btn" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                  Previous
+                </button>
+                <div className="pagination-numbers">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) pageNum = i + 1;
+                    else if (currentPage <= 3) pageNum = i + 1;
+                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                    else pageNum = currentPage - 2 + i;
+                    return (
+                      <button
+                        key={pageNum}
+                        className={`pagination-number ${currentPage === pageNum ? "active" : ""}`}
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button className="pagination-btn" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                  Next
+                </button>
+              </div>
+            </div>
+            </>
           )}
         </div>
 
@@ -753,9 +800,11 @@ const Quotations = () => {
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn-secondary" onClick={closeDecisionModal} disabled={actionLoading}>
-                Cancel
-              </button>
+              {!actionLoading && (
+                <button className="btn-secondary" onClick={closeDecisionModal} disabled={actionLoading}>
+                  Cancel
+                </button>
+              )}
               <button
                 className={`btn-primary ${decisionType === "approve" ? "approve" : decisionType === "reject" ? "reject" : "revision"}`}
                 onClick={() => {
@@ -787,18 +836,20 @@ const Quotations = () => {
                 <FiLock />
                 CAPTCHA Verification Required
               </h3>
-              <button 
-                onClick={() => {
-                  setShowCaptchaModal(false);
-                  setCaptchaToken(null);
-                  setCaptchaPassword("");
-                  recaptchaRef.current?.reset();
-                  setPendingCaptchaApproval(null);
-                }}
-                aria-label="Close modal"
-              >
-                <FiX />
-              </button>
+              {!actionLoading && (
+                <button 
+                  onClick={() => {
+                    setShowCaptchaModal(false);
+                    setCaptchaToken(null);
+                    setCaptchaPassword("");
+                    recaptchaRef.current?.reset();
+                    setPendingCaptchaApproval(null);
+                  }}
+                  aria-label="Close modal"
+                >
+                  <FiX />
+                </button>
+              )}
             </div>
             <div className="modal-body">
               <p style={{ color: '#e74c3c', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -839,20 +890,22 @@ const Quotations = () => {
                   />
                 </div>
                 <div className="modal-footer">
-                  <button 
-                    type="button"
-                    className="btn-secondary" 
-                    onClick={() => {
-                      setShowCaptchaModal(false);
-                      setCaptchaToken(null);
-                      setCaptchaPassword("");
-                      recaptchaRef.current?.reset();
-                      setPendingCaptchaApproval(null);
-                    }}
-                    disabled={actionLoading}
-                  >
-                    Cancel
-                  </button>
+                  {!actionLoading && (
+                    <button 
+                      type="button"
+                      className="btn-secondary" 
+                      onClick={() => {
+                        setShowCaptchaModal(false);
+                        setCaptchaToken(null);
+                        setCaptchaPassword("");
+                        recaptchaRef.current?.reset();
+                        setPendingCaptchaApproval(null);
+                      }}
+                      disabled={actionLoading}
+                    >
+                      Cancel
+                    </button>
+                  )}
                   <button
                     type="submit"
                     className="btn-primary"
@@ -879,13 +932,15 @@ const Quotations = () => {
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
                 Re-authentication Required
               </h3>
-              <button onClick={() => {
-                setShowReauthModal(false);
-                setReauthPassword("");
-                setPendingApproval(null);
-              }}>
-                <FiX />
-              </button>
+              {!actionLoading && (
+                <button onClick={() => {
+                  setShowReauthModal(false);
+                  setReauthPassword("");
+                  setPendingApproval(null);
+                }}>
+                  <FiX />
+                </button>
+              )}
             </div>
             <div className="modal-body">
               <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
@@ -914,18 +969,20 @@ const Quotations = () => {
                   />
                 </div>
                 <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                  <button 
-                    type="button"
-                    className="btn-secondary" 
-                    onClick={() => {
-                      setShowReauthModal(false);
-                      setReauthPassword("");
-                      setPendingApproval(null);
-                    }}
-                    disabled={actionLoading}
-                  >
-                    Cancel
-                  </button>
+                  {!actionLoading && (
+                    <button 
+                      type="button"
+                      className="btn-secondary" 
+                      onClick={() => {
+                        setShowReauthModal(false);
+                        setReauthPassword("");
+                        setPendingApproval(null);
+                      }}
+                      disabled={actionLoading}
+                    >
+                      Cancel
+                    </button>
+                  )}
                   <button
                     type="submit"
                     className="btn-primary"

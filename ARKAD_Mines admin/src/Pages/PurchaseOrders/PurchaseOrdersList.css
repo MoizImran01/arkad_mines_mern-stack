@@ -259,6 +259,35 @@
   overflow: hidden;
 }
 
+.po-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.po-pagination-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.po-pagination-actions button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.po-pagination-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .po-table-responsive {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;

@@ -31,6 +31,8 @@ const Documents = () => {
   const [endDate, setEndDate] = useState("");
   const [orderIdFilter, setOrderIdFilter] = useState("");
   const [documentTypeFilter, setDocumentTypeFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   const navigate = useNavigate();
 
@@ -96,6 +98,9 @@ const Documents = () => {
       setFilteredDocuments(documents.filter(doc => doc.documentType === activeFilter));
     }
   }, [activeFilter, documents]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, filteredDocuments.length]);
 
   const handleDownload = async (documentId, format = 'PDF') => {
     try {
@@ -131,7 +136,7 @@ const Documents = () => {
         if (response.status === 429) {
           toast.error(errorMessage || "Too many download requests. Please wait a moment before trying again.", {
             autoClose: 6000,
-            position: "top-center"
+            position: "top-right"
           });
         } else if (response.status === 404) {
           toast.error("Document not found. It may have been archived.");
@@ -191,7 +196,7 @@ const Documents = () => {
           }
           toast.error(errorMessage, {
             autoClose: 6000,
-            position: "top-center"
+            position: "top-right"
           });
         } else if (err.response.status === 404) {
           toast.error("Document not found. It may have been archived.");
@@ -248,6 +253,11 @@ const Documents = () => {
   const formatAmount = (amount) => {
     return `Rs ${(amount || 0).toLocaleString()}`;
   };
+  const totalItems = filteredDocuments.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const pageStart = (currentPage - 1) * ITEMS_PER_PAGE;
+  const pageEnd = pageStart + ITEMS_PER_PAGE;
+  const paginatedDocuments = filteredDocuments.slice(pageStart, pageEnd);
 
   if (!token) {
     return (
@@ -420,6 +430,7 @@ const Documents = () => {
             <table className="documents-table">
               <thead>
                 <tr>
+                  <th>#</th>
                   <th>Document Type</th>
                   <th>Document Number</th>
                   <th>Date</th>
@@ -430,8 +441,9 @@ const Documents = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredDocuments.map((doc) => (
+                {paginatedDocuments.map((doc, index) => (
                   <tr key={doc.id}>
+                    <td>{pageStart + index + 1}</td>
                     <td>
                       <div className="document-type-cell">
                         {getDocumentTypeIcon(doc.documentType)}
@@ -475,6 +487,39 @@ const Documents = () => {
                 ))}
               </tbody>
             </table>
+            <div className="universal-pagination">
+              <div className="pagination-info">
+                <span>
+                  Showing {totalItems === 0 ? 0 : pageStart + 1} - {Math.min(pageEnd, totalItems)} of {totalItems} documents
+                </span>
+              </div>
+              <div className="pagination-controls">
+                <button className="pagination-btn" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                  Previous
+                </button>
+                <div className="pagination-numbers">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) pageNum = i + 1;
+                    else if (currentPage <= 3) pageNum = i + 1;
+                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                    else pageNum = currentPage - 2 + i;
+                    return (
+                      <button
+                        key={pageNum}
+                        className={`pagination-number ${currentPage === pageNum ? "active" : ""}`}
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button className="pagination-btn" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                  Next
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

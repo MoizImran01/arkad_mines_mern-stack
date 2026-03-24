@@ -26,7 +26,25 @@ const Users = () => {
   const [historyData, setHistoryData] = useState(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
   const { token, url, adminUser } = useContext(AdminAuthContext);
+
+  const visibleUsers = users.filter((user) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      user.companyName?.toLowerCase().includes(q) ||
+      user.email?.toLowerCase().includes(q) ||
+      user.role?.toLowerCase().includes(q)
+    );
+  });
+  const totalItems = visibleUsers.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const pageStart = (currentPage - 1) * ITEMS_PER_PAGE;
+  const pageEnd = pageStart + ITEMS_PER_PAGE;
+  const paginatedUsers = visibleUsers.slice(pageStart, pageEnd);
 
   const fetchUsers = async () => {
     try {
@@ -155,6 +173,10 @@ const Users = () => {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, users.length]);
+
   if (loading) {
     return (
       <div className="users-loading">
@@ -211,12 +233,23 @@ const Users = () => {
         </div>
       </div>
 
+      <div className="users-search-row">
+        <input
+          type="text"
+          placeholder="Search users by company, email or role..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="users-search-input"
+        />
+      </div>
+
 
       <div className="users-table-container">
         <div className="table-responsive">
           <table className="users-table">
             <thead>
               <tr>
+                <th>#</th>
                 <th>Company Name</th>
                 <th>Email</th>
                 {adminUser?.role === 'admin' && <th>Role</th>}
@@ -226,9 +259,9 @@ const Users = () => {
               </tr>
             </thead>
             <tbody>
-              {users.length === 0 ? (
+              {visibleUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={adminUser?.role === 'admin' ? 6 : 4} className="no-users">
+                  <td colSpan={adminUser?.role === 'admin' ? 7 : 5} className="no-users">
                     <div className="empty-state">
                       <FiUser className="empty-icon" />
                       <p>No users found</p>
@@ -236,7 +269,7 @@ const Users = () => {
                   </td>
                 </tr>
               ) : (
-                users.map(user => {
+                paginatedUsers.map((user, index) => {
                   const isCurrentUser = user._id === adminUser?.id || String(user._id) === String(adminUser?.id);
                   const normalizedCompanyName = (user.companyName || '').trim();
                   const companyDisplay =
@@ -245,6 +278,7 @@ const Users = () => {
                       : normalizedCompanyName;
                   return (
                   <tr key={user._id} className={isCurrentUser ? 'current-user' : ''}>
+                    <td className="user-index">{pageStart + index + 1}</td>
                     <td className="company-name">
                       {companyDisplay ? (
                         <>
@@ -304,6 +338,39 @@ const Users = () => {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="universal-pagination">
+          <div className="pagination-info">
+            <span>
+              Showing {totalItems === 0 ? 0 : pageStart + 1} - {Math.min(pageEnd, totalItems)} of {totalItems} users
+            </span>
+          </div>
+          <div className="pagination-controls">
+            <button className="pagination-btn" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>
+              Previous
+            </button>
+            <div className="pagination-numbers">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) pageNum = i + 1;
+                else if (currentPage <= 3) pageNum = i + 1;
+                else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                else pageNum = currentPage - 2 + i;
+                return (
+                  <button
+                    key={pageNum}
+                    className={`pagination-number ${currentPage === pageNum ? "active" : ""}`}
+                    onClick={() => setCurrentPage(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            <button className="pagination-btn" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+              Next
+            </button>
+          </div>
         </div>
       </div>
 

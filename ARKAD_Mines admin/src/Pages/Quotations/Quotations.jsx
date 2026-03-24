@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import "./Quotations.css";
 import axios from "axios";
+import { toast } from "react-toastify";
 import { AdminAuthContext } from "../../context/AdminAuthContext";
 import { 
   FiAlertTriangle, 
@@ -20,6 +21,9 @@ const Quotations = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("all"); // Filter by tab: all, draft, submitted, adjustment_required, revision_requested, issued, approved, rejected
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   
   const [issueFormData, setIssueFormData] = useState({
@@ -67,6 +71,26 @@ const Quotations = () => {
       setRefreshing(false);
     }
   };
+
+  const visibleQuotes = quotes.filter((quote) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      quote.referenceNumber?.toLowerCase().includes(q) ||
+      quote.buyer?.companyName?.toLowerCase().includes(q) ||
+      quote.buyer?.email?.toLowerCase().includes(q) ||
+      quote.status?.toLowerCase().includes(q)
+    );
+  });
+  const totalItems = visibleQuotes.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const pageStart = (currentPage - 1) * ITEMS_PER_PAGE;
+  const pageEnd = pageStart + ITEMS_PER_PAGE;
+  const paginatedQuotes = visibleQuotes.slice(pageStart, pageEnd);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeTab, quotes.length]);
 
   const filterQuotationsByTab = (quotations, tab) => {
     if (tab === "all") {
@@ -133,7 +157,7 @@ const Quotations = () => {
     });
 
     if (invalidPrices.length > 0) {
-      alert(`Invalid prices for items: ${invalidPrices.join(", ")}. Please enter valid non-negative numbers.`);
+      toast.error(`Invalid prices for items: ${invalidPrices.join(", ")}. Please enter valid non-negative numbers.`);
       return;
     }
 
@@ -146,17 +170,17 @@ const Quotations = () => {
       );
 
       if (response.data.success) {
-        alert("Quotation Issued Successfully!");
+        toast.success("Quotation Issued Successfully!");
         fetchQuotes(); 
         setSelectedQuote(null); 
       } else {
-        alert("Failed to issue quote: " + (response.data.message || "Unknown error"));
+        toast.error("Failed to issue quote: " + (response.data.message || "Unknown error"));
       }
     } catch (err) {
       console.error("Error issuing quote:", err);
       console.error("Error response:", err.response?.data);
       const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || "Error issuing quote. Please check the console for details.";
-      alert(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -208,7 +232,7 @@ const Quotations = () => {
       link.remove();
     } catch (err) {
       console.error("Download failed", err);
-      alert("Failed to download PDF");
+      toast.error("Failed to download PDF");
     }
   };
 
@@ -276,6 +300,15 @@ const Quotations = () => {
           Rejected
         </button>
       </div>
+      <div className="quotations-search-row">
+        <input
+          type="text"
+          placeholder="Search by reference, buyer, email or status..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="quotations-search-input"
+        />
+      </div>
 
       {error && (
         <div className="quotations-error">
@@ -289,12 +322,14 @@ const Quotations = () => {
         <div className="quotations-table-wrapper">
           {loading ? (
             <div className="quotations-loading"><FiRefreshCw className="spin" /><p>Loading...</p></div>
-          ) : quotes.length === 0 ? (
+          ) : visibleQuotes.length === 0 ? (
             <div className="quotations-empty"><FiFileText /><p>No quotations found</p></div>
           ) : (
+            <>
             <table className="quotations-table">
               <thead>
                 <tr>
+                  <th>#</th>
                   <th>Reference</th>
                   <th>Buyer</th>
                   <th>Status</th>
@@ -303,7 +338,7 @@ const Quotations = () => {
                 </tr>
               </thead>
               <tbody>
-                {quotes.map((quote) => (
+                {paginatedQuotes.map((quote, index) => (
                   <tr
                     key={quote._id}
                     className={selectedQuote?._id === quote._id ? "selected" : ""}
@@ -316,6 +351,7 @@ const Quotations = () => {
                     tabIndex="0"
                     role="button"
                   >
+                    <td>{pageStart + index + 1}</td>
                     <td>{quote.referenceNumber}</td>
                     <td>
                       <div className="buyer-info">
@@ -336,6 +372,40 @@ const Quotations = () => {
                 ))}
               </tbody>
             </table>
+            <div className="universal-pagination">
+              <div className="pagination-info">
+                <span>
+                  Showing {totalItems === 0 ? 0 : pageStart + 1} - {Math.min(pageEnd, totalItems)} of {totalItems} quotations
+                </span>
+              </div>
+              <div className="pagination-controls">
+                <button className="pagination-btn" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                  Previous
+                </button>
+                <div className="pagination-numbers">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) pageNum = i + 1;
+                    else if (currentPage <= 3) pageNum = i + 1;
+                    else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                    else pageNum = currentPage - 2 + i;
+                    return (
+                      <button
+                        key={pageNum}
+                        className={`pagination-number ${currentPage === pageNum ? "active" : ""}`}
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button className="pagination-btn" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                  Next
+                </button>
+              </div>
+            </div>
+            </>
           )}
         </div>
 

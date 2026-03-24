@@ -1,6 +1,7 @@
 import React, { useContext, useMemo, useState } from "react";
 import "./RequestQuote.css";
 import axios from "axios";
+import { toast } from "react-toastify";
 import { StoreContext } from "../../context/StoreContext";
 import {
   FiAlertTriangle,
@@ -10,6 +11,8 @@ import {
   FiSave,
   FiSend,
   FiTrash2,
+  FiCopy,
+  FiX,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
@@ -32,6 +35,8 @@ const RequestQuote = () => {
   const [feedback, setFeedback] = useState(null);
   const [unavailableItems, setUnavailableItems] = useState([]);
   const [exceededMaxItems, setExceededMaxItems] = useState({});
+  const [quoteIssuedModal, setQuoteIssuedModal] = useState(null);
+  const [copiedQuoteNumber, setCopiedQuoteNumber] = useState(false);
   const navigate = useNavigate();
 
   const headers = useMemo(
@@ -130,12 +135,7 @@ const RequestQuote = () => {
 
       setUnavailableItems([]);
       const { quotation } = response.data;
-      setFeedback({
-        type: "success",
-        message: response.data.message,
-        referenceNumber: quotation.referenceNumber,
-        validity: quotation.validity,
-      });
+      setFeedback(null);
 
       if (saveAsDraft) {
         setActiveQuoteId(quotation._id);
@@ -143,6 +143,12 @@ const RequestQuote = () => {
         clearQuoteItems();
         setActiveQuoteId(null);
         setQuoteNotes("");
+        toast.success("Quotation issued.");
+        setCopiedQuoteNumber(false);
+        setQuoteIssuedModal({
+          referenceNumber: quotation.referenceNumber,
+          validity: quotation.validity,
+        });
       }
     } catch (err) {
       const errorMessage = err.response?.data?.error || err.response?.statusText || err.message;
@@ -165,7 +171,7 @@ const RequestQuote = () => {
         </div>
       </div>
 
-      {feedback && (
+      {feedback && feedback.type !== "success" && (
         <div className={`feedback-banner ${feedback.type}`}>
           {feedback.type === "success" && <FiCheckCircle />}
           {feedback.type === "warning" && <FiAlertTriangle />}
@@ -344,7 +350,7 @@ const RequestQuote = () => {
               Save as Draft
             </button>
             <button
-              className="primary-btn"
+              className="submit-request-btn"
               onClick={() => submitQuote({ saveAsDraft: false })}
               disabled={loading || !quoteItems.length}
             >
@@ -354,6 +360,66 @@ const RequestQuote = () => {
           </div>
         </div>
       </div>
+
+      {quoteIssuedModal && (
+        <div className="quote-issued-overlay" role="dialog" aria-modal="true">
+          <button type="button" className="quote-issued-backdrop" onClick={() => setQuoteIssuedModal(null)} aria-label="Close" />
+          <div className="quote-issued-modal">
+            <button
+              type="button"
+              className="quote-issued-close"
+              onClick={() => setQuoteIssuedModal(null)}
+              aria-label="Close"
+            >
+              <FiX />
+            </button>
+
+            <h3 className="quote-issued-title">
+              <FiCheckCircle />
+              Quotation Issued
+            </h3>
+            <div className="quote-issued-ref-row">
+              <p className="quote-issued-ref">
+                <strong>Quotation Number: {quoteIssuedModal.referenceNumber}</strong>
+              </p>
+              <button
+                type="button"
+                className={`quote-copy-icon-btn ${copiedQuoteNumber ? "copied" : ""}`}
+                onClick={() => {
+                  navigator.clipboard.writeText(quoteIssuedModal.referenceNumber);
+                  setCopiedQuoteNumber(true);
+                  toast.success("Quotation number copied to clipboard.");
+                  setTimeout(() => setCopiedQuoteNumber(false), 1200);
+                }}
+                aria-label="Copy quotation number"
+                title={copiedQuoteNumber ? "Copied" : "Copy quotation number"}
+              >
+                {copiedQuoteNumber ? <FiCheckCircle /> : <FiCopy />}
+              </button>
+            </div>
+            <p className="quote-issued-validity">
+              Valid until:{" "}
+              {quoteIssuedModal.validity?.end
+                ? new Date(quoteIssuedModal.validity.end).toLocaleDateString()
+                : "N/A"}
+            </p>
+
+            <div className="quote-issued-actions">
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={() => {
+                  setCopiedQuoteNumber(false);
+                  setQuoteIssuedModal(null);
+                  navigate("/quotations");
+                }}
+              >
+                Go to My Quotations
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

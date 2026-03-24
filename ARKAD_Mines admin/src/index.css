@@ -98,6 +98,88 @@ hr{
   border-radius: 9999px !important;
 }
 
+.app-content .universal-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.app-content .universal-pagination .pagination-info {
+  font-size: 0.875rem;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.app-content .universal-pagination .pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.app-content .universal-pagination .pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.app-content .universal-pagination .pagination-btn:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #2f5242;
+  color: #2f5242;
+}
+
+.app-content .universal-pagination .pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.app-content .universal-pagination .pagination-numbers {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.app-content .universal-pagination .pagination-number {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-content .universal-pagination .pagination-number:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #2f5242;
+  color: #2f5242;
+}
+
+.app-content .universal-pagination .pagination-number.active {
+  background: #2f5242;
+  border-color: #2f5242;
+  color: #ffffff;
+}
+
 select:not([multiple]) {
   appearance: none !important;
   -webkit-appearance: none !important;

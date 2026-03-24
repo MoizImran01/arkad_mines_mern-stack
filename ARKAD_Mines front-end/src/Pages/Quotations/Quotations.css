@@ -19,6 +19,7 @@
   align-items: center;
   gap: 8px;
   margin: 0;
+  font-size: 28px;
 }
 
 .quotations-tabs {
@@ -400,6 +401,36 @@
 .quotations-loading .spin {
   font-size: 24px;
   color: #6b7280;
+}
+
+.quotations-pagination-inline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #4b5563;
+  background: #fff;
+}
+
+.quotations-pagination-inline-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.quotations-pagination-inline-actions button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.quotations-pagination-inline-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .modal-overlay {

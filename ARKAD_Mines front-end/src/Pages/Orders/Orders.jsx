@@ -42,6 +42,8 @@ const Orders = () => {
   const [captchaToken, setCaptchaToken] = useState(null);
   const [captchaPassword, setCaptchaPassword] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
   const recaptchaRef = useRef(null);
 
   const navigate = useNavigate();
@@ -88,6 +90,9 @@ const Orders = () => {
       setFilteredOrders(orders.filter((order) => order.status === activeTab));
     }
   }, [activeTab, orders]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, orders.length]);
 
   useEffect(() => {
     const hasModalOpen = trackingOrderNumber || showCaptchaModal || showMfaModal;
@@ -546,6 +551,11 @@ const Orders = () => {
     await fetchOrders();
     setRefreshing(false);
   };
+  const totalItems = filteredOrders.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const pageStart = (currentPage - 1) * ITEMS_PER_PAGE;
+  const pageEnd = pageStart + ITEMS_PER_PAGE;
+  const paginatedOrders = filteredOrders.slice(pageStart, pageEnd);
 
   const refreshOrderDetails = async () => {
     if (!trackingOrderDetails || !trackingOrderDetails._id) return;
@@ -605,10 +615,12 @@ const Orders = () => {
       ) : filteredOrders.length === 0 ? (
         <div className="orders-empty"><p>No orders found in this category.</p></div>
       ) : (
+        <>
         <div className="table-container">
           <table className="orders-table">
             <thead>
               <tr>
+                <th>#</th>
                 <th>Order Number</th>
                 <th>Date Placed</th>
                 <th>Status</th>
@@ -618,8 +630,9 @@ const Orders = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.map((order) => (
+              {paginatedOrders.map((order, index) => (
                 <tr key={order._id}>
+                  <td>{pageStart + index + 1}</td>
                   <td><strong>{order.orderNumber}</strong></td>
                   <td>
                     {new Date(order.createdAt).toLocaleDateString(undefined, {
@@ -654,6 +667,40 @@ const Orders = () => {
             </tbody>
           </table>
         </div>
+        <div className="universal-pagination">
+          <div className="pagination-info">
+            <span>
+              Showing {totalItems === 0 ? 0 : pageStart + 1} - {Math.min(pageEnd, totalItems)} of {totalItems} orders
+            </span>
+          </div>
+          <div className="pagination-controls">
+            <button className="pagination-btn" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>
+              Previous
+            </button>
+            <div className="pagination-numbers">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) pageNum = i + 1;
+                else if (currentPage <= 3) pageNum = i + 1;
+                else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+                else pageNum = currentPage - 2 + i;
+                return (
+                  <button
+                    key={pageNum}
+                    className={`pagination-number ${currentPage === pageNum ? "active" : ""}`}
+                    onClick={() => setCurrentPage(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            <button className="pagination-btn" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+              Next
+            </button>
+          </div>
+        </div>
+        </>
       )}
 
       {trackingOrderNumber && trackingOrderDetails && (
