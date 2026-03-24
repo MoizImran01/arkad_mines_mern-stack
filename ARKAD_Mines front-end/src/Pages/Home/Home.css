@@ -55,7 +55,7 @@
   width: 100px;
   height: 2px;
   margin: 1.5rem auto 0;
-  background: linear-gradient(90deg, #2a5c45, #76c08f);
+  background: linear-gradient(90deg, #2f5242, #2f5242);
   transform-origin: center;
 }
 
@@ -108,7 +108,7 @@
   text-transform: uppercase;
   letter-spacing: 0.22em;
   font-size: 0.78rem;
-  color: #2a5c45;
+  color: #2f5242;
   font-weight: 600;
 }
 
@@ -116,7 +116,7 @@
 .section-rule {
   height: 3px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #2a5c45 0%, #76c08f 100%);
+  background: linear-gradient(90deg, #2f5242 0%, #2f5242 100%);
   transform-origin: left;
   box-shadow: 0 4px 14px rgba(42, 92, 69, 0.3);
 }
@@ -189,14 +189,38 @@
   flex-wrap: wrap;
 }
 
-.hero-actions .btn-primary {
+.hero-actionss{
   box-shadow: 0 16px 30px rgba(42, 92, 69, 0.35);
 }
 
 .hero-actions .btn-secondary {
   backdrop-filter: blur(6px);
 }
+.btn-primary {
+  background: #2f5242;
+  color: #ffffff;
+}
 
+.btn-primary:hover {
+  background: #1c3127;
+}
+
+.get-started-btn {
+  background: #2f5242;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.get-started-btn:hover {
+  background: #1c3127;
+}
 .hero-meta {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -290,7 +314,7 @@
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: #2a5c45;
+  color: #2f5242;
 }
 
 .hero-gradient {
@@ -500,7 +524,7 @@
 }
 
 .offer-card a {
-  color: #2a5c45;
+  color: #2f5242;
   font-weight: 600;
   font-size: 0.88rem;
   margin-top: auto;
@@ -561,7 +585,7 @@
 }
 
 .highlight-links a {
-  color: #2a5c45;
+  color: #2f5242;
   font-weight: 600;
 }
 
@@ -614,7 +638,7 @@
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: #2a5c45;
+  color: #2f5242;
   font-weight: 600;
 }
 
@@ -714,52 +738,27 @@
 .contact-form input:focus,
 .contact-form textarea:focus {
   outline: none;
-  border-color: #2a5c45;
+  border-color: #2f5242;
   box-shadow: 0 0 0 3px rgba(42, 92, 69, 0.15);
 }
 
-.landing-footer {
-  padding: 4rem 0 5rem;
-  background: #0f241b;
-  color: #d9e7dd;
+
+.submit-btn-home {
+  background: #2f5242;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.footer-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3rem;
-  align-items: center;
+.submit-btn-home:hover {
+  background: #1c3127;
 }
-
-.footer-grid h3 {
-  font-family: 'DM Serif Display', serif;
-  color: #fff;
-  margin-bottom: 0.75rem;
-  font-size: 1.4rem;
-}
-
-.footer-grid p {
-  line-height: 1.7;
-  font-size: 0.92rem;
-}
-
-.footer-links {
-  display: flex;
-  gap: 1.8rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.footer-links a {
-  color: #d9e7dd;
-  font-weight: 500;
-  transition: color 0.25s ease;
-}
-
-.footer-links a:hover {
-  color: #76c08f;
-}
-    
 @media (max-width: 1024px) {
   .hero-grid,
   .intro-grid,
@@ -784,13 +783,6 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .footer-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .footer-links {
-    justify-content: flex-start;
-  }
 }
 
 @media (max-width: 768px) {

@@ -189,11 +189,11 @@ function Industries({ setShowLogin }) {
             the stone that has shaped civilizations for millennia.
           </p>
           <div className="hero-cta">
-            <button className="primary-btn" onClick={handleCatalogClick}>
+            <button className="explore-primary-btn" onClick={handleCatalogClick}>
               Explore Our Catalog{" "}
               <span className="btn-arrow">→</span>
             </button>
-            <button className="secondary-btn" onClick={handleQuoteClick}>
+            <button className="request-quote-btn" onClick={handleQuoteClick}>
               <span className="play-icon">📋</span>{" "}
               Request a Quote
             </button>

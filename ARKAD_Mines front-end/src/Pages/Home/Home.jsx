@@ -310,7 +310,7 @@ const Home = () => {
             </div>
 
             <div className="hero-actions">
-              <Link className="btn-primary" to="/request-quote">
+              <Link className="get-started-btn" to="/request-quote">
                 Get started
               </Link>
               <Link className="btn-secondary" to="/industries">
@@ -556,30 +556,13 @@ const Home = () => {
               How can we help?
               <textarea rows="4" placeholder="Tell us about your project." />
             </label>
-            <button className="btn-primary" type="button">
+            <button className="submit-btn-home" type="button">
               Submit
             </button>
           </form>
         </div>
       </section>
 
-      <section className="landing-footer">
-        <div className="landing-container footer-grid">
-          <div>
-            <h3>Arkad Mines</h3>
-            <p>
-              Engineered mineral solutions for construction, energy, and
-              manufacturing partners worldwide.
-            </p>
-          </div>
-          <div className="footer-links">
-            <Link to="/products">Products</Link>
-            <Link to="/industries">Industries</Link>
-            <Link to="/about">Company</Link>
-            <Link to="/contact">Contact</Link>
-          </div>
-        </div>
-      </section>
     </main>
   );
 };

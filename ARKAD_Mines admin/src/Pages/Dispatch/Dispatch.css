@@ -20,7 +20,7 @@
 
 .dispatch-header .header-icon {
   font-size: 32px;
-  color: #2d8659;
+  color: #2f5242;
 }
 
 .dispatch-header p {
@@ -61,14 +61,14 @@
 }
 
 .mode-btn:hover {
-  border-color: #2d8659;
-  color: #2d8659;
+  border-color: #2f5242;
+  color: #2f5242;
 }
 
 .mode-btn.active {
-  background: linear-gradient(135deg, #2d8659 0%, #34a853 100%);
+  background: linear-gradient(135deg, #2f5242 0%, #2f5242 100%);
   color: white;
-  border-color: #2d8659;
+  border-color: #2f5242;
 }
 
 .instructions-box {
@@ -132,7 +132,7 @@
 .scan-frame {
   width: 250px;
   height: 250px;
-  border: 3px solid #34a853;
+  border: 3px solid #2f5242;
   border-radius: 12px;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
 }
@@ -211,7 +211,7 @@
 
 .qr-input:focus {
   outline: none;
-  border-color: #2d8659;
+  border-color: #2f5242;
   box-shadow: 0 0 0 3px rgba(45, 134, 89, 0.1);
 }
 
@@ -222,7 +222,7 @@
 
 .search-btn {
   padding: 14px 24px;
-  background: linear-gradient(135deg, #2d8659 0%, #34a853 100%);
+  background: linear-gradient(135deg, #2f5242 0%, #2f5242 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -300,7 +300,7 @@
 
 .status-badge.dispatched {
   background: #d1fae5;
-  color: #065f46;
+  color: #2f5242;
 }
 
 .block-details {
@@ -364,7 +364,7 @@
 .dispatch-btn {
   flex: 1;
   padding: 14px 24px;
-  background: linear-gradient(135deg, #2d8659 0%, #34a853 100%);
+  background: linear-gradient(135deg, #2f5242 0%, #2f5242 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -412,7 +412,7 @@
   flex: 1;
   padding: 14px 24px;
   background: #d1fae5;
-  color: #065f46;
+  color: #2f5242;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -495,7 +495,7 @@
 }
 
 .print-btn {
-  background: linear-gradient(135deg, #2d8659 0%, #34a853 100%);
+  background: linear-gradient(135deg, #2f5242 0%, #2f5242 100%);
   color: white;
 }
 

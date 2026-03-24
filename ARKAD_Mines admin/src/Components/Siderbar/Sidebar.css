@@ -30,11 +30,13 @@
     transition: all 0.2s ease;
 }
 .sidebar-option:hover{
-    background-color: #f5f5f5;
+    background-color: #1c3127;
+    color: #ffffff;
 }
 .sidebar-option.active{
-    background-color: #e6ffd3;
-    border-color: rgb(52, 111, 34);
+    background-color: #2f5242;
+    border-color: #2f5242;
+    color: #ffffff;
 }
 .sidebar-option img {
     width: 20px;
@@ -57,6 +59,10 @@
     font-weight: 500;
     color: #333;
     white-space: nowrap;
+}
+.sidebar-option:hover p,
+.sidebar-option.active p {
+    color: #ffffff;
 }
 @media (max-width:900px){
     .sidebar-option p{

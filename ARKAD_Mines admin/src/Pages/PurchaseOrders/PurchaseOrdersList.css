@@ -14,7 +14,7 @@
   height: 40px;
   border: 3px solid #e5e7eb;
   border-radius: 50%;
-  border-top-color: #536438;
+  border-top-color: #2f5242;
   animation: po-spin 1s ease-in-out infinite;
 }
 
@@ -55,6 +55,8 @@
   gap: 1rem;
   flex-wrap: wrap;
   margin-bottom: 0.35rem;
+  position: relative;
+  padding-right: 160px;
 }
 
 .po-title-row h1 {
@@ -70,7 +72,7 @@
 .po-header-icon {
   width: 28px;
   height: 28px;
-  color: #536438;
+  color: #2f5242;
 }
 
 .po-subtitle {
@@ -82,22 +84,28 @@
 .po-refresh-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #2f5242;
   border-radius: 10px;
-  padding: 9px 16px;
-  background: #fff;
+  padding: 0 16px;
+  min-height: 40px;
+  min-width: 140px;
+  background: #ffffff;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  color: #2f5242;
   transition: all 0.2s;
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 .po-refresh-btn:hover {
-  background: #f9fafb;
-  border-color: #536438;
-  color: #536438;
+  background: #1c3127;
+  border-color: #1c3127;
+  color: #ffffff;
 }
 
 .po-refresh-btn:disabled {
@@ -117,7 +125,7 @@
   padding: 11px 22px;
   border-radius: 10px;
   border: none;
-  background: #536438;
+  background: #2f5242;
   color: #fff;
   font-size: 15px;
   font-weight: 600;
@@ -127,7 +135,7 @@
 }
 
 .po-create-btn:hover {
-  background: #3a471f;
+  background: #1c3127;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(83, 100, 56, 0.2);
 }
@@ -159,7 +167,7 @@
 .po-stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border-color: #536438;
+  border-color: #2f5242;
 }
 
 .po-stat-icon {
@@ -184,11 +192,11 @@
   font-size: 1.8rem;
 }
 
-.po-stat-icon.total    { background: linear-gradient(135deg, #536438, #6b8248); }
+.po-stat-icon.total    { background: linear-gradient(135deg, #2f5242, #2f5242); }
 .po-stat-icon.draft    { background: linear-gradient(135deg, #6b7280, #9ca3af); }
 .po-stat-icon.sent     { background: linear-gradient(135deg, #2563eb, #3b82f6); }
-.po-stat-icon.received { background: linear-gradient(135deg, #059669, #10b981); }
-.po-stat-icon.cost     { background: linear-gradient(135deg, #2d8659, #28a745); }
+.po-stat-icon.received { background: linear-gradient(135deg, #2f5242, #2f5242); }
+.po-stat-icon.cost     { background: linear-gradient(135deg, #2f5242, #2f5242); }
 
 .po-stat-info h3 {
   font-size: 1.4rem;
@@ -239,7 +247,7 @@
 }
 
 .po-search-input:focus {
-  border-color: #536438;
+  border-color: #2f5242;
   box-shadow: 0 0 0 3px rgba(83, 100, 56, 0.1);
 }
 
@@ -296,7 +304,7 @@
 
 .po-number-cell {
   font-weight: 600;
-  color: #536438;
+  color: #2f5242;
   font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
   white-space: nowrap;
 }
@@ -461,7 +469,7 @@
 
 .po-status-received {
   background-color: #d1fae5;
-  color: #065f46;
+  color: #2f5242;
   border-color: #6ee7b7;
 }
 
@@ -481,9 +489,9 @@
   gap: 6px;
   padding: 8px 16px;
   border-radius: 8px;
-  border: 1px solid #536438;
+  border: 1px solid #2f5242;
   background: #fff;
-  color: #536438;
+  color: #2f5242;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -491,7 +499,7 @@
 }
 
 .po-view-btn:hover {
-  background: #536438;
+  background: #2f5242;
   color: #fff;
   transform: translateY(-1px);
 }
@@ -642,7 +650,7 @@
 .po-section-icon {
   width: 18px;
   height: 18px;
-  color: #536438;
+  color: #2f5242;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -689,7 +697,7 @@
 
 .po-detail-value.mono {
   font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-  color: #536438;
+  color: #2f5242;
 }
 
 .po-detail-badge {
@@ -777,7 +785,7 @@
 }
 
 .po-form-input:focus {
-  border-color: #536438;
+  border-color: #2f5242;
   box-shadow: 0 0 0 3px rgba(83, 100, 56, 0.1);
 }
 
@@ -801,7 +809,7 @@ textarea.po-form-input {
   border-radius: 8px;
   background: #ecfdf5;
   border: 1px solid #a7f3d0;
-  color: #065f46;
+  color: #2f5242;
   font-size: 15px;
   margin-bottom: 1rem;
 }
@@ -813,7 +821,7 @@ textarea.po-form-input {
   padding: 10px 22px;
   border-radius: 8px;
   border: none;
-  background: #536438;
+  background: #2f5242;
   color: #fff;
   font-size: 15px;
   font-weight: 600;
@@ -822,7 +830,7 @@ textarea.po-form-input {
 }
 
 .po-btn-primary:hover {
-  background: #3a471f;
+  background: #1c3127;
   transform: translateY(-1px);
 }
 
@@ -873,6 +881,16 @@ textarea.po-form-input {
 
   .po-title-row h1 {
     font-size: 1.35rem;
+  }
+
+  .po-title-row {
+    padding-right: 0;
+  }
+
+  .po-refresh-btn {
+    position: static;
+    width: 100%;
+    margin-top: 10px;
   }
 
   .po-stats-grid {

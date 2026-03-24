@@ -35,7 +35,7 @@ form {
   font-weight: 600;
   margin-bottom: 40px;
   text-align: center;
-  color: #2c5035;
+  color: #2f5242;
 }
 
 .flex-col {
@@ -45,19 +45,25 @@ form {
 }
 
 .add-img-upload label {
+  position: relative;
   cursor: pointer;
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   max-width: 300px;
+  min-height: 180px;
   margin: 0 auto;
-  border: 2px dashed #bdc3c7;
+  border: 2px dashed #2f5242;
   border-radius: 12px;
   overflow: hidden;
-  transition: border-color 0.3s ease;
+  background: #f8fbf9;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
 }
 
 .add-img-upload label:hover {
-  border-color: #3498db;
+  border-color: #1c3127;
+  background: #eef4f0;
 }
 
 .add-img-upload img {
@@ -67,6 +73,29 @@ form {
   object-fit: contain;
   padding: 10px;
   background-color: #fafafa;
+}
+
+.upload-empty-state {
+  width: 100%;
+  min-height: 180px;
+  color: #2f5242;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #f8fbf9;
+}
+
+.upload-empty-state svg {
+  width: 40px;
+  height: 40px;
+}
+
+.upload-empty-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2f5242;
 }
 
 
@@ -91,7 +120,30 @@ form {
   resize: vertical;
 }
 
+.add-product-name select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  padding: 12px 44px 12px 16px;
+  min-height: 46px;
+  line-height: 1.35;
+  font-size: 16px;
+  color: #1f2937;
+  background-image: linear-gradient(45deg, transparent 50%, #2f5242 50%), linear-gradient(135deg, #2f5242 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  border: 1px solid #cfe0d8;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.add-product-name select:hover {
+  border-color: #2f5242;
+}
+
 .add-product-name input:focus,
+.add-product-name select:focus,
 .add-product-dimensions input:focus,
 .add-category select:focus,
 .add-subcategory select:focus,
@@ -101,8 +153,8 @@ form {
 .add-stock-quantity input:focus,
 .add-product-location input:focus,
 .add-product-notes textarea:focus {
-  border-color: #3498db;
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  border-color: #2f5242;
+  box-shadow: 0 0 0 3px rgba(47, 82, 66, 0.18);
 }
 
 
@@ -151,7 +203,7 @@ form {
 
 
 .add-product-btn {
-  background: #4e6632; 
+  background: #2f5242;
   color: white;
   font-weight: 600;
   font-size: 16px;
@@ -166,9 +218,9 @@ form {
 }
 
 .add-product-btn:hover {
-  background: #3f592d;
+  background: #1c3127;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.3);
+  box-shadow: 0 4px 12px rgba(28, 49, 39, 0.3);
 }
 
 .add-product-btn:active {
@@ -332,7 +384,7 @@ form {
 
 .copy-btn {
   padding: 6px 12px;
-  background: #2d8659;
+  background: #2f5242;
   color: white;
   border: none;
   border-radius: 4px;
@@ -344,7 +396,7 @@ form {
 }
 
 .copy-btn:hover {
-  background: #34a853;
+  background: #1c3127;
   transform: translateY(-1px);
 }
 
@@ -360,7 +412,7 @@ form {
 }
 
 .print-btn {
-  background: linear-gradient(135deg, #2d8659 0%, #34a853 100%);
+  background: linear-gradient(135deg, #2f5242 0%, #2f5242 100%);
   color: white;
 }
 

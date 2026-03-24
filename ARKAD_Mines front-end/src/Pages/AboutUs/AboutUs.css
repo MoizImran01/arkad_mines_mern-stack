@@ -3,8 +3,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 .about-page-new {
-  --primary: #16a34a;
-  --primary-dark: #15803d;
+  --primary: #2f5242;
+  --primary-dark: #1c3127;
   --primary-light: #dcfce7;
   --primary-lighter: #f0fdf4;
   --accent: #0f766e;
@@ -186,13 +186,11 @@
   font-weight: 600;
   font-size: 1rem;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(22, 163, 74, 0.3);
 }
 
 .btn-primary-new:hover {
   background: var(--primary-dark);
   transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(22, 163, 74, 0.4);
 }
 
 .btn-primary-new svg {
@@ -821,7 +819,6 @@
   background: var(--primary);
   color: white;
   transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(22, 163, 74, 0.3);
 }
 
 .btn-view-all svg {
@@ -836,8 +833,9 @@
 .process-section-new {
   position: relative;
   padding: 8rem 2rem 5rem;
-  background: var(--bg-dark);
+  background: #2f5242;
   overflow: hidden;
+  color: #ffffff;
 }
 
 /* Animated Wave at top of process section */
@@ -890,16 +888,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(22, 163, 74, 0.2);
+  background: rgb(255, 255, 255);
   border: 2px solid var(--primary);
   border-radius: 50%;
-  color: var(--primary);
+  color: #2f5242;
   margin: 0 auto 1rem;
   transition: all 0.3s ease;
 }
 
 .process-item-new:hover .process-icon-new {
-  background: var(--primary);
+  background: #2f5242;
   color: white;
   transform: scale(1.1);
 }
@@ -908,7 +906,7 @@
   font-family: 'Playfair Display', serif;
   font-size: 2.5rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.1);
+  color: rgb(255, 255, 255);
   margin-bottom: 0.5rem;
 }
 

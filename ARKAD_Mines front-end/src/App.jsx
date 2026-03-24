@@ -16,6 +16,7 @@ import Quotations from './Pages/Quotations/Quotations';
 import Documents from './Pages/Documents/Documents';
 import ItemDetail from './Pages/ItemDetail/ItemDetail';
 import Dashboard from './Pages/Dashboard/Dashboard';
+import Footer from './Components/Footer/Footer';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Lenis from 'lenis';
@@ -91,7 +92,7 @@ function App() {
           <Route
             path="/products"
             element={
-              <ProtectedRoute setShowLogin={setShowLogin}>
+              <ProtectedRoute>
                 <Products />
               </ProtectedRoute>
             }
@@ -99,7 +100,7 @@ function App() {
           <Route
             path="/item/:id"
             element={
-              <ProtectedRoute setShowLogin={setShowLogin}>
+              <ProtectedRoute>
                 <ItemDetail />
               </ProtectedRoute>
             }
@@ -107,7 +108,7 @@ function App() {
           <Route
   path="/place-order/:orderNumber"
   element={
-    <ProtectedRoute setShowLogin={setShowLogin}>
+    <ProtectedRoute>
       <PlaceOrder />
     </ProtectedRoute>
   }
@@ -118,7 +119,7 @@ function App() {
           <Route
             path="/request-quote"
             element={
-              <ProtectedRoute setShowLogin={setShowLogin}>
+              <ProtectedRoute>
                 <RequestQuote />
               </ProtectedRoute>
             }
@@ -126,7 +127,7 @@ function App() {
           <Route
             path="/orders"
             element={
-              <ProtectedRoute setShowLogin={setShowLogin}>
+              <ProtectedRoute>
                 <Orders />
               </ProtectedRoute>
             }
@@ -134,7 +135,7 @@ function App() {
           <Route
             path="/quotations"
             element={
-              <ProtectedRoute setShowLogin={setShowLogin}>
+              <ProtectedRoute>
                 <Quotations />
               </ProtectedRoute>
             }
@@ -142,7 +143,7 @@ function App() {
           <Route
             path="/documents"
             element={
-              <ProtectedRoute setShowLogin={setShowLogin}>
+              <ProtectedRoute>
                 <Documents />
               </ProtectedRoute>
             }
@@ -150,13 +151,14 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute setShowLogin={setShowLogin}>
+              <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
             }
           />
           <Route path="*" element={<div></div>} />
         </Routes>
+        <Footer />
       </div>
     </>
   );

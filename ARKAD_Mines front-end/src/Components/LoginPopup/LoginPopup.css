@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --primary-color: #2a5c45;
-  --primary-dark: #1e4532;
-  --primary-light: #3a7a5c;
+  --primary-color: #2f5242;
+  --primary-dark: #1c3127;
+  --primary-light: #2f5242;
   --secondary-color: #8b7355;
   --text-dark: #1a2a2a;
   --text-light: #6b7280;
@@ -202,7 +202,7 @@
 
 .submit-btn {
     margin: 0 2rem 1.5rem;
-    padding: 1rem 1.5rem;
+    padding: 0 1.5rem;
     background: var(--primary-color);
     color: var(--bg-white);
     border: none;
@@ -216,7 +216,16 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    height: 52px;
     min-height: 52px;
+    max-height: 52px;
+    width: calc(100% - 4rem);
+    white-space: nowrap;
+    overflow: hidden;
+    line-height: 52px;
+    appearance: none;
+    -webkit-appearance: none;
+    flex: 0 0 52px;
 }
 
 .submit-btn:hover:not(:disabled) {
@@ -230,17 +239,41 @@
     opacity: 0.7;
 }
 
-.submit-btn.loading {
+.submit-btn.submitting {
     cursor: wait;
 }
 
-.spinner {
+.submit-btn-text.hidden {
+    visibility: hidden;
+}
+
+.submit-btn-text {
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.submit-spinner {
+    position: absolute;
     width: 20px;
     height: 20px;
     border: 2px solid transparent;
     border-top: 2px solid var(--bg-white);
     border-radius: 50%;
     animation: spin 1s linear infinite;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 
@@ -356,6 +389,10 @@
     
     .submit-btn {
         margin: 0 1.5rem 1.25rem;
+        width: calc(100% - 3rem);
+        height: 52px;
+        min-height: 52px;
+        max-height: 52px;
     }
     
     .form-footer {

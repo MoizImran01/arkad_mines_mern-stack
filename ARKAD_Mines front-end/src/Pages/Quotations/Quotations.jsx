@@ -926,7 +926,7 @@ const Quotations = () => {
                     type="submit"
                     className="btn-primary"
                     disabled={actionLoading || !reauthPassword.trim()}
-                    style={{ backgroundColor: '#2d8659' }}
+                    style={{ backgroundColor: '#2f5242' }}
                   >
                     {actionLoading ? "Verifying..." : "Confirm & Approve"}
                   </button>

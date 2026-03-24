@@ -518,7 +518,7 @@ const Analytics = () => {
   const { token } = useContext(AdminAuthContext);
   const navigate = useNavigate();
 
-  const pieColors = ['#2d8659', '#e74c3c', '#3498db', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'];
+  const pieColors = ['#2f5242', '#e74c3c', '#3498db', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'];
   
   const statusColors = {
     draft: '#95a5a6',
@@ -526,19 +526,19 @@ const Analytics = () => {
     processing: '#f39c12',
     shipped: '#9b59b6',
     dispatched: '#9b59b6',
-    delivered: '#27ae60',
+    delivered: '#2f5242',
     cancelled: '#e74c3c',
     submitted: '#3498db',
     adjustment_required: '#e67e22',
     revision_requested: '#f39c12',
     issued: '#1abc9c',
-    approved: '#27ae60',
+    approved: '#2f5242',
     rejected: '#e74c3c',
     pending: '#f1c40f',
     payment_in_progress: '#3498db',
-    fully_paid: '#27ae60',
+    fully_paid: '#2f5242',
     partial: '#e67e22',
-    paid: '#27ae60',
+    paid: '#2f5242',
     refunded: '#e74c3c'
   };
 
@@ -584,7 +584,7 @@ const Analytics = () => {
       if (passwordConfirmation && typeof passwordConfirmation === 'string') {
         params.passwordConfirmation = passwordConfirmation;
       }
-      const response = await axios.get(`${API_URL}/api/analytics`, {
+      const response = await axios.get(`${API_URL}/api/dashboard`, {
         headers: { Authorization: `Bearer ${token}` },
         params
       });
@@ -740,7 +740,7 @@ const Analytics = () => {
 
   const exportPDF = async () => {
     try {
-      await axios.post(`${API_URL}/api/analytics/export/pdf`, {}, {
+      await axios.post(`${API_URL}/api/dashboard/export/pdf`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (error) {
@@ -755,14 +755,14 @@ const Analytics = () => {
           <title>ARKAD Mines Analytics Report</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; color: #333; margin: 0; }
-            h1 { color: #2d8659; border-bottom: 3px solid #2d8659; padding-bottom: 10px; }
-            h2 { color: #536438; margin-top: 30px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-            h3 { color: #6b8245; margin-top: 20px; }
-            .summary-box { display: inline-block; background: #f8f9fa; padding: 15px 25px; margin: 10px; border-radius: 8px; border-left: 4px solid #2d8659; }
+            h1 { color: #2f5242; border-bottom: 3px solid #2f5242; padding-bottom: 10px; }
+            h2 { color: #2f5242; margin-top: 30px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+            h3 { color: #2f5242; margin-top: 20px; }
+            .summary-box { display: inline-block; background: #f8f9fa; padding: 15px 25px; margin: 10px; border-radius: 8px; border-left: 4px solid #2f5242; }
             .summary-box h4 { margin: 0; color: #666; font-size: 12px; text-transform: uppercase; }
-            .summary-box p { margin: 5px 0 0; font-size: 24px; font-weight: bold; color: #2d8659; }
+            .summary-box p { margin: 5px 0 0; font-size: 24px; font-weight: bold; color: #2f5242; }
             table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-            th { background: #2d8659; color: white; padding: 12px; text-align: left; }
+            th { background: #2f5242; color: white; padding: 12px; text-align: left; }
             td { padding: 10px 12px; border-bottom: 1px solid #eee; }
             tr:nth-child(even) { background: #f9f9f9; }
             .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; text-align: center; }
@@ -772,7 +772,7 @@ const Analytics = () => {
               top: 0; 
               left: 0; 
               right: 0; 
-              background: linear-gradient(135deg, #2d8659 0%, #1e5c3d 100%); 
+              background: linear-gradient(135deg, #2f5242 0%, #1c3127 100%);
               padding: 15px 30px; 
               display: flex; 
               justify-content: space-between; 
@@ -793,7 +793,7 @@ const Analytics = () => {
             }
             .btn-print { 
               background: white; 
-              color: #2d8659; 
+              color: #2f5242;
             }
             .btn-print:hover { 
               background: #f0f0f0; 
@@ -1257,7 +1257,7 @@ const Analytics = () => {
           description={chartDescriptions.monthlySales}
           data={monthlySales || []}
           expandedContent={
-            <LineChart data={monthlySales || []} dataKey="totalSales" nameKey="month" stroke="#536438" height={350} expanded={true} />
+            <LineChart data={monthlySales || []} dataKey="totalSales" nameKey="month" stroke="#2f5242" height={350} expanded={true} />
           }
           detailView={
             <div className="monthly-sales-details-table">
@@ -1299,7 +1299,7 @@ const Analytics = () => {
             </div>
           }
         >
-          <LineChart data={monthlySales || []} dataKey="totalSales" nameKey="month" stroke="#536438" height={280} />
+          <LineChart data={monthlySales || []} dataKey="totalSales" nameKey="month" stroke="#2f5242" height={280} />
         </ChartCard>
 
         {/* Top Clients */}
@@ -1308,7 +1308,7 @@ const Analytics = () => {
           description={chartDescriptions.topClients}
           data={topClients || []}
           expandedContent={
-            <HorizontalBarChart data={(topClients || []).slice(0, 10)} dataKey="totalPurchases" nameKey="companyName" fill="#2d8659" height={400} expanded={true} />
+            <HorizontalBarChart data={(topClients || []).slice(0, 10)} dataKey="totalPurchases" nameKey="companyName" fill="#2f5242" height={400} expanded={true} />
           }
           detailView={
             <div className="client-details-table">
@@ -1344,7 +1344,7 @@ const Analytics = () => {
             </div>
           }
         >
-          <HorizontalBarChart data={(topClients || []).slice(0, 7)} dataKey="totalPurchases" nameKey="companyName" fill="#2d8659" height={280} />
+          <HorizontalBarChart data={(topClients || []).slice(0, 7)} dataKey="totalPurchases" nameKey="companyName" fill="#2f5242" height={280} />
         </ChartCard>
 
         {/* Most Sold Stones */}
@@ -1516,7 +1516,7 @@ const Analytics = () => {
           description={chartDescriptions.weeklySales}
           data={weeklySalesPattern || []}
           expandedContent={
-            <BarChart data={weeklySalesPattern || []} dataKey="totalSales" nameKey="day" fill="#6b8245" height={350} expanded={true} />
+            <BarChart data={weeklySalesPattern || []} dataKey="totalSales" nameKey="day" fill="#2f5242" height={350} expanded={true} />
           }
           detailView={
             <div className="weekly-sales-details-table">
@@ -1551,7 +1551,7 @@ const Analytics = () => {
             </div>
           }
         >
-          <BarChart data={weeklySalesPattern || []} dataKey="totalSales" nameKey="day" fill="#6b8245" height={260} />
+          <BarChart data={weeklySalesPattern || []} dataKey="totalSales" nameKey="day" fill="#2f5242" height={260} />
         </ChartCard>
 
         {/* Category Sales */}

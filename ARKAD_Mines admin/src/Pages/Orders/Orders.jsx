@@ -56,14 +56,14 @@ const Orders = () => {
     { value: 'draft', label: 'Draft', color: '#6b7280' },
     { value: 'confirmed', label: 'Confirmed', color: '#3b82f6' },
     { value: 'dispatched', label: 'Dispatched', color: '#8b5cf6' },
-    { value: 'delivered', label: 'Delivered', color: '#10b981' },
+    { value: 'delivered', label: 'Delivered', color: '#2f5242' },
     { value: 'cancelled', label: 'Cancelled', color: '#ef4444' }
   ]
 
   const paymentStatusOptions = [
     { value: 'pending', label: 'Pending', color: '#f59e0b' },
     { value: 'payment_in_progress', label: 'Payment In Progress', color: '#3b82f6' },
-    { value: 'fully_paid', label: 'Fully Paid', color: '#10b981' }
+    { value: 'fully_paid', label: 'Fully Paid', color: '#2f5242' }
   ]
 
   const getImageUrl = (imagePath) => {

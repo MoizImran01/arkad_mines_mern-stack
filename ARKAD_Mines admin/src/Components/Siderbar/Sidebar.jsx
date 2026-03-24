@@ -1,25 +1,29 @@
 import React from 'react';
 import './Sidebar.css';
-import { assets } from '../../assets/assets';
 import { NavLink } from 'react-router-dom';
-import { FiUser, FiPackage, FiFileText, FiBarChart2, FiTrendingUp, FiTruck } from 'react-icons/fi';
+import { FiUser, FiPackage, FiFileText, FiTrendingUp, FiTruck, FiPlusSquare, FiList, FiShoppingCart, FiHome } from 'react-icons/fi';
 
 const Siderbar = () => {
   return (
     <div className='sidebar'>
       <div className="sidebar-options">
+        <NavLink to='/dashboard' className="sidebar-option">
+          <FiHome className="sidebar-icon" />
+          <p>Dashboard</p>
+        </NavLink>
+
         <NavLink to='/add' className="sidebar-option">
-          <img src={assets.add_icon} alt="Add" />
+          <FiPlusSquare className="sidebar-icon" />
           <p>Add Items</p>
         </NavLink>
 
         <NavLink to='/list' className="sidebar-option">
-          <img src={assets.order_icon} alt="List" />
+          <FiList className="sidebar-icon" />
           <p>List Items</p>
         </NavLink>
 
         <NavLink to='/orders' className="sidebar-option">
-          <img src={assets.order_icon} alt="Orders" />
+          <FiShoppingCart className="sidebar-icon" />
           <p>Orders</p>
         </NavLink>
 
@@ -36,11 +40,6 @@ const Siderbar = () => {
         <NavLink to='/quotes' className="sidebar-option">
           <FiFileText className="sidebar-icon" />
           <p>Quotes</p>
-        </NavLink>
-
-        <NavLink to='/analytics' className="sidebar-option">
-          <FiBarChart2 className="sidebar-icon" />
-          <p>Analytics</p>
         </NavLink>
 
         <NavLink to='/purchase-orders' className="sidebar-option">

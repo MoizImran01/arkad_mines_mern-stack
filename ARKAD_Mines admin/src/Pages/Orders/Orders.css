@@ -1,9 +1,9 @@
 :root {
-  --primary-color: #536438;
-  --primary-light: #6b8248;
-  --primary-dark: #3a471f;
+  --primary-color: #2f5242;
+  --primary-light: #2f5242;
+  --primary-dark: #1c3127;
   --secondary-color: #f8f9fa;
-  --success-color: #28a745;
+  --success-color: #2f5242;
   --success-light: #d1fae5;
   --danger-color: #ef4444;
   --danger-light: #fee2e2;
@@ -138,23 +138,26 @@ body {
 .refresh-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--primary-color);
   border-radius: 12px;
-  padding: 10px 16px;
-  background: var(--white);
+  padding: 0 16px;
+  min-height: 40px;
+  min-width: 140px;
+  background: #ffffff;
   cursor: pointer;
   transition: all 0.2s;
   font-size: 14px;
-  font-weight: 500;
-  color: var(--text-color);
+  font-weight: 600;
+  color: var(--primary-color);
   white-space: nowrap;
 }
 
 .refresh-btn:hover {
-  background: var(--gray-50);
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  color: var(--white);
 }
 
 .refresh-btn:disabled {
@@ -213,7 +216,7 @@ body {
 .stat-icon.confirmed { background: linear-gradient(135deg, var(--info-color), #138496); }
 .stat-icon.dispatched { background: linear-gradient(135deg, var(--primary-light), var(--primary-color)); }
 .stat-icon.delivered { background: linear-gradient(135deg, var(--success-color), #28a745); }
-.stat-icon.revenue { background: linear-gradient(135deg, #2d8659, var(--success-color)); }
+.stat-icon.revenue { background: linear-gradient(135deg, #2f5242, var(--success-color)); }
 
 .stat-info h3 {
   font-size: 1.5rem;

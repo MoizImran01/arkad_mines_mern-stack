@@ -72,7 +72,7 @@ const ForecastingAnalytics = ({ forecasts = [] }) => {
     primary: '#4f46e5', 
     safetyStock: '#f59e0b', 
     reorderPoint: '#14b8a6', 
-    category: ['#4f46e5', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1']
+    category: ['#4f46e5', '#8b5cf6', '#ec4899', '#f59e0b', '#2f5242', '#06b6d4', '#6366f1']
   };
 
   const CustomTooltip = ({ active, payload, label }) => {

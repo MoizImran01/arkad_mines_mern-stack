@@ -1,9 +1,9 @@
 :root {
-  --primary-color: #536438;
-  --primary-light: #6b8248;
-  --primary-dark: #3a471f;
+  --primary-color: #2f5242;
+  --primary-light: #2f5242;
+  --primary-dark: #1c3127;
   --secondary-color: #f8f9fa;
-  --success-color: #28a745;
+  --success-color: #2f5242;
   --success-light: #d1fae5;
   --danger-color: #ef4444;
   --danger-light: #fee2e2;
@@ -54,7 +54,7 @@
 
 .users-header .header-icon {
   font-size: 32px;
-  color: var(--primary-color, #536438);
+  color: var(--primary-color, #2f5242);
 }
 
 .users-header p {
@@ -100,7 +100,7 @@
 }
 
 .stat-icon.total {
-  background: linear-gradient(135deg, #536438 0%, #6b8245 100%);
+  background: linear-gradient(135deg, #2f5242 0%, #2f5242 100%);
 }
 
 .stat-icon.admin {
@@ -112,7 +112,7 @@
 }
 
 .stat-icon.customer {
-  background: linear-gradient(135deg, #73df58 0%, #2d8659 100%);
+  background: linear-gradient(135deg, #2f5242 0%, #2f5242 100%);
 }
 
 .stat-info h3 {
@@ -144,6 +144,16 @@
 .users-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: auto;
+}
+
+.users-table thead,
+.users-table tbody {
+  display: table-row-group !important;
+}
+
+.users-table tr {
+  display: table-row !important;
 }
 
 .users-table thead {
@@ -159,6 +169,12 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid var(--border-color, #e5e7eb);
+  display: table-cell !important;
+}
+
+.users-table th:nth-last-child(2),
+.users-table th:last-child {
+  text-align: center;
 }
 
 .users-table tbody tr {
@@ -182,6 +198,8 @@
   padding: 16px;
   font-size: 14px;
   color: var(--dark-color, #1f2937);
+  vertical-align: middle;
+  display: table-cell !important;
 }
 
 .company-name {
@@ -189,6 +207,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 40px;
+  line-height: 1.25;
 }
 
 .user-email {
@@ -196,11 +216,21 @@
   align-items: center;
   gap: 8px;
   color: var(--text-light, #6b7280);
+  min-height: 40px;
+  line-height: 1.25;
 }
 
 .info-icon {
-  font-size: 16px;
+  font-size: 18px;
   color: var(--gray-400, #9ca3af);
+  flex: 0 0 auto;
+  align-self: center;
+  margin-top: -3px;
+  margin-right: 5px;
+
+  vertical-align: middle;
+  transform: translateY(0);
+  display: inline-flex;
 }
 
 .user-role {
@@ -226,7 +256,7 @@
 }
 
 .role-select:hover:not(:disabled) {
-  border-color: var(--primary-color, #536438);
+  border-color: var(--primary-color, #2f5242);
 }
 
 .role-select.role-admin {
@@ -255,6 +285,17 @@
 .user-actions {
   display: flex;
   gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.history-cell {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.history-cell .history-btn {
+  margin: 0 auto;
 }
 
 .delete-btn {
@@ -311,6 +352,10 @@
 .history-modal-overlay {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  margin: 0;
   background: transparent;
   display: flex;
   align-items: center;
@@ -334,12 +379,12 @@
   z-index: 1;
   background: var(--white, #fff);
   border-radius: 12px;
-  max-width: 700px;
-  width: 100%;
+  width: min(700px, calc(100vw - 40px));
   max-height: 90vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  margin: 0 auto;
 }
 
 .history-modal-header {
@@ -394,7 +439,7 @@
 .history-section h3 {
   font-size: 14px;
   font-weight: 600;
-  color: var(--primary-color, #536438);
+  color: var(--primary-color, #2f5242);
   margin: 0 0 12px 0;
   display: flex;
   align-items: center;
@@ -443,7 +488,7 @@
 
 .export-pdf-btn {
   padding: 10px 18px;
-  background: var(--primary-color, #536438);
+  background: var(--primary-color, #2f5242);
   color: white;
   border: none;
   border-radius: 8px;
@@ -455,7 +500,7 @@
 }
 
 .export-pdf-btn:hover:not(:disabled) {
-  background: var(--primary-light, #6b8248);
+  background: var(--primary-light, #2f5242);
 }
 
 .export-pdf-btn:disabled {
@@ -501,7 +546,7 @@
   width: 40px;
   height: 40px;
   border: 4px solid var(--gray-100, #f3f4f6);
-  border-top-color: var(--primary-color, #536438);
+  border-top-color: var(--primary-color, #2f5242);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -526,14 +571,19 @@
   }
 
   .users-table {
-    font-size: 12px;
+    font-size: 0.75rem;
   }
 
   .users-table th,
   .users-table td {
     padding: 12px 8px;
   }
-
+  .users-table th {
+    font-size: 0.75rem;
+  }
+  .users-table td {
+    font-size: 0.75rem;
+  }
   .company-name,
   .user-email {
     flex-direction: column;

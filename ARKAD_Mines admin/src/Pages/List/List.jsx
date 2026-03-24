@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './List.css';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import { FiBox, FiTrash2 } from 'react-icons/fi';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -86,7 +87,10 @@ const List = () => {
   
   return (
     <div className='list add flex-col'>
-        <p>All Stone Products List</p>
+        <h1 className="list-title">
+          <FiBox className="header-icon" />
+          Stone Product List
+        </h1>
         <div className="list-table">
 
             <div className="list-table-format title">
@@ -145,10 +149,10 @@ const List = () => {
                     <button 
                       type="button"
                       onClick={()=>{removeStoneItem(item._id)}} 
-                      className="remove-btn"
+                      className="delete-btn remove-btn"
                       aria-label={`Remove ${item.stoneName}`}
                     >
-                      X
+                      <FiTrash2 />
                     </button>
                   </div>
 

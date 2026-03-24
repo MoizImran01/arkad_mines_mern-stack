@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --primary-color: #2a5c45;
-  --primary-dark: #1e4532;
-  --primary-light: #3a7a5c;
+  --primary-color: #2f5242;
+  --primary-dark: #1c3127;
+  --primary-light: #2f5242;
   --secondary-color: #8b7355;
   --text-dark: #1a2a2a;
   --text-light: #6b7280;
@@ -132,7 +132,7 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #1f3f2f, #2a5c45);
+  background: linear-gradient(135deg, #2f5242, #2f5242);
   color: var(--bg-white);
   border: none;
   padding: 0.55rem 1.3rem;
@@ -147,7 +147,7 @@
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #2a5c45, #3f8a68);
+  background: #1c3127;
   transform: translateY(-2px);
   box-shadow: 0 14px 28px rgba(42, 92, 69, 0.35);
 

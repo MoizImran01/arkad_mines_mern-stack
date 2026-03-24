@@ -55,11 +55,12 @@ const App = () => {
 
         <Route path="/" element={
           token && (adminUser?.role === 'admin' || adminUser?.role === 'employee') ? (
-            <Navigate to={adminUser?.role === 'admin' ? "/add" : "/users"} replace />
+            <Navigate to="/dashboard" replace />
           ) : (
             <Navigate to="/login" replace />
           )
         }/>
+        <Route path="/analytics" element={<Navigate to="/dashboard" replace />} />
         
         <Route path="/add" element={
           <ProtectedRoute>
@@ -139,7 +140,7 @@ const App = () => {
           </ProtectedRoute>
         }/>
         
-        <Route path="/analytics" element={
+        <Route path="/dashboard" element={
           <ProtectedRoute>
             <>
               <Navbar/>

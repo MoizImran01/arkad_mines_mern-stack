@@ -123,7 +123,7 @@
 .filter-select:focus,
 .price-input:focus {
   outline: none;
-  border-color: #2d8659;
+  border-color: #2f5242;
   box-shadow: 0 0 0 3px rgba(45, 134, 89, 0.1);
 }
 
@@ -133,17 +133,22 @@
   align-items: center;
 }
 
-.search-icon {
+.search-input-wrapper .search-icon {
   position: absolute;
-  left: 12px;
-  font-size: 18px;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%) !important;
+  width: 16px !important;
+  height: 16px !important;
+  z-index: 2;
   color: #9ca3af;
   pointer-events: none;
 }
 
-.keywords-input {
+.search-input-wrapper .keywords-input {
   width: 100%;
-  padding: 10px 12px 10px 40px;
+  padding: 10px 12px 10px 46px !important;
+  box-sizing: border-box;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 14px;
@@ -152,7 +157,7 @@
 
 .keywords-input:focus {
   outline: none;
-  border-color: #2d8659;
+  border-color: #2f5242;
   box-shadow: 0 0 0 3px rgba(45, 134, 89, 0.1);
 }
 
@@ -195,13 +200,13 @@
 }
 
 .apply-filters-btn {
-  background: linear-gradient(135deg, #2d8659 0%, #34a853 100%);
+  background: #2f5242;
   color: white;
 }
 
 .apply-filters-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(45, 134, 89, 0.3);
+  background: #1c3127;
 }
 
 .apply-filters-btn:disabled {
@@ -264,39 +269,44 @@
 
 .sort-select:focus {
   outline: none;
-  border-color: #2d8659;
+  border-color: #2f5242;
   box-shadow: 0 0 0 3px rgba(45, 134, 89, 0.1);
 }
 
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 28px;
+  align-items: stretch;
 }
 
 .product-card {
-  background: white;
-  border-radius: 8px;
+  background: #ffffff;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  min-height: 100%;
 }
 
 .product-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  border-color: #d1d5db;
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.14);
 }
 
 .product-image {
   position: relative;
   width: 100%;
-  height: 160px;
+  aspect-ratio: 4 / 3;
+  min-height: 240px;
   overflow: hidden;
-  background: #f3f4f6;
+  background: #f8fafc;
 }
 
 .product-image img {
@@ -333,36 +343,37 @@
 
 .product-status.dispatched {
   background: #d1fae5;
-  color: #065f46;
+  color: #2f5242;
 }
 
 .product-info {
-  padding: 12px;
+  padding: 16px 18px 14px;
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
 
 .product-name {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: #1a2a2a;
-  margin: 0 0 10px 0;
-  line-height: 1.3;
+  margin: 0;
+  line-height: 1.35;
 }
 
 .product-details {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   flex: 1;
 }
 
 .product-details p {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
   color: #4b5563;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .detail-label {
@@ -378,7 +389,7 @@
 
 .product-qa,
 .product-location {
-  font-size: 11px;
+  font-size: 12px;
   color: #6b7280;
 }
 
@@ -387,40 +398,39 @@
 }
 
 .product-stock {
-  margin-top: 4px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  display: block;
-  width: 100%;
-  text-align: center;
+  margin-top: 2px;
+  padding: 0;
+  border-radius: 0;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  text-align: left;
+  background: transparent;
+  border: none;
 }
 
 .product-stock.available {
-  background: #d1fae5;
-  color: #065f46;
+  color: #2f5242;
 }
 
 .product-stock.reserved {
-  background: #fef3c7;
   color: #92400e;
 }
 
 .product-stock.hold {
-  background: #fde68a;
   color: #78350f;
 }
 
 .product-stock.out-of-stock {
-  background: #fee2e2;
   color: #991b1b;
 }
 
 .product-stock.unknown {
-  background: #e5e7eb;
   color: #374151;
 }
 
@@ -431,27 +441,41 @@
 }
 
 .product-stock {
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 0;
+  border-radius: 0;
   font-size: 12px;
-  font-weight: 600;
-  display: inline-block;
-  margin-top: 8px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
 }
 
 .product-stock.in-stock {
-  background: #d4edda;
-  color: #155724;
+  color: #2f5242;
 }
 
 .product-stock.low-stock {
-  background: #fff3cd;
   color: #856404;
 }
 
 .product-stock.pre-order {
-  background: #cce7ff;
   color: #004085;
+}
+
+.status-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-value::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
 }
 
 .stock-quantity {
@@ -478,28 +502,29 @@
 }
 
 .product-actions {
-  padding: 10px 12px;
+  padding: 14px 18px 18px;
   border-top: 1px solid #e5e7eb;
-  background: #f9fafb;
+  background: #fcfcfd;
   margin-top: auto;
 }
 
 .request-btn {
   width: 100%;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
+  border: 1px solid #000000;
+  border-radius: 10px;
+  padding: 11px 14px;
   font-weight: 600;
-  font-size: 13px;
-  background: #1d4ed8;
-  color: white;
+  font-size: 14px;
+  background: #ffffff;
+  color: #000000;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .request-btn:hover {
-  background: #1e40af;
+  background: #2f5242;
   transform: translateY(-1px);
+  color: #ffffff;
 }
 
 
@@ -540,7 +565,7 @@
   width: 40px;
   height: 40px;
   border: 4px solid #f3f4f6;
-  border-top-color: #2d8659;
+  border-top-color: #2f5242;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -571,8 +596,8 @@
   }
 
   .products-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
   }
 }
 
@@ -587,6 +612,11 @@
 
   .products-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .product-image {
+    min-height: 220px;
   }
 
   .sort-bar {

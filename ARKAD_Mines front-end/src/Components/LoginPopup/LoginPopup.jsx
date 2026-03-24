@@ -23,6 +23,7 @@ const LoginPopup = ({ setShowLogin }) => {
     
 
     const [formData, setFormData] = useState({
+        companyName: "",
         name: "",
         email: "",
         password: ""
@@ -82,7 +83,7 @@ const handleSubmit = async (event) => {
       }
 
         setShowLogin(false);
-        setFormData({ name: "", email: "", password: "" });
+        setFormData({ companyName: "", name: "", email: "", password: "" });
       } else {
         setError(response.data.message || "An error occurred");
         recaptchaRef.current?.reset();
@@ -111,7 +112,7 @@ const handleSubmit = async (event) => {
         setCurrentState(prev => prev === "Login" ? "Sign Up" : "Login")
 
         setError("")
-        setFormData({ name: "", email: "", password: "" })
+        setFormData({ companyName: "", name: "", email: "", password: "" })
         recaptchaRef.current?.reset()
         setCaptchaToken(null)
     }
@@ -220,14 +221,20 @@ const handleSubmit = async (event) => {
 
                     <button 
                         type="submit" 
-                        className={`submit-btn ${isLoading ? 'loading' : ''}`}
+                        className={`submit-btn ${isLoading ? 'submitting' : ''}`}
                         disabled={isLoading || !captchaToken}
+                        style={{ height: '52px', minHeight: '52px', maxHeight: '52px' }}
+                        aria-busy={isLoading}
                     >
+                        <span className={`submit-btn-text ${isLoading ? 'hidden' : ''}`}>
+                            {submitButtonLabel}
+                        </span>
                         {isLoading ? (
-                            <div className="spinner"></div>
-                        ) : (
-                            submitButtonLabel
-                        )}
+                            <span className="submit-spinner" aria-hidden="true"></span>
+                        ) : null}
+                        {isLoading ? (
+                            <span className="sr-only">Loading</span>
+                        ) : null}
                     </button>
 
                     <div className="form-footer">

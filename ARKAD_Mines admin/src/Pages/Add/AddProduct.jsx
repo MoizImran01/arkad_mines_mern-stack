@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import './AddProduct.css';
-import { assets } from '../../assets/assets';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { FiUploadCloud } from 'react-icons/fi';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -135,7 +135,14 @@ export const AddProduct = () => {
         <div className="add-img-upload flex-col">
           <p className='upload-image'>Upload Stone Image</p>
           <label htmlFor="image">
-          <img src={imagePreview || assets.upload_area} alt="Stone product preview" />
+            {imagePreview ? (
+              <img src={imagePreview} alt="Stone product preview" />
+            ) : (
+              <span className="upload-empty-state" aria-hidden="true">
+                <FiUploadCloud />
+                <span className="upload-empty-text">Click to upload</span>
+              </span>
+            )}
           </label>
           <input
             type="file"

@@ -15,7 +15,7 @@
   height: 40px;
   border: 3px solid #e5e7eb;
   border-radius: 50%;
-  border-top-color: #536438;
+  border-top-color: #2f5242;
   animation: cpo-spin 1s ease-in-out infinite;
 }
 
@@ -57,6 +57,8 @@
   gap: 1rem;
   flex-wrap: wrap;
   margin-bottom: 0.35rem;
+  position: relative;
+  padding-right: 160px;
 }
 
 .cpo-title-row h1 {
@@ -72,7 +74,7 @@
 .cpo-header-icon {
   width: 28px;
   height: 28px;
-  color: #536438;
+  color: #2f5242;
 }
 
 .cpo-subtitle {
@@ -84,22 +86,28 @@
 .cpo-refresh-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #2f5242;
   border-radius: 10px;
-  padding: 9px 16px;
-  background: #fff;
+  padding: 0 16px;
+  min-height: 40px;
+  min-width: 140px;
+  background: #ffffff;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  color: #374151;
+  font-weight: 600;
+  color: #2f5242;
   transition: all 0.2s;
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 .cpo-refresh-btn:hover {
-  background: #f9fafb;
-  border-color: #536438;
-  color: #536438;
+  background: #1c3127;
+  border-color: #1c3127;
+  color: #ffffff;
 }
 
 .cpo-refresh-btn:disabled {
@@ -119,7 +127,7 @@
   padding: 11px 22px;
   border-radius: 10px;
   border: none;
-  background: #536438;
+  background: #2f5242;
   color: #fff;
   font-size: 15px;
   font-weight: 600;
@@ -129,7 +137,7 @@
 }
 
 .cpo-create-btn:hover {
-  background: #3a471f;
+  background: #1c3127;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(83, 100, 56, 0.2);
 }
@@ -161,11 +169,11 @@
 .cpo-stat-icon {
   width: 40px;
   height: 40px;
-  color: #536438;
+  color: #2f5242;
 }
 
 .cpo-stat-icon.selected {
-  color: #059669;
+  color: #2f5242;
 }
 
 .cpo-stat-card h3 {
@@ -217,7 +225,7 @@
 }
 
 .cpo-search-input:focus {
-  border-color: #536438;
+  border-color: #2f5242;
   box-shadow: 0 0 0 3px rgba(83, 100, 56, 0.1);
 }
 
@@ -271,12 +279,12 @@
 }
 
 .cpo-stone-card:hover {
-  border-color: #536438;
+  border-color: #2f5242;
   box-shadow: 0 2px 8px rgba(83, 100, 56, 0.1);
 }
 
 .cpo-stone-card.selected {
-  border-color: #536438;
+  border-color: #2f5242;
   background: #f0fdf4;
 }
 
@@ -342,7 +350,7 @@
 
 .cpo-suggested-qty {
   font-size: 12px;
-  color: #059669;
+  color: #2f5242;
   font-weight: 500;
   margin-top: 6px;
 }
@@ -475,7 +483,7 @@
 .cpo-section-icon {
   width: 18px;
   height: 18px;
-  color: #536438;
+  color: #2f5242;
 }
 
 .cpo-form-group {
@@ -505,7 +513,7 @@
 }
 
 .cpo-form-input:focus {
-  border-color: #536438;
+  border-color: #2f5242;
   box-shadow: 0 0 0 3px rgba(83, 100, 56, 0.1);
 }
 
@@ -549,7 +557,7 @@ textarea.cpo-form-input {
 
 .cpo-suggested-text {
   font-size: 12px;
-  color: #059669;
+  color: #2f5242;
   font-weight: 500;
   margin: 0;
 }
@@ -576,7 +584,7 @@ textarea.cpo-form-input {
 .cpo-total-icon {
   width: 16px;
   height: 16px;
-  color: #536438;
+  color: #2f5242;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -624,7 +632,7 @@ textarea.cpo-form-input {
 .cpo-total-value-lg {
   font-size: 20px;
   font-weight: 700;
-  color: #536438;
+  color: #2f5242;
 }
 
 .cpo-modal-footer {
@@ -642,7 +650,7 @@ textarea.cpo-form-input {
   padding: 10px 22px;
   border-radius: 8px;
   border: none;
-  background: #536438;
+  background: #2f5242;
   color: #fff;
   font-size: 15px;
   font-weight: 600;
@@ -651,7 +659,7 @@ textarea.cpo-form-input {
 }
 
 .cpo-btn-primary:hover {
-  background: #3a471f;
+  background: #1c3127;
   transform: translateY(-1px);
 }
 
@@ -693,6 +701,16 @@ textarea.cpo-form-input {
 
   .cpo-header {
     flex-direction: column;
+  }
+
+  .cpo-title-row {
+    padding-right: 0;
+  }
+
+  .cpo-refresh-btn {
+    position: static;
+    width: 100%;
+    margin-top: 10px;
   }
 
   .cpo-create-btn {

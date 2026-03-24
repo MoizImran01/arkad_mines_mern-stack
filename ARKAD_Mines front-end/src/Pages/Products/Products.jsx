@@ -156,6 +156,8 @@ const Products = () => {
     const statusLower = status.toLowerCase();
     if (statusLower.includes('available') || statusLower === 'in stock') {
       return 'available';
+    } else if (statusLower.includes('warehouse') || statusLower.includes('in warehouse')) {
+      return 'reserved';
     } else if (statusLower.includes('reserved')) {
       return 'reserved';
     } else if (statusLower.includes('hold')) {
@@ -404,7 +406,8 @@ const Products = () => {
                         </p>
                       )}
                       <p className={`product-stock ${getStockStatusClass(product.stockAvailability)}`}>
-                        <span className="detail-label">Status:</span> {product.stockAvailability}
+                        <span className="detail-label">Status:</span>
+                        <span className="status-value">{product.stockAvailability}</span>
                       </p>
                     </div>
                   </div>

@@ -140,7 +140,7 @@ const PurchaseOrdersList = () => {
               onClick={() => fetchOrders(true)}
               disabled={refreshing}
             >
-              {refreshing ? <Loader2 className="po-spin" /> : <RefreshCw />}
+              <RefreshCw />
               Refresh
             </button>
           </div>

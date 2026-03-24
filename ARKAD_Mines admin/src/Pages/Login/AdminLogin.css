@@ -5,7 +5,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #2d8659 0%, #34a853 100%);
+  background: linear-gradient(135deg, #2f5242 0%, #2f5242 100%);
   padding: 20px;
   font-family: 'Inter', sans-serif;
 }
@@ -116,7 +116,7 @@
 
 .input-group input:focus {
   outline: none;
-  border-color: #34a853;
+  border-color: #2f5242;
   box-shadow: 0 0 0 3px rgba(52, 168, 83, 0.1);
 }
 
@@ -128,7 +128,7 @@
 .submit-btn {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #2d8659 0%, #34a853 100%);
+  background: linear-gradient(135deg, #2f5242 0%, #2f5242 100%);
   color: white;
   border: none;
   border-radius: 8px;

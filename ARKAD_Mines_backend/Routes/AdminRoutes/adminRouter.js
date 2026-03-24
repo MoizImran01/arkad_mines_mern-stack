@@ -3,26 +3,13 @@ import { verifyToken, authorizeRoles } from "../../Middlewares/auth.js";
 import { getAllUsers, updateUserRole, deleteUser } from "../../Controllers/UserController/userController.js";
 import { getAnalytics, exportAnalyticsPDF } from "../../Controllers/AnalyticsController/analyticsController.js";
 import { enforceHTTPS } from "../../Middlewares/securityHeaders.js";
-import { analyticsRateLimiter, analyticsThrottling, analyticsWAF } from "../../Middlewares/analyticsPerformance.js";
+import { analyticsWAF } from "../../Middlewares/analyticsPerformance.js";
 import { strictAnalyticsRBAC, verifyAdminInDatabase } from "../../Middlewares/analyticsRBAC.js";
 import { detectAnalyticsAnomalies, createIPWhitelist } from "../../Middlewares/analyticsSecurity.js";
 import { strictAnalyticsCSP } from "../../Middlewares/analyticsTamperingProtection.js";
-import { createReauthMiddleware } from "../../Middlewares/genericReauth.js";
 
 // Admin routes: dashboard, users, role update, delete user, analytics, analytics PDF export.
 const adminRouter = express.Router();
-
-const requireAnalyticsMFA = createReauthMiddleware({
-  actionName: 'ANALYTICS_MFA',
-  actionType: 'ANALYTICS_MFA_REQUIRED',
-  passwordField: 'passwordConfirmation',
-  responseFlag: 'requiresMFA',
-  getResourceId: () => 'analytics-dashboard',
-  getAdditionalContext: (req) => ({
-    path: req.path,
-    queryParams: req.query
-  })
-});
 
 const analyticsIPWhitelist = createIPWhitelist(
   process.env.ANALYTICS_ALLOWED_IPS ? process.env.ANALYTICS_ALLOWED_IPS.split(',') : [],
@@ -37,6 +24,27 @@ adminRouter.get("/users", verifyToken, authorizeRoles("admin", "employee"), getA
 adminRouter.put("/users/:userId/role", verifyToken, authorizeRoles("admin"), updateUserRole);
 adminRouter.delete("/users/:userId", verifyToken, authorizeRoles("admin"), deleteUser);
 
+adminRouter.get("/dashboard", 
+  verifyToken,
+  strictAnalyticsRBAC,
+  authorizeRoles("admin"),
+  verifyAdminInDatabase,
+  analyticsIPWhitelist,
+  strictAnalyticsCSP,
+  analyticsWAF,
+  detectAnalyticsAnomalies,
+  getAnalytics
+);
+adminRouter.post("/dashboard/export/pdf", 
+  verifyToken,
+  strictAnalyticsRBAC,
+  authorizeRoles("admin"),
+  verifyAdminInDatabase,
+  enforceHTTPS,
+  exportAnalyticsPDF
+);
+
+// Backward compatibility aliases (temporary)
 adminRouter.get("/analytics", 
   verifyToken,
   strictAnalyticsRBAC,
@@ -45,11 +53,7 @@ adminRouter.get("/analytics",
   analyticsIPWhitelist,
   strictAnalyticsCSP,
   analyticsWAF,
-  analyticsThrottling,
-  analyticsRateLimiter.userLimiter,
-  analyticsRateLimiter.ipLimiter,
   detectAnalyticsAnomalies,
-  requireAnalyticsMFA,
   getAnalytics
 );
 adminRouter.post("/analytics/export/pdf", 

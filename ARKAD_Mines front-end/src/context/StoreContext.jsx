@@ -8,7 +8,7 @@ export const StoreContext = createContext(null);
 const StoreContextProvider = (props) => {
   const url = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
   const [user, setUser] = useState(null);
   const [quoteItems, setQuoteItems] = useState(() => {
     const stored = localStorage.getItem("quoteItems");
@@ -20,13 +20,6 @@ const StoreContextProvider = (props) => {
   const [activeQuoteId, setActiveQuoteId] = useState(
     () => sessionStorage.getItem("activeQuoteId") || null
   );
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    if (storedToken) {
-      setToken(storedToken);
-    }
-  }, []);
 
   useEffect(() => {
     if (token) {

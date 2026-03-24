@@ -312,7 +312,7 @@ export default function AboutUs() {
       <section className="process-section-new">
         <div className="process-wave-animated">
           <svg viewBox="0 0 2880 120" preserveAspectRatio="none">
-            <path fill="#ffffff">
+            <path fill="#2f5242">
               <animate
                 attributeName="d"
                 dur="8s"
@@ -351,7 +351,7 @@ export default function AboutUs() {
       <section className="cta-section-new">
         <div className="cta-wave-animated">
           <svg viewBox="0 0 2880 120" preserveAspectRatio="none">
-            <path fill="#111827">
+            <path fill="#ffffff">
               <animate
                 attributeName="d"
                 dur="10s"

@@ -71,8 +71,8 @@
 }
 
 .tab-button.active {
-  color: #47674c;
-  border-bottom-color: #47674c;
+  color: #2f5242;
+  border-bottom-color: #2f5242;
   background: transparent;
 }
 
@@ -84,12 +84,24 @@
 .refresh-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  border: 1px solid #d0d5dd;
+  border: 1px solid #2f5242;
   border-radius: 12px;
-  padding: 10px 16px;
-  background: white;
+  padding: 0 16px;
+  min-height: 40px;
+  min-width: 140px;
+  background: #ffffff;
   cursor: pointer;
+  color: #2f5242;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+  background: #1c3127;
+  border-color: #1c3127;
+  color: #ffffff;
 }
 
 .spin {
@@ -262,7 +274,7 @@
 
 .quote-item-card .item-price-input-group input:focus {
   outline: none;
-  border-color: #47674c;
+  border-color: #2f5242;
   box-shadow: 0 0 0 2px rgba(71, 103, 76, 0.1);
 }
 
@@ -328,7 +340,7 @@
 
 .decision-badge.approved {
   background: #dcfce7;
-  color: #166534;
+  color: #2f5242;
 }
 
 .decision-badge.rejected {
@@ -377,7 +389,7 @@
 
 .status-badge.submitted { background: #e0f2fe; color: #0284c7; }
 .status-badge.issued { background: #f3e8ff; color: #7e22ce; }
-.status-badge.approved { background: #dcfce7; color: #166534; }
+.status-badge.approved { background: #dcfce7; color: #2f5242; }
 .status-badge.rejected { background: #fee2e2; color: #dc2626; }
 .status-badge.draft { background: #f1f5f9; color: #475467; }
 .status-badge.adjustment_required { background: #fef3c7; color: #92400e; }
@@ -423,7 +435,7 @@
 }
 
 .issue-btn {
-  background: #47674c;
+  background: #2f5242;
   color: white;
   border: none;
   padding: 10px;
@@ -438,7 +450,7 @@
 }
 
 .issue-btn:hover {
-  background: #34523d;
+  background: #1c3127;
 }
 
 .issue-btn:disabled {

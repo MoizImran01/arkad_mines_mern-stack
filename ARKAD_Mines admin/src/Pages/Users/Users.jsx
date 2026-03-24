@@ -221,13 +221,14 @@ const Users = () => {
                 <th>Email</th>
                 {adminUser?.role === 'admin' && <th>Role</th>}
                 {adminUser?.role === 'admin' && <th>Created</th>}
+                <th>Customer History</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={adminUser?.role === 'admin' ? 5 : 3} className="no-users">
+                  <td colSpan={adminUser?.role === 'admin' ? 6 : 4} className="no-users">
                     <div className="empty-state">
                       <FiUser className="empty-icon" />
                       <p>No users found</p>
@@ -237,11 +238,20 @@ const Users = () => {
               ) : (
                 users.map(user => {
                   const isCurrentUser = user._id === adminUser?.id || String(user._id) === String(adminUser?.id);
+                  const normalizedCompanyName = (user.companyName || '').trim();
+                  const companyDisplay =
+                    !normalizedCompanyName || normalizedCompanyName.toLowerCase() === 'company'
+                      ? ''
+                      : normalizedCompanyName;
                   return (
                   <tr key={user._id} className={isCurrentUser ? 'current-user' : ''}>
                     <td className="company-name">
-                      <FiBriefcase className="info-icon" />
-                      {user.companyName}
+                      {companyDisplay ? (
+                        <>
+                          <FiBriefcase className="info-icon" />
+                          {companyDisplay}
+                        </>
+                      ) : '—'}
                     </td>
                     <td className="user-email">
                       <FiMail className="info-icon" />
@@ -267,7 +277,7 @@ const Users = () => {
                         {formatDate(user.createdAt)}
                       </td>
                     )}
-                    <td className="user-actions">
+                    <td className="history-cell">
                       <button
                         className="history-btn"
                         onClick={() => openHistoryModal(user._id)}
@@ -275,6 +285,8 @@ const Users = () => {
                       >
                         <FiClock />
                       </button>
+                    </td>
+                    <td className="user-actions">
                       {adminUser?.role === 'admin' && (
                         <button
                           className="delete-btn"

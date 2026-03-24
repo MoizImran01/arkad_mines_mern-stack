@@ -249,7 +249,7 @@ const CreatePurchaseOrder = () => {
               onClick={() => fetchMarkedStones(true)}
               disabled={refreshing}
             >
-              {refreshing ? <Loader2 className="cpo-spin" /> : <RefreshCw />}
+              <RefreshCw />
               Refresh
             </button>
           </div>

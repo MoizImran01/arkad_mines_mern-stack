@@ -3,7 +3,7 @@ import { createRequestQueue } from "./genericRequestQueue.js";
 import { wafProtection } from "./waf.js";
 
 export const analyticsRateLimiter = createRateLimiter({
-  endpoint: '/api/analytics',
+  endpoint: '/api/dashboard',
   windowMs: 60 * 60 * 1000,
   maxRequests: 20,
   actionName: 'ANALYTICS_ACCESS',
@@ -12,11 +12,11 @@ export const analyticsRateLimiter = createRateLimiter({
 });
 
 export const analyticsThrottling = createRequestQueue({
-  endpoint: '/api/analytics',
+  endpoint: '/api/dashboard',
   maxConcurrent: 3,
   timeoutMs: 60000,
   actionName: 'ANALYTICS_THROTTLING',
-  shouldApply: (req) => req.path.includes('/analytics'),
+  shouldApply: (req) => req.path.includes('/analytics') || req.path.includes('/dashboard'),
   getResourceId: (req) => req.user?.id || req.ip
 });
 

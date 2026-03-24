@@ -76,22 +76,26 @@
 .forecast-refresh-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 0 16px;
+  min-height: 40px;
+  min-width: 140px;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
+  border: 1px solid #2f5242;
+  background: #ffffff;
   font-size: 14px;
-  font-weight: 500;
-  color: #334155;
+  font-weight: 600;
+  color: #2f5242;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   transition: all 0.15s ease;
 }
 
 .forecast-refresh-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: #1c3127;
+  border-color: #1c3127;
+  color: #ffffff;
 }
 
 .forecast-refresh-btn:disabled {
@@ -207,7 +211,7 @@
 
 .kpi-icon-box.emerald {
   background: #ecfdf5;
-  color: #059669;
+  color: #2f5242;
 }
 
 .kpi-card-bar {
@@ -564,7 +568,7 @@
 }
 
 .status-dot.healthy {
-  background: #059669;
+  background: #2f5242;
 }
 
 /* ── Create PO button ── */

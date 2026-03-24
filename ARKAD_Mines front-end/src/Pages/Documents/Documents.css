@@ -45,13 +45,13 @@
 
 .filter-btn:hover {
   background: #f9fafb;
-  border-color: #47674c;
+  border-color: #2f5242;
 }
 
 .filter-btn.active {
-  background: #47674c;
+  background: #2f5242;
   color: white;
-  border-color: #47674c;
+  border-color: #2f5242;
 }
 
 .refresh-btn {
@@ -127,7 +127,7 @@
 .filter-group input:focus,
 .filter-group select:focus {
   outline: none;
-  border-color: #47674c;
+  border-color: #2f5242;
 }
 
 .filters-actions {
@@ -148,7 +148,7 @@
 }
 
 .apply-btn {
-  background: #47674c;
+  background: #2f5242;
   color: white;
 }
 
@@ -196,8 +196,8 @@
 }
 
 .tab-button.active {
-  color: #47674c;
-  border-bottom-color: #47674c;
+  color: #2f5242;
+  border-bottom-color: #2f5242;
   background: transparent;
 }
 
@@ -289,7 +289,7 @@
 
 .document-type-cell svg {
   font-size: 18px;
-  color: #47674c;
+  color: #2f5242;
 }
 
 .status-badge {
@@ -306,7 +306,7 @@
 .status-badge.status-fully_paid,
 .status-badge.status-delivered {
   background: #d1fae5;
-  color: #065f46;
+  color: #2f5242;
 }
 
 .status-badge.status-pending,
@@ -341,7 +341,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background: #47674c;
+  background: #2f5242;
   color: white;
   border: none;
   border-radius: 8px;

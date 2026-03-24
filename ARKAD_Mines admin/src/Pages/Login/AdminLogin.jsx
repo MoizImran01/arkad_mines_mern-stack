@@ -89,7 +89,7 @@ const AdminLogin = () => {
         toast.success("Welcome back, Admin!");
 
 
-        navigate("/add");
+        navigate("/dashboard");
       } else {
 
         setError(response.data.message || "An error occurred");

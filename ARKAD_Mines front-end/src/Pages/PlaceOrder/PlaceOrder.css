@@ -271,7 +271,7 @@
 }
 
 .summary-row.discount {
-  color: #27ae60;
+  color: #2f5242;
 }
 
 .summary-row.total {
@@ -569,7 +569,7 @@
   padding: 10px 20px;
   border-radius: 6px;
   border: none;
-  background: #2d8659;
+  background: #2f5242;
   color: white;
   font-weight: 500;
   cursor: pointer;
@@ -578,7 +578,7 @@
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #216219;
+  background: #1c3127;
 }
 
 .btn-primary:disabled {
@@ -678,7 +678,7 @@
   padding: 10px 20px;
   border-radius: 6px;
   border: none;
-  background: #2d8659;
+  background: #2f5242;
   color: white;
   font-weight: 500;
   cursor: pointer;
@@ -687,7 +687,7 @@
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #216219;
+  background: #1c3127;
 }
 
 .btn-primary:disabled {

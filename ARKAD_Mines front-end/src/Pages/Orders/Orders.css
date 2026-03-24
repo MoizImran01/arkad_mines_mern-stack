@@ -48,8 +48,8 @@
 
 .refresh-btn:hover {
   background: #f9fafb;
-  border-color: #47674c;
-  color: #47674c;
+  border-color: #2f5242;
+  color: #2f5242;
 }
 
 .refresh-btn:disabled {
@@ -73,8 +73,8 @@
 
 .refresh-btn-small:hover {
   background: #f9fafb;
-  border-color: #47674c;
-  color: #47674c;
+  border-color: #2f5242;
+  color: #2f5242;
 }
 
 .spin {
@@ -112,7 +112,7 @@
 }
 
 .tab-btn.active {
-  color: #3d712d;
+  color: #2f5242;
   font-weight: 600;
 }
 
@@ -123,7 +123,7 @@
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: #3d712d;
+  background-color: #2f5242;
 }
 
 
@@ -183,7 +183,7 @@
 .status-draft { background: #f3f4f6; color: #374151; }      
 .status-confirmed { background: #dbeafe; color: #1e40af; }   
 .status-dispatched { background: #ffedd5; color: #9a3412; } 
-.status-delivered { background: #dcfce7; color: #166534; }  
+.status-delivered { background: #dcfce7; color: #2f5242; }  
 .status-cancelled { background: #fee2e2; color: #991b1b; }   
 
 .balance-badge {
@@ -203,7 +203,7 @@
 
 .balance-badge.paid {
   background: #dcfce7;
-  color: #166534;
+  color: #2f5242;
 }
 
 .action-buttons {
@@ -215,7 +215,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background-color: #367423; 
+  background-color: #2f5242;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -227,7 +227,7 @@
 }
 
 .payment-btn:hover {
-  background-color: #216219;
+  background-color: #1c3127;
 }
 
 .track-btn {
@@ -401,7 +401,7 @@
 }
 
 .modal-tab-btn.active {
-  color: #3d712d;
+  color: #2f5242;
   font-weight: 600;
 }
 
@@ -412,7 +412,7 @@
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: #3d712d;
+  background-color: #2f5242;
 }
 
 
@@ -486,7 +486,7 @@
   padding: 10px 20px;
   border-radius: 6px;
   border: none;
-  background: #2d8659;
+  background: #2f5242;
   color: white;
   font-weight: 500;
   cursor: pointer;
@@ -495,7 +495,7 @@
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #216219;
+  background: #1c3127;
 }
 
 .btn-primary:disabled {
@@ -568,21 +568,21 @@
 }
 
 .timeline-dot.completed {
-  background: #3d712d;
-  border-color: #3d712d;
+  background: #2f5242;
+  border-color: #2f5242;
   color: white;
 }
 
 .timeline-dot.current {
   background: white;
-  border-color: #3d712d;
-  color: #3d712d;
+  border-color: #2f5242;
+  color: #2f5242;
   box-shadow: 0 0 0 4px rgba(61, 113, 45, 0.1);
 }
 
 .timeline-dot.delivered.current {
-  background: #3d712d;
-  border-color: #3d712d;
+  background: #2f5242;
+  border-color: #2f5242;
   color: white;
 }
 
@@ -605,7 +605,7 @@
   color: #6b7280;
   padding: 8px 12px;
   background: #f3f4f6;
-  border-left: 2px solid #3d712d;
+  border-left: 2px solid #2f5242;
   border-radius: 4px;
 }
 
@@ -633,7 +633,7 @@
   align-items: center;
   gap: 6px;
   margin-top: 8px;
-  color: #3d712d;
+  color: #2f5242;
   text-decoration: none;
   font-weight: 500;
 }
@@ -838,7 +838,7 @@
 }
 
 .btn-submit-payment {
-  background: #367423;
+  background: #2f5242;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -853,7 +853,7 @@
 }
 
 .btn-submit-payment:hover:not(:disabled) {
-  background: #216219;
+  background: #1c3127;
 }
 
 .btn-submit-payment:disabled {
@@ -900,7 +900,7 @@
 }
 
 .timeline-indicator.payment_approved {
-  background: #10b981;
+  background: #2f5242;
 }
 
 .timeline-indicator.payment_rejected {
@@ -984,7 +984,7 @@
 }
 
 .payment-proof-item.approved {
-  border-left: 4px solid #10b981;
+  border-left: 4px solid #2f5242;
 }
 
 .payment-proof-item.rejected {
@@ -1015,7 +1015,7 @@
 
 .proof-status-badge.approved {
   background: #d1fae5;
-  color: #065f46;
+  color: #2f5242;
 }
 
 .proof-status-badge.rejected {
@@ -1114,7 +1114,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background-color: #10b981;
+  background-color: #2f5242;
   color: white;
   padding: 8px 14px;
   border-radius: 6px;
@@ -1125,7 +1125,7 @@
 }
 
 .btn-download-invoice:hover {
-  background-color: #059669;
+  background-color: #1c3127;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 

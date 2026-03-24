@@ -747,7 +747,7 @@ const PlaceOrder = () => {
                     type="submit"
                     className="btn-primary"
                     disabled={paymentSubmitting || !captchaToken || !captchaPassword.trim()}
-                    style={{ backgroundColor: '#2d8659' }}
+                    style={{ backgroundColor: '#2f5242' }}
                   >
                     {paymentSubmitting ? "Submitting..." : "Confirm & Submit Payment"}
                   </button>

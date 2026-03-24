@@ -32,7 +32,7 @@ const MaterialPreferenceChart = ({ preferences }) => {
     '#536438', // Primary green
     '#6b8248', // Primary light green
     '#3a471f', // Primary dark green
-    '#2d8659', // Accent green
+    '#2f5242', // Accent green
     '#4a7c59', // Medium green
     '#5a8a5a', // Light green
     '#3a5f3a', // Forest green
