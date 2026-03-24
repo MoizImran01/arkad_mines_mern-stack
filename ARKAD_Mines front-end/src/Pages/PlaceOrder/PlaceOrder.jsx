@@ -6,6 +6,7 @@ import axios from "axios";
 import { useNavigate, useParams } from 'react-router-dom';
 import ReCAPTCHA from "react-google-recaptcha";
 import { FiPackage, FiCreditCard, FiMapPin, FiShoppingBag, FiEdit2, FiArrowLeft, FiLock, FiX, FiAlertTriangle } from "react-icons/fi";
+import { toast } from "react-toastify";
 
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
@@ -71,7 +72,7 @@ const PlaceOrder = () => {
             }
           }
         } else {
-          alert("Order not found");
+          toast.error("Order not found");
           navigate("/quotations");
         }
       } catch (err) {
@@ -113,17 +114,17 @@ const PlaceOrder = () => {
     e.preventDefault();
     const numericAmount = Number.parseFloat(paymentAmount);
     if (!Number.isFinite(numericAmount) || numericAmount <= 0 || numericAmount < 0.01) {
-      alert('Please enter a valid payment amount (minimum 0.01)');
+      toast.error('Please enter a valid payment amount (minimum 0.01)');
       return;
     }
     if (!paymentProofFile) {
-      alert('Please upload a payment proof screenshot');
+      toast.error('Please upload a payment proof screenshot');
       return;
     }
 
     const outstanding = orderData?.outstandingBalance ?? orderData?.financials?.grandTotal;
     if (numericAmount > outstanding + 0.01) {
-      alert(`Amount cannot exceed outstanding balance of Rs ${outstanding.toFixed(2)}`);
+      toast.error(`Amount cannot exceed outstanding balance of Rs ${outstanding.toFixed(2)}`);
       return;
     }
 
@@ -138,7 +139,7 @@ const PlaceOrder = () => {
         }
       } catch (compressionError) {
         console.error('Image compression error:', compressionError);
-        alert('Failed to process image. Please try a different image file.');
+        toast.error('Failed to process image. Please try a different image file.');
         setPaymentSubmitting(false);
         return;
       }
@@ -162,11 +163,11 @@ const PlaceOrder = () => {
       );
 
       if (response.data.success) {
-        alert('Payment proof submitted successfully. Awaiting admin verification.');
+        toast.success('Payment proof submitted successfully. Awaiting admin verification.');
         setShowPaymentModal(false);
         navigate('/orders');
       } else {
-        alert(response.data.message || 'Failed to submit payment proof');
+        toast.error(response.data.message || 'Failed to submit payment proof');
       }
     } catch (err) {
       console.error('Error submitting payment proof:', err);
@@ -186,7 +187,7 @@ const PlaceOrder = () => {
             base64 = await compressImage(paymentProofFile);
           } catch (compressionError) {
             console.error('Error compressing image for CAPTCHA:', compressionError);
-            alert('Failed to process image. Please try again.');
+            toast.error('Failed to process image. Please try again.');
             setPaymentSubmitting(false);
             return;
           }
@@ -224,7 +225,7 @@ const PlaceOrder = () => {
             base64 = await compressImage(paymentProofFile);
           } catch (compressionError) {
             console.error('Error compressing image for MFA:', compressionError);
-            alert('Failed to process image. Please try again.');
+            toast.error('Failed to process image. Please try again.');
             setPaymentSubmitting(false);
             return;
           }
@@ -245,7 +246,7 @@ const PlaceOrder = () => {
       }
       
       if (!requiresCaptcha && !requiresMFA) {
-        alert(err.response?.data?.message || 'Error submitting payment proof');
+        toast.error(err.response?.data?.message || 'Error submitting payment proof');
       }
       setPaymentSubmitting(false);
     }
@@ -262,16 +263,16 @@ const PlaceOrder = () => {
   const handleCaptchaSubmit = async (e) => {
     e.preventDefault();
     if (!captchaToken) {
-      alert("Please complete the CAPTCHA verification.");
+      toast.error("Please complete the CAPTCHA verification.");
       return;
     }
     if (!captchaPassword.trim()) {
-      alert("Please enter your password to confirm this payment submission.");
+      toast.error("Please enter your password to confirm this payment submission.");
       return;
     }
 
     if (!pendingPayment) {
-      alert("Error: Payment data not found. Please try again.");
+      toast.error("Error: Payment data not found. Please try again.");
       setShowCaptchaModal(false);
       setCaptchaToken(null);
       setCaptchaPassword("");
@@ -296,7 +297,7 @@ const PlaceOrder = () => {
       );
 
       if (response.data.success) {
-        alert('Payment proof submitted successfully. Awaiting admin verification.');
+        toast.success('Payment proof submitted successfully. Awaiting admin verification.');
         setShowCaptchaModal(false);
         setCaptchaToken(null);
         setCaptchaPassword("");
@@ -305,7 +306,7 @@ const PlaceOrder = () => {
         setShowPaymentModal(false);
         navigate('/orders');
       } else {
-        alert(response.data.message || "Failed to submit payment proof");
+        toast.error(response.data.message || "Failed to submit payment proof");
         recaptchaRef.current?.reset();
         setCaptchaToken(null);
       }
@@ -313,14 +314,14 @@ const PlaceOrder = () => {
       console.error("Error submitting payment with CAPTCHA:", error);
       
       if (error.response?.data?.requiresCaptcha === true) {
-        alert("CAPTCHA verification failed. Please try again.");
+        toast.error("CAPTCHA verification failed. Please try again.");
         recaptchaRef.current?.reset();
         setCaptchaToken(null);
       } else if (error.response?.data?.requiresMFA === true || error.response?.status === 401) {
-        alert("Invalid password. Please check your password and try again.");
+        toast.error("Invalid password. Please check your password and try again.");
         setCaptchaPassword("");
       } else {
-        alert(error.response?.data?.message || "Error submitting payment proof");
+        toast.error(error.response?.data?.message || "Error submitting payment proof");
         recaptchaRef.current?.reset();
         setCaptchaToken(null);
       }
@@ -332,12 +333,12 @@ const PlaceOrder = () => {
   const handleMfaSubmit = async (e) => {
     e.preventDefault();
     if (!mfaPassword.trim()) {
-      alert("Please enter your password to confirm this payment submission.");
+      toast.error("Please enter your password to confirm this payment submission.");
       return;
     }
 
     if (!pendingPayment) {
-      alert("Error: Payment data not found. Please try again.");
+      toast.error("Error: Payment data not found. Please try again.");
       setShowMfaModal(false);
       setMfaPassword("");
       setPendingPayment(null);
@@ -359,23 +360,23 @@ const PlaceOrder = () => {
       );
 
       if (response.data.success) {
-        alert('Payment proof submitted successfully. Awaiting admin verification.');
+        toast.success('Payment proof submitted successfully. Awaiting admin verification.');
         setShowMfaModal(false);
         setMfaPassword("");
         setPendingPayment(null);
         setShowPaymentModal(false);
         navigate('/orders');
       } else {
-        alert(response.data.message || "Failed to submit payment proof");
+        toast.error(response.data.message || "Failed to submit payment proof");
       }
     } catch (error) {
       console.error("Error submitting payment with MFA:", error);
       
       if (error.response?.data?.requiresMFA === true || error.response?.status === 401) {
-        alert("Invalid password. Please check your password and try again.");
+        toast.error("Invalid password. Please check your password and try again.");
         setMfaPassword("");
       } else {
-        alert(error.response?.data?.message || "Error submitting payment proof");
+        toast.error(error.response?.data?.message || "Error submitting payment proof");
       }
     } finally {
       setPaymentSubmitting(false);
@@ -386,7 +387,7 @@ const PlaceOrder = () => {
     const required = ['street', 'city', 'state', 'zipCode', 'phone'];
     for (let field of required) {
       if (!addressData[field].trim()) {
-        alert(`Please fill in ${field.replaceAll(/([A-Z])/g, ' $1').toLowerCase()}`);
+        toast.error(`Please fill in ${field.replaceAll(/([A-Z])/g, ' $1').toLowerCase()}`);
         return false;
       }
     }
@@ -654,7 +655,12 @@ const PlaceOrder = () => {
               
               <form onSubmit={handlePlaceOrder}>
                 <div className="confirmation-actions">
-                  <button type="button" className="btn-back" onClick={() => setActiveTab('information')}>
+                  <button
+                    type="button"
+                    className="btn-back"
+                    onClick={() => setActiveTab('information')}
+                    disabled={hasPaymentProofs || showPaymentModal || paymentSubmitting}
+                  >
                     Back to Edit
                   </button>
                   <button type="submit" className="btn-confirm">
@@ -680,15 +686,17 @@ const PlaceOrder = () => {
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
                 CAPTCHA Verification Required
               </h3>
-              <button onClick={() => {
-                setShowCaptchaModal(false);
-                setCaptchaToken(null);
-                setCaptchaPassword("");
-                recaptchaRef.current?.reset();
-                setPendingPayment(null);
-              }}>
-                <FiX />
-              </button>
+              {!paymentSubmitting && (
+                <button onClick={() => {
+                  setShowCaptchaModal(false);
+                  setCaptchaToken(null);
+                  setCaptchaPassword("");
+                  recaptchaRef.current?.reset();
+                  setPendingPayment(null);
+                }}>
+                  <FiX />
+                </button>
+              )}
             </div>
             <div className="modal-body">
               <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
@@ -729,20 +737,21 @@ const PlaceOrder = () => {
                   />
                 </div>
                 <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                  <button 
-                    type="button"
-                    className="btn-secondary" 
-                    onClick={() => {
-                      setShowCaptchaModal(false);
-                      setCaptchaToken(null);
-                      setCaptchaPassword("");
-                      recaptchaRef.current?.reset();
-                      setPendingPayment(null);
-                    }}
-                    disabled={paymentSubmitting}
-                  >
-                    Cancel
-                  </button>
+                  {!paymentSubmitting && (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => {
+                        setShowCaptchaModal(false);
+                        setCaptchaToken(null);
+                        setCaptchaPassword("");
+                        recaptchaRef.current?.reset();
+                        setPendingPayment(null);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  )}
                   <button
                     type="submit"
                     className="btn-primary"
@@ -770,16 +779,18 @@ const PlaceOrder = () => {
                 <FiLock />
                 Multi-Factor Authentication Required
               </h3>
-              <button 
-                onClick={() => {
-                  setShowMfaModal(false);
-                  setMfaPassword("");
-                  setPendingPayment(null);
-                }}
-                aria-label="Close modal"
-              >
-                <FiX />
-              </button>
+              {!paymentSubmitting && (
+                <button
+                  onClick={() => {
+                    setShowMfaModal(false);
+                    setMfaPassword("");
+                    setPendingPayment(null);
+                  }}
+                  aria-label="Close modal"
+                >
+                  <FiX />
+                </button>
+              )}
             </div>
             <div className="modal-body">
               <p style={{ color: '#e74c3c', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -808,18 +819,19 @@ const PlaceOrder = () => {
                   />
                 </div>
                 <div className="modal-footer">
-                  <button 
-                    type="button"
-                    className="btn-secondary" 
-                    onClick={() => {
-                      setShowMfaModal(false);
-                      setMfaPassword("");
-                      setPendingPayment(null);
-                    }}
-                    disabled={paymentSubmitting}
-                  >
-                    Cancel
-                  </button>
+                  {!paymentSubmitting && (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => {
+                        setShowMfaModal(false);
+                        setMfaPassword("");
+                        setPendingPayment(null);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  )}
                   <button
                     type="submit"
                     className="btn-primary"
@@ -844,7 +856,9 @@ const PlaceOrder = () => {
           <div className="payment-modal" role="document">
             <div className="payment-modal-header">
               <h3><FiCreditCard /> Submit Payment Proof</h3>
-              <button className="modal-close-btn" onClick={() => setShowPaymentModal(false)} disabled={paymentSubmitting}>×</button>
+              {!paymentSubmitting && (
+                <button className="modal-close-btn" onClick={() => setShowPaymentModal(false)}>×</button>
+              )}
             </div>
             
             <div className="payment-modal-body">
@@ -908,7 +922,9 @@ const PlaceOrder = () => {
             </div>
 
             <div className="payment-modal-footer">
-              <button type="button" className="btn-back" onClick={() => setShowPaymentModal(false)} disabled={paymentSubmitting}>Cancel</button>
+              {!paymentSubmitting && (
+                <button type="button" className="btn-back" onClick={() => setShowPaymentModal(false)}>Cancel</button>
+              )}
               <button type="submit" className="btn-primary" onClick={submitPaymentProof} disabled={paymentSubmitting}>
                 {paymentSubmitting ? 'Submitting...' : 'Submit Payment Proof'}
               </button>

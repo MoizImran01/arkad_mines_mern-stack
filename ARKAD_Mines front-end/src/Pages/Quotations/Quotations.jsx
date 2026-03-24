@@ -4,6 +4,7 @@ import "./Quotations.css";
 import axios from "axios";
 import { StoreContext } from "../../context/StoreContext";
 import ReCAPTCHA from "react-google-recaptcha";
+import { toast } from "react-toastify";
 import { 
   FiAlertTriangle, 
   FiFileText, 
@@ -166,7 +167,7 @@ const Quotations = () => {
         
         navigate(`/place-order/${orderNum}`);
       } else {
-        alert("Failed to approve quotation: " + (response.data.message || "Unknown error"));
+        toast.error("Failed to approve quotation: " + (response.data.message || "Unknown error"));
       }
     } catch (err) {
       console.error("Error approving quotation:", err);
@@ -193,7 +194,7 @@ const Quotations = () => {
       }
       
       const errorMessage = err.response?.data?.error || err.response?.data?.message || err.response?.statusText || err.message;
-      alert(`Failed to approve: ${errorMessage}`);
+      toast.error(`Failed to approve: ${errorMessage}`);
     } finally {
       setActionLoading(false);
     }
@@ -210,11 +211,11 @@ const Quotations = () => {
   const handleCaptchaSubmit = async (e) => {
     e.preventDefault();
     if (!captchaToken) {
-      alert("Please complete the CAPTCHA verification.");
+      toast.error("Please complete the CAPTCHA verification.");
       return;
     }
     if (!captchaPassword.trim()) {
-      alert("Please enter your password to confirm this action.");
+      toast.error("Please enter your password to confirm this action.");
       return;
     }
 
@@ -222,7 +223,7 @@ const Quotations = () => {
     const commentToUse = decisionComment || (pendingCaptchaApproval ? pendingCaptchaApproval.comment : "");
 
     if (!quoteToApprove) {
-      alert("Error: Quotation not found. Please try again.");
+      toast.error("Error: Quotation not found. Please try again.");
       setShowCaptchaModal(false);
       setCaptchaToken(null);
       setCaptchaPassword("");
@@ -261,7 +262,7 @@ const Quotations = () => {
         
         navigate(`/place-order/${orderNum}`);
       } else {
-        alert("Failed to approve quotation: " + (response.data.message || "Unknown error"));
+        toast.error("Failed to approve quotation: " + (response.data.message || "Unknown error"));
         recaptchaRef.current?.reset();
         setCaptchaToken(null);
       }
@@ -269,12 +270,12 @@ const Quotations = () => {
       console.error("Error approving quotation with CAPTCHA:", err);
       
       if (err.response?.data?.requiresCaptcha === true) {
-        alert("CAPTCHA verification failed. Please try again.");
+        toast.error("CAPTCHA verification failed. Please try again.");
         recaptchaRef.current?.reset();
         setCaptchaToken(null);
       } else {
         const errorMessage = err.response?.data?.error || err.response?.data?.message || err.response?.statusText || err.message;
-        alert(`Failed to approve: ${errorMessage}`);
+        toast.error(`Failed to approve: ${errorMessage}`);
         recaptchaRef.current?.reset();
         setCaptchaToken(null);
       }
@@ -286,7 +287,7 @@ const Quotations = () => {
   const handleReauthSubmit = async (e) => {
     e.preventDefault();
     if (!reauthPassword.trim()) {
-      alert("Please enter your password to confirm this action.");
+      toast.error("Please enter your password to confirm this action.");
       return;
     }
 
@@ -294,7 +295,7 @@ const Quotations = () => {
     const commentToUse = decisionComment || (pendingApproval ? pendingApproval.comment : "");
 
     if (!quoteToApprove) {
-      alert("Error: Quotation not found. Please try again.");
+      toast.error("Error: Quotation not found. Please try again.");
       setShowReauthModal(false);
       setReauthPassword("");
       setPendingApproval(null);
@@ -334,17 +335,17 @@ const Quotations = () => {
         
         navigate(`/place-order/${orderNum}`);
       } else {
-        alert("Failed to approve quotation: " + (response.data.message || "Unknown error"));
+        toast.error("Failed to approve quotation: " + (response.data.message || "Unknown error"));
       }
     } catch (err) {
       console.error("Error approving quotation with re-auth:", err);
       
       if (err.response?.data?.requiresReauth === true) {
-        alert("Re-authentication failed. Please check your password and try again.");
+        toast.error("Re-authentication failed. Please check your password and try again.");
         setReauthPassword("");
       } else {
         const errorMessage = err.response?.data?.error || err.response?.data?.message || err.response?.statusText || err.message;
-        alert(`Failed to approve: ${errorMessage}`);
+        toast.error(`Failed to approve: ${errorMessage}`);
       }
     } finally {
       setActionLoading(false);
@@ -363,17 +364,17 @@ const Quotations = () => {
       );
 
       if (response.data.success) {
-        alert("Quotation rejected successfully.");
+        toast.success("Quotation rejected successfully.");
         fetchQuotes();
         setSelectedQuote(null);
         closeDecisionModal();
       } else {
-        alert("Failed to reject quotation: " + (response.data.message || "Unknown error"));
+        toast.error("Failed to reject quotation: " + (response.data.message || "Unknown error"));
       }
     } catch (err) {
       console.error("Error rejecting quotation:", err);
       const errorMessage = err.response?.data?.error || err.response?.statusText || err.message;
-      alert(`Failed to reject: ${errorMessage}`);
+      toast.error(`Failed to reject: ${errorMessage}`);
     } finally {
       setActionLoading(false);
     }
@@ -383,7 +384,7 @@ const Quotations = () => {
     if (!selectedQuote) return;
 
     if (!decisionComment.trim()) {
-      alert("Please provide a comment explaining what needs to be revised.");
+      toast.error("Please provide a comment explaining what needs to be revised.");
       return;
     }
 
@@ -396,17 +397,17 @@ const Quotations = () => {
       );
 
       if (response.data.success) {
-        alert("Revision request submitted. Sales team will review and update the quotation.");
+        toast.success("Revision request submitted. Sales team will review and update the quotation.");
         fetchQuotes();
         setSelectedQuote(null);
         closeDecisionModal();
       } else {
-        alert("Failed to request revision: " + (response.data.message || "Unknown error"));
+        toast.error("Failed to request revision: " + (response.data.message || "Unknown error"));
       }
     } catch (err) {
       console.error("Error requesting revision:", err);
       const errorMessage = err.response?.data?.error || err.response?.statusText || err.message;
-      alert(`Failed to request revision: ${errorMessage}`);
+      toast.error(`Failed to request revision: ${errorMessage}`);
     } finally {
       setActionLoading(false);
     }
@@ -433,7 +434,7 @@ const Quotations = () => {
     } catch (err) {
       const errorMessage = err.response?.data?.error || err.response?.statusText || err.message;
       console.error("Download failed", err);
-      alert(`Failed to download PDF: ${errorMessage}`);
+      toast.error(`Failed to download PDF: ${errorMessage}`);
     }
   };
 
@@ -676,13 +677,15 @@ const Quotations = () => {
 
             {selectedQuote.status === "approved" && (
               <div className="panel-section action-buttons">
-                <button 
-                  className="action-btn convert-order-btn" 
-                  onClick={handleConvertToSalesOrder}
-                  disabled={actionLoading}
-                >
-                  <FiShoppingCart /> Convert to Sales Order
-                </button>
+                {!selectedQuote.orderNumber && (
+                  <button
+                    className="action-btn convert-order-btn"
+                    onClick={handleConvertToSalesOrder}
+                    disabled={actionLoading}
+                  >
+                    <FiShoppingCart /> Convert to Sales Order
+                  </button>
+                )}
                 <button 
                   className="action-btn download-btn" 
                   onClick={handleDownloadPDF}

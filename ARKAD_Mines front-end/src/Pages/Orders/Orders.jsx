@@ -987,15 +987,17 @@ const Orders = () => {
                 <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
                 CAPTCHA Verification Required
               </h3>
-              <button onClick={() => {
-                setShowCaptchaModal(false);
-                setCaptchaToken(null);
-                setCaptchaPassword("");
-                recaptchaRef.current?.reset();
-                setPendingPayment(null);
-              }}>
-                <FiX />
-              </button>
+              {!paymentSubmitting && (
+                <button onClick={() => {
+                  setShowCaptchaModal(false);
+                  setCaptchaToken(null);
+                  setCaptchaPassword("");
+                  recaptchaRef.current?.reset();
+                  setPendingPayment(null);
+                }}>
+                  <FiX />
+                </button>
+              )}
             </div>
             <div className="modal-body" data-lenis-prevent="true">
               <p style={{ color: '#e74c3c', marginBottom: '20px' }}>
@@ -1036,20 +1038,21 @@ const Orders = () => {
                   />
                 </div>
                 <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                  <button 
-                    type="button"
-                    className="btn-secondary" 
-                    onClick={() => {
-                      setShowCaptchaModal(false);
-                      setCaptchaToken(null);
-                      setCaptchaPassword("");
-                      recaptchaRef.current?.reset();
-                      setPendingPayment(null);
-                    }}
-                    disabled={paymentSubmitting}
-                  >
-                    Cancel
-                  </button>
+                  {!paymentSubmitting && (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => {
+                        setShowCaptchaModal(false);
+                        setCaptchaToken(null);
+                        setCaptchaPassword("");
+                        recaptchaRef.current?.reset();
+                        setPendingPayment(null);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  )}
                   <button
                     type="submit"
                     className="btn-primary"
@@ -1074,16 +1077,18 @@ const Orders = () => {
                 <FiLock />
                 Multi-Factor Authentication Required
               </h3>
-              <button 
-                onClick={() => {
-                  setShowMfaModal(false);
-                  setMfaPassword("");
-                  setPendingPayment(null);
-                }}
-                aria-label="Close modal"
-              >
-                <FiX />
-              </button>
+              {!paymentSubmitting && (
+                <button
+                  onClick={() => {
+                    setShowMfaModal(false);
+                    setMfaPassword("");
+                    setPendingPayment(null);
+                  }}
+                  aria-label="Close modal"
+                >
+                  <FiX />
+                </button>
+              )}
             </div>
             <div className="modal-body" data-lenis-prevent="true">
               <p style={{ color: '#e74c3c', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1112,18 +1117,19 @@ const Orders = () => {
                   />
                 </div>
                 <div className="modal-footer">
-                  <button 
-                    type="button"
-                    className="btn-secondary" 
-                    onClick={() => {
-                      setShowMfaModal(false);
-                      setMfaPassword("");
-                      setPendingPayment(null);
-                    }}
-                    disabled={paymentSubmitting}
-                  >
-                    Cancel
-                  </button>
+                  {!paymentSubmitting && (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => {
+                        setShowMfaModal(false);
+                        setMfaPassword("");
+                        setPendingPayment(null);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  )}
                   <button
                     type="submit"
                     className="btn-primary"

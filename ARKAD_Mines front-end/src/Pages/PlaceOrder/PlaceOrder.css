@@ -4,6 +4,8 @@
   max-width: 1000px;
   margin: 40px auto;
   padding: 0 20px;
+margin-bottom: 100px;
+margin-top: 100px;
 }
 
 .loading {
@@ -353,8 +355,17 @@
   color: #666;
 }
 
-.btn-back:hover {
+.btn-back:hover:not(:disabled) {
   border-color: #999;
+}
+
+.btn-back:disabled {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #9ca3af;
+  opacity: 1;
+  cursor: not-allowed;
+  pointer-events: auto;
 }
 
 .btn-primary {

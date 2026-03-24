@@ -112,6 +112,8 @@ const EditProfile = () => {
       if (didEmailUpdate) {
         setInitialEmail(form.email);
         toast.success("Email updated successfully.");
+        navigate("/");
+        return;
       } else {
         toast.info("No changes to save.");
       }

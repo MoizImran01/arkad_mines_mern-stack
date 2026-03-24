@@ -85,6 +85,7 @@ function App() {
         draggable
         pauseOnHover
         theme="light"
+        style={{ zIndex: 30000 }}
       />
       {showLogin ? <LoginPopup setShowLogin={setShowLogin} /> : null}
       <div className="app">
