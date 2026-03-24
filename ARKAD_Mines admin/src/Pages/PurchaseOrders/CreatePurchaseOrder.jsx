@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import './CreatePurchaseOrder.css';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -358,19 +359,30 @@ const CreatePurchaseOrder = () => {
         )}
       </div>
 
-      {/* Create PO Modal */}
-      {createModal && (
-        <dialog className="cpo-modal-overlay" open aria-modal="true">
-          <button
-            type="button"
-            className="cpo-modal-backdrop"
-            onClick={() => setCreateModal(false)}
-            aria-label="Close modal"
-          />
-          <div className="cpo-modal">
+      {/* Create PO Modal — portaled to body so fixed centering is not clipped by .cpo-container overflow */}
+      {createModal &&
+        createPortal(
+          <div
+            className="cpo-modal-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cpo-modal-title"
+          >
+            <button
+              type="button"
+              className="cpo-modal-backdrop"
+              onClick={() => setCreateModal(false)}
+              aria-label="Close modal"
+            />
+            <div className="cpo-modal">
             <div className="cpo-modal-header">
-              <h3>Create Purchase Order</h3>
-              <button className="cpo-modal-close" onClick={() => setCreateModal(false)}>
+              <h3 id="cpo-modal-title">Create Purchase Order</h3>
+              <button
+                type="button"
+                className="cpo-modal-close"
+                onClick={() => setCreateModal(false)}
+                aria-label="Close"
+              >
                 <X />
               </button>
             </div>
@@ -525,8 +537,9 @@ const CreatePurchaseOrder = () => {
               </button>
             </div>
           </div>
-        </dialog>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

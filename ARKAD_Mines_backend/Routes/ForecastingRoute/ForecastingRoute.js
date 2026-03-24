@@ -7,7 +7,7 @@ const forecastingRouter = express.Router();
 
 const forecastRateLimiter = createRateLimiter({
   endpoint: '/api/forecasting/forecast',
-  windowMs: 60 * 1000,
+  windowMs: 60 * 10000,
   maxRequests: 30,
   actionName: 'FORECAST_ACCESS',
   actionType: 'FORECAST_RATE_LIMIT_EXCEEDED'

@@ -6,9 +6,10 @@
 }
 
 .forecast-container {
-  max-width: 1440px;
+  max-width: none;
+  width: 100%;
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 32px 20px;
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -270,7 +271,7 @@
 }
 
 .skeleton-row td {
-  padding: 14px 16px;
+  padding: 8px 6px;
 }
 
 .skeleton-cell {
@@ -391,15 +392,37 @@
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
 }
 
-/* ── Table ── */
+/* ── Table (fit viewport — no horizontal scroll) ── */
 .forecast-table-scroll {
-  overflow-x: auto;
+  overflow-x: visible;
+  width: 100%;
 }
 
 .forecast-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 12px;
+}
+
+.forecast-table col.col-sku {
+  width: 17%;
+}
+
+.forecast-table col.col-cat {
+  width: 7%;
+}
+
+.forecast-table col.col-num {
+  width: 9%;
+}
+
+.forecast-table col.col-status {
+  width: 9%;
+}
+
+.forecast-table col.col-actions {
+  width: 12%;
 }
 
 .forecast-table thead tr {
@@ -407,19 +430,28 @@
   background: #fafbfc;
 }
 
+.forecast-page .forecast-table th,
+.forecast-page .forecast-table td {
+  font-size: 12px !important;
+}
+
 .forecast-table th {
-  white-space: nowrap;
-  padding: 12px 16px;
+  white-space: normal;
+  padding: 8px 6px;
   text-align: left;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   color: #64748b;
   position: sticky;
   top: 0;
   z-index: 10;
   background: #fafbfc;
+  vertical-align: bottom;
+  line-height: 1.2;
+  hyphens: auto;
+  overflow-wrap: anywhere;
 }
 
 .forecast-table th.sortable {
@@ -435,6 +467,8 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 
 .th-content svg {
@@ -477,28 +511,40 @@
 }
 
 .forecast-table td {
-  white-space: nowrap;
-  padding: 14px 16px;
+  white-space: normal;
+  padding: 8px 6px;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.forecast-table td:last-child,
+.forecast-table th:last-child {
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 /* Cell styles */
 .sku-cell-name {
   font-weight: 500;
-  font-size: 13px;
+  font-size: 12px;
   color: #0f172a;
   margin: 0;
+  line-height: 1.25;
 }
 
 .sku-cell-sub {
-  font-size: 11px;
+  font-size: 10px;
   color: #94a3b8;
   margin: 2px 0 0;
+  line-height: 1.2;
 }
 
 .mono-cell {
   font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
   font-size: 13px;
   color: #334155;
+  line-height: 1.3;
 }
 
 .mono-cell .unit {
@@ -514,11 +560,12 @@
 .category-badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  padding: 2px 6px;
   border-radius: 9999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.02em;
+  max-width: 100%;
 }
 
 .category-badge.marble {
@@ -537,12 +584,15 @@
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: 4px;
+  padding: 3px 6px;
   border-radius: 9999px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.02em;
+  white-space: normal;
+  line-height: 1.2;
+  max-width: 100%;
 }
 
 .status-pill.reorder {
@@ -575,21 +625,28 @@
 .create-po-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: #4f46e5;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background:#2f5242;
   color: #fff;
-  font-size: 12px;
   font-weight: 600;
   border: none;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   transition: all 0.15s ease;
-}
 
+  max-width: 75%;
+  white-space: normal;
+  line-height: 1.2;
+  text-align: center;
+}
+.mark-po-text {
+  font-size: 2px;
+}
 .create-po-btn:hover {
-  background: #4338ca;
+  background:#1c3127;
   box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
 }
 
@@ -598,8 +655,9 @@
 }
 
 .create-po-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
 }
 
 /* ── Empty state ── */

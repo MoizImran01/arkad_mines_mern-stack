@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const FORECAST_API_URL = process.env.FORECASTING_API_URL || 'https://nonethereally-pushiest-coleman.ngrok-free.dev/api/forecast';
-const FORECAST_TIMEOUT_MS = Number(process.env.FORECAST_TIMEOUT_MS) || 15000;
+const FORECAST_API_URL = process.env.FORECASTING_API_URL || 'http://127.0.0.1:8000/api/forecast';
+const FORECAST_TIMEOUT_MS = Number(process.env.FORECAST_TIMEOUT_MS) || 60 * 10000;
 
 export const getAIForecast = async (req, res) => {
     try {
@@ -9,7 +9,13 @@ export const getAIForecast = async (req, res) => {
             timeout: FORECAST_TIMEOUT_MS,
             validateStatus: (s) => s >= 200 && s < 300
         });
-        const data = response.data?.data || [];
+        const payload = response.data;
+        const data = Array.isArray(payload)
+            ? payload
+            : Array.isArray(payload?.data)
+                ? payload.data
+                : [];
+
         res.status(200).json({
             success: true,
             count: Array.isArray(data) ? data.length : 0,
@@ -17,6 +23,11 @@ export const getAIForecast = async (req, res) => {
         });
     } catch (error) {
         console.error("AI Microservice Error:", error.message);
+        console.error("AI Microservice URL:", FORECAST_API_URL);
+        if (error.response) {
+            console.error("AI Microservice status:", error.response.status);
+            console.error("AI Microservice body:", error.response.data);
+        }
         res.status(500).json({ success: false, message: "Forecasting engine offline." });
     }
 };

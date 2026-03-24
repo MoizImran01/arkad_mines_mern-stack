@@ -275,7 +275,14 @@
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: 0.75rem;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .cpo-stone-card:hover {
@@ -301,6 +308,11 @@
 
 .cpo-stone-content {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .cpo-stone-name {
@@ -381,20 +393,22 @@
   margin: 0;
 }
 
-/* Modal */
+/* Modal (rendered via portal on document.body) */
 .cpo-modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 1rem;
+  border: none;
   background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-  border: none;
+  z-index: 10000;
+  box-sizing: border-box;
 }
 
 .cpo-modal-backdrop {
@@ -412,12 +426,13 @@
   background: #fff;
   border-radius: 14px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-  max-width: 800px;
+  max-width: min(800px, 100%);
   width: 100%;
-  max-height: 90vh;
+  max-height: min(90vh, 100dvh - 2rem);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .cpo-modal-header {
@@ -542,17 +557,34 @@ textarea.cpo-form-input {
   padding: 1.25rem;
 }
 
+.cpo-stone-item-header {
+  text-align: left;
+}
+
+.cpo-stone-item-header > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
 .cpo-stone-item-header h5 {
   font-size: 16px;
   font-weight: 600;
   color: #1f2937;
   margin: 0 0 8px;
+  text-align: left;
+  width: 100%;
 }
 
 .cpo-stone-item-badges {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 8px;
+  justify-content: flex-start;
 }
 
 .cpo-suggested-text {
@@ -560,25 +592,36 @@ textarea.cpo-form-input {
   color: #2f5242;
   font-weight: 500;
   margin: 0;
+  text-align: left;
 }
 
 .cpo-stone-item-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
   gap: 1rem;
-  align-items: end;
   margin-top: 1rem;
+}
+
+.cpo-stone-item-fields .cpo-form-group {
+  flex: 1 1 160px;
+  margin-bottom: 0;
+  min-width: 0;
 }
 
 .cpo-stone-item-total {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  align-self: flex-end;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 10px 12px;
+  min-height: 46px;
+  box-sizing: border-box;
   background: #fff;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
-  white-space: nowrap;
+  flex: 0 1 auto;
 }
 
 .cpo-total-icon {
@@ -727,11 +770,13 @@ textarea.cpo-form-input {
   }
 
   .cpo-stone-item-fields {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .cpo-stone-item-total {
-    grid-column: 1;
+    align-self: stretch;
+    justify-content: center;
   }
 
   .cpo-modal {

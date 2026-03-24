@@ -67,7 +67,7 @@ const StatusPill = ({ currentStock, reorderPoint }) => {
   return (
     <span className={`status-pill ${cls}`}>
       <span className={`status-dot ${cls}`} />
-      {needsReorder ? 'Reorder Needed' : 'Healthy'}
+      {needsReorder ? 'Reorder' : 'OK'}
     </span>
   );
 };
@@ -229,14 +229,14 @@ const Forecasting = () => {
 
   const columns = [
     { key: 'sku', label: 'SKU' },
-    { key: 'category', label: 'Category' },
-    { key: 'forecast_monthly_mean', label: 'Monthly Forecast' },
-    { key: 'current_lead_time_days', label: 'Lead Time' },
-    { key: 'calculated_safety_stock', label: 'Safety Stock' },
-    { key: 'dynamic_reorder_point', label: 'Reorder Point' },
-    { key: 'current_stock', label: 'Current Stock' },
+    { key: 'category', label: 'Cat.' },
+    { key: 'forecast_monthly_mean', label: 'Mo. forecast' },
+    { key: 'current_lead_time_days', label: 'Lead (d)' },
+    { key: 'calculated_safety_stock', label: 'Safety' },
+    { key: 'dynamic_reorder_point', label: 'Reorder' },
+    { key: 'current_stock', label: 'Stock' },
     { key: 'status', label: 'Status' },
-    { key: 'actions', label: 'Actions' },
+    { key: 'actions', label: 'Action' },
   ];
 
   return (
@@ -342,6 +342,17 @@ const Forecasting = () => {
 
           <div className="forecast-table-scroll">
             <table className="forecast-table">
+              <colgroup>
+                <col className="col-sku" />
+                <col className="col-cat" />
+                <col className="col-num" />
+                <col className="col-num" />
+                <col className="col-num" />
+                <col className="col-num" />
+                <col className="col-num" />
+                <col className="col-status" />
+                <col className="col-actions" />
+              </colgroup>
               <thead>
                 <tr>
                   {columns.map((col) => {
@@ -422,11 +433,13 @@ const Forecasting = () => {
                         </td>
                         <td>
                           <button
+                            type="button"
                             onClick={() => handleMarkForPO(item)}
                             className="create-po-btn"
+                            title="Mark for purchase order"
                           >
-                            <CheckCircle2 />
-                            Mark for PO
+                            <CheckCircle2 aria-hidden />
+                           <p className="mark-po-text">Mark PO</p>
                           </button>
                         </td>
                       </tr>
