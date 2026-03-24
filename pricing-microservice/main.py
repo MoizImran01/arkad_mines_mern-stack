@@ -5,6 +5,8 @@ import numpy as np
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from pymongo import MongoClient
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI(title="Arkad Live Demand Forecasting Service")
 
