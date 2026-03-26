@@ -124,7 +124,11 @@ const AdminLogin = () => {
         }
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Network error. Please try again.");
+      if (err.response?.data?.notFound) {
+        setError("No admin account found with this email address. Please contact your system administrator.");
+      } else {
+        setError(err.response?.data?.message || "Network error. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }

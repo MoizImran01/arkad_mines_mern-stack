@@ -22,6 +22,8 @@ const LoginPopup = ({ setShowLogin }) => {
     const [newPassword, setNewPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
 
+    const [accountNotFound, setAccountNotFound] = useState(false)
+
     const [emailVerified, setEmailVerified] = useState(false)
     const [verifyStep, setVerifyStep] = useState(null)
     const [verifyCode, setVerifyCode] = useState("")
@@ -107,6 +109,7 @@ const LoginPopup = ({ setShowLogin }) => {
 
         try {
             if (resetStep === "email") {
+                setAccountNotFound(false);
                 const response = await axios.post(`${url}/api/user/forgot-password`, { email: resetEmail });
                 if (response.data.success) {
                     setSuccessMsg("A 6-digit reset code has been sent to your email.");
@@ -137,10 +140,26 @@ const LoginPopup = ({ setShowLogin }) => {
                 }
             }
         } catch (err) {
-            setError(err.response?.data?.message || "Network error. Please try again.");
+            if (err.response?.data?.notFound) {
+                setAccountNotFound(true);
+                setError("");
+            } else {
+                setError(err.response?.data?.message || "Network error. Please try again.");
+            }
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const switchToRegister = () => {
+        const emailToKeep = resetEmail;
+        setResetStep(null);
+        setResetEmail("");
+        setAccountNotFound(false);
+        setError("");
+        setSuccessMsg("");
+        setCurrentState("Sign Up");
+        setFormData(prev => ({ ...prev, email: emailToKeep }));
     };
 
     const startCountdown = useCallback(() => {
@@ -226,6 +245,7 @@ const LoginPopup = ({ setShowLogin }) => {
         recaptchaRef.current?.reset()
         setCaptchaToken(null)
         setResetStep(null)
+        setAccountNotFound(false)
         setEmailVerified(false)
         setVerifyStep(null)
         setVerifyCode("")
@@ -241,12 +261,14 @@ const LoginPopup = ({ setShowLogin }) => {
         setResetCode("");
         setNewPassword("");
         setConfirmPassword("");
+        setAccountNotFound(false);
     }
 
     const backToLogin = () => {
         setResetStep(null);
         setError("");
         setSuccessMsg("");
+        setAccountNotFound(false);
     }
 
     const submitButtonLabel = currentState === "Sign Up" ? "Create Business Account" : "Login to Dashboard";
@@ -287,80 +309,95 @@ const LoginPopup = ({ setShowLogin }) => {
                             </div>
                         )}
 
-                        <div className="form-inputs">
-                            {resetStep === "email" && (
-                                <div className="input-group">
-                                    <label htmlFor="reset-email">Business Email</label>
-                                    <input
-                                        id="reset-email"
-                                        type="email"
-                                        placeholder="your.company@email.com"
-                                        value={resetEmail}
-                                        onChange={(e) => { setResetEmail(e.target.value); setError(""); }}
-                                        required
-                                        disabled={isLoading}
-                                    />
+                        {accountNotFound && (
+                            <div className="not-found-prompt">
+                                <div className="not-found-icon">&#9888;</div>
+                                <p className="not-found-text">No account found with this email address.</p>
+                                <p className="not-found-sub">Would you like to create a new business account?</p>
+                                <button type="button" className="not-found-register-btn" onClick={switchToRegister}>
+                                    Create Account
+                                </button>
+                            </div>
+                        )}
+
+                        {!accountNotFound && (
+                            <>
+                                <div className="form-inputs">
+                                    {resetStep === "email" && (
+                                        <div className="input-group">
+                                            <label htmlFor="reset-email">Business Email</label>
+                                            <input
+                                                id="reset-email"
+                                                type="email"
+                                                placeholder="your.company@email.com"
+                                                value={resetEmail}
+                                                onChange={(e) => { setResetEmail(e.target.value); setError(""); setAccountNotFound(false); }}
+                                                required
+                                                disabled={isLoading}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {resetStep === "code" && (
+                                        <>
+                                            <div className="input-group">
+                                                <label htmlFor="reset-code">6-Digit Code</label>
+                                                <input
+                                                    id="reset-code"
+                                                    type="text"
+                                                    placeholder="Enter the code from your email"
+                                                    value={resetCode}
+                                                    onChange={(e) => { setResetCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(""); }}
+                                                    required
+                                                    disabled={isLoading}
+                                                    maxLength={6}
+                                                    pattern="\d{6}"
+                                                    inputMode="numeric"
+                                                />
+                                            </div>
+                                            <div className="input-group">
+                                                <label htmlFor="new-password">New Password</label>
+                                                <input
+                                                    id="new-password"
+                                                    type="password"
+                                                    placeholder="Min. 8 characters"
+                                                    value={newPassword}
+                                                    onChange={(e) => { setNewPassword(e.target.value); setError(""); }}
+                                                    required
+                                                    disabled={isLoading}
+                                                    minLength={8}
+                                                />
+                                            </div>
+                                            <div className="input-group">
+                                                <label htmlFor="confirm-password">Confirm Password</label>
+                                                <input
+                                                    id="confirm-password"
+                                                    type="password"
+                                                    placeholder="Re-enter your new password"
+                                                    value={confirmPassword}
+                                                    onChange={(e) => { setConfirmPassword(e.target.value); setError(""); }}
+                                                    required
+                                                    disabled={isLoading}
+                                                    minLength={8}
+                                                />
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
-                            )}
 
-                            {resetStep === "code" && (
-                                <>
-                                    <div className="input-group">
-                                        <label htmlFor="reset-code">6-Digit Code</label>
-                                        <input
-                                            id="reset-code"
-                                            type="text"
-                                            placeholder="Enter the code from your email"
-                                            value={resetCode}
-                                            onChange={(e) => { setResetCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(""); }}
-                                            required
-                                            disabled={isLoading}
-                                            maxLength={6}
-                                            pattern="\d{6}"
-                                            inputMode="numeric"
-                                        />
-                                    </div>
-                                    <div className="input-group">
-                                        <label htmlFor="new-password">New Password</label>
-                                        <input
-                                            id="new-password"
-                                            type="password"
-                                            placeholder="Min. 8 characters"
-                                            value={newPassword}
-                                            onChange={(e) => { setNewPassword(e.target.value); setError(""); }}
-                                            required
-                                            disabled={isLoading}
-                                            minLength={8}
-                                        />
-                                    </div>
-                                    <div className="input-group">
-                                        <label htmlFor="confirm-password">Confirm Password</label>
-                                        <input
-                                            id="confirm-password"
-                                            type="password"
-                                            placeholder="Re-enter your new password"
-                                            value={confirmPassword}
-                                            onChange={(e) => { setConfirmPassword(e.target.value); setError(""); }}
-                                            required
-                                            disabled={isLoading}
-                                            minLength={8}
-                                        />
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
-                        <button
-                            type="submit"
-                            className={`submit-btn ${isLoading ? 'submitting' : ''}`}
-                            disabled={isLoading}
-                            style={{ height: '52px', minHeight: '52px', maxHeight: '52px' }}
-                        >
-                            <span className={`submit-btn-text ${isLoading ? 'hidden' : ''}`}>
-                                {resetStep === "email" ? "Send Reset Code" : "Reset Password"}
-                            </span>
-                            {isLoading && <span className="submit-spinner" aria-hidden="true"></span>}
-                        </button>
+                                <button
+                                    type="submit"
+                                    className={`submit-btn ${isLoading ? 'submitting' : ''}`}
+                                    disabled={isLoading}
+                                    style={{ height: '52px', minHeight: '52px', maxHeight: '52px' }}
+                                >
+                                    <span className={`submit-btn-text ${isLoading ? 'hidden' : ''}`}>
+                                        {resetStep === "email" ? "Send Reset Code" : "Reset Password"}
+                                    </span>
+                                    {isLoading && <span className="submit-spinner" aria-hidden="true"></span>}
+                                </button>
+                            </>
+                        )}
 
                         <div className="form-footer">
                             <div className="state-toggle">

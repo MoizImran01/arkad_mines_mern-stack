@@ -673,7 +673,7 @@ const forgotPassword = async (req, res) => {
     const user = await userModel.findOne({ email: safeEmail });
 
     if (!user) {
-      return res.json({ success: true, message: "If an account with that email exists, a reset code has been sent." });
+      return res.status(404).json({ success: false, notFound: true, message: "No account found with this email address." });
     }
 
     const resetCode = crypto.randomInt(100000, 999999).toString();
@@ -694,7 +694,7 @@ const forgotPassword = async (req, res) => {
       details: `Password reset code sent to email=${safeEmail}`,
     });
 
-    res.json({ success: true, message: "If an account with that email exists, a reset code has been sent." });
+    res.json({ success: true, message: "A reset code has been sent to your email." });
   } catch (error) {
     logError(error, {
       action: "PASSWORD_RESET_REQUEST_ERROR",
