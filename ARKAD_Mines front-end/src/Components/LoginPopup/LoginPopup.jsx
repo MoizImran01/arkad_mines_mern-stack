@@ -125,7 +125,9 @@ const LoginPopup = ({ setShowLogin }) => {
                     confirmPassword,
                 });
                 if (response.data.success) {
-                    setSuccessMsg(response.data.message);
+                    setSuccessMsg("Password reset successful! Redirecting to login...");
+                    const emailForLogin = resetEmail;
+                    const passForLogin = newPassword;
                     setTimeout(() => {
                         setResetStep(null);
                         setResetEmail("");
@@ -134,6 +136,7 @@ const LoginPopup = ({ setShowLogin }) => {
                         setConfirmPassword("");
                         setSuccessMsg("");
                         setCurrentState("Login");
+                        setFormData(prev => ({ ...prev, email: emailForLogin, password: passForLogin }));
                     }, 2000);
                 } else {
                     setError(response.data.message);

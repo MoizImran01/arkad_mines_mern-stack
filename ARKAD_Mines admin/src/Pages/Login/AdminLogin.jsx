@@ -110,7 +110,9 @@ const AdminLogin = () => {
           confirmPassword,
         });
         if (response.data.success) {
-          setSuccessMsg(response.data.message);
+          setSuccessMsg("Password reset successful! Redirecting to login...");
+          const emailForLogin = resetEmail;
+          const passForLogin = newPassword;
           setTimeout(() => {
             setResetStep(null);
             setResetEmail("");
@@ -118,6 +120,7 @@ const AdminLogin = () => {
             setNewPassword("");
             setConfirmPassword("");
             setSuccessMsg("");
+            setFormData({ email: emailForLogin, password: passForLogin });
           }, 2000);
         } else {
           setError(response.data.message);
