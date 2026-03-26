@@ -7,6 +7,8 @@ import {
   updateMyPassword,
   forgotPassword,
   resetPassword,
+  sendVerificationCode,
+  verifyEmailCode,
 } from "../../Controllers/UserController/userController.js";
 import { createRateLimiter } from "../../Middlewares/genericRateLimiting.js";
 import { verifyToken } from "../../Middlewares/auth.js";
@@ -33,6 +35,8 @@ userRouter.post("/register", authRateLimiter.userLimiter, authRateLimiter.ipLimi
 userRouter.post("/login", authRateLimiter.userLimiter, authRateLimiter.ipLimiter, loginUser);
 userRouter.post("/forgot-password", resetRateLimiter.ipLimiter, forgotPassword);
 userRouter.post("/reset-password", resetRateLimiter.ipLimiter, resetPassword);
+userRouter.post("/send-verification", resetRateLimiter.ipLimiter, sendVerificationCode);
+userRouter.post("/verify-email", resetRateLimiter.ipLimiter, verifyEmailCode);
 userRouter.get("/me", verifyToken, getMyProfile);
 userRouter.put("/me", verifyToken, updateMyProfile);
 userRouter.put("/me/password", verifyToken, updateMyPassword);

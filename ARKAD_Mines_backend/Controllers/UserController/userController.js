@@ -5,7 +5,9 @@ import crypto from "crypto";
 import validator from "validator";
 import axios from "axios";
 import { logAudit, logError, getClientIp, normalizeRole } from "../../logger/auditLogger.js";
-import { sendPasswordResetEmail } from "../../Utils/emailService.js";
+import { sendPasswordResetEmail, sendVerificationEmail } from "../../Utils/emailService.js";
+
+const pendingVerifications = new Map();
 
 
 const createToken = (id, role) => {
@@ -196,6 +198,12 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid email format" });
     }
     const safeEmail = email.toLowerCase().trim();
+
+    const pending = pendingVerifications.get(safeEmail);
+    if (!pending || !pending.verified) {
+      return res.status(400).json({ success: false, message: "Email has not been verified. Please verify your email first." });
+    }
+
     if (captchaToken) {
       const isCaptchaValid = await verifyCaptcha(captchaToken);
       if (!isCaptchaValid) {
@@ -214,7 +222,6 @@ const registerUser = async (req, res) => {
       }
     }
 
-
     const exists = await userModel.findOne({ email: safeEmail });
     if (exists) {
       logAudit({
@@ -225,12 +232,11 @@ const registerUser = async (req, res) => {
         clientIp,
         details: `Email already exists: email=${email}`
       });
-      return res.status(409).json({ 
-        success: false, 
-        message: "A business account with this email already exists." 
+      return res.status(409).json({
+        success: false,
+        message: "A business account with this email already exists."
       });
     }
-
 
     if (!validator.isEmail(email)) {
       logAudit({
@@ -241,12 +247,11 @@ const registerUser = async (req, res) => {
         clientIp,
         details: `Invalid email format: email=${email}`
       });
-      return res.status(400).json({ 
-        success: false, 
-        message: "Please enter a valid business email address." 
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid business email address."
       });
     }
-
 
     if (password.length < 8) {
       logAudit({
@@ -263,7 +268,6 @@ const registerUser = async (req, res) => {
       });
     }
 
-
     if (!companyName || companyName.trim().length < 2) {
       logAudit({
         userId: null,
@@ -279,23 +283,18 @@ const registerUser = async (req, res) => {
       });
     }
 
-
     const salt = await bcrypt.genSalt(10);
-
     const hashedPassword = await bcrypt.hash(password, salt);
 
-
-   const newUser = new userModel({ 
-    companyName: companyName.trim(), 
-    email: email.toLowerCase().trim(), 
-    password: hashedPassword, 
-    role: role || "customer" 
+    const newUser = new userModel({
+      companyName: companyName.trim(),
+      email: safeEmail,
+      password: hashedPassword,
+      role: role || "customer"
     });
 
-
-
     const user = await newUser.save();
-
+    pendingVerifications.delete(safeEmail);
 
     const token = createToken(user._id, user.role);
 
@@ -308,28 +307,25 @@ const registerUser = async (req, res) => {
       details: `New user registered: email=${email}, companyName=${companyName}`
     });
 
-    res.json({ 
-  success: true, 
-  token,
-  user: {
-    id: user._id,
-    companyName: user.companyName,
-    email: user.email,
-    role: user.role
-  }
-});
-
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        companyName: user.companyName,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (error) {
-
     logError(error, {
       action: 'REGISTER_ERROR',
       clientIp,
       details: `Unexpected error during registration for email=${email}`
     });
-
-    res.status(500).json({ 
-      success: false, 
-      message: "Server error during account creation" 
+    res.status(500).json({
+      success: false,
+      message: "Server error during account creation"
     });
   }
 };
@@ -775,6 +771,83 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const sendVerificationCode = async (req, res) => {
+  const { email } = req.body;
+  const clientIp = getClientIp(req);
+
+  try {
+    if (!email || !validator.isEmail(email)) {
+      return res.status(400).json({ success: false, message: "Please enter a valid email address." });
+    }
+
+    const safeEmail = email.toLowerCase().trim();
+
+    const exists = await userModel.findOne({ email: safeEmail });
+    if (exists) {
+      return res.status(409).json({ success: false, message: "A business account with this email already exists." });
+    }
+
+    const code = crypto.randomInt(100000, 999999).toString();
+    const hashedCode = crypto.createHash("sha256").update(code).digest("hex");
+
+    pendingVerifications.set(safeEmail, {
+      hashedCode,
+      expires: Date.now() + 15 * 60 * 1000,
+    });
+
+    await sendVerificationEmail(safeEmail, code);
+
+    await logAudit({
+      userId: null,
+      role: "GUEST",
+      action: "EMAIL_VERIFICATION_SENT",
+      status: "SUCCESS",
+      clientIp,
+      details: `Verification code sent to email=${safeEmail}`,
+    });
+
+    res.json({ success: true, message: "A verification code has been sent to your email." });
+  } catch (error) {
+    logError(error, {
+      action: "EMAIL_VERIFICATION_ERROR",
+      clientIp,
+      details: `Error sending verification code for email=${email}`,
+    });
+    res.status(500).json({ success: false, message: "Failed to send verification email. Please try again." });
+  }
+};
+
+const verifyEmailCode = async (req, res) => {
+  const { email, code } = req.body;
+
+  try {
+    if (!email || !code) {
+      return res.status(400).json({ success: false, message: "Email and code are required." });
+    }
+
+    const safeEmail = email.toLowerCase().trim();
+    const pending = pendingVerifications.get(safeEmail);
+
+    if (!pending || pending.expires < Date.now()) {
+      pendingVerifications.delete(safeEmail);
+      return res.status(400).json({ success: false, message: "Verification code has expired. Please request a new one." });
+    }
+
+    const hashedCode = crypto.createHash("sha256").update(code).digest("hex");
+
+    if (hashedCode !== pending.hashedCode) {
+      return res.status(400).json({ success: false, message: "Invalid verification code." });
+    }
+
+    pending.verified = true;
+    pendingVerifications.set(safeEmail, pending);
+
+    res.json({ success: true, message: "Email verified successfully." });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error during verification." });
+  }
+};
+
 export {
   loginUser,
   registerUser,
@@ -786,4 +859,6 @@ export {
   updateMyPassword,
   forgotPassword,
   resetPassword,
+  sendVerificationCode,
+  verifyEmailCode,
 };

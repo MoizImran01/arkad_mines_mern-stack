@@ -22,6 +22,10 @@ const LoginPopup = ({ setShowLogin }) => {
     const [newPassword, setNewPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
 
+    const [emailVerified, setEmailVerified] = useState(false)
+    const [verifyStep, setVerifyStep] = useState(null)
+    const [verifyCode, setVerifyCode] = useState("")
+
     const { setToken } = useContext(StoreContext)
 
     const [formData, setFormData] = useState({
@@ -137,6 +141,53 @@ const LoginPopup = ({ setShowLogin }) => {
         }
     };
 
+    const handleSendVerification = async () => {
+        if (!formData.email) {
+            setError("Please enter your email address first.");
+            return;
+        }
+        setIsLoading(true);
+        setError("");
+        setSuccessMsg("");
+        try {
+            const response = await axios.post(`${url}/api/user/send-verification`, { email: formData.email });
+            if (response.data.success) {
+                setSuccessMsg("A 6-digit verification code has been sent to your email.");
+                setVerifyStep("code");
+            } else {
+                setError(response.data.message);
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to send verification email.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleVerifyCode = async () => {
+        if (verifyCode.length !== 6) {
+            setError("Please enter the 6-digit code.");
+            return;
+        }
+        setIsLoading(true);
+        setError("");
+        setSuccessMsg("");
+        try {
+            const response = await axios.post(`${url}/api/user/verify-email`, { email: formData.email, code: verifyCode });
+            if (response.data.success) {
+                setEmailVerified(true);
+                setVerifyStep(null);
+                setSuccessMsg("Email verified successfully! Complete the form to create your account.");
+            } else {
+                setError(response.data.message);
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || "Verification failed.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const toggleState = () => {
         setCurrentState(prev => prev === "Login" ? "Sign Up" : "Login")
         setError("")
@@ -145,6 +196,9 @@ const LoginPopup = ({ setShowLogin }) => {
         recaptchaRef.current?.reset()
         setCaptchaToken(null)
         setResetStep(null)
+        setEmailVerified(false)
+        setVerifyStep(null)
+        setVerifyCode("")
     }
 
     const openForgotPassword = () => {
@@ -315,6 +369,13 @@ const LoginPopup = ({ setShowLogin }) => {
                         </div>
                     )}
 
+                    {successMsg && (
+                        <div className="success-message">
+                            <span className="success-icon">&#10003;</span>
+                            {successMsg}
+                        </div>
+                    )}
+
                     <div className="form-inputs">
                         {currentState === "Sign Up" && (
                             <div className="input-group">
@@ -334,17 +395,67 @@ const LoginPopup = ({ setShowLogin }) => {
 
                         <div className="input-group">
                             <label htmlFor="email">Business Email</label>
-                            <input
-                                id="email"
-                                name="email"
-                                onChange={handleInputChange}
-                                value={formData.email}
-                                type="email"
-                                placeholder="your.company@email.com"
-                                required
-                                disabled={isLoading}
-                            />
+                            <div className="email-verify-row">
+                                <input
+                                    id="email"
+                                    name="email"
+                                    onChange={(e) => {
+                                        handleInputChange(e);
+                                        if (emailVerified) {
+                                            setEmailVerified(false);
+                                            setVerifyStep(null);
+                                            setVerifyCode("");
+                                            setSuccessMsg("");
+                                        }
+                                    }}
+                                    value={formData.email}
+                                    type="email"
+                                    placeholder="your.company@email.com"
+                                    required
+                                    disabled={isLoading || (currentState === "Sign Up" && emailVerified)}
+                                />
+                                {currentState === "Sign Up" && !emailVerified && !verifyStep && (
+                                    <button
+                                        type="button"
+                                        className="verify-email-btn"
+                                        onClick={handleSendVerification}
+                                        disabled={isLoading || !formData.email}
+                                    >
+                                        {isLoading ? "..." : "Verify"}
+                                    </button>
+                                )}
+                                {currentState === "Sign Up" && emailVerified && (
+                                    <span className="verified-badge">&#10003; Verified</span>
+                                )}
+                            </div>
                         </div>
+
+                        {currentState === "Sign Up" && verifyStep === "code" && !emailVerified && (
+                            <div className="input-group">
+                                <label htmlFor="verify-code">Verification Code</label>
+                                <div className="email-verify-row">
+                                    <input
+                                        id="verify-code"
+                                        type="text"
+                                        placeholder="Enter 6-digit code"
+                                        value={verifyCode}
+                                        onChange={(e) => { setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(""); }}
+                                        disabled={isLoading}
+                                        maxLength={6}
+                                        pattern="\d{6}"
+                                        inputMode="numeric"
+                                    />
+                                    <button
+                                        type="button"
+                                        className="verify-email-btn"
+                                        onClick={handleVerifyCode}
+                                        disabled={isLoading || verifyCode.length !== 6}
+                                    >
+                                        {isLoading ? "..." : "Confirm"}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="input-group">
                             <label htmlFor="password">Password</label>
@@ -381,7 +492,7 @@ const LoginPopup = ({ setShowLogin }) => {
                     <button
                         type="submit"
                         className={`submit-btn ${isLoading ? 'submitting' : ''}`}
-                        disabled={isLoading || !captchaToken}
+                        disabled={isLoading || !captchaToken || (currentState === "Sign Up" && !emailVerified)}
                         style={{ height: '52px', minHeight: '52px', maxHeight: '52px' }}
                         aria-busy={isLoading}
                     >

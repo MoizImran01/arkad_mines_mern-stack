@@ -363,6 +363,53 @@
 }
 
 
+.email-verify-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.email-verify-row input {
+    flex: 1;
+}
+
+.verify-email-btn {
+    padding: 0.875rem 1.25rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.verify-email-btn:hover:not(:disabled) {
+    background: var(--primary-dark);
+}
+
+.verify-email-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.verified-badge {
+    padding: 0.5rem 0.75rem;
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #86efac;
+    border-radius: var(--radius-sm);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
 .forgot-password-link {
     text-align: right;
     margin-top: -0.5rem;
