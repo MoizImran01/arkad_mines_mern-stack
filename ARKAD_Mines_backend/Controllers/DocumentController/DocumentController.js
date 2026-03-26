@@ -205,184 +205,70 @@ const downloadDocument = async (req, res) => {
       });
     }
 
+    const fetchOrderAndAuthorize = async (model, id, notFoundMsg) => {
+      const record = model === quotationModel
+        ? await model.findById(id).populate("buyer")
+        : await model.findById(id).populate("buyer").populate("quotation");
+      if (!record) return { error: res.status(404).json({ success: false, message: notFoundMsg, canRequestReissue: true }) };
+      const isAdmin = req.user.role === "admin";
+      const buyerId = record.buyer._id ? record.buyer._id.toString() : record.buyer.toString();
+      if (!isAdmin && buyerId !== userId) {
+        await logAudit({ userId, role: normalizeRole(req.user?.role), action: 'DOWNLOAD_DOCUMENT', status: 'FAILED_AUTH', resourceId: documentId, clientIp, userAgent, details: 'Unauthorized access attempt' });
+        return { error: res.status(403).json({ success: false, message: "Unauthorized" }) };
+      }
+      return { record };
+    };
+
     let documentBuffer = null;
     let filename = '';
     let contentType = 'application/pdf';
 
     switch (documentType) {
       case 'quote': {
-        const quotation = await quotationModel.findById(resourceId).populate("buyer");
-        if (!quotation) {
-          return res.status(404).json({ 
-            success: false, 
-            message: "Quotation not found. This document may have been archived.",
-            canRequestReissue: true 
-          });
-        }
-
-        const isAdmin = req.user.role === "admin";
-        const buyerId = quotation.buyer._id ? quotation.buyer._id.toString() : quotation.buyer.toString();
-        if (!isAdmin && buyerId !== userId) {
-          await logAudit({
-            userId,
-            role: normalizeRole(req.user?.role),
-            action: 'DOWNLOAD_DOCUMENT',
-            status: 'FAILED_AUTH',
-            resourceId: documentId,
-            clientIp,
-            userAgent,
-            details: 'Unauthorized access attempt'
-          });
-          return res.status(403).json({ success: false, message: "Unauthorized" });
-        }
-
+        const { record: quotation, error: authErr } = await fetchOrderAndAuthorize(quotationModel, resourceId, "Quotation not found. This document may have been archived.");
+        if (authErr) return;
         documentBuffer = await generateQuotationPDF(quotation);
         filename = `Quotation-${quotation.referenceNumber}.pdf`;
         break;
       }
 
       case 'proforma': {
-        const order = await orderModel.findById(resourceId).populate("buyer").populate("quotation");
-        if (!order) {
-          return res.status(404).json({ 
-            success: false, 
-            message: "Order not found. This document may have been archived.",
-            canRequestReissue: true 
-          });
-        }
-
-        const isAdmin = req.user.role === "admin";
-        const buyerId = order.buyer._id ? order.buyer._id.toString() : order.buyer.toString();
-        if (!isAdmin && buyerId !== userId) {
-          await logAudit({
-            userId,
-            role: normalizeRole(req.user?.role),
-            action: 'DOWNLOAD_DOCUMENT',
-            status: 'FAILED_AUTH',
-            resourceId: documentId,
-            clientIp,
-            userAgent,
-            details: 'Unauthorized access attempt'
-          });
-          return res.status(403).json({ success: false, message: "Unauthorized" });
-        }
-
+        const { record: order, error: authErr } = await fetchOrderAndAuthorize(orderModel, resourceId, "Order not found. This document may have been archived.");
+        if (authErr) return;
         if (order.status === 'draft') {
-          return res.status(400).json({ 
-            success: false, 
-            message: "Proforma invoice not available for draft orders" 
-          });
+          return res.status(400).json({ success: false, message: "Proforma invoice not available for draft orders" });
         }
-
         documentBuffer = await generateProformaPDF(order);
         filename = `Proforma-${order.orderNumber}.pdf`;
         break;
       }
 
       case 'tax_invoice': {
-        const order = await orderModel.findById(resourceId).populate("buyer").populate("quotation");
-        if (!order) {
-          return res.status(404).json({ 
-            success: false, 
-            message: "Order not found. This document may have been archived.",
-            canRequestReissue: true 
-          });
-        }
-
-        const isAdmin = req.user.role === "admin";
-        const buyerId = order.buyer._id ? order.buyer._id.toString() : order.buyer.toString();
-        if (!isAdmin && buyerId !== userId) {
-          await logAudit({
-            userId,
-            role: normalizeRole(req.user?.role),
-            action: 'DOWNLOAD_DOCUMENT',
-            status: 'FAILED_AUTH',
-            resourceId: documentId,
-            clientIp,
-            userAgent,
-            details: 'Unauthorized access attempt'
-          });
-          return res.status(403).json({ success: false, message: "Unauthorized" });
-        }
-
+        const { record: order, error: authErr } = await fetchOrderAndAuthorize(orderModel, resourceId, "Order not found. This document may have been archived.");
+        if (authErr) return;
         if (!['dispatched', 'delivered'].includes(order.status)) {
-          return res.status(400).json({ 
-            success: false, 
-            message: "Tax invoice not available until order is dispatched" 
-          });
+          return res.status(400).json({ success: false, message: "Tax invoice not available until order is dispatched" });
         }
-
         documentBuffer = await generateTaxInvoicePDF(order);
         filename = `TaxInvoice-${order.orderNumber}.pdf`;
         break;
       }
 
       case 'receipt': {
-        const order = await orderModel.findById(resourceId).populate("buyer").populate("quotation");
-        if (!order) {
-          return res.status(404).json({ 
-            success: false, 
-            message: "Order not found. This document may have been archived.",
-            canRequestReissue: true 
-          });
-        }
-
-        const isAdmin = req.user.role === "admin";
-        const buyerId = order.buyer._id ? order.buyer._id.toString() : order.buyer.toString();
-        if (!isAdmin && buyerId !== userId) {
-          await logAudit({
-            userId,
-            role: normalizeRole(req.user?.role),
-            action: 'DOWNLOAD_DOCUMENT',
-            status: 'FAILED_AUTH',
-            resourceId: documentId,
-            clientIp,
-            userAgent,
-            details: 'Unauthorized access attempt'
-          });
-          return res.status(403).json({ success: false, message: "Unauthorized" });
-        }
-
+        const { record: order, error: authErr } = await fetchOrderAndAuthorize(orderModel, resourceId, "Order not found. This document may have been archived.");
+        if (authErr) return;
         const paymentProof = order.paymentProofs?.[receiptIndex];
         if (!paymentProof || paymentProof.status !== 'approved') {
-          return res.status(404).json({ 
-            success: false, 
-            message: "Receipt not found or payment not approved",
-            canRequestReissue: true 
-          });
+          return res.status(404).json({ success: false, message: "Receipt not found or payment not approved", canRequestReissue: true });
         }
-
         documentBuffer = await generateReceiptPDF(order, paymentProof, receiptIndex);
         filename = `Receipt-${order.orderNumber}-${receiptIndex + 1}.pdf`;
         break;
       }
 
       case 'statement': {
-        const order = await orderModel.findById(resourceId).populate("buyer").populate("quotation");
-        if (!order) {
-          return res.status(404).json({ 
-            success: false, 
-            message: "Order not found. This document may have been archived.",
-            canRequestReissue: true 
-          });
-        }
-
-        const isAdmin = req.user.role === "admin";
-        const buyerId = order.buyer._id ? order.buyer._id.toString() : order.buyer.toString();
-        if (!isAdmin && buyerId !== userId) {
-          await logAudit({
-            userId,
-            role: normalizeRole(req.user?.role),
-            action: 'DOWNLOAD_DOCUMENT',
-            status: 'FAILED_AUTH',
-            resourceId: documentId,
-            clientIp,
-            userAgent,
-            details: 'Unauthorized access attempt'
-          });
-          return res.status(403).json({ success: false, message: "Unauthorized" });
-        }
-
+        const { record: order, error: authErr } = await fetchOrderAndAuthorize(orderModel, resourceId, "Order not found. This document may have been archived.");
+        if (authErr) return;
         if (documentFormat === 'CSV') {
           const csvContent = await generateStatementCSV(order);
           contentType = 'text/csv';
@@ -396,10 +282,7 @@ const downloadDocument = async (req, res) => {
       }
 
       default:
-        return res.status(400).json({ 
-          success: false, 
-          message: "Invalid document type" 
-        });
+        return res.status(400).json({ success: false, message: "Invalid document type" });
     }
 
     if (!documentBuffer) {

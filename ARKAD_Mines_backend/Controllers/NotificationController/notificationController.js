@@ -34,23 +34,25 @@ export const createNotification = async (payload) => {
   }
 };
 
+const buildRecipientQuery = (user) => {
+  const safe_role = String(user.role || '').trim();
+  if (safe_role === "admin") {
+    return { valid: true, query: { recipientType: "admin" } };
+  }
+  if (!user.id || !mongoose.Types.ObjectId.isValid(String(user.id))) {
+    return { valid: false };
+  }
+  return {
+    valid: true,
+    query: { recipientType: "user", recipientId: new mongoose.Types.ObjectId(String(user.id)) }
+  };
+};
+
 export const getNotifications = async (req, res) => {
   try {
-    const { role, id } = req.user;
-    const safe_role = String(role || '').trim();
-    let query = {};
-    if (safe_role === "admin") {
-      query.recipientType = "admin";
-    } else {
-
-      if (!id || !mongoose.Types.ObjectId.isValid(String(id))) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid user ID format"
-        });
-      }
-      query.recipientType = "user";
-      query.recipientId = new mongoose.Types.ObjectId(String(id));
+    const { valid, query } = buildRecipientQuery(req.user);
+    if (!valid) {
+      return res.status(400).json({ success: false, message: "Invalid user ID format" });
     }
 
     const notifications = await notificationModel
@@ -61,33 +63,18 @@ export const getNotifications = async (req, res) => {
     res.status(200).json({ success: true, notifications });
   } catch (error) {
     logError(error, { action: 'FETCH_NOTIFICATIONS', userId: req.user?.id });
-    res.status(500).json({
-      success: false,
-      message: "Error fetching notifications",
-    });
+    res.status(500).json({ success: false, message: "Error fetching notifications" });
   }
 };
 
 export const clearNotifications = async (req, res) => {
   try {
-    const { role, id } = req.user;
-    const safe_role = String(role || '').trim();
-    let query = {};
-    if (safe_role === "admin") {
-      query.recipientType = "admin";
-    } else {
-      if (!id || !mongoose.Types.ObjectId.isValid(String(id))) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid user ID format"
-        });
-      }
-      query.recipientType = "user";
-      query.recipientId = new mongoose.Types.ObjectId(String(id));
+    const { valid, query } = buildRecipientQuery(req.user);
+    if (!valid) {
+      return res.status(400).json({ success: false, message: "Invalid user ID format" });
     }
 
     const clearedAt = new Date();
-
     const result = await notificationModel.updateMany(query, {
       $set: { clearedAt, readAt: clearedAt },
     });
@@ -100,10 +87,7 @@ export const clearNotifications = async (req, res) => {
     });
   } catch (error) {
     logError(error, { action: 'CLEAR_NOTIFICATIONS', userId: req.user?.id });
-    res.status(500).json({
-      success: false,
-      message: "Error clearing notifications",
-    });
+    res.status(500).json({ success: false, message: "Error clearing notifications" });
   }
 };
 

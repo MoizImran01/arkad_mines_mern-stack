@@ -213,148 +213,77 @@ const Quotations = () => {
     setCaptchaToken(null);
   };
 
-  const handleCaptchaSubmit = async (e) => {
-    e.preventDefault();
-    if (!captchaToken) {
-      toast.error("Please complete the CAPTCHA verification.");
-      return;
-    }
-    if (!captchaPassword.trim()) {
-      toast.error("Please enter your password to confirm this action.");
-      return;
-    }
-
-    const quoteToApprove = selectedQuote || (pendingCaptchaApproval ? quotes.find(q => q._id === pendingCaptchaApproval.quoteId) : null);
-    const commentToUse = decisionComment || (pendingCaptchaApproval ? pendingCaptchaApproval.comment : "");
-
-    if (!quoteToApprove) {
-      toast.error("Error: Quotation not found. Please try again.");
-      setShowCaptchaModal(false);
-      setCaptchaToken(null);
-      setCaptchaPassword("");
-      recaptchaRef.current?.reset();
-      setPendingCaptchaApproval(null);
-      return;
-    }
-
+  const submitVerifiedApproval = async (quoteToApprove, commentToUse, extraBody, onSuccess, onError) => {
     setActionLoading(true);
-    
     try {
-      const requestBody = { 
-        comment: commentToUse,
-        captchaToken: captchaToken,
-        passwordConfirmation: captchaPassword // Include password for re-auth
-      };
-
       const response = await axios.put(
         `${url}/api/quotes/${quoteToApprove._id}/approve`,
-        requestBody,
+        { comment: commentToUse, ...extraBody },
         { headers }
       );
-
       if (response.data.success) {
-        const orderNum = response.data.order.orderNumber;
-        
-        setShowCaptchaModal(false);
-        setCaptchaToken(null);
-        setCaptchaPassword("");
-        recaptchaRef.current?.reset();
-        setPendingCaptchaApproval(null);
-        
+        onSuccess();
         fetchQuotes();
         setSelectedQuote(null);
         closeDecisionModal();
-        
-        navigate(`/place-order/${orderNum}`);
+        navigate(`/place-order/${response.data.order.orderNumber}`);
       } else {
         toast.error("Failed to approve quotation: " + (response.data.message || "Unknown error"));
-        recaptchaRef.current?.reset();
-        setCaptchaToken(null);
       }
     } catch (err) {
-      console.error("Error approving quotation with CAPTCHA:", err);
-      
-      if (err.response?.data?.requiresCaptcha === true) {
-        toast.error("CAPTCHA verification failed. Please try again.");
-        recaptchaRef.current?.reset();
-        setCaptchaToken(null);
-      } else {
-        const errorMessage = err.response?.data?.error || err.response?.data?.message || err.response?.statusText || err.message;
-        toast.error(`Failed to approve: ${errorMessage}`);
-        recaptchaRef.current?.reset();
-        setCaptchaToken(null);
-      }
+      console.error("Error approving quotation:", err);
+      onError(err);
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handleReauthSubmit = async (e) => {
+  const handleCaptchaSubmit = async (e) => {
     e.preventDefault();
-    if (!reauthPassword.trim()) {
-      toast.error("Please enter your password to confirm this action.");
+    if (!captchaToken) { toast.error("Please complete the CAPTCHA verification."); return; }
+    if (!captchaPassword.trim()) { toast.error("Please enter your password to confirm this action."); return; }
+
+    const quoteToApprove = selectedQuote || (pendingCaptchaApproval ? quotes.find(q => q._id === pendingCaptchaApproval.quoteId) : null);
+    const commentToUse = decisionComment || (pendingCaptchaApproval ? pendingCaptchaApproval.comment : "");
+    if (!quoteToApprove) {
+      toast.error("Error: Quotation not found. Please try again.");
+      setShowCaptchaModal(false); setCaptchaToken(null); setCaptchaPassword(""); recaptchaRef.current?.reset(); setPendingCaptchaApproval(null);
       return;
     }
+
+    await submitVerifiedApproval(
+      quoteToApprove, commentToUse,
+      { captchaToken, passwordConfirmation: captchaPassword },
+      () => { setShowCaptchaModal(false); setCaptchaToken(null); setCaptchaPassword(""); recaptchaRef.current?.reset(); setPendingCaptchaApproval(null); },
+      (err) => {
+        const errorMessage = err.response?.data?.error || err.response?.data?.message || err.response?.statusText || err.message;
+        toast.error(err.response?.data?.requiresCaptcha ? "CAPTCHA verification failed. Please try again." : `Failed to approve: ${errorMessage}`);
+        recaptchaRef.current?.reset(); setCaptchaToken(null);
+      }
+    );
+  };
+
+  const handleReauthSubmit = async (e) => {
+    e.preventDefault();
+    if (!reauthPassword.trim()) { toast.error("Please enter your password to confirm this action."); return; }
 
     const quoteToApprove = selectedQuote || (pendingApproval ? quotes.find(q => q._id === pendingApproval.quoteId) : null);
     const commentToUse = decisionComment || (pendingApproval ? pendingApproval.comment : "");
-
     if (!quoteToApprove) {
       toast.error("Error: Quotation not found. Please try again.");
-      setShowReauthModal(false);
-      setReauthPassword("");
-      setPendingApproval(null);
+      setShowReauthModal(false); setReauthPassword(""); setPendingApproval(null);
       return;
     }
 
-    setActionLoading(true);
-    
-    try {
-      const requestBody = { 
-        comment: commentToUse,
-        passwordConfirmation: reauthPassword // Explicitly include password
-      };
-
-      console.log("Sending approval request with password:", { 
-        quoteId: quoteToApprove._id, 
-        hasPassword: !!reauthPassword,
-        passwordLength: reauthPassword.length 
-      });
-
-      const response = await axios.put(
-        `${url}/api/quotes/${quoteToApprove._id}/approve`,
-        requestBody,
-        { headers }
-      );
-
-      if (response.data.success) {
-        const orderNum = response.data.order.orderNumber;
-        
-        setShowReauthModal(false);
-        setReauthPassword("");
-        setPendingApproval(null);
-        
-        fetchQuotes();
-        setSelectedQuote(null);
-        closeDecisionModal();
-        
-        navigate(`/place-order/${orderNum}`);
-      } else {
-        toast.error("Failed to approve quotation: " + (response.data.message || "Unknown error"));
+    await submitVerifiedApproval(
+      quoteToApprove, commentToUse,
+      { passwordConfirmation: reauthPassword },
+      () => { setShowReauthModal(false); setReauthPassword(""); setPendingApproval(null); },
+      (err) => {
+        if (err.response?.data?.requiresReauth) { toast.error("Re-authentication failed. Please check your password and try again."); setReauthPassword(""); }
+        else { const errorMessage = err.response?.data?.error || err.response?.data?.message || err.response?.statusText || err.message; toast.error(`Failed to approve: ${errorMessage}`); }
       }
-    } catch (err) {
-      console.error("Error approving quotation with re-auth:", err);
-      
-      if (err.response?.data?.requiresReauth === true) {
-        toast.error("Re-authentication failed. Please check your password and try again.");
-        setReauthPassword("");
-      } else {
-        const errorMessage = err.response?.data?.error || err.response?.data?.message || err.response?.statusText || err.message;
-        toast.error(`Failed to approve: ${errorMessage}`);
-      }
-    } finally {
-      setActionLoading(false);
-    }
+    );
   };
 
   const handleReject = async () => {

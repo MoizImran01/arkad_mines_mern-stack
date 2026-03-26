@@ -957,64 +957,42 @@ const approveQuotation = async (req, res) => {
   }
 };
 
-// Rejects issued quotation; sets buyer decision and status (audited).
+const validateAndFetchQuotation = async ({ quoteId, userId, clientIp, action, requiredStatus }) => {
+  if (!quoteId || !mongoose.Types.ObjectId.isValid(String(quoteId))) {
+    return { error: { status: 400, body: { success: false, message: "Invalid quotation ID format" } } };
+  }
+  if (!userId || !mongoose.Types.ObjectId.isValid(String(userId))) {
+    return { error: { status: 400, body: { success: false, message: "Invalid user ID format" } } };
+  }
+
+  const quotation = await quotationModel.findOne({
+    _id: new mongoose.Types.ObjectId(String(quoteId)),
+    buyer: new mongoose.Types.ObjectId(String(userId)),
+  }).populate("buyer");
+
+  if (!quotation) {
+    logAudit({ userId, role: normalizeRole(undefined), action, status: 'FAILED_VALIDATION', resourceId: quoteId, clientIp, details: 'Quotation not found or unauthorized' });
+    return { error: { status: 404, body: { success: false, message: "Quotation not found" } } };
+  }
+
+  if (requiredStatus && quotation.status !== requiredStatus) {
+    logAudit({ userId, role: normalizeRole(undefined), action, status: 'FAILED_BUSINESS_RULE', quotationId: quotation.referenceNumber, resourceId: quoteId, clientIp, details: `Invalid status: currentStatus=${quotation.status}` });
+    return { error: { status: 400, body: { success: false, message: `Cannot perform this action on quotation with status: ${quotation.status}. Only ${requiredStatus} quotations are eligible.` } } };
+  }
+
+  return { quotation };
+};
+
 const rejectQuotation = async (req, res) => {
   const clientIp = getClientIp(req);
   try {
     const { quoteId } = req.params;
     const { comment } = req.body;
 
-    if (!quoteId || !mongoose.Types.ObjectId.isValid(String(quoteId))) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid quotation ID format"
-      });
-    }
-    
-    if (!req.user?.id || !mongoose.Types.ObjectId.isValid(String(req.user.id))) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID format"
-      });
-    }
-
-    const quotation = await quotationModel.findOne({
-      _id: new mongoose.Types.ObjectId(String(quoteId)),
-      buyer: new mongoose.Types.ObjectId(String(req.user.id)),
-    }).populate("buyer");
-
-    if (!quotation) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
-        action: 'REJECT_QUOTATION',
-        status: 'FAILED_VALIDATION',
-        resourceId: quoteId,
-        clientIp,
-        details: 'Quotation not found or unauthorized'
-      });
-      return res.status(404).json({ 
-        success: false, 
-        message: "Quotation not found" 
-      });
-    }
-
-    if (quotation.status !== "issued") {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
-        action: 'REJECT_QUOTATION',
-        status: 'FAILED_BUSINESS_RULE',
-        quotationId: quotation.referenceNumber,
-        resourceId: quoteId,
-        clientIp,
-        details: `Invalid status for rejection: currentStatus=${quotation.status}`
-      });
-      return res.status(400).json({ 
-        success: false, 
-        message: `Cannot reject quotation with status: ${quotation.status}. Only issued quotations can be rejected.` 
-      });
-    }
+    const { quotation, error: valErr } = await validateAndFetchQuotation({
+      quoteId, userId: req.user?.id, clientIp, action: 'REJECT_QUOTATION', requiredStatus: 'issued'
+    });
+    if (valErr) return res.status(valErr.status).json(valErr.body);
 
     const now = new Date();
     quotation.status = "rejected";
@@ -1063,57 +1041,10 @@ const requestRevision = async (req, res) => {
     const { quoteId } = req.params;
     const { comment } = req.body;
 
-    if (!quoteId || !mongoose.Types.ObjectId.isValid(String(quoteId))) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid quotation ID format"
-      });
-    }
-    
-    if (!req.user?.id || !mongoose.Types.ObjectId.isValid(String(req.user.id))) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID format"
-      });
-    }
-
-    const quotation = await quotationModel.findOne({
-      _id: new mongoose.Types.ObjectId(String(quoteId)),
-      buyer: new mongoose.Types.ObjectId(String(req.user.id)),
-    }).populate("buyer");
-
-    if (!quotation) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
-        action: 'REQUEST_QUOTATION_REVISION',
-        status: 'FAILED_VALIDATION',
-        resourceId: quoteId,
-        clientIp,
-        details: 'Quotation not found or unauthorized'
-      });
-      return res.status(404).json({ 
-        success: false, 
-        message: "Quotation not found" 
-      });
-    }
-
-    if (quotation.status !== "issued") {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
-        action: 'REQUEST_QUOTATION_REVISION',
-        status: 'FAILED_BUSINESS_RULE',
-        quotationId: quotation.referenceNumber,
-        resourceId: quoteId,
-        clientIp,
-        details: `Invalid status for revision request: currentStatus=${quotation.status}`
-      });
-      return res.status(400).json({ 
-        success: false, 
-        message: `Cannot request revision for quotation with status: ${quotation.status}. Only issued quotations can be revised.` 
-      });
-    }
+    const { quotation, error: valErr } = await validateAndFetchQuotation({
+      quoteId, userId: req.user?.id, clientIp, action: 'REQUEST_QUOTATION_REVISION', requiredStatus: 'issued'
+    });
+    if (valErr) return res.status(valErr.status).json(valErr.body);
 
     quotation.status = "revision_requested";
     quotation.notes = (quotation.notes || "") + (quotation.notes ? "\n\n" : "") + 
@@ -1156,48 +1087,11 @@ const convertToSalesOrder = async (req, res) => {
   const clientIp = getClientIp(req);
   try {
     const { quoteId } = req.params;
-    const safeQuoteId = String(quoteId);
-    if (!mongoose.Types.ObjectId.isValid(safeQuoteId)) {
-      return res.status(400).json({ success: false, message: "Invalid quotation ID" });
-  }
 
-  const quotation = await quotationModel.findOne({
-    _id: safeQuoteId,
-    buyer: req.user.id,
-  }).populate("buyer");
-
-    if (!quotation) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
-        action: 'CONVERT_TO_SALES_ORDER',
-        status: 'FAILED_VALIDATION',
-        resourceId: quoteId,
-        clientIp,
-        details: 'Quotation not found or unauthorized'
-      });
-      return res.status(404).json({ 
-        success: false, 
-        message: "Quotation not found" 
-      });
-    }
-
-    if (quotation.status !== "approved") {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
-        action: 'CONVERT_TO_SALES_ORDER',
-        status: 'FAILED_BUSINESS_RULE',
-        quotationId: quotation.referenceNumber,
-        resourceId: quoteId,
-        clientIp,
-        details: `Invalid status for conversion: currentStatus=${quotation.status}`
-      });
-      return res.status(400).json({ 
-        success: false, 
-        message: `Cannot convert quotation to sales order. Quotation status must be "approved". Current status: ${quotation.status}` 
-      });
-    }
+    const { quotation, error: valErr } = await validateAndFetchQuotation({
+      quoteId, userId: req.user?.id, clientIp, action: 'CONVERT_TO_SALES_ORDER', requiredStatus: 'approved'
+    });
+    if (valErr) return res.status(valErr.status).json(valErr.body);
 
 
 

@@ -18,16 +18,7 @@ const formatQuotationStatus = (status) => {
 
 // Generates quotation PDF (header, items, financials, validity).
 export const generateQuotationPDF = (quotation) => {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({
-      margin: 50,
-      size: "A4",
-      info: { Title: `Quotation ${quotation.referenceNumber}`, Author: "ARKAD MINES & MINERALS", Subject: "Official Quotation" }
-    });
-    const buffers = [];
-    doc.on("data", (chunk) => buffers.push(chunk));
-    doc.on("end", () => resolve(Buffer.concat(buffers)));
-    doc.on("error", (err) => reject(err));
+  const { doc, promise } = initPDF({ Title: `Quotation ${quotation.referenceNumber}`, Author: "ARKAD MINES & MINERALS", Subject: "Official Quotation" });
 
     const headerTop = 50;
     createPDFHeader(doc, headerTop);
@@ -65,7 +56,7 @@ export const generateQuotationPDF = (quotation) => {
 
     addStandardFooter(doc, "This quotation is valid until the specified date. Prices are subject to change without prior notice.");
     doc.end();
-  });
+    return promise;
 };
 
 const createPDFHeader = (doc, headerTop) => {
@@ -204,6 +195,17 @@ const createFinancialSummary = (doc, financials, startY) => {
   return financialsTop + 140;
 };
 
+const initPDF = (info) => {
+  const doc = new PDFDocument({ margin: 50, size: "A4", info });
+  const buffers = [];
+  doc.on("data", (chunk) => buffers.push(chunk));
+  const promise = new Promise((resolve, reject) => {
+    doc.on("end", () => resolve(Buffer.concat(buffers)));
+    doc.on("error", (err) => reject(err));
+  });
+  return { doc, promise };
+};
+
 const FOOTER_Y = 750;
 const TAGLINE = "ARKAD MINES & MINERALS - Your Trusted Partner in Quality Minerals";
 
@@ -272,16 +274,7 @@ const writeMetaDataTable = (doc, metaData, detailsTop) => {
 
 // Generates proforma invoice PDF for an order.
 export const generateProformaPDF = (order) => {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({
-      margin: 50,
-      size: "A4",
-      info: { Title: `Proforma Invoice ${order.orderNumber}`, Author: "ARKAD MINES & MINERALS", Subject: "Proforma Invoice" }
-    });
-    const buffers = [];
-    doc.on("data", (chunk) => buffers.push(chunk));
-    doc.on("end", () => resolve(Buffer.concat(buffers)));
-    doc.on("error", (err) => reject(err));
+  const { doc, promise } = initPDF({ Title: `Proforma Invoice ${order.orderNumber}`, Author: "ARKAD MINES & MINERALS", Subject: "Proforma Invoice" });
 
     const headerTop = 50;
     createPDFHeader(doc, headerTop);
@@ -304,21 +297,12 @@ export const generateProformaPDF = (order) => {
     createFinancialSummary(doc, order.financials || {}, itemsEndY);
     addStandardFooter(doc, "This is a proforma invoice and does not constitute a tax invoice. Payment terms as per agreement.");
     doc.end();
-  });
+    return promise;
 };
 
 // Generates tax invoice PDF for an order.
 export const generateTaxInvoicePDF = (order) => {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({
-      margin: 50,
-      size: "A4",
-      info: { Title: `Tax Invoice ${order.orderNumber}`, Author: "ARKAD MINES & MINERALS", Subject: "Tax Invoice" }
-    });
-    const buffers = [];
-    doc.on("data", (chunk) => buffers.push(chunk));
-    doc.on("end", () => resolve(Buffer.concat(buffers)));
-    doc.on("error", (err) => reject(err));
+  const { doc, promise } = initPDF({ Title: `Tax Invoice ${order.orderNumber}`, Author: "ARKAD MINES & MINERALS", Subject: "Tax Invoice" });
 
     const headerTop = 50;
     createPDFHeader(doc, headerTop);
@@ -349,26 +333,12 @@ export const generateTaxInvoicePDF = (order) => {
 
     addStandardFooter(doc, "This is an official tax invoice. Please retain for your records.");
     doc.end();
-  });
+    return promise;
 };
 
 // Generates receipt PDF for a single payment proof.
 export const generateReceiptPDF = (order, paymentProof, receiptIndex) => {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ 
-      margin: 50,
-      size: 'A4',
-      info: {
-        Title: `Receipt ${order.orderNumber}`,
-        Author: 'ARKAD MINES & MINERALS',
-        Subject: 'Payment Receipt'
-      }
-    });
-    const buffers = [];
-
-    doc.on("data", (chunk) => buffers.push(chunk));
-    doc.on("end", () => resolve(Buffer.concat(buffers)));
-    doc.on("error", (err) => reject(err));
+  const { doc, promise } = initPDF({ Title: `Receipt ${order.orderNumber}`, Author: 'ARKAD MINES & MINERALS', Subject: 'Payment Receipt' });
 
     const headerTop = 50;
     createPDFHeader(doc, headerTop);
@@ -394,21 +364,12 @@ export const generateReceiptPDF = (order, paymentProof, receiptIndex) => {
     doc.text(`Email: ${buyerEmail}`, 50, detailsTop + 30);
 
     const receiptDate = paymentProof.approvedAt || paymentProof.uploadedAt || new Date();
-    const metaData = [
+    writeMetaDataTable(doc, [
       { label: 'RECEIPT NO:', value: `RCP-${order.orderNumber}-${receiptIndex + 1}` },
       { label: 'ORDER NO:', value: order.orderNumber },
       { label: 'PAYMENT DATE:', value: new Date(receiptDate).toLocaleDateString('en-GB') },
       { label: 'PAYMENT STATUS:', value: 'APPROVED' }
-    ];
-
-    let metaY = detailsTop;
-    metaData.forEach(item => {
-      doc.font('Helvetica-Bold')
-         .text(item.label, 350, metaY, { continued: true })
-         .font('Helvetica')
-         .text(` ${item.value}`);
-      metaY += 15;
-    });
+    ], detailsTop);
 
     doc.moveDown(4);
 
@@ -443,26 +404,12 @@ export const generateReceiptPDF = (order, paymentProof, receiptIndex) => {
 
     addStandardFooter(doc, "This is an official payment receipt. Please retain for your records.");
     doc.end();
-  });
+    return promise;
 };
 
 // Generates account statement PDF for an order.
 export const generateStatementPDF = (order) => {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ 
-      margin: 50,
-      size: 'A4',
-      info: {
-        Title: `Account Statement ${order.orderNumber}`,
-        Author: 'ARKAD MINES & MINERALS',
-        Subject: 'Account Statement'
-      }
-    });
-    const buffers = [];
-
-    doc.on("data", (chunk) => buffers.push(chunk));
-    doc.on("end", () => resolve(Buffer.concat(buffers)));
-    doc.on("error", (err) => reject(err));
+  const { doc, promise } = initPDF({ Title: `Account Statement ${order.orderNumber}`, Author: 'ARKAD MINES & MINERALS', Subject: 'Account Statement' });
 
     const headerTop = 50;
     createPDFHeader(doc, headerTop);
@@ -487,21 +434,12 @@ export const generateStatementPDF = (order) => {
        .text(buyerName, 50, detailsTop + 15);
     doc.text(`Email: ${buyerEmail}`, 50, detailsTop + 30);
 
-    const metaData = [
+    writeMetaDataTable(doc, [
       { label: 'STATEMENT NO:', value: `STMT-${order.orderNumber}` },
       { label: 'ORDER NO:', value: order.orderNumber },
       { label: 'STATEMENT DATE:', value: new Date().toLocaleDateString('en-GB') },
       { label: 'PAYMENT STATUS:', value: order.paymentStatus?.toUpperCase() || 'PENDING' }
-    ];
-
-    let metaY = detailsTop;
-    metaData.forEach(item => {
-      doc.font('Helvetica-Bold')
-         .text(item.label, 350, metaY, { continued: true })
-         .font('Helvetica')
-         .text(` ${item.value}`);
-      metaY += 15;
-    });
+    ], detailsTop);
 
     doc.moveDown(3);
 
@@ -544,26 +482,12 @@ export const generateStatementPDF = (order) => {
 
     addStandardFooter(doc, "This is an official account statement. Please retain for your records.");
     doc.end();
-  });
+    return promise;
 };
 
 // Generates customer history PDF (contact, quotes, orders).
 export const generateCustomerHistoryPDF = (customer, quotations = [], orders = []) => {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({
-      margin: 50,
-      size: 'A4',
-      info: {
-        Title: `Customer History - ${customer.companyName || customer.email}`,
-        Author: 'ARKAD MINES & MINERALS',
-        Subject: 'Customer History'
-      }
-    });
-    const buffers = [];
-
-    doc.on('data', (chunk) => buffers.push(chunk));
-    doc.on('end', () => resolve(Buffer.concat(buffers)));
-    doc.on('error', (err) => reject(err));
+  const { doc, promise } = initPDF({ Title: `Customer History - ${customer.companyName || customer.email}`, Author: 'ARKAD MINES & MINERALS', Subject: 'Customer History' });
 
     const headerTop = 50;
     createPDFHeader(doc, headerTop);
@@ -683,5 +607,5 @@ export const generateCustomerHistoryPDF = (customer, quotations = [], orders = [
 
     addStandardFooter(doc, `ARKAD MINES & MINERALS - Customer History. Generated: ${new Date().toLocaleString("en-GB")}`);
     doc.end();
-  });
+    return promise;
 };

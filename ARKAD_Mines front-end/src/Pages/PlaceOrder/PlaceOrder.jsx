@@ -174,25 +174,24 @@ const PlaceOrder = () => {
       console.log("Error response data:", err.response?.data);
       console.log("Error status:", err.response?.status);
       
-      const requiresCaptcha = err.response?.data?.requiresCaptcha === true || 
-                              (err.response?.data?.message && err.response.data.message.toLowerCase().includes('captcha'));
-      
-      if (requiresCaptcha) {
-        console.log("CAPTCHA required - showing modal");
-        
+      const errData = err.response?.data;
+      const errMsg = errData?.message?.toLowerCase() || '';
+      const requiresCaptcha = errData?.requiresCaptcha === true || errMsg.includes('captcha');
+      const requiresMFA = errData?.requiresMFA === true || errData?.requiresReauth === true ||
+        errMsg.includes('re-authentication') || errMsg.includes('password') || errMsg.includes('confirm this action');
+
+      if (requiresCaptcha || requiresMFA) {
         setShowPaymentModal(false);
-        
         if (!base64 && paymentProofFile) {
           try {
             base64 = await compressImage(paymentProofFile);
           } catch (compressionError) {
-            console.error('Error compressing image for CAPTCHA:', compressionError);
+            console.error('Image compression error:', compressionError);
             toast.error('Failed to process image. Please try again.');
             setPaymentSubmitting(false);
             return;
           }
         }
-
         const pendingData = {
           orderId: orderData._id,
           amountPaid: Number.parseFloat(numericAmount.toFixed(2)),
@@ -200,54 +199,14 @@ const PlaceOrder = () => {
           proofBase64: base64,
           proofFileName: paymentProofFile.name
         };
-        
         setPendingPayment(pendingData);
-        setShowCaptchaModal(true);
+        if (requiresCaptcha) setShowCaptchaModal(true);
+        else setShowMfaModal(true);
         setPaymentSubmitting(false);
         return;
       }
-      
-      const requiresMFA = err.response?.data?.requiresMFA === true || 
-                         err.response?.data?.requiresReauth === true ||
-                         (err.response?.data?.message && (
-                           err.response.data.message.toLowerCase().includes('re-authentication') ||
-                           err.response.data.message.toLowerCase().includes('password') ||
-                           err.response.data.message.toLowerCase().includes('confirm this action')
-                         ));
-      
-      if (requiresMFA) {
-        console.log("MFA required - showing modal");
-        
-        setShowPaymentModal(false);
-        
-        if (!base64 && paymentProofFile) {
-          try {
-            base64 = await compressImage(paymentProofFile);
-          } catch (compressionError) {
-            console.error('Error compressing image for MFA:', compressionError);
-            toast.error('Failed to process image. Please try again.');
-            setPaymentSubmitting(false);
-            return;
-          }
-        }
 
-        const pendingData = {
-          orderId: orderData._id,
-          amountPaid: Number.parseFloat(numericAmount.toFixed(2)),
-          address: addressData,
-          proofBase64: base64,
-          proofFileName: paymentProofFile.name
-        };
-        
-        setPendingPayment(pendingData);
-        setShowMfaModal(true);
-        setPaymentSubmitting(false);
-        return;
-      }
-      
-      if (!requiresCaptcha && !requiresMFA) {
-        toast.error(err.response?.data?.message || 'Error submitting payment proof');
-      }
+      toast.error(errData?.message || 'Error submitting payment proof');
       setPaymentSubmitting(false);
     }
   };

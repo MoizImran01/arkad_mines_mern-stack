@@ -275,27 +275,24 @@ const Orders = () => {
       console.log("Error response data:", error.response?.data);
       console.log("Error status:", error.response?.status);
       
-      const requiresCaptcha = error.response?.data?.requiresCaptcha === true || 
-                              (error.response?.data?.message && error.response.data.message.toLowerCase().includes('captcha'));
-      
-      if (requiresCaptcha) {
-        console.log("CAPTCHA required - showing modal", { 
-          requiresCaptchaFlag: error.response?.data?.requiresCaptcha,
-          message: error.response?.data?.message 
-        });
-        
+      const errData = error.response?.data;
+      const errMsg = errData?.message?.toLowerCase() || '';
+      const requiresCaptcha = errData?.requiresCaptcha === true || errMsg.includes('captcha');
+      const requiresMFA = errData?.requiresMFA === true || errData?.requiresReauth === true ||
+        errMsg.includes('re-authentication') || errMsg.includes('password') || errMsg.includes('confirm this action');
+
+      if (requiresCaptcha || requiresMFA) {
         let base64ToUse = compressedBase64;
         if (!base64ToUse && paymentForm.proofFile) {
           try {
             base64ToUse = await compressImage(paymentForm.proofFile);
           } catch (compressionError) {
-            console.error('Error compressing image for CAPTCHA:', compressionError);
+            console.error('Image compression error:', compressionError);
             toast.error('Failed to process image. Please try again.');
             setPaymentSubmitting(false);
             return;
           }
         }
-        
         const pendingData = {
           orderId: trackingOrderDetails._id,
           amountPaid: Number.parseFloat(amount.toFixed(2)),
@@ -303,63 +300,14 @@ const Orders = () => {
           proofBase64: base64ToUse,
           proofFileName: paymentForm.proofFile?.name
         };
-        
-        console.log("Setting pending payment data:", pendingData);
         setPendingPayment(pendingData);
-        
-        console.log("Setting showCaptchaModal to true");
-        setShowCaptchaModal(true);
+        if (requiresCaptcha) setShowCaptchaModal(true);
+        else setShowMfaModal(true);
         setPaymentSubmitting(false);
         return;
       }
-      
-      const requiresMFA = error.response?.data?.requiresMFA === true || 
-                         error.response?.data?.requiresReauth === true ||
-                         (error.response?.data?.message && (
-                           error.response.data.message.toLowerCase().includes('re-authentication') ||
-                           error.response.data.message.toLowerCase().includes('password') ||
-                           error.response.data.message.toLowerCase().includes('confirm this action')
-                         ));
-      
-      if (requiresMFA) {
-        console.log("MFA required - showing modal", { 
-          requiresMFAFlag: error.response?.data?.requiresMFA,
-          requiresReauthFlag: error.response?.data?.requiresReauth,
-          message: error.response?.data?.message 
-        });
-        
-        let base64ToUse = compressedBase64;
-        if (!base64ToUse && paymentForm.proofFile) {
-          try {
-            base64ToUse = await compressImage(paymentForm.proofFile);
-          } catch (compressionError) {
-            console.error('Error compressing image for MFA:', compressionError);
-            toast.error('Failed to process image. Please try again.');
-            setPaymentSubmitting(false);
-            return;
-          }
-        }
-        
-        const pendingData = {
-          orderId: trackingOrderDetails._id,
-          amountPaid: Number.parseFloat(amount.toFixed(2)),
-          address: trackingOrderDetails.deliveryAddress || {},
-          proofBase64: base64ToUse,
-          proofFileName: paymentForm.proofFile?.name
-        };
-        
-        console.log("Setting pending payment data:", pendingData);
-        setPendingPayment(pendingData);
-        
-        console.log("Setting showMfaModal to true");
-        setShowMfaModal(true);
-        setPaymentSubmitting(false);
-        return;
-      }
-      
-      if (!requiresCaptcha && !requiresMFA) {
-        toast.error(error.response?.data?.message || "Error submitting payment proof");
-      }
+
+      toast.error(errData?.message || "Error submitting payment proof");
       setPaymentSubmitting(false);
     }
   };

@@ -102,6 +102,17 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const renderNotificationItem = (notification) => (
+    <div key={notification._id} className="notification-item">
+      <div className="notification-title">{notification.title}</div>
+      <div className="notification-message">{notification.message}</div>
+      <div className="notification-meta">
+        <span>{formatTime(notification.createdAt)}</span>
+        {notification.clearedAt && <span className="notification-cleared">Cleared</span>}
+      </div>
+    </div>
+  );
+
   return (
     <div className='navbar'>
       <img className='logo' src={assets.logo} alt='ARKAD Mines Logo'/>
@@ -139,16 +150,7 @@ const Navbar = () => {
                 {!loadingNotifications && notifications.length === 0 && (
                   <p className="notifications-empty">No notifications yet</p>
                 )}
-                {notifications.map((notification) => (
-                  <div key={notification._id} className="notification-item">
-                    <div className="notification-title">{notification.title}</div>
-                    <div className="notification-message">{notification.message}</div>
-                    <div className="notification-meta">
-                      <span>{formatTime(notification.createdAt)}</span>
-                      {notification.clearedAt && <span className="notification-cleared">Cleared</span>}
-                    </div>
-                  </div>
-                ))}
+                {notifications.map(renderNotificationItem)}
               </div>
             </div>
           )}
@@ -195,16 +197,7 @@ const Navbar = () => {
                   {notifications.length === 0 && (
                     <p className="notifications-empty">No notifications yet</p>
                   )}
-                  {notifications.map((notification) => (
-                    <div key={notification._id} className="notification-item">
-                      <div className="notification-title">{notification.title}</div>
-                      <div className="notification-message">{notification.message}</div>
-                      <div className="notification-meta">
-                        <span>{formatTime(notification.createdAt)}</span>
-                        {notification.clearedAt && <span className="notification-cleared">Cleared</span>}
-                      </div>
-                    </div>
-                  ))}
+                  {notifications.map(renderNotificationItem)}
                 </div>
               </div>
               <div className="notification-modal-section">
