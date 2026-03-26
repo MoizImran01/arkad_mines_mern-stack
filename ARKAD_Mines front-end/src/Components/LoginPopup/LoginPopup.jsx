@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef } from 'react'
+import React, { useContext, useState, useRef, useEffect, useCallback } from 'react'
 import PropTypes from 'prop-types';
 import './LoginPopup.css'
 import crossicon from '../../assets/cross_icon.png'
@@ -25,6 +25,8 @@ const LoginPopup = ({ setShowLogin }) => {
     const [emailVerified, setEmailVerified] = useState(false)
     const [verifyStep, setVerifyStep] = useState(null)
     const [verifyCode, setVerifyCode] = useState("")
+    const [countdown, setCountdown] = useState(0)
+    const countdownRef = useRef(null)
 
     const { setToken } = useContext(StoreContext)
 
@@ -141,6 +143,33 @@ const LoginPopup = ({ setShowLogin }) => {
         }
     };
 
+    const startCountdown = useCallback(() => {
+        setCountdown(900);
+        if (countdownRef.current) clearInterval(countdownRef.current);
+        countdownRef.current = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(countdownRef.current);
+                    countdownRef.current = null;
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (countdownRef.current) clearInterval(countdownRef.current);
+        };
+    }, []);
+
+    const formatTime = (seconds) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    };
+
     const handleSendVerification = async () => {
         if (!formData.email) {
             setError("Please enter your email address first.");
@@ -154,6 +183,7 @@ const LoginPopup = ({ setShowLogin }) => {
             if (response.data.success) {
                 setSuccessMsg("A 6-digit verification code has been sent to your email.");
                 setVerifyStep("code");
+                startCountdown();
             } else {
                 setError(response.data.message);
             }
@@ -199,6 +229,8 @@ const LoginPopup = ({ setShowLogin }) => {
         setEmailVerified(false)
         setVerifyStep(null)
         setVerifyCode("")
+        setCountdown(0)
+        if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
     }
 
     const openForgotPassword = () => {
@@ -452,6 +484,22 @@ const LoginPopup = ({ setShowLogin }) => {
                                         disabled={isLoading || verifyCode.length !== 6}
                                     >
                                         {isLoading ? "..." : "Confirm"}
+                                    </button>
+                                </div>
+                                <div className="verify-meta">
+                                    {countdown > 0 && (
+                                        <span className="verify-timer">Code expires in {formatTime(countdown)}</span>
+                                    )}
+                                    {countdown === 0 && (
+                                        <span className="verify-timer expired">Code expired</span>
+                                    )}
+                                    <button
+                                        type="button"
+                                        className="resend-btn"
+                                        onClick={handleSendVerification}
+                                        disabled={isLoading}
+                                    >
+                                        Resend Code
                                     </button>
                                 </div>
                             </div>

@@ -397,6 +397,46 @@
     cursor: not-allowed;
 }
 
+.verify-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.4rem;
+}
+
+.verify-timer {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.verify-timer.expired {
+    color: var(--error-color);
+}
+
+.resend-btn {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    transition: var(--transition);
+}
+
+.resend-btn:hover:not(:disabled) {
+    color: var(--primary-dark);
+}
+
+.resend-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .verified-badge {
     padding: 0.5rem 0.75rem;
     background: #f0fdf4;
