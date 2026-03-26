@@ -7,6 +7,8 @@ import { toast } from 'react-toastify'
 import axios from 'axios'
 import { FiBell, FiX, FiRefreshCw } from 'react-icons/fi'
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 const Navbar = () => {
   const { adminUser, logout, token } = useContext(AdminAuthContext);
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ const Navbar = () => {
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [refreshingNotifications, setRefreshingNotifications] = useState(false);
   const panelRef = useRef(null);
+  const authHeaders = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
   const handleLogout = () => {
     logout();
@@ -32,9 +35,7 @@ const Navbar = () => {
       } else {
         setLoadingNotifications(true);
       }
-      const response = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/notifications`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API_BASE}/api/notifications`, authHeaders);
       if (response.data.success) {
         setNotifications(response.data.notifications || []);
       }
@@ -49,9 +50,7 @@ const Navbar = () => {
   const fetchPaymentSummary = async () => {
     if (!token) return;
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/notifications/admin/payment-summary`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${API_BASE}/api/notifications/admin/payment-summary`, authHeaders);
       if (response.data.success) {
         setPaymentSummary(response.data.summary || []);
       }
@@ -63,9 +62,7 @@ const Navbar = () => {
   const clearNotifications = async () => {
     if (!token) return;
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/notifications/clear`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.post(`${API_BASE}/api/notifications/clear`, {}, authHeaders);
       if (response.data.success) {
         setNotifications([]);
         toast.success("Notifications cleared");
@@ -113,6 +110,30 @@ const Navbar = () => {
     </div>
   );
 
+  const isRefreshing = refreshingNotifications || loadingNotifications;
+
+  const renderRefreshButton = (onRefresh, style) => (
+    <button
+      className="notification-link refresh-notification-btn"
+      onClick={onRefresh}
+      disabled={isRefreshing}
+      title="Refresh notifications"
+      style={style}
+    >
+      <FiRefreshCw className={refreshingNotifications ? 'spin' : ''} />
+    </button>
+  );
+
+  const renderNotificationList = (showLoading) => (
+    <>
+      {showLoading && loadingNotifications && <p className="notifications-empty">Loading...</p>}
+      {(!showLoading || !loadingNotifications) && notifications.length === 0 && (
+        <p className="notifications-empty">No notifications yet</p>
+      )}
+      {notifications.map(renderNotificationItem)}
+    </>
+  );
+
   return (
     <div className='navbar'>
       <img className='logo' src={assets.logo} alt='ARKAD Mines Logo'/>
@@ -129,14 +150,7 @@ const Navbar = () => {
               <div className="notifications-header">
                 <h4>Payment Notifications</h4>
                 <div className="notification-actions">
-                  <button 
-                    className="notification-link refresh-notification-btn" 
-                    onClick={() => fetchNotifications(true)}
-                    disabled={refreshingNotifications || loadingNotifications}
-                    title="Refresh notifications"
-                  >
-                    <FiRefreshCw className={refreshingNotifications ? 'spin' : ''} />
-                  </button>
+                  {renderRefreshButton(() => fetchNotifications(true))}
                   <button className="notification-link" onClick={() => { setShowExpanded(true); fetchPaymentSummary(); }}>
                     Expand
                   </button>
@@ -146,11 +160,7 @@ const Navbar = () => {
                 </div>
               </div>
               <div className="notifications-list">
-                {loadingNotifications && <p className="notifications-empty">Loading...</p>}
-                {!loadingNotifications && notifications.length === 0 && (
-                  <p className="notifications-empty">No notifications yet</p>
-                )}
-                {notifications.map(renderNotificationItem)}
+                {renderNotificationList(true)}
               </div>
             </div>
           )}
@@ -176,15 +186,7 @@ const Navbar = () => {
             <div className="notification-modal-header">
               <h3 id="notification-modal-title">Payment Notifications</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <button 
-                  className="notification-link refresh-notification-btn" 
-                  onClick={() => { fetchNotifications(true); fetchPaymentSummary(); }}
-                  disabled={refreshingNotifications || loadingNotifications}
-                  title="Refresh notifications"
-                  style={{ padding: '4px 8px' }}
-                >
-                  <FiRefreshCw className={refreshingNotifications ? 'spin' : ''} />
-                </button>
+                {renderRefreshButton(() => { fetchNotifications(true); fetchPaymentSummary(); }, { padding: '4px 8px' })}
                 <button className="notification-modal-close" onClick={() => setShowExpanded(false)}>
                   <FiX />
                 </button>
@@ -194,10 +196,7 @@ const Navbar = () => {
               <div className="notification-modal-section">
                 <h4>Recent Updates</h4>
                 <div className="notification-modal-list">
-                  {notifications.length === 0 && (
-                    <p className="notifications-empty">No notifications yet</p>
-                  )}
-                  {notifications.map(renderNotificationItem)}
+                  {renderNotificationList(false)}
                 </div>
               </div>
               <div className="notification-modal-section">

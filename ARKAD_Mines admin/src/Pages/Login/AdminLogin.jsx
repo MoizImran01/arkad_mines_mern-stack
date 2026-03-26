@@ -6,6 +6,7 @@ import { AdminAuthContext } from '../../context/AdminAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import ReCAPTCHA from "react-google-recaptcha";
+import usePasswordReset from '../../../../shared/usePasswordReset';
 
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
@@ -16,14 +17,14 @@ const AdminLogin = () => {
   const [captchaToken, setCaptchaToken] = useState(null);
   const recaptchaRef = useRef(null);
 
-  const [resetStep, setResetStep] = useState(null);
-  const [resetEmail, setResetEmail] = useState("");
-  const [resetCode, setResetCode] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
   const { setToken, setAdminUser, url } = useContext(AdminAuthContext);
   const navigate = useNavigate();
+
+  const {
+    resetStep, resetEmail, setResetEmail, resetCode, setResetCode,
+    newPassword, setNewPassword, confirmPassword, setConfirmPassword,
+    openForgotPassword: openReset, backToLogin: backReset, submitForgotPassword,
+  } = usePasswordReset(url);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -89,69 +90,15 @@ const AdminLogin = () => {
 
   const handleForgotSubmit = async (event) => {
     event.preventDefault();
-    setIsLoading(true);
-    setError("");
-    setSuccessMsg("");
-
-    try {
-      if (resetStep === "email") {
-        const response = await axios.post(`${url}/api/user/forgot-password`, { email: resetEmail });
-        if (response.data.success) {
-          setSuccessMsg("A 6-digit reset code has been sent to your email.");
-          setResetStep("code");
-        } else {
-          setError(response.data.message);
-        }
-      } else if (resetStep === "code") {
-        const response = await axios.post(`${url}/api/user/reset-password`, {
-          email: resetEmail,
-          code: resetCode,
-          newPassword,
-          confirmPassword,
-        });
-        if (response.data.success) {
-          setSuccessMsg("Password reset successful! Redirecting to login...");
-          const emailForLogin = resetEmail;
-          const passForLogin = newPassword;
-          setTimeout(() => {
-            setResetStep(null);
-            setResetEmail("");
-            setResetCode("");
-            setNewPassword("");
-            setConfirmPassword("");
-            setSuccessMsg("");
-            setFormData({ email: emailForLogin, password: passForLogin });
-          }, 2000);
-        } else {
-          setError(response.data.message);
-        }
-      }
-    } catch (err) {
-      if (err.response?.data?.notFound) {
-        setError("No admin account found with this email address. Please contact your system administrator.");
-      } else {
-        setError(err.response?.data?.message || "Network error. Please try again.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
+    await submitForgotPassword({
+      setIsLoading, setError, setSuccessMsg,
+      onNotFound: () => setError("No admin account found with this email address. Please contact your system administrator."),
+      onResetSuccess: (email, pass) => setFormData({ email, password: pass }),
+    });
   };
 
-  const openForgotPassword = () => {
-    setResetStep("email");
-    setError("");
-    setSuccessMsg("");
-    setResetEmail("");
-    setResetCode("");
-    setNewPassword("");
-    setConfirmPassword("");
-  };
-
-  const backToLogin = () => {
-    setResetStep(null);
-    setError("");
-    setSuccessMsg("");
-  };
+  const openForgotPassword = () => openReset(setError, setSuccessMsg);
+  const backToLogin = () => backReset(setError, setSuccessMsg);
 
   if (resetStep) {
     return (

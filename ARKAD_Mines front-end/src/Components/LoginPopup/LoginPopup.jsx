@@ -5,6 +5,7 @@ import crossicon from '../../assets/cross_icon.png'
 import axios from "axios";
 import { StoreContext } from '../../context/StoreContext';
 import ReCAPTCHA from "react-google-recaptcha";
+import usePasswordReset from '../../../../shared/usePasswordReset';
 
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
@@ -15,12 +16,6 @@ const LoginPopup = ({ setShowLogin }) => {
     const [successMsg, setSuccessMsg] = useState("")
     const [captchaToken, setCaptchaToken] = useState(null)
     const recaptchaRef = useRef(null)
-
-    const [resetStep, setResetStep] = useState(null)
-    const [resetEmail, setResetEmail] = useState("")
-    const [resetCode, setResetCode] = useState("")
-    const [newPassword, setNewPassword] = useState("")
-    const [confirmPassword, setConfirmPassword] = useState("")
 
     const [accountNotFound, setAccountNotFound] = useState(false)
 
@@ -40,6 +35,13 @@ const LoginPopup = ({ setShowLogin }) => {
     })
 
     const url = import.meta.env.VITE_API_URL || "http://localhost:4000"
+
+    const {
+        resetStep, resetEmail, setResetEmail, resetCode, setResetCode,
+        newPassword, setNewPassword, confirmPassword, setConfirmPassword,
+        clearResetState, openForgotPassword: openReset, backToLogin: backReset,
+        submitForgotPassword,
+    } = usePasswordReset(url)
 
     const handleInputChange = (event) => {
         const { name, value } = event.target
@@ -103,61 +105,20 @@ const LoginPopup = ({ setShowLogin }) => {
 
     const handleForgotSubmit = async (event) => {
         event.preventDefault();
-        setIsLoading(true);
-        setError("");
-        setSuccessMsg("");
-
-        try {
-            if (resetStep === "email") {
-                setAccountNotFound(false);
-                const response = await axios.post(`${url}/api/user/forgot-password`, { email: resetEmail });
-                if (response.data.success) {
-                    setSuccessMsg("A 6-digit reset code has been sent to your email.");
-                    setResetStep("code");
-                } else {
-                    setError(response.data.message);
-                }
-            } else if (resetStep === "code") {
-                const response = await axios.post(`${url}/api/user/reset-password`, {
-                    email: resetEmail,
-                    code: resetCode,
-                    newPassword,
-                    confirmPassword,
-                });
-                if (response.data.success) {
-                    setSuccessMsg("Password reset successful! Redirecting to login...");
-                    const emailForLogin = resetEmail;
-                    const passForLogin = newPassword;
-                    setTimeout(() => {
-                        setResetStep(null);
-                        setResetEmail("");
-                        setResetCode("");
-                        setNewPassword("");
-                        setConfirmPassword("");
-                        setSuccessMsg("");
-                        setCurrentState("Login");
-                        setFormData(prev => ({ ...prev, email: emailForLogin, password: passForLogin }));
-                    }, 2000);
-                } else {
-                    setError(response.data.message);
-                }
-            }
-        } catch (err) {
-            if (err.response?.data?.notFound) {
-                setAccountNotFound(true);
-                setError("");
-            } else {
-                setError(err.response?.data?.message || "Network error. Please try again.");
-            }
-        } finally {
-            setIsLoading(false);
-        }
+        setAccountNotFound(false);
+        await submitForgotPassword({
+            setIsLoading, setError, setSuccessMsg,
+            onNotFound: () => { setAccountNotFound(true); setError(""); },
+            onResetSuccess: (email, pass) => {
+                setCurrentState("Login");
+                setFormData(prev => ({ ...prev, email, password: pass }));
+            },
+        });
     };
 
     const switchToRegister = () => {
         const emailToKeep = resetEmail;
-        setResetStep(null);
-        setResetEmail("");
+        clearResetState();
         setAccountNotFound(false);
         setError("");
         setSuccessMsg("");
@@ -247,7 +208,7 @@ const LoginPopup = ({ setShowLogin }) => {
         setFormData({ companyName: "", name: "", email: "", password: "" })
         recaptchaRef.current?.reset()
         setCaptchaToken(null)
-        setResetStep(null)
+        clearResetState()
         setAccountNotFound(false)
         setEmailVerified(false)
         setVerifyStep(null)
@@ -257,20 +218,12 @@ const LoginPopup = ({ setShowLogin }) => {
     }
 
     const openForgotPassword = () => {
-        setResetStep("email");
-        setError("");
-        setSuccessMsg("");
-        setResetEmail("");
-        setResetCode("");
-        setNewPassword("");
-        setConfirmPassword("");
+        openReset(setError, setSuccessMsg);
         setAccountNotFound(false);
     }
 
     const backToLogin = () => {
-        setResetStep(null);
-        setError("");
-        setSuccessMsg("");
+        backReset(setError, setSuccessMsg);
         setAccountNotFound(false);
     }
 
