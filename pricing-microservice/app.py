@@ -339,4 +339,4 @@ if __name__ == "__main__":
     else:
         logger.warning("No training data available. Model will train on first request.")
 
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host=os.environ.get("HOST", "127.0.0.1"), port=port, debug=False)

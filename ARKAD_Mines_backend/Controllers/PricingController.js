@@ -3,10 +3,16 @@ import axios from 'axios';
 const PRICING_API_URL = process.env.PRICING_API_URL || 'http://localhost:5001';
 const PRICING_TIMEOUT_MS = Number(process.env.PRICING_TIMEOUT_MS) || 15000;
 
-const proxyPricingRequest = async (req, res, endpoint) => {
+const ALLOWED_ENDPOINTS = {
+    single: `${PRICING_API_URL}/api/predict-price`,
+    batch: `${PRICING_API_URL}/api/predict-prices`,
+    health: `${PRICING_API_URL}/api/health`,
+};
+
+const proxyPricingPost = async (req, res, resolvedUrl) => {
     try {
         const response = await axios.post(
-            `${PRICING_API_URL}${endpoint}`,
+            resolvedUrl,
             req.body,
             {
                 timeout: PRICING_TIMEOUT_MS,
@@ -30,15 +36,15 @@ const proxyPricingRequest = async (req, res, endpoint) => {
 };
 
 export const getPriceSuggestion = (req, res) =>
-    proxyPricingRequest(req, res, '/api/predict-price');
+    proxyPricingPost(req, res, ALLOWED_ENDPOINTS.single);
 
 export const getBatchPriceSuggestions = (req, res) =>
-    proxyPricingRequest(req, res, '/api/predict-prices');
+    proxyPricingPost(req, res, ALLOWED_ENDPOINTS.batch);
 
 export const getPricingHealth = async (req, res) => {
     try {
         const response = await axios.get(
-            `${PRICING_API_URL}/api/health`,
+            ALLOWED_ENDPOINTS.health,
             { timeout: 5000 }
         );
         res.status(200).json({ success: true, ...response.data });
