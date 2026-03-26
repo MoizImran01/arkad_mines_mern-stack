@@ -1,9 +1,11 @@
 import userModel from "../../Models/Users/userModel.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import validator from "validator";
 import axios from "axios";
 import { logAudit, logError, getClientIp, normalizeRole } from "../../logger/auditLogger.js";
+import { sendPasswordResetEmail } from "../../Utils/emailService.js";
 
 
 const createToken = (id, role) => {
@@ -662,6 +664,117 @@ const updateMyPassword = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  const clientIp = getClientIp(req);
+
+  try {
+    if (!email || !validator.isEmail(email)) {
+      return res.status(400).json({ success: false, message: "Please enter a valid email address." });
+    }
+
+    const safeEmail = email.toLowerCase().trim();
+    const user = await userModel.findOne({ email: safeEmail });
+
+    if (!user) {
+      return res.json({ success: true, message: "If an account with that email exists, a reset code has been sent." });
+    }
+
+    const resetCode = crypto.randomInt(100000, 999999).toString();
+    const hashedCode = crypto.createHash("sha256").update(resetCode).digest("hex");
+
+    user.resetPasswordToken = hashedCode;
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+
+    await sendPasswordResetEmail(safeEmail, resetCode);
+
+    await logAudit({
+      userId: user._id.toString(),
+      role: normalizeRole(user.role),
+      action: "PASSWORD_RESET_REQUESTED",
+      status: "SUCCESS",
+      clientIp,
+      details: `Password reset code sent to email=${safeEmail}`,
+    });
+
+    res.json({ success: true, message: "If an account with that email exists, a reset code has been sent." });
+  } catch (error) {
+    logError(error, {
+      action: "PASSWORD_RESET_REQUEST_ERROR",
+      clientIp,
+      details: `Error during forgot password for email=${email}`,
+    });
+    res.status(500).json({ success: false, message: "Server error. Please try again later." });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  const { email, code, newPassword, confirmPassword } = req.body;
+  const clientIp = getClientIp(req);
+
+  try {
+    if (!email || !code || !newPassword || !confirmPassword) {
+      return res.status(400).json({ success: false, message: "All fields are required." });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: "Password must be at least 8 characters long." });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: "Passwords do not match." });
+    }
+
+    const safeEmail = email.toLowerCase().trim();
+    const hashedCode = crypto.createHash("sha256").update(code).digest("hex");
+
+    const user = await userModel.findOne({
+      email: safeEmail,
+      resetPasswordToken: hashedCode,
+      resetPasswordExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      await logAudit({
+        userId: null,
+        role: "GUEST",
+        action: "PASSWORD_RESET_FAILED",
+        status: "FAILED_VALIDATION",
+        clientIp,
+        details: `Invalid or expired reset code for email=${safeEmail}`,
+      });
+      return res.status(400).json({ success: false, message: "Invalid or expired reset code. Please request a new one." });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    user.failedLoginAttempts = 0;
+    user.accountLockedUntil = null;
+    await user.save();
+
+    await logAudit({
+      userId: user._id.toString(),
+      role: normalizeRole(user.role),
+      action: "PASSWORD_RESET_SUCCESS",
+      status: "SUCCESS",
+      clientIp,
+      details: `Password reset successfully for email=${safeEmail}`,
+    });
+
+    res.json({ success: true, message: "Password has been reset successfully. You can now log in with your new password." });
+  } catch (error) {
+    logError(error, {
+      action: "PASSWORD_RESET_ERROR",
+      clientIp,
+      details: `Error during password reset for email=${email}`,
+    });
+    res.status(500).json({ success: false, message: "Server error. Please try again later." });
+  }
+};
+
 export {
   loginUser,
   registerUser,
@@ -671,4 +784,6 @@ export {
   getMyProfile,
   updateMyProfile,
   updateMyPassword,
+  forgotPassword,
+  resetPassword,
 };
