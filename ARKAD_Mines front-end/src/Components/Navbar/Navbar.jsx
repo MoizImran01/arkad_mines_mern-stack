@@ -7,7 +7,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { StoreContext } from '../../context/StoreContext';
 import { assets } from '../../assets/assets.js';
 import { FiBell, FiFileText, FiFolder, FiRefreshCw, FiUser } from 'react-icons/fi';
-import axios from 'axios';
+import useNotifications, { formatTime } from '../../../../shared/useNotifications';
 
 
 const Navbar = ({ setShowLogin }) => {
@@ -20,11 +20,12 @@ const Navbar = ({ setShowLogin }) => {
   const { token, logout } = useContext(StoreContext);
   const navigate = useNavigate();
   const location = useLocation();
-  const [notifications, setNotifications] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [loadingNotifications, setLoadingNotifications] = useState(false);
-  const [refreshingNotifications, setRefreshingNotifications] = useState(false);
-  const notificationRef = useRef(null);
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
+  const {
+    notifications, loadingNotifications, refreshingNotifications,
+    showNotifications, setShowNotifications, panelRef: notificationRef,
+    fetchNotifications, clearNotifications,
+  } = useNotifications(token, API_BASE);
 
   const getActiveMenu = () => {
     const path = location.pathname;
@@ -46,67 +47,6 @@ const Navbar = ({ setShowLogin }) => {
     setIsMenuOpen(false); 
   };
 
-  const fetchNotifications = async (isRefresh = false) => {
-    if (!token) return;
-    try {
-      if (isRefresh) {
-        setRefreshingNotifications(true);
-      } else {
-        setLoadingNotifications(true);
-      }
-      const response = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/notifications`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.data.success) {
-        setNotifications(response.data.notifications || []);
-      }
-    } catch (error) {
-      console.error("Client notifications error:", error);
-    } finally {
-      setLoadingNotifications(false);
-      setRefreshingNotifications(false);
-    }
-  };
-
-  const clearNotifications = async () => {
-    if (!token) return;
-    try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}/api/notifications/clear`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.data.success) {
-        setNotifications([]);
-      }
-    } catch (error) {
-      console.error("Client clear notifications error:", error);
-    }
-  };
-
-  const formatTime = (date) => {
-    if (!date) return "";
-    const diff = Date.now() - new Date(date).getTime();
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return "just now";
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [token]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   useEffect(() => {
     const onScroll = () => {

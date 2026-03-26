@@ -7,6 +7,10 @@ import axios from "axios";
 import { logAudit, logError, getClientIp, normalizeRole } from "../../logger/auditLogger.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../../Utils/emailService.js";
 
+const auditLog = (userId, role, clientIp, overrides) => logAudit({ userId, role, clientIp, ...overrides });
+const guestAudit = (clientIp, overrides) => auditLog(null, 'GUEST', clientIp, overrides);
+const userAudit = (req, clientIp, overrides) => auditLog(req.user?.id, normalizeRole(req.user?.role), clientIp, overrides);
+
 const pendingVerifications = new Map();
 
 
@@ -55,12 +59,9 @@ const loginUser = async (req, res) => {
     if (captchaToken) {
       const isCaptchaValid = await verifyCaptcha(captchaToken);
       if (!isCaptchaValid) {
-        await logAudit({
-          userId: null,
-          role: 'GUEST',
+        await guestAudit(clientIp, {
           action: 'LOGIN_FAILED',
           status: 'FAILED_VALIDATION',
-          clientIp,
           details: `CAPTCHA verification failed for email=${safeEmail}`
         });
         return res.status(400).json({
@@ -72,12 +73,9 @@ const loginUser = async (req, res) => {
     const user = await userModel.findOne({ email: safeEmail });
 
     if (!user) {
-      await logAudit({
-        userId: null,
-        role: 'GUEST',
+      await guestAudit(clientIp, {
         action: 'LOGIN_FAILED',
         status: 'FAILED_AUTH',
-        clientIp,
         details: `User not found for email=${email}`
       });
       return res.status(401).json({ 
@@ -88,12 +86,9 @@ const loginUser = async (req, res) => {
 
     if (user.accountLockedUntil && user.accountLockedUntil > new Date()) {
       const lockoutMinutes = Math.ceil((user.accountLockedUntil - new Date()) / (1000 * 60));
-      await logAudit({
-        userId: user._id.toString(),
-        role: normalizeRole(user.role),
+      await auditLog(user._id.toString(), normalizeRole(user.role), clientIp, {
         action: 'LOGIN_BLOCKED',
         status: 'FAILED_AUTH',
-        clientIp,
         details: `Account locked due to multiple failed login attempts. Unlocks in ${lockoutMinutes} minutes`
       });
       return res.status(403).json({
@@ -114,12 +109,9 @@ const loginUser = async (req, res) => {
         user.accountLockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
         await user.save();
 
-        await logAudit({
-          userId: user._id.toString(),
-          role: normalizeRole(user.role),
+        await auditLog(user._id.toString(), normalizeRole(user.role), clientIp, {
           action: 'ACCOUNT_LOCKED',
           status: 'FAILED_AUTH',
-          clientIp,
           details: `Account locked after ${MAX_FAILED_ATTEMPTS} failed login attempts. Unlocks in ${LOCKOUT_DURATION_MS / 1000 / 60} minutes`
         });
 
@@ -131,12 +123,9 @@ const loginUser = async (req, res) => {
         await user.save();
       }
 
-      await logAudit({
-        userId: user._id.toString(),
-        role: normalizeRole(user.role),
+      await auditLog(user._id.toString(), normalizeRole(user.role), clientIp, {
         action: 'LOGIN_FAILED',
         status: 'FAILED_AUTH',
-        clientIp,
         details: `Invalid password for userId=${user._id}, email=${email}. Failed attempts: ${user.failedLoginAttempts}/${MAX_FAILED_ATTEMPTS}`
       });
       return res.status(401).json({ 
@@ -153,12 +142,9 @@ const loginUser = async (req, res) => {
 
     const token = createToken(user._id, user.role);
 
-    await logAudit({
-      userId: user._id.toString(),
-      role: normalizeRole(user.role),
+    await auditLog(user._id.toString(), normalizeRole(user.role), clientIp, {
       action: 'LOGIN_SUCCESS',
       status: 'SUCCESS',
-      clientIp,
       details: `User logged in successfully, email=${email}`
     });
 
@@ -207,12 +193,9 @@ const registerUser = async (req, res) => {
     if (captchaToken) {
       const isCaptchaValid = await verifyCaptcha(captchaToken);
       if (!isCaptchaValid) {
-        logAudit({
-          userId: null,
-          role: 'GUEST',
+        guestAudit(clientIp, {
           action: 'REGISTER_FAILED',
           status: 'FAILED_VALIDATION',
-          clientIp,
           details: `CAPTCHA verification failed for email=${safeEmail}`
         });
         return res.status(400).json({
@@ -224,12 +207,9 @@ const registerUser = async (req, res) => {
 
     const exists = await userModel.findOne({ email: safeEmail });
     if (exists) {
-      logAudit({
-        userId: null,
-        role: 'GUEST',
+      guestAudit(clientIp, {
         action: 'REGISTER_FAILED',
         status: 'FAILED_VALIDATION',
-        clientIp,
         details: `Email already exists: email=${email}`
       });
       return res.status(409).json({
@@ -239,12 +219,9 @@ const registerUser = async (req, res) => {
     }
 
     if (!validator.isEmail(email)) {
-      logAudit({
-        userId: null,
-        role: 'GUEST',
+      guestAudit(clientIp, {
         action: 'REGISTER_FAILED',
         status: 'FAILED_VALIDATION',
-        clientIp,
         details: `Invalid email format: email=${email}`
       });
       return res.status(400).json({
@@ -254,12 +231,9 @@ const registerUser = async (req, res) => {
     }
 
     if (password.length < 8) {
-      logAudit({
-        userId: null,
-        role: 'GUEST',
+      guestAudit(clientIp, {
         action: 'REGISTER_FAILED',
         status: 'FAILED_VALIDATION',
-        clientIp,
         details: `Password too short for email=${email}`
       });
       return res.status(400).json({
@@ -269,12 +243,9 @@ const registerUser = async (req, res) => {
     }
 
     if (!companyName || companyName.trim().length < 2) {
-      logAudit({
-        userId: null,
-        role: 'GUEST',
+      guestAudit(clientIp, {
         action: 'REGISTER_FAILED',
         status: 'FAILED_VALIDATION',
-        clientIp,
         details: `Invalid company name for email=${email}`
       });
       return res.status(400).json({
@@ -298,12 +269,9 @@ const registerUser = async (req, res) => {
 
     const token = createToken(user._id, user.role);
 
-    logAudit({
-      userId: user._id.toString(),
-      role: normalizeRole(user.role),
+    auditLog(user._id.toString(), normalizeRole(user.role), clientIp, {
       action: 'REGISTER_SUCCESS',
       status: 'SUCCESS',
-      clientIp,
       details: `New user registered: email=${email}, companyName=${companyName}`
     });
 
@@ -336,12 +304,9 @@ const getAllUsers = async (req, res) => {
 
     const users = await userModel.find({}).select('-password');
     
-    logAudit({
-      userId: req.user?.id,
-      role: normalizeRole(req.user?.role),
+    userAudit(req, clientIp, {
       action: 'VIEW_ALL_USERS',
       status: 'SUCCESS',
-      clientIp,
       details: `Admin viewed all users, count=${users.length}`
     });
     
@@ -376,13 +341,10 @@ const updateUserRole = async (req, res) => {
 
     const validRoles = ["admin", "employee", "customer"];
     if (!validRoles.includes(role)) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      userAudit(req, clientIp, {
         action: 'UPDATE_USER_ROLE',
         status: 'FAILED_VALIDATION',
         resourceId: userId,
-        clientIp,
         details: `Invalid role provided: role=${role}`
       });
       return res.status(400).json({
@@ -393,13 +355,10 @@ const updateUserRole = async (req, res) => {
 
 
     if (req.user.id === userId && role !== "admin") {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      userAudit(req, clientIp, {
         action: 'UPDATE_USER_ROLE',
         status: 'FAILED_BUSINESS_RULE',
         resourceId: userId,
-        clientIp,
         details: `Admin attempted to remove own admin privileges`
       });
       return res.status(403).json({
@@ -416,13 +375,10 @@ const updateUserRole = async (req, res) => {
     ).select('-password');
 
     if (!updatedUser) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      userAudit(req, clientIp, {
         action: 'UPDATE_USER_ROLE',
         status: 'FAILED_VALIDATION',
         resourceId: userId,
-        clientIp,
         details: `User not found: userId=${userId}`
       });
       return res.status(404).json({
@@ -431,13 +387,10 @@ const updateUserRole = async (req, res) => {
       });
     }
 
-    logAudit({
-      userId: req.user?.id,
-      role: normalizeRole(req.user?.role),
+    userAudit(req, clientIp, {
       action: 'UPDATE_USER_ROLE',
       status: 'SUCCESS',
       resourceId: userId,
-      clientIp,
       details: `Role updated: targetUserId=${userId}, oldRole=${updatedUser.role}, newRole=${role}`
     });
 
@@ -471,13 +424,10 @@ const deleteUser = async (req, res) => {
 
 
     if (req.user.id === userId) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      userAudit(req, clientIp, {
         action: 'DELETE_USER',
         status: 'FAILED_BUSINESS_RULE',
         resourceId: userId,
-        clientIp,
         details: `Admin attempted to delete own account`
       });
       return res.status(403).json({
@@ -490,13 +440,10 @@ const deleteUser = async (req, res) => {
     const deletedUser = await userModel.findByIdAndDelete(userId);
 
     if (!deletedUser) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      userAudit(req, clientIp, {
         action: 'DELETE_USER',
         status: 'FAILED_VALIDATION',
         resourceId: userId,
-        clientIp,
         details: `User not found: userId=${userId}`
       });
       return res.status(404).json({
@@ -505,13 +452,10 @@ const deleteUser = async (req, res) => {
       });
     }
 
-    logAudit({
-      userId: req.user?.id,
-      role: normalizeRole(req.user?.role),
+    userAudit(req, clientIp, {
       action: 'DELETE_USER',
       status: 'SUCCESS',
       resourceId: userId,
-      clientIp,
       details: `User deleted: deletedUserId=${userId}, email=${deletedUser.email}`
     });
 
@@ -685,12 +629,9 @@ const forgotPassword = async (req, res) => {
 
     await sendPasswordResetEmail(safeEmail, resetCode);
 
-    await logAudit({
-      userId: user._id.toString(),
-      role: normalizeRole(user.role),
+    await auditLog(user._id.toString(), normalizeRole(user.role), clientIp, {
       action: "PASSWORD_RESET_REQUESTED",
       status: "SUCCESS",
-      clientIp,
       details: `Password reset code sent to email=${safeEmail}`,
     });
 
@@ -732,12 +673,9 @@ const resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      await logAudit({
-        userId: null,
-        role: "GUEST",
+      await guestAudit(clientIp, {
         action: "PASSWORD_RESET_FAILED",
         status: "FAILED_VALIDATION",
-        clientIp,
         details: `Invalid or expired reset code for email=${safeEmail}`,
       });
       return res.status(400).json({ success: false, message: "Invalid or expired reset code. Please request a new one." });
@@ -751,12 +689,9 @@ const resetPassword = async (req, res) => {
     user.accountLockedUntil = null;
     await user.save();
 
-    await logAudit({
-      userId: user._id.toString(),
-      role: normalizeRole(user.role),
+    await auditLog(user._id.toString(), normalizeRole(user.role), clientIp, {
       action: "PASSWORD_RESET_SUCCESS",
       status: "SUCCESS",
-      clientIp,
       details: `Password reset successfully for email=${safeEmail}`,
     });
 
@@ -797,12 +732,9 @@ const sendVerificationCode = async (req, res) => {
 
     await sendVerificationEmail(safeEmail, code);
 
-    await logAudit({
-      userId: null,
-      role: "GUEST",
+    await guestAudit(clientIp, {
       action: "EMAIL_VERIFICATION_SENT",
       status: "SUCCESS",
-      clientIp,
       details: `Verification code sent to email=${safeEmail}`,
     });
 

@@ -11,18 +11,22 @@ const roundToTwoDecimals = (value) => {
 };
 
 // Aggregates dashboard analytics (clients, stones, trends, revenue, conversion, etc.); cached.
+const auditBase = (req) => ({
+  userId: req.user?.id || null,
+  role: normalizeRole(req.user?.role),
+  resourceId: 'analytics-dashboard',
+  clientIp: getClientIp(req),
+  userAgent: getUserAgent(req),
+});
+
 export const getAnalytics = async (req, res) => {
   const queryStartTime = Date.now();
   
   if (!req.verifiedAdminRole) {
     await logAudit({
-      userId: req.user?.id || null,
-      role: normalizeRole(req.user?.role),
+      ...auditBase(req),
       action: 'ANALYTICS_UNAUTHORIZED_ACCESS',
       status: 'FAILED_AUTH',
-      resourceId: 'analytics-dashboard',
-      clientIp: getClientIp(req),
-      userAgent: getUserAgent(req),
       details: 'Controller-level authorization check failed: Admin role not verified'
     });
 
@@ -50,6 +54,9 @@ export const getAnalytics = async (req, res) => {
     const endDate = new Date();
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - 12);
+    const dateRange = { $gte: startDate, $lte: endDate };
+    const activeStatusMatch = { status: { $in: ["confirmed", "processing", "shipped", "delivered"] }, createdAt: dateRange };
+    const dateOnlyMatch = { createdAt: dateRange };
 
     const adminUserId = req.user?.id;
     if (!adminUserId) {
@@ -60,12 +67,7 @@ export const getAnalytics = async (req, res) => {
     }
 
     const topClients = await orderModel.aggregate([
-      {
-        $match: {
-          status: { $in: ["confirmed", "processing", "shipped", "delivered"] },
-          createdAt: { $gte: startDate, $lte: endDate }
-        }
-      },
+      { $match: activeStatusMatch },
       {
         $group: {
           _id: "$buyer",
@@ -96,12 +98,7 @@ export const getAnalytics = async (req, res) => {
     ]);
 
     const mostSoldStones = await orderModel.aggregate([
-      {
-        $match: {
-          status: { $in: ["confirmed", "processing", "shipped", "delivered"] },
-          createdAt: { $gte: startDate, $lte: endDate }
-        }
-      },
+      { $match: activeStatusMatch },
       { $unwind: "$items" },
       {
         $group: {
@@ -117,12 +114,7 @@ export const getAnalytics = async (req, res) => {
     ]);
 
     const monthlySales = await orderModel.aggregate([
-      {
-        $match: {
-          status: { $in: ["confirmed", "processing", "shipped", "delivered"] },
-          createdAt: { $gte: startDate, $lte: endDate }
-        }
-      },
+      { $match: activeStatusMatch },
       {
         $group: {
           _id: {
@@ -157,11 +149,7 @@ export const getAnalytics = async (req, res) => {
     ]);
 
     const orderStatusDistribution = await orderModel.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startDate, $lte: endDate }
-        }
-      },
+      { $match: dateOnlyMatch },
       {
         $group: {
           _id: "$status",
@@ -171,11 +159,7 @@ export const getAnalytics = async (req, res) => {
     ]);
 
     const quotationStatusDistribution = await quotationModel.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startDate, $lte: endDate }
-        }
-      },
+      { $match: dateOnlyMatch },
       {
         $group: {
           _id: "$status",
@@ -185,12 +169,7 @@ export const getAnalytics = async (req, res) => {
     ]);
 
     const categorySales = await orderModel.aggregate([
-      {
-        $match: {
-          status: { $in: ["confirmed", "processing", "shipped", "delivered"] },
-          createdAt: { $gte: startDate, $lte: endDate }
-        }
-      },
+      { $match: activeStatusMatch },
       { $unwind: "$items" },
       {
         $lookup: {
@@ -212,11 +191,7 @@ export const getAnalytics = async (req, res) => {
     ]);
 
     const paymentStatusOverview = await orderModel.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startDate, $lte: endDate }
-        }
-      },
+      { $match: dateOnlyMatch },
       {
         $group: {
           _id: "$paymentStatus",
@@ -226,26 +201,15 @@ export const getAnalytics = async (req, res) => {
       }
     ]);
 
-    const totalOrders = await orderModel.countDocuments({
-      createdAt: { $gte: startDate, $lte: endDate }
-    });
-
-    const totalQuotations = await quotationModel.countDocuments({
-      createdAt: { $gte: startDate, $lte: endDate }
-    });
+    const totalOrders = await orderModel.countDocuments(dateOnlyMatch);
+    const totalQuotations = await quotationModel.countDocuments(dateOnlyMatch);
 
     const totalCustomers = await userModel.countDocuments({ role: "customer" });
 
     const totalStones = await stonesModel.countDocuments();
 
     const actualRevenueAggregation = await orderModel.aggregate([
-      {
-        $match: {
-          status: { $in: ["confirmed", "dispatched", "delivered"] },
-          paymentStatus: "fully_paid",
-          createdAt: { $gte: startDate, $lte: endDate }
-        }
-      },
+      { $match: { status: { $in: ["confirmed", "dispatched", "delivered"] }, paymentStatus: "fully_paid", createdAt: dateRange } },
       {
         $group: {
           _id: null,
@@ -257,12 +221,7 @@ export const getAnalytics = async (req, res) => {
     const totalRevenue = roundToTwoDecimals(actualRevenueAggregation[0]?.totalRevenue || 0);
 
     const forecastedRevenueAggregation = await orderModel.aggregate([
-      {
-        $match: {
-          status: { $in: ["confirmed", "dispatched", "delivered"] },
-          createdAt: { $gte: startDate, $lte: endDate }
-        }
-      },
+      { $match: { status: { $in: ["confirmed", "dispatched", "delivered"] }, createdAt: dateRange } },
       {
         $group: {
           _id: null,
@@ -274,11 +233,7 @@ export const getAnalytics = async (req, res) => {
     const forecastedRevenue = roundToTwoDecimals(forecastedRevenueAggregation[0]?.totalRevenue || 0);
 
     const pendingRevenueAggregation = await orderModel.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: startDate, $lte: endDate }
-        }
-      },
+      { $match: dateOnlyMatch },
       {
         $group: {
           _id: null,
@@ -289,27 +244,15 @@ export const getAnalytics = async (req, res) => {
 
     const pendingPayments = roundToTwoDecimals(pendingRevenueAggregation[0]?.totalRevenue || 0);
 
-    const approvedQuotations = await quotationModel.countDocuments({
-      status: "approved",
-      createdAt: { $gte: startDate, $lte: endDate }
-    });
-
-    const submittedQuotations = await quotationModel.countDocuments({
-      status: { $ne: "draft" },
-      createdAt: { $gte: startDate, $lte: endDate }
-    });
+    const approvedQuotations = await quotationModel.countDocuments({ status: "approved", createdAt: dateRange });
+    const submittedQuotations = await quotationModel.countDocuments({ status: { $ne: "draft" }, createdAt: dateRange });
 
     const conversionRate = submittedQuotations > 0 
       ? ((approvedQuotations / submittedQuotations) * 100).toFixed(2) 
       : 0;
 
     const weeklySalesPattern = await orderModel.aggregate([
-      {
-        $match: {
-          status: { $in: ["confirmed", "processing", "shipped", "delivered"] },
-          createdAt: { $gte: startDate, $lte: endDate }
-        }
-      },
+      { $match: activeStatusMatch },
       {
         $group: {
           _id: { $dayOfWeek: "$createdAt" },
@@ -359,35 +302,13 @@ export const getAnalytics = async (req, res) => {
       ? (((recentOrdersCount - previousOrdersCount) / previousOrdersCount) * 100).toFixed(2)
       : recentOrdersCount > 0 ? 100 : 0;
 
-    const roundedTopClients = topClients.map(client => ({
-      ...client,
-      totalPurchases: roundToTwoDecimals(client.totalPurchases || 0)
-    }));
-
-    const roundedMostSoldStones = mostSoldStones.map(stone => ({
-      ...stone,
-      totalRevenue: roundToTwoDecimals(stone.totalRevenue || 0)
-    }));
-
-    const roundedMonthlySales = monthlySales.map(sale => ({
-      ...sale,
-      totalSales: roundToTwoDecimals(sale.totalSales || 0)
-    }));
-
-    const roundedCategorySales = categorySales.map(category => ({
-      ...category,
-      totalRevenue: roundToTwoDecimals(category.totalRevenue || 0)
-    }));
-
-    const roundedPaymentStatusOverview = paymentStatusOverview.map(payment => ({
-      ...payment,
-      totalAmount: roundToTwoDecimals(payment.totalAmount || 0)
-    }));
-
-    const roundedWeeklySalesPattern = weeklySalesPattern.map(week => ({
-      ...week,
-      totalSales: roundToTwoDecimals(week.totalSales || 0)
-    }));
+    const roundField = (arr, field) => arr.map(item => ({ ...item, [field]: roundToTwoDecimals(item[field] || 0) }));
+    const roundedTopClients = roundField(topClients, 'totalPurchases');
+    const roundedMostSoldStones = roundField(mostSoldStones, 'totalRevenue');
+    const roundedMonthlySales = roundField(monthlySales, 'totalSales');
+    const roundedCategorySales = roundField(categorySales, 'totalRevenue');
+    const roundedPaymentStatusOverview = roundField(paymentStatusOverview, 'totalAmount');
+    const roundedWeeklySalesPattern = roundField(weeklySalesPattern, 'totalSales');
 
     const dataCategories = [
       'summary',
@@ -403,19 +324,10 @@ export const getAnalytics = async (req, res) => {
     ];
 
     await logAudit({
-      userId: req.user?.id || null,
-      role: normalizeRole(req.user?.role),
+      ...auditBase(req),
       action: 'ANALYTICS_ACCESS',
       status: 'SUCCESS',
-      resourceId: 'analytics-dashboard',
-      clientIp: getClientIp(req),
-      userAgent: getUserAgent(req),
-      requestPayload: {
-        method: req.method,
-        path: req.path,
-        dataCategoriesAccessed: dataCategories,
-        queryParams: req.query
-      },
+      requestPayload: { method: req.method, path: req.path, dataCategoriesAccessed: dataCategories, queryParams: req.query },
       details: `Analytics dashboard accessed. Data categories: ${dataCategories.join(', ')}`
     });
 
@@ -447,16 +359,7 @@ export const getAnalytics = async (req, res) => {
 
     const queryTime = Date.now() - queryStartTime;
     if (queryTime > 5000) {
-      await logAudit({
-        userId: req.user?.id || null,
-        role: normalizeRole(req.user?.role),
-        action: 'ANALYTICS_SLOW_QUERY',
-        status: 'WARNING',
-        resourceId: 'analytics-dashboard',
-        clientIp: getClientIp(req),
-        userAgent: getUserAgent(req),
-        details: `Slow analytics query detected: ${queryTime}ms`
-      });
+      await logAudit({ ...auditBase(req), action: 'ANALYTICS_SLOW_QUERY', status: 'WARNING', details: `Slow analytics query detected: ${queryTime}ms` });
     }
 
     res.status(200).json({
@@ -472,16 +375,7 @@ export const getAnalytics = async (req, res) => {
   } catch (error) {
     logError(error, { action: 'ANALYTICS_ACCESS', userId: req.user?.id });
     
-    await logAudit({
-      userId: req.user?.id || null,
-      role: normalizeRole(req.user?.role),
-      action: 'ANALYTICS_ACCESS',
-      status: 'ERROR',
-      resourceId: 'analytics-dashboard',
-      clientIp: getClientIp(req),
-      userAgent: getUserAgent(req),
-      details: `Error accessing analytics: ${error.message}`
-    });
+    await logAudit({ ...auditBase(req), action: 'ANALYTICS_ACCESS', status: 'ERROR', details: `Error accessing analytics: ${error.message}` });
     
     res.status(500).json({
       success: false,
@@ -493,16 +387,7 @@ export const getAnalytics = async (req, res) => {
 
 export const exportAnalyticsPDF = async (req, res) => {
   if (!req.verifiedAdminRole) {
-    await logAudit({
-      userId: req.user?.id || null,
-      role: normalizeRole(req.user?.role),
-      action: 'ANALYTICS_PDF_EXPORT_UNAUTHORIZED',
-      status: 'FAILED_AUTH',
-      resourceId: 'analytics-dashboard',
-      clientIp: getClientIp(req),
-      userAgent: getUserAgent(req),
-      details: 'PDF export unauthorized: Admin role not verified'
-    });
+    await logAudit({ ...auditBase(req), action: 'ANALYTICS_PDF_EXPORT_UNAUTHORIZED', status: 'FAILED_AUTH', details: 'PDF export unauthorized: Admin role not verified' });
 
     return res.status(403).json({
       success: false,
@@ -511,8 +396,6 @@ export const exportAnalyticsPDF = async (req, res) => {
   }
 
   try {
-    const clientIp = getClientIp(req);
-    const userAgent = getUserAgent(req);
     const adminId = req.user?.id;
     
     const isHTTPS = req.secure || 
@@ -520,16 +403,7 @@ export const exportAnalyticsPDF = async (req, res) => {
                     req.headers['x-forwarded-proto'] === 'https, http';
     
     if (process.env.NODE_ENV === 'production' && !isHTTPS) {
-      await logAudit({
-        userId: adminId,
-        role: normalizeRole(req.user?.role),
-        action: 'ANALYTICS_PDF_EXPORT',
-        status: 'FAILED_VALIDATION',
-        resourceId: 'analytics-dashboard',
-        clientIp,
-        userAgent,
-        details: `PDF export blocked: HTTPS required`
-      });
+      await logAudit({ ...auditBase(req), action: 'ANALYTICS_PDF_EXPORT', status: 'FAILED_VALIDATION', details: `PDF export blocked: HTTPS required` });
       
       return res.status(403).json({
         success: false,
@@ -538,20 +412,10 @@ export const exportAnalyticsPDF = async (req, res) => {
     }
     
     await logAudit({
-      userId: adminId,
-      role: normalizeRole(req.user?.role),
+      ...auditBase(req),
       action: 'ANALYTICS_PDF_EXPORT',
       status: 'SUCCESS',
-      resourceId: 'analytics-dashboard',
-      clientIp,
-      userAgent,
-      requestPayload: {
-        method: req.method,
-        path: req.path,
-        exportType: 'PDF',
-        timestamp: new Date().toISOString(),
-        secureChannel: isHTTPS
-      },
+      requestPayload: { method: req.method, path: req.path, exportType: 'PDF', timestamp: new Date().toISOString(), secureChannel: isHTTPS },
       details: `Analytics PDF export initiated by admin ${adminId} via ${isHTTPS ? 'HTTPS' : 'HTTP'}`
     });
 
@@ -562,16 +426,7 @@ export const exportAnalyticsPDF = async (req, res) => {
   } catch (error) {
     logError(error, { action: 'ANALYTICS_PDF_EXPORT', userId: req.user?.id });
     
-    await logAudit({
-      userId: req.user?.id || null,
-      role: normalizeRole(req.user?.role),
-      action: 'ANALYTICS_PDF_EXPORT',
-      status: 'ERROR',
-      resourceId: 'analytics-dashboard',
-      clientIp: getClientIp(req),
-      userAgent: getUserAgent(req),
-      details: `Error logging PDF export: ${error.message}`
-    });
+    await logAudit({ ...auditBase(req), action: 'ANALYTICS_PDF_EXPORT', status: 'ERROR', details: `Error logging PDF export: ${error.message}` });
     
     res.status(500).json({
       success: false,

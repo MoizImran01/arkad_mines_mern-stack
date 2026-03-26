@@ -12,6 +12,13 @@ const roundToTwoDecimals = (value) => {
 
 const VALID_STATUSES = ["draft", "submitted", "adjustment_required"];
 
+const auditQuote = (req, clientIp, overrides) => logAudit({
+  userId: req.user?.id,
+  role: normalizeRole(req.user?.role),
+  clientIp,
+  ...overrides,
+});
+
 const generateReferenceNumber = () => {
   const random = Math.floor(Math.random() * 900) + 100;
   return `QT-${Date.now().toString().slice(-6)}-${random}`;
@@ -65,13 +72,10 @@ const createOrUpdateQuotation = async (req, res) => {
         confirmAdjustments
       };
       
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      auditQuote(req, clientIp, {
         action: saveAsDraft ? 'CREATE_QUOTATION_DRAFT' : 'REQUEST_QUOTATION',
         status: 'FAILED_VALIDATION',
         quotationRequestId,
-        clientIp,
         details: `No items provided, requestPayload=${JSON.stringify(requestPayload)}`
       });
       return res
@@ -151,26 +155,20 @@ const createOrUpdateQuotation = async (req, res) => {
     });
 
     if (unavailableItems.length && !confirmAdjustments) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      auditQuote(req, clientIp, {
         action: saveAsDraft ? 'CREATE_QUOTATION_DRAFT' : 'REQUEST_QUOTATION',
         status: 'FAILED_BUSINESS_RULE',
         quotationRequestId,
-        clientIp,
         details: `Items unavailable or need adjustment, unavailableCount=${unavailableItems.length}`
       });
       return res.status(409).json(buildUnavailableResponse(unavailableItems));
     }
 
     if (!preparedItems.length) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      auditQuote(req, clientIp, {
         action: saveAsDraft ? 'CREATE_QUOTATION_DRAFT' : 'REQUEST_QUOTATION',
         status: 'FAILED_BUSINESS_RULE',
         quotationRequestId,
-        clientIp,
         details: 'No items available after adjustments'
       });
       return res.status(400).json({
@@ -202,13 +200,10 @@ const createOrUpdateQuotation = async (req, res) => {
       });
 
       if (!quotation) {
-        logAudit({
-          userId: req.user?.id,
-          role: normalizeRole(req.user?.role),
+        auditQuote(req, clientIp, {
           action: 'UPDATE_QUOTATION',
           status: 'FAILED_VALIDATION',
           resourceId: quoteId,
-          clientIp,
           details: 'Quotation draft not found or unauthorized'
         });
         return res.status(404).json({
@@ -260,15 +255,12 @@ const createOrUpdateQuotation = async (req, res) => {
     
     const details = `itemsCount=${preparedItems.length}, items=[${itemDetails}], totalCost=${totalEstimatedCost}, status=${status}, notesLength=${notes?.length || 0}, hasAdjustments=${unavailableItems.length > 0}, requestPayload=${JSON.stringify(requestPayload)}`;
 
-    logAudit({
-      userId: req.user?.id,
-      role: normalizeRole(req.user?.role),
+    auditQuote(req, clientIp, {
       action: saveAsDraft ? 'CREATE_QUOTATION_DRAFT' : 'REQUEST_QUOTATION',
       status: 'SUCCESS',
       quotationRequestId: saveAsDraft ? null : quotationRequestId,
       quotationId: quotation.referenceNumber,
       resourceId: quotation._id.toString(),
-      clientIp,
       details
     });
 
@@ -329,12 +321,9 @@ const getMyQuotations = async (req, res) => {
       .sort({ updatedAt: -1 })
       .select("-__v");
 
-    await logAudit({
-      userId: req.user?.id,
-      role: normalizeRole(req.user?.role),
+    await auditQuote(req, clientIp, {
       action: 'VIEW_MY_QUOTATIONS',
       status: 'SUCCESS',
-      clientIp,
       userAgent,
       requestPayload: {
         method: req.method,
@@ -377,12 +366,9 @@ const getAllQuotations = async (req, res) => {
       .populate("buyer", "companyName email role")
       .select("-__v");
 
-    await logAudit({
-      userId: req.user?.id,
-      role: normalizeRole(req.user?.role),
+    await auditQuote(req, clientIp, {
       action: 'VIEW_ALL_QUOTATIONS',
       status: 'SUCCESS',
-      clientIp,
       userAgent,
       requestPayload: {
         method: req.method,
@@ -423,27 +409,21 @@ const issueQuotation = async (req, res) => {
     const quotation = await quotationModel.findById(String(quoteId)).populate("buyer");
 
     if (!quotation) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      auditQuote(req, clientIp, {
         action: 'CREATE_QUOTATION',
         status: 'FAILED_VALIDATION',
         resourceId: quoteId,
-        clientIp,
         details: 'Quotation not found'
       });
       return res.status(404).json({ success: false, message: "Quotation not found" });
     }
 
     if (!quotation.items || quotation.items.length === 0) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      auditQuote(req, clientIp, {
         action: 'CREATE_QUOTATION',
         status: 'FAILED_VALIDATION',
         quotationId: quotation.referenceNumber,
         resourceId: quoteId,
-        clientIp,
         details: 'Quotation has no items'
       });
       return res.status(400).json({ 
@@ -453,14 +433,11 @@ const issueQuotation = async (req, res) => {
     }
 
     if (!quotation.buyer) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      auditQuote(req, clientIp, {
         action: 'CREATE_QUOTATION',
         status: 'FAILED_VALIDATION',
         quotationId: quotation.referenceNumber,
         resourceId: quoteId,
-        clientIp,
         details: 'Buyer information missing'
       });
       return res.status(400).json({ 
@@ -471,14 +448,11 @@ const issueQuotation = async (req, res) => {
 
     const taxPercent = Number(taxPercentage);
     if (Number.isNaN(taxPercent) || taxPercent < 0 || taxPercent > 100) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      auditQuote(req, clientIp, {
         action: 'CREATE_QUOTATION',
         status: 'FAILED_VALIDATION',
         quotationId: quotation.referenceNumber,
         resourceId: quoteId,
-        clientIp,
         details: `Invalid tax percentage: ${taxPercentage}`
       });
       return res.status(400).json({ 
@@ -490,14 +464,11 @@ const issueQuotation = async (req, res) => {
     
     const shipping = Number(shippingCost);
     if (Number.isNaN(shipping) || shipping < 0) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      auditQuote(req, clientIp, {
         action: 'CREATE_QUOTATION',
         status: 'FAILED_VALIDATION',
         quotationId: quotation.referenceNumber,
         resourceId: quoteId,
-        clientIp,
         details: `Invalid shipping cost: ${shippingCost}`
       });
       return res.status(400).json({ 
@@ -509,14 +480,11 @@ const issueQuotation = async (req, res) => {
     
     const discount = Number(discountAmount);
     if (Number.isNaN(discount) || discount < 0) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      auditQuote(req, clientIp, {
         action: 'CREATE_QUOTATION',
         status: 'FAILED_VALIDATION',
         quotationId: quotation.referenceNumber,
         resourceId: quoteId,
-        clientIp,
         details: `Invalid discount amount: ${discountAmount}`
       });
       return res.status(400).json({ 
@@ -528,14 +496,11 @@ const issueQuotation = async (req, res) => {
     
     const validity = Number(validityDays);
     if (Number.isNaN(validity) || validity < 1 || validity > 365) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      auditQuote(req, clientIp, {
         action: 'CREATE_QUOTATION',
         status: 'FAILED_VALIDATION',
         quotationId: quotation.referenceNumber,
         resourceId: quoteId,
-        clientIp,
         details: `Invalid validity days: ${validityDays}`
       });
       return res.status(400).json({ 
@@ -575,14 +540,11 @@ const issueQuotation = async (req, res) => {
 
     
     if (discount > subtotal) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      auditQuote(req, clientIp, {
         action: 'CREATE_QUOTATION',
         status: 'FAILED_BUSINESS_RULE',
         quotationId: quotation.referenceNumber,
         resourceId: quoteId,
-        clientIp,
         details: `Discount exceeds subtotal: discount=${discount}, subtotal=${subtotal}`
       });
       return res.status(400).json({ 
@@ -596,14 +558,11 @@ const issueQuotation = async (req, res) => {
     const grandTotal = subtotal + taxAmount + shipping - discount;
 
     if (grandTotal < 0) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      auditQuote(req, clientIp, {
         action: 'CREATE_QUOTATION',
         status: 'FAILED_BUSINESS_RULE',
         quotationId: quotation.referenceNumber,
         resourceId: quoteId,
-        clientIp,
         details: `Grand total is negative: ${grandTotal}`
       });
       return res.status(400).json({ 
@@ -630,15 +589,12 @@ const issueQuotation = async (req, res) => {
 
     await quotation.save();
 
-    logAudit({
-      userId: req.user?.id,
-      role: normalizeRole(req.user?.role),
+    auditQuote(req, clientIp, {
       action: 'CREATE_QUOTATION',
       status: 'SUCCESS',
       quotationRequestId: quotation.quotationRequestId || null,
       quotationId: quotation.referenceNumber,
       resourceId: quoteId,
-      clientIp,
       details: `customerId=${quotation.buyer._id || quotation.buyer}, lineItems=${quotation.items.length}, discount=${discount}%, grandTotal=${grandTotal}, taxPercent=${taxPercent}`
     });
 
@@ -664,13 +620,10 @@ const issueQuotation = async (req, res) => {
 
   } catch (error) {
     if (error.message && error.message.includes("Invalid")) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      auditQuote(req, clientIp, {
         action: 'CREATE_QUOTATION',
         status: 'FAILED_VALIDATION',
         resourceId: req.params.quoteId,
-        clientIp,
         details: error.message
       });
       return res.status(400).json({ 
@@ -712,14 +665,11 @@ const downloadQuotation = async (req, res) => {
     const isBuyer = buyerId === req.user.id;
 
     if (!isAdmin && !isBuyer) {
-      logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      auditQuote(req, clientIp, {
         action: 'DOWNLOAD_QUOTATION',
         status: 'FAILED_AUTH',
         quotationId: quotation.referenceNumber,
         resourceId: quoteId,
-        clientIp,
         details: 'Unauthorized access attempt - user not admin or buyer'
       });
       return res.status(403).json({ success: false, message: "Unauthorized to download this quotation" });
@@ -774,13 +724,10 @@ const approveQuotation = async (req, res) => {
 
     if (!quotation) {
       
-      await logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      await auditQuote(req, clientIp, {
         action: 'APPROVE_QUOTATION',
         status: 'FAILED_AUTH',
         resourceId: quoteId,
-        clientIp,
         userAgent,
         requestPayload: { quoteId, comment: req.body.comment || null },
         details: 'CRITICAL: Quotation not found after strict ownership validation. Possible elevation of privilege attempt. User may not own this quotation.'
@@ -800,15 +747,12 @@ const approveQuotation = async (req, res) => {
 
     if (buyerIdFromQuotation !== userIdFromRequest) {
       
-      await logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      await auditQuote(req, clientIp, {
         action: 'APPROVE_QUOTATION',
         status: 'FAILED_AUTH',
         quotationRequestId: quotation.quotationRequestId || null,
         quotationId: quotation.referenceNumber,
         resourceId: quoteId,
-        clientIp,
         userAgent,
         requestPayload: { quoteId, comment: req.body.comment || null },
         details: `CRITICAL: Ownership mismatch in final check. Possible elevation of privilege attempt. quotation.buyer=${buyerIdFromQuotation}, req.user.id=${userIdFromRequest}`
@@ -820,15 +764,12 @@ const approveQuotation = async (req, res) => {
     }
 
     if (quotation.status !== "issued") {
-      await logAudit({
-        userId: req.user?.id,
-        role: normalizeRole(req.user?.role),
+      await auditQuote(req, clientIp, {
         action: 'APPROVE_QUOTATION',
         status: 'FAILED_BUSINESS_RULE',
         quotationRequestId: quotation.quotationRequestId || null,
         quotationId: quotation.referenceNumber,
         resourceId: quoteId,
-        clientIp,
         userAgent,
         requestPayload: { quoteId, comment: req.body.comment || null },
         details: `Status changed after validation: currentStatus=${quotation.status}`
@@ -904,15 +845,12 @@ const approveQuotation = async (req, res) => {
       hasPasswordConfirmation: !!req.body.passwordConfirmation
     };
 
-    await logAudit({
-      userId: req.user?.id,
-      role: normalizeRole(req.user?.role),
+    await auditQuote(req, clientIp, {
       action: 'APPROVE_QUOTATION',
       status: 'SUCCESS',
       quotationRequestId: quotation.quotationRequestId || null,
       quotationId: quotation.referenceNumber,
       resourceId: quoteId,
-      clientIp,
       userAgent,
       requestPayload: fullRequestPayload,
       details: `oldStatus=issued, newStatus=approved, orderNumber=${order.orderNumber}, grandTotal=${quotation.financials?.grandTotal || 0}, buyerDecision=${JSON.stringify(quotation.buyerDecision)}${anomalyInfo}`
@@ -938,13 +876,10 @@ const approveQuotation = async (req, res) => {
       userAgent: req.headers['user-agent'] || 'Unknown'
     });
     
-    await logAudit({
-      userId: req.user?.id,
-      role: normalizeRole(req.user?.role),
+    await auditQuote(req, clientIp, {
       action: 'APPROVE_QUOTATION',
       status: 'ERROR',
       resourceId: req.params.quoteId,
-      clientIp,
       userAgent: req.headers['user-agent'] || 'Unknown',
       requestPayload: { quoteId: req.params.quoteId, comment: req.body?.comment || null },
       details: `Error processing approval: ${error.message}`
@@ -1004,14 +939,11 @@ const rejectQuotation = async (req, res) => {
 
     await quotation.save();
 
-    logAudit({
-      userId: req.user?.id,
-      role: normalizeRole(req.user?.role),
+    auditQuote(req, clientIp, {
       action: 'REJECT_QUOTATION',
       status: 'SUCCESS',
       quotationId: quotation.referenceNumber,
       resourceId: quoteId,
-      clientIp,
       details: `oldStatus=issued, newStatus=rejected, hasComment=${!!comment}`
     });
 
@@ -1052,14 +984,11 @@ const requestRevision = async (req, res) => {
 
     await quotation.save();
 
-    logAudit({
-      userId: req.user?.id,
-      role: normalizeRole(req.user?.role),
+    auditQuote(req, clientIp, {
       action: 'REQUEST_QUOTATION_REVISION',
       status: 'SUCCESS',
       quotationId: quotation.referenceNumber,
       resourceId: quoteId,
-      clientIp,
       details: `oldStatus=issued, newStatus=revision_requested, hasComment=${!!comment}`
     });
 
@@ -1095,14 +1024,11 @@ const convertToSalesOrder = async (req, res) => {
 
 
 
-    logAudit({
-      userId: req.user?.id,
-      role: normalizeRole(req.user?.role),
+    auditQuote(req, clientIp, {
       action: 'CONVERT_TO_SALES_ORDER',
       status: 'SUCCESS',
       quotationId: quotation.referenceNumber,
       resourceId: quoteId,
-      clientIp,
       details: 'Placeholder - conversion requested but not yet implemented'
     });
 

@@ -1,14 +1,13 @@
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { StoreContext } from '../../context/StoreContext';
 import { compressImage } from '../../utils/compressImage';
 import './PlaceOrder.css';
 import axios from "axios";
 import { useNavigate, useParams } from 'react-router-dom';
-import ReCAPTCHA from "react-google-recaptcha";
-import { FiPackage, FiCreditCard, FiMapPin, FiShoppingBag, FiEdit2, FiArrowLeft, FiLock, FiX, FiAlertTriangle } from "react-icons/fi";
+import { FiPackage, FiCreditCard, FiMapPin, FiShoppingBag, FiEdit2, FiArrowLeft } from "react-icons/fi";
 import { toast } from "react-toastify";
-
-const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
+import usePaymentVerification from '../../../../shared/usePaymentVerification';
+import { CaptchaModal, MfaModal } from '../../../../shared/VerificationModals.jsx';
 
 // Order status page: delivery info, summary, and payment proof with CAPTCHA/MFA.
 const PlaceOrder = () => {
@@ -99,16 +98,8 @@ const PlaceOrder = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentProofFile, setPaymentProofFile] = useState(null);
-  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
-  
-  const [showCaptchaModal, setShowCaptchaModal] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState(null);
-  const [captchaPassword, setCaptchaPassword] = useState("");
-  const recaptchaRef = useRef(null);
-  
-  const [showMfaModal, setShowMfaModal] = useState(false);
-  const [mfaPassword, setMfaPassword] = useState("");
-  const [pendingPayment, setPendingPayment] = useState(null);
+
+  const pv = usePaymentVerification(url, token);
 
   const submitPaymentProof = async (e) => {
     e.preventDefault();
@@ -128,7 +119,7 @@ const PlaceOrder = () => {
       return;
     }
 
-    setPaymentSubmitting(true);
+    pv.setPaymentSubmitting(true);
     let base64 = null;
 
     try {
@@ -140,7 +131,7 @@ const PlaceOrder = () => {
       } catch (compressionError) {
         console.error('Image compression error:', compressionError);
         toast.error('Failed to process image. Please try a different image file.');
-        setPaymentSubmitting(false);
+        pv.setPaymentSubmitting(false);
         return;
       }
 
@@ -154,12 +145,7 @@ const PlaceOrder = () => {
       const response = await axios.post(
         `${url}/api/orders/payment/submit/${orderData._id}`,
         payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
 
       if (response.data.success) {
@@ -171,175 +157,34 @@ const PlaceOrder = () => {
       }
     } catch (err) {
       console.error('Error submitting payment proof:', err);
-      console.log("Error response data:", err.response?.data);
-      console.log("Error status:", err.response?.status);
-      
       const errData = err.response?.data;
-      const errMsg = errData?.message?.toLowerCase() || '';
-      const requiresCaptcha = errData?.requiresCaptcha === true || errMsg.includes('captcha');
-      const requiresMFA = errData?.requiresMFA === true || errData?.requiresReauth === true ||
-        errMsg.includes('re-authentication') || errMsg.includes('password') || errMsg.includes('confirm this action');
+      const { requiresCaptcha, requiresMFA } = pv.detectVerificationNeeded(errData);
 
       if (requiresCaptcha || requiresMFA) {
         setShowPaymentModal(false);
         if (!base64 && paymentProofFile) {
-          try {
-            base64 = await compressImage(paymentProofFile);
-          } catch (compressionError) {
-            console.error('Image compression error:', compressionError);
-            toast.error('Failed to process image. Please try again.');
-            setPaymentSubmitting(false);
-            return;
-          }
+          try { base64 = await compressImage(paymentProofFile); }
+          catch { toast.error('Failed to process image. Please try again.'); pv.setPaymentSubmitting(false); return; }
         }
-        const pendingData = {
+        pv.triggerVerification({
           orderId: orderData._id,
           amountPaid: Number.parseFloat(numericAmount.toFixed(2)),
           address: addressData,
           proofBase64: base64,
           proofFileName: paymentProofFile.name
-        };
-        setPendingPayment(pendingData);
-        if (requiresCaptcha) setShowCaptchaModal(true);
-        else setShowMfaModal(true);
-        setPaymentSubmitting(false);
+        }, requiresCaptcha);
+        pv.setPaymentSubmitting(false);
         return;
       }
 
       toast.error(errData?.message || 'Error submitting payment proof');
-      setPaymentSubmitting(false);
-    }
-  };
-  
-  const handleCaptchaChange = (token) => {
-    setCaptchaToken(token);
-  };
-
-  const handleCaptchaExpired = () => {
-    setCaptchaToken(null);
-  };
-
-  const handleCaptchaSubmit = async (e) => {
-    e.preventDefault();
-    if (!captchaToken) {
-      toast.error("Please complete the CAPTCHA verification.");
-      return;
-    }
-    if (!captchaPassword.trim()) {
-      toast.error("Please enter your password to confirm this payment submission.");
-      return;
-    }
-
-    if (!pendingPayment) {
-      toast.error("Error: Payment data not found. Please try again.");
-      setShowCaptchaModal(false);
-      setCaptchaToken(null);
-      setCaptchaPassword("");
-      recaptchaRef.current?.reset();
-      setPendingPayment(null);
-      return;
-    }
-
-    setPaymentSubmitting(true);
-
-    try {
-      const payload = {
-        ...pendingPayment,
-        captchaToken: captchaToken,
-        passwordConfirmation: captchaPassword
-      };
-
-      const response = await axios.post(
-        `${url}/api/orders/payment/submit/${pendingPayment.orderId}`,
-        payload,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data.success) {
-        toast.success('Payment proof submitted successfully. Awaiting admin verification.');
-        setShowCaptchaModal(false);
-        setCaptchaToken(null);
-        setCaptchaPassword("");
-        recaptchaRef.current?.reset();
-        setPendingPayment(null);
-        setShowPaymentModal(false);
-        navigate('/orders');
-      } else {
-        toast.error(response.data.message || "Failed to submit payment proof");
-        recaptchaRef.current?.reset();
-        setCaptchaToken(null);
-      }
-    } catch (error) {
-      console.error("Error submitting payment with CAPTCHA:", error);
-      
-      if (error.response?.data?.requiresCaptcha === true) {
-        toast.error("CAPTCHA verification failed. Please try again.");
-        recaptchaRef.current?.reset();
-        setCaptchaToken(null);
-      } else if (error.response?.data?.requiresMFA === true || error.response?.status === 401) {
-        toast.error("Invalid password. Please check your password and try again.");
-        setCaptchaPassword("");
-      } else {
-        toast.error(error.response?.data?.message || "Error submitting payment proof");
-        recaptchaRef.current?.reset();
-        setCaptchaToken(null);
-      }
-    } finally {
-      setPaymentSubmitting(false);
+      pv.setPaymentSubmitting(false);
     }
   };
 
-  const handleMfaSubmit = async (e) => {
-    e.preventDefault();
-    if (!mfaPassword.trim()) {
-      toast.error("Please enter your password to confirm this payment submission.");
-      return;
-    }
-
-    if (!pendingPayment) {
-      toast.error("Error: Payment data not found. Please try again.");
-      setShowMfaModal(false);
-      setMfaPassword("");
-      setPendingPayment(null);
-      return;
-    }
-
-    setPaymentSubmitting(true);
-
-    try {
-      const payload = {
-        ...pendingPayment,
-        passwordConfirmation: mfaPassword
-      };
-
-      const response = await axios.post(
-        `${url}/api/orders/payment/submit/${pendingPayment.orderId}`,
-        payload,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data.success) {
-        toast.success('Payment proof submitted successfully. Awaiting admin verification.');
-        setShowMfaModal(false);
-        setMfaPassword("");
-        setPendingPayment(null);
-        setShowPaymentModal(false);
-        navigate('/orders');
-      } else {
-        toast.error(response.data.message || "Failed to submit payment proof");
-      }
-    } catch (error) {
-      console.error("Error submitting payment with MFA:", error);
-      
-      if (error.response?.data?.requiresMFA === true || error.response?.status === 401) {
-        toast.error("Invalid password. Please check your password and try again.");
-        setMfaPassword("");
-      } else {
-        toast.error(error.response?.data?.message || "Error submitting payment proof");
-      }
-    } finally {
-      setPaymentSubmitting(false);
-    }
+  const onPaymentSuccess = () => {
+    setShowPaymentModal(false);
+    navigate('/orders');
   };
 
   const validateForm = () => {
@@ -618,7 +463,7 @@ const PlaceOrder = () => {
                     type="button"
                     className="btn-back"
                     onClick={() => setActiveTab('information')}
-                    disabled={hasPaymentProofs || showPaymentModal || paymentSubmitting}
+                    disabled={hasPaymentProofs || showPaymentModal || pv.paymentSubmitting}
                   >
                     Back to Edit
                   </button>
@@ -632,180 +477,31 @@ const PlaceOrder = () => {
         </div>
       )}
 
-      {showCaptchaModal && (
-        <div 
-          className="modal-overlay" 
-          style={{ zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)' }} 
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="modal-content" role="document">
-            <div className="modal-header">
-              <h3>
-                <FiLock style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-                CAPTCHA Verification Required
-              </h3>
-              {!paymentSubmitting && (
-                <button onClick={() => {
-                  setShowCaptchaModal(false);
-                  setCaptchaToken(null);
-                  setCaptchaPassword("");
-                  recaptchaRef.current?.reset();
-                  setPendingPayment(null);
-                }}>
-                  <FiX />
-                </button>
-              )}
-            </div>
-            <div className="modal-body">
-              <p style={{ color: '#e74c3c', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FiAlertTriangle size={22} style={{ flexShrink: 0 }} />
-                For security purposes, please complete the CAPTCHA verification and enter your password to submit this payment.
-              </p>
-              <form onSubmit={handleCaptchaSubmit}>
-                <div className="form-group" style={{ marginBottom: '20px' }}>
-                  <span className="form-label" style={{ marginBottom: '10px', display: 'block' }}>CAPTCHA Verification:</span>
-                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
-                    <ReCAPTCHA
-                      ref={recaptchaRef}
-                      sitekey={RECAPTCHA_SITE_KEY}
-                      onChange={handleCaptchaChange}
-                      onExpired={handleCaptchaExpired}
-                      theme="light"
-                    />
-                  </div>
-                </div>
-                <div className="form-group" style={{ marginBottom: '20px' }}>
-                  <label htmlFor="captcha-password">Enter Your Password:</label>
-                  <input
-                    id="captcha-password"
-                    type="password"
-                    value={captchaPassword}
-                    onChange={(e) => setCaptchaPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    autoFocus
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      marginTop: '8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '14px'
-                    }}
-                  />
-                </div>
-                <div className="modal-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                  {!paymentSubmitting && (
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={() => {
-                        setShowCaptchaModal(false);
-                        setCaptchaToken(null);
-                        setCaptchaPassword("");
-                        recaptchaRef.current?.reset();
-                        setPendingPayment(null);
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={paymentSubmitting || !captchaToken || !captchaPassword.trim()}
-                    style={{ backgroundColor: '#2f5242' }}
-                  >
-                    {paymentSubmitting ? "Submitting..." : "Confirm & Submit Payment"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
+      {pv.showCaptchaModal && (
+        <CaptchaModal
+          onSubmit={(e) => pv.handleCaptchaSubmit(e, onPaymentSuccess)}
+          onClose={pv.resetCaptchaState}
+          isSubmitting={pv.paymentSubmitting}
+          captchaPassword={pv.captchaPassword}
+          setCaptchaPassword={pv.setCaptchaPassword}
+          recaptchaRef={pv.recaptchaRef}
+          onCaptchaChange={pv.handleCaptchaChange}
+          onCaptchaExpired={pv.handleCaptchaExpired}
+          captchaToken={pv.captchaToken}
+        />
       )}
 
-      {showMfaModal && (
-        <div 
-          className="modal-overlay" 
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="modal-content" role="document">
-            <div className="modal-header">
-              <h3>
-                <FiLock />
-                Multi-Factor Authentication Required
-              </h3>
-              {!paymentSubmitting && (
-                <button
-                  onClick={() => {
-                    setShowMfaModal(false);
-                    setMfaPassword("");
-                    setPendingPayment(null);
-                  }}
-                  aria-label="Close modal"
-                >
-                  <FiX />
-                </button>
-              )}
-            </div>
-            <div className="modal-body">
-              <p style={{ color: '#e74c3c', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FiAlertTriangle size={22} style={{ flexShrink: 0 }} />
-                For security purposes, please confirm your password to submit this payment.
-              </p>
-              <form onSubmit={handleMfaSubmit}>
-                <div className="form-group">
-                  <label htmlFor="mfa-password">Enter Your Password:</label>
-                  <input
-                    id="mfa-password"
-                    type="password"
-                    value={mfaPassword}
-                    onChange={(e) => setMfaPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    autoFocus
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      marginTop: '8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '14px'
-                    }}
-                  />
-                </div>
-                <div className="modal-footer">
-                  {!paymentSubmitting && (
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      onClick={() => {
-                        setShowMfaModal(false);
-                        setMfaPassword("");
-                        setPendingPayment(null);
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={paymentSubmitting || !mfaPassword.trim()}
-                  >
-                    {paymentSubmitting ? "Submitting..." : "Confirm & Submit Payment"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
+      {pv.showMfaModal && (
+        <MfaModal
+          onSubmit={(e) => pv.handleMfaSubmit(e, onPaymentSuccess)}
+          onClose={pv.resetMfaState}
+          isSubmitting={pv.paymentSubmitting}
+          mfaPassword={pv.mfaPassword}
+          setMfaPassword={pv.setMfaPassword}
+        />
       )}
 
-      {showPaymentModal && !showCaptchaModal && !showMfaModal && (
+      {showPaymentModal && !pv.showCaptchaModal && !pv.showMfaModal && (
         <div 
           className="modal-overlay" 
           style={{ zIndex: 9999 }} 
@@ -815,7 +511,7 @@ const PlaceOrder = () => {
           <div className="payment-modal" role="document">
             <div className="payment-modal-header">
               <h3><FiCreditCard /> Submit Payment Proof</h3>
-              {!paymentSubmitting && (
+              {!pv.paymentSubmitting && (
                 <button className="modal-close-btn" onClick={() => setShowPaymentModal(false)}>×</button>
               )}
             </div>
@@ -881,11 +577,11 @@ const PlaceOrder = () => {
             </div>
 
             <div className="payment-modal-footer">
-              {!paymentSubmitting && (
+              {!pv.paymentSubmitting && (
                 <button type="button" className="btn-back" onClick={() => setShowPaymentModal(false)}>Cancel</button>
               )}
-              <button type="submit" className="btn-primary" onClick={submitPaymentProof} disabled={paymentSubmitting}>
-                {paymentSubmitting ? 'Submitting...' : 'Submit Payment Proof'}
+              <button type="submit" className="btn-primary" onClick={submitPaymentProof} disabled={pv.paymentSubmitting}>
+                {pv.paymentSubmitting ? 'Submitting...' : 'Submit Payment Proof'}
               </button>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react'
+import React, { useContext, useState } from 'react'
 import './Navbar.css'
 import { assets } from '../../assets/assets.js'
 import { AdminAuthContext } from '../../context/AdminAuthContext'
@@ -6,45 +6,28 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import axios from 'axios'
 import { FiBell, FiX, FiRefreshCw } from 'react-icons/fi'
+import useNotifications, { formatTime } from '../../../../shared/useNotifications'
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const Navbar = () => {
   const { adminUser, logout, token } = useContext(AdminAuthContext);
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showExpanded, setShowExpanded] = useState(false);
   const [paymentSummary, setPaymentSummary] = useState([]);
-  const [loadingNotifications, setLoadingNotifications] = useState(false);
-  const [refreshingNotifications, setRefreshingNotifications] = useState(false);
-  const panelRef = useRef(null);
+
+  const {
+    notifications, loadingNotifications, refreshingNotifications,
+    showNotifications, setShowNotifications, panelRef,
+    fetchNotifications, clearNotifications,
+  } = useNotifications(token, API_BASE);
+
   const authHeaders = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
   const handleLogout = () => {
     logout();
     toast.success("Logged out successfully");
     navigate("/login");
-  };
-
-  const fetchNotifications = async (isRefresh = false) => {
-    if (!token) return;
-    try {
-      if (isRefresh) {
-        setRefreshingNotifications(true);
-      } else {
-        setLoadingNotifications(true);
-      }
-      const response = await axios.get(`${API_BASE}/api/notifications`, authHeaders);
-      if (response.data.success) {
-        setNotifications(response.data.notifications || []);
-      }
-    } catch (error) {
-      console.error("Notification fetch error:", error);
-    } finally {
-      setLoadingNotifications(false);
-      setRefreshingNotifications(false);
-    }
   };
 
   const fetchPaymentSummary = async () => {
@@ -58,46 +41,6 @@ const Navbar = () => {
       console.error("Payment summary error:", error);
     }
   };
-
-  const clearNotifications = async () => {
-    if (!token) return;
-    try {
-      const response = await axios.post(`${API_BASE}/api/notifications/clear`, {}, authHeaders);
-      if (response.data.success) {
-        setNotifications([]);
-        toast.success("Notifications cleared");
-      }
-    } catch (error) {
-      console.error("Clear notifications error:", error);
-      toast.error("Failed to clear notifications");
-    }
-  };
-
-  const formatTime = (date) => {
-    if (!date) return "";
-    const diff = Date.now() - new Date(date).getTime();
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return "just now";
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [token]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (panelRef.current && !panelRef.current.contains(event.target)) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const renderNotificationItem = (notification) => (
     <div key={notification._id} className="notification-item">
@@ -154,7 +97,7 @@ const Navbar = () => {
                   <button className="notification-link" onClick={() => { setShowExpanded(true); fetchPaymentSummary(); }}>
                     Expand
                   </button>
-                  <button className="notification-link" onClick={clearNotifications}>
+                  <button className="notification-link" onClick={() => clearNotifications(() => toast.success("Notifications cleared"))}>
                     Clear
                   </button>
                 </div>

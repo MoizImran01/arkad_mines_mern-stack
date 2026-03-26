@@ -6,6 +6,7 @@ import axios from "axios";
 import { StoreContext } from '../../context/StoreContext';
 import ReCAPTCHA from "react-google-recaptcha";
 import usePasswordReset from '../../../../shared/usePasswordReset';
+import ResetFormFields, { StatusMessages } from '../../../../shared/ResetFormFields';
 
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
@@ -251,19 +252,7 @@ const LoginPopup = ({ setShowLogin }) => {
                             </button>
                         </div>
 
-                        {error && (
-                            <div className="error-message">
-                                <span className="error-icon">⚠</span>
-                                {error}
-                            </div>
-                        )}
-
-                        {successMsg && (
-                            <div className="success-message">
-                                <span className="success-icon">&#10003;</span>
-                                {successMsg}
-                            </div>
-                        )}
+                        <StatusMessages error={error} successMsg={successMsg} />
 
                         {accountNotFound && (
                             <div className="not-found-prompt">
@@ -278,68 +267,16 @@ const LoginPopup = ({ setShowLogin }) => {
 
                         {!accountNotFound && (
                             <>
-                                <div className="form-inputs">
-                                    {resetStep === "email" && (
-                                        <div className="input-group">
-                                            <label htmlFor="reset-email">Business Email</label>
-                                            <input
-                                                id="reset-email"
-                                                type="email"
-                                                placeholder="your.company@email.com"
-                                                value={resetEmail}
-                                                onChange={(e) => { setResetEmail(e.target.value); setError(""); setAccountNotFound(false); }}
-                                                required
-                                                disabled={isLoading}
-                                            />
-                                        </div>
-                                    )}
-
-                                    {resetStep === "code" && (
-                                        <>
-                                            <div className="input-group">
-                                                <label htmlFor="reset-code">6-Digit Code</label>
-                                                <input
-                                                    id="reset-code"
-                                                    type="text"
-                                                    placeholder="Enter the code from your email"
-                                                    value={resetCode}
-                                                    onChange={(e) => { setResetCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(""); }}
-                                                    required
-                                                    disabled={isLoading}
-                                                    maxLength={6}
-                                                    pattern="\d{6}"
-                                                    inputMode="numeric"
-                                                />
-                                            </div>
-                                            <div className="input-group">
-                                                <label htmlFor="new-password">New Password</label>
-                                                <input
-                                                    id="new-password"
-                                                    type="password"
-                                                    placeholder="Min. 8 characters"
-                                                    value={newPassword}
-                                                    onChange={(e) => { setNewPassword(e.target.value); setError(""); }}
-                                                    required
-                                                    disabled={isLoading}
-                                                    minLength={8}
-                                                />
-                                            </div>
-                                            <div className="input-group">
-                                                <label htmlFor="confirm-password">Confirm Password</label>
-                                                <input
-                                                    id="confirm-password"
-                                                    type="password"
-                                                    placeholder="Re-enter your new password"
-                                                    value={confirmPassword}
-                                                    onChange={(e) => { setConfirmPassword(e.target.value); setError(""); }}
-                                                    required
-                                                    disabled={isLoading}
-                                                    minLength={8}
-                                                />
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
+                                <ResetFormFields
+                                    resetStep={resetStep} isLoading={isLoading}
+                                    resetEmail={resetEmail} setResetEmail={setResetEmail}
+                                    resetCode={resetCode} setResetCode={setResetCode}
+                                    newPassword={newPassword} setNewPassword={setNewPassword}
+                                    confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword}
+                                    clearError={() => { setError(""); setAccountNotFound(false); }}
+                                    emailLabel="Business Email"
+                                    emailPlaceholder="your.company@email.com"
+                                />
 
                                 <button
                                     type="submit"
@@ -387,19 +324,7 @@ const LoginPopup = ({ setShowLogin }) => {
                         </button>
                     </div>
 
-                    {error && (
-                        <div className="error-message">
-                            <span className="error-icon">⚠</span>
-                            {error}
-                        </div>
-                    )}
-
-                    {successMsg && (
-                        <div className="success-message">
-                            <span className="success-icon">&#10003;</span>
-                            {successMsg}
-                        </div>
-                    )}
+                    <StatusMessages error={error} successMsg={successMsg} />
 
                     <div className="form-inputs">
                         {currentState === "Sign Up" && (
