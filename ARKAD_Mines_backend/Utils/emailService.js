@@ -8,6 +8,14 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const resetTransporter = nodemailer.createTransport({
+  service: "Gmail",
+  auth: {
+    user: process.env.RESET_EMAIL_USER,
+    pass: process.env.RESET_EMAIL_PASS,
+  },
+});
+
 export const sendQuotationEmail = async (toEmail, quotationRef, pdfBuffer) => {
   const mailOptions = {
     from: `"Arkad Sales Team" <${process.env.EMAIL_USER}>`,
@@ -27,7 +35,7 @@ export const sendQuotationEmail = async (toEmail, quotationRef, pdfBuffer) => {
 
 export const sendPasswordResetEmail = async (toEmail, resetCode) => {
   const mailOptions = {
-    from: `"ARKAD Mines & Minerals" <${process.env.EMAIL_USER}>`,
+    from: `"ARKAD Mines & Minerals" <${process.env.RESET_EMAIL_USER}>`,
     to: toEmail,
     subject: "Password Reset Code - ARKAD Mines",
     html: `
@@ -53,5 +61,5 @@ export const sendPasswordResetEmail = async (toEmail, resetCode) => {
       </div>
     `,
   };
-  await transporter.sendMail(mailOptions);
+  await resetTransporter.sendMail(mailOptions);
 };
