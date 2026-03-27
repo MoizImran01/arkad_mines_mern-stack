@@ -47,7 +47,7 @@ jobs:
       - name: Build and push Frontend
         uses: docker/build-push-action@v5
         with:
-          context: "./ARKAD_Mines front-end"
+          context: .
           file: "./ARKAD_Mines front-end/Dockerfile.prod"
           push: true
           tags: |
@@ -58,7 +58,7 @@ jobs:
       - name: Build and push Admin
         uses: docker/build-push-action@v5
         with:
-          context: "./ARKAD_Mines admin"
+          context: .
           file: "./ARKAD_Mines admin/Dockerfile.prod"
           push: true
           tags: |
