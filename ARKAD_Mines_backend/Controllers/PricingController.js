@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const PRICING_API_URL = process.env.PRICING_API_URL || 'http://localhost:5001';
+const PRICING_API_URL = process.env.PRICING_API_URL || 'https://arkad-pricing-api.onrender.com';
 const PRICING_TIMEOUT_MS = Number(process.env.PRICING_TIMEOUT_MS) || 15000;
 const PRICING_POST_OPTIONS = {
     timeout: PRICING_TIMEOUT_MS,
