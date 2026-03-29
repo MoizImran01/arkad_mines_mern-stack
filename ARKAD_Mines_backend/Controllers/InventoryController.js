@@ -1,8 +1,14 @@
 import axios from 'axios';
 
+const FIVE_MINUTES_MS = 5 * 60 * 1000; // 300_000 — forecasting + Render cold start can exceed short defaults
+
 export const getAIForecast = async (req, res) => {
     const FORECAST_API_URL = process.env.FORECASTING_API_URL || 'https://arkad-forecasting-api.onrender.com/api/forecast';
-    const FORECAST_TIMEOUT_MS = Number(process.env.FORECAST_TIMEOUT_MS) || 15000;
+    const rawTimeout = process.env.FORECAST_TIMEOUT_MS;
+    const FORECAST_TIMEOUT_MS =
+        rawTimeout !== undefined && rawTimeout !== '' && !Number.isNaN(Number(rawTimeout))
+            ? Number(rawTimeout)
+            : FIVE_MINUTES_MS;
     try {
         const response = await axios.get(FORECAST_API_URL, {
             timeout: FORECAST_TIMEOUT_MS,
