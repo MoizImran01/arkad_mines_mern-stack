@@ -114,15 +114,56 @@ export const updatePurchaseOrderStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid status value' });
     }
 
-    const update = { status };
-    if (status === 'received') {
-      update.actualDeliveryDate = new Date();
-    }
-
-    const po = await procurementModel.findByIdAndUpdate(id, update, { new: true });
+    const po = await procurementModel.findById(id);
     if (!po) {
       return res.status(404).json({ success: false, message: 'Purchase order not found' });
     }
+
+    const previousStatus = po.status;
+
+    // Collect all stones from this PO
+    const getStoneItems = () => {
+      if (po.stones && po.stones.length > 0) {
+        return po.stones.map(s => ({ stoneId: s.stoneId, quantity: s.quantityOrdered }));
+      }
+      if (po.stoneDetails?.stoneId && po.quantityOrdered) {
+        return [{ stoneId: po.stoneDetails.stoneId, quantity: po.quantityOrdered }];
+      }
+      return [];
+    };
+
+    const stoneItems = getStoneItems();
+
+    if (status === 'received' && previousStatus !== 'received') {
+      for (const item of stoneItems) {
+        if (!item.stoneId) continue;
+        const stone = await stonesModel.findById(item.stoneId);
+        if (stone) {
+          stone.stockQuantity = (stone.stockQuantity || 0) + item.quantity;
+          const remaining = stone.stockQuantity - (stone.quantityDelivered || 0);
+          if (remaining > 0) stone.stockAvailability = "In Stock";
+          await stone.save();
+        }
+      }
+      po.actualDeliveryDate = new Date();
+    }
+
+    
+    if (status === 'cancelled' && previousStatus === 'received') {
+      for (const item of stoneItems) {
+        if (!item.stoneId) continue;
+        const stone = await stonesModel.findById(item.stoneId);
+        if (stone) {
+          stone.stockQuantity = Math.max(0, (stone.stockQuantity || 0) - item.quantity);
+          const remaining = stone.stockQuantity - (stone.quantityDelivered || 0);
+          if (remaining <= 0) stone.stockAvailability = "Out of Stock";
+          await stone.save();
+        }
+      }
+    }
+
+    po.status = status;
+    await po.save();
 
     res.json({ success: true, message: `Status updated to ${status}`, purchaseOrder: po });
   } catch (error) {
