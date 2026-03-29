@@ -1,14 +1,5 @@
 """
 ARKAD Mines — ML-Based Quotation Pricing Suggestion Microservice
-
-Connects to the same MongoDB used by the main backend, pulls historical
-accepted/issued quotations, trains a regression model on the fly, and
-returns a suggested price range for a given stone.
-
-Endpoints:
-    POST /api/predict-price   – single stone prediction
-    POST /api/predict-prices  – batch prediction (multiple stones)
-    GET  /api/health          – health check
 """
 
 import os
@@ -26,7 +17,6 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import cross_val_score
 
-# ── Config ────────────────────────────────────────────────────────────
 app = Flask(__name__)
 CORS(app)
 
@@ -39,7 +29,6 @@ MONGO_URI = os.environ.get(
 )
 DB_NAME = os.environ.get("DB_NAME", "arkadDB")
 
-# ── Database helper ───────────────────────────────────────────────────
 _client = None
 
 def get_db():
@@ -49,7 +38,6 @@ def get_db():
     return _client[DB_NAME]
 
 
-# ── Data collection ──────────────────────────────────────────────────
 def fetch_training_data():
     """
     Pull quotation items from issued/approved quotations where
@@ -60,13 +48,11 @@ def fetch_training_data():
     quotations_col = db["quotations"]
     stones_col = db["stones"]
 
-    # Get all issued or approved quotations
     quotations = list(quotations_col.find(
         {"status": {"$in": ["issued", "approved"]}},
         {"items": 1, "createdAt": 1, "_id": 0}
     ))
 
-    # Build a stone lookup for category/subcategory/grade
     stones = list(stones_col.find(
         {},
         {"_id": 1, "stoneName": 1, "category": 1, "subcategory": 1,
@@ -100,7 +86,7 @@ def fetch_training_data():
     return training_rows
 
 
-# ── Model training ───────────────────────────────────────────────────
+#Model training
 class PricingModel:
     """
     Trains a Gradient Boosting Regressor on historical quotation data.
@@ -121,7 +107,6 @@ class PricingModel:
             self.encoders[name] = LabelEncoder()
             self.encoders[name].fit(values)
 
-        # Handle unseen labels gracefully
         encoded = []
         for v in values:
             if v in self.encoders[name].classes_:
@@ -129,7 +114,7 @@ class PricingModel:
                     self.encoders[name].transform([v])[0]
                 )
             else:
-                encoded.append(-1)  # unknown category
+                encoded.append(-1)
         return np.array(encoded)
 
     def _encode_single(self, name, value):
@@ -147,13 +132,11 @@ class PricingModel:
 
         cat_features = ["category", "subcategory", "grade", "priceUnit", "stoneName"]
 
-        # Fit all encoders first
         for feat in cat_features:
             vals = [row[feat] for row in data]
             self.encoders[feat] = LabelEncoder()
             self.encoders[feat].fit(vals)
 
-        # Build feature matrix
         X = np.column_stack([
             self._encode_feature("category", [r["category"] for r in data]),
             self._encode_feature("subcategory", [r["subcategory"] for r in data]),
@@ -175,7 +158,6 @@ class PricingModel:
         )
         self.model.fit(X, y)
 
-        # Compute training stats
         predictions = self.model.predict(X)
         residuals = y - predictions
         self.training_stats = {
@@ -186,7 +168,6 @@ class PricingModel:
             "r2_score": float(self.model.score(X, y)),
         }
 
-        # Cross-validation if enough data
         if len(data) >= 10:
             cv_folds = min(5, len(data))
             cv_scores = cross_val_score(self.model, X, y, cv=cv_folds, scoring="r2")
@@ -218,9 +199,8 @@ class PricingModel:
 
         predicted = float(self.model.predict(X)[0])
 
-        # Calculate confidence-based range using training error
         mae = self.training_stats.get("mean_abs_error", predicted * 0.1)
-        margin = max(mae * 1.5, predicted * 0.05)  # At least 5% range
+        margin = max(mae * 1.5, predicted * 0.05)  
 
         return {
             "suggested_price": round(predicted, 2),
@@ -231,7 +211,6 @@ class PricingModel:
         }
 
 
-# ── Global model instance ────────────────────────────────────────────
 pricing_model = PricingModel()
 
 
@@ -244,7 +223,6 @@ def ensure_model_trained():
     return pricing_model.is_trained
 
 
-# ── Routes ────────────────────────────────────────────────────────────
 
 @app.route("/api/health", methods=["GET"])
 def health():
@@ -326,11 +304,10 @@ def predict_prices():
     return jsonify({"success": True, "predictions": predictions})
 
 
-# ── Main ──────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5001))
 
-    # Pre-train on startup
+    #Pre-train on startup
     logger.info("Pre-training pricing model...")
     data = fetch_training_data()
     if data:

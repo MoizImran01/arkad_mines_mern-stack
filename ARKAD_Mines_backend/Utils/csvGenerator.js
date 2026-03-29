@@ -1,4 +1,4 @@
-// Statement CSV for a single order (summary, items, financials, payment history).
+//Statement CSV for a single order (summary, items, financials, payment history).
 export const generateStatementCSV = async (order) => {
   const lines = [];
   

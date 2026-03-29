@@ -111,7 +111,6 @@
   margin: 0;
 }
 
-/* Statistics Cards */
 .users-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -176,7 +175,6 @@
   margin: 0;
 }
 
-/* Table Container */
 .users-table-container {
   background: var(--white, #ffffff);
   border-radius: 12px;
@@ -396,7 +394,6 @@
   font-size: 16px;
 }
 
-/* Customer History Modal */
 .history-modal-overlay {
   position: fixed;
   inset: 0;
@@ -608,7 +605,6 @@
   color: var(--text-light, #6b7280);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .users-container {
     padding: 20px;

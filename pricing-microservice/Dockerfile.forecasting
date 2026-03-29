@@ -7,7 +7,6 @@ RUN pip install --no-cache-dir -r requirements-forecasting.txt
 
 COPY main.py .
 
-# Default for local runs; Render overrides PORT at runtime.
 ENV PORT=8001
 EXPOSE 8001
 

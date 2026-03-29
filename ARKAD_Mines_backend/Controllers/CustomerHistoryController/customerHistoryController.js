@@ -18,7 +18,7 @@ export const searchCustomers = async (req, res) => {
         message: "Search query must be at least 2 characters",
       });
     }
-    // Use MongoDB $text search so we never build a RegExp from user input (ReDoS-safe).
+    
     const safeSearch = q.replaceAll('"', " ").trim().slice(0, 100);
     const users = await userModel
       .find({

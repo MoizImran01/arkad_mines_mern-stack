@@ -19,11 +19,11 @@ const Dispatch = () => {
   // Get image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/100?text=No+QR';
-    // If it's already a full URL (Cloudinary), return as is
+    
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath;
     }
-    // Otherwise, construct local URL for legacy images
+    
     return `${API_URL}/images/${imagePath}`;
   };
 

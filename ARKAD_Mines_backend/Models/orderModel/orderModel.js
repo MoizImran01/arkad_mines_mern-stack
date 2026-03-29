@@ -125,11 +125,11 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Add indexes for better query performance
-orderSchema.index({ buyer: 1, createdAt: -1 }); // For getUserOrders
-orderSchema.index({ status: 1, createdAt: -1 }); // For status filtering
-orderSchema.index({ orderNumber: 1 }); // For orderNumber searches
-orderSchema.index({ createdAt: -1 }); // For default sorting
+//Add indexes for better query performance
+orderSchema.index({ buyer: 1, createdAt: -1 }); 
+orderSchema.index({ status: 1, createdAt: -1 });
+orderSchema.index({ orderNumber: 1 }); 
+orderSchema.index({ createdAt: -1 });
 orderSchema.index({ "buyer.companyName": "text", "buyer.email": "text", orderNumber: "text" }); // Text search index
 
 const orderModel = mongoose.models.order || mongoose.model("order", orderSchema);

@@ -18,9 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ==========================================
-# 1. MONGODB CONNECTION SETUP
-# ==========================================
+
 MONGO_URI = os.environ.get(
     "MONGO_URI",
     "mongodb://localhost:27017/arkadDB"
@@ -34,13 +32,9 @@ try:
 except Exception as e:
     print(f"❌ MongoDB Connection Error: {e}")
 
-# ==========================================
-# 2. DATA EXTRACTION & TRANSFORMATION LOGIC
-# ==========================================
 def fetch_and_aggregate_live_data():
     """Extracts raw data from 3 MongoDB collections and transforms it for the AI"""
     
-    # A. Fetch all stones to create a mapping dictionary (ObjectId -> Stone Info)
     stones_cursor = db.stones.find()
     stone_map = {}
     for stone in stones_cursor:
@@ -51,7 +45,6 @@ def fetch_and_aggregate_live_data():
             'SKU': f"{stone.get('stoneName')} - {stone.get('subcategory')}"
         }
 
-    # B. Fetch Procurements to calculate REAL Dynamic Lead Times
     procurements = list(db.procurements.find({"status": "received"}))
     lead_time_dict = {} 
     
@@ -70,7 +63,6 @@ def fetch_and_aggregate_live_data():
         lt_df = pd.DataFrame(lt_records)
         lead_time_dict = lt_df.groupby('SKU')['leadTimeDays'].mean().to_dict()
 
-    # C. Fetch Delivered Orders for Demand Forecasting
     orders = list(db.orders.find({"status": "delivered"}))
     if not orders:
         return None, None
@@ -94,7 +86,6 @@ def fetch_and_aggregate_live_data():
     df_sales = pd.DataFrame(sales_data)
     df_sales['orderDate'] = pd.to_datetime(df_sales['orderDate'])
 
-    # D. Aggregate into Monthly Buckets
     global_start = df_sales['orderDate'].min()
     global_end = df_sales['orderDate'].max()
     full_date_range = pd.date_range(start=global_start, end=global_end, freq='MS')
@@ -124,9 +115,6 @@ def fetch_and_aggregate_live_data():
     
     return final_ml_df, lead_time_dict
 
-# ==========================================
-# 3. THE API ENDPOINTS
-# ==========================================
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "forecasting"}
@@ -146,7 +134,6 @@ def get_inventory_forecast():
         group_df = group_df.sort_values('month_starting')
         historical_quantities = group_df['quantity'].values
         
-        # 1. AI Demand Forecasting (Holt-Winters)
         try:
             model = ExponentialSmoothing(
                 historical_quantities,
@@ -178,7 +165,6 @@ def get_inventory_forecast():
         reorder_point = (avg_weekly_demand * lead_time_weeks) + safety_stock
         suggested_po_qty = (avg_weekly_demand * 4) + safety_stock
 
-        # --- GRAPH DATA EXTRACTION ---
         recent_history = group_df.tail(12)
         chart_data = []
         
@@ -200,7 +186,6 @@ def get_inventory_forecast():
                 "forecast": round(ai_historical_guess, 2)
             })
             
-        # Add the next 3 months of future AI predictions
         future_dates = pd.date_range(start=recent_history['month_starting'].iloc[-1] + pd.DateOffset(months=1), periods=3, freq='MS')
         for i, val in enumerate(forecast):
             chart_data.append({

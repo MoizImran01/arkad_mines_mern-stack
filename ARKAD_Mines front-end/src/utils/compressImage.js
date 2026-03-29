@@ -1,12 +1,5 @@
 /**
- * Compresses an image file to JPEG base64 for upload. If result exceeds maxSizeBytes,
- * re-compresses at lower quality. Used by PlaceOrder and Orders for payment proof uploads.
- * @param {File} file - Image file
- * @param {number} maxWidth - Max width in pixels
- * @param {number} maxHeight - Max height in pixels
- * @param {number} quality - JPEG quality 0–1
- * @param {number} maxSizeBytes - If blob exceeds this, re-compress at 0.5 quality (default 3MB)
- * @returns {Promise<string>} Base64 data URL (data:image/jpeg;base64,...)
+ * Compresses an image file to JPEG base64 for upload
  */
 export function compressImage(file, maxWidth = 1000, maxHeight = 1000, quality = 0.6, maxSizeBytes = 3 * 1024 * 1024) {
   return new Promise((resolve, reject) => {

@@ -20,7 +20,6 @@
   overflow-x: hidden;
 }
 
-/* ===== HERO SECTION ===== */
 .industries-hero {
   min-height: 90vh;
   display: flex;
@@ -40,7 +39,6 @@
   opacity: 0.15;
 }
 
-/* 3D Floating Cubes - Green Theme */
 .floating-cube {
   position: absolute;
   background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-dark) 100%);
@@ -530,7 +528,6 @@
   transform: scale(1.1);
 }
 
-/* ===== GRANITE TYPES SECTION ===== */
 .granite-types-section {
   padding: 5rem 2rem;
   background: white;
@@ -813,7 +810,6 @@
   50% { box-shadow: 0 0 20px gold, 0 0 30px gold; }
 }
 
-/* ===== GREEK TEMPLE ===== */
 .greek-temple {
   position: relative;
   width: 100px;
@@ -927,7 +923,6 @@
   border-radius: 2px;
 }
 
-/* ===== FACTORY ===== */
 .factory {
   position: relative;
   width: 100px;
@@ -999,7 +994,6 @@
   50% { background: #ffaa00; }
 }
 
-/* ===== SKYSCRAPER ===== */
 .skyscraper {
   position: relative;
   width: 50px;
@@ -1060,7 +1054,6 @@
   border-radius: 0 0 2px 2px;
 }
 
-/* Responsive Timeline */
 @media (max-width: 768px) {
   .timeline-item-enhanced {
     grid-template-columns: 1fr;
@@ -1481,7 +1474,6 @@
   }
 }
 
-/* ===== LOGIN PROMPT MODAL ===== */
 .login-prompt-overlay {
   position: fixed;
   inset: 0;

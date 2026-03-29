@@ -82,7 +82,6 @@ export const logError = (error, context = {}) => {
   }
 };
 
-// Resolves client IP from x-forwarded-for, x-real-ip, or socket.
 export const getClientIp = (req) => {
   return req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
          req.headers['x-real-ip'] ||
@@ -91,12 +90,10 @@ export const getClientIp = (req) => {
          null;
 };
 
-// Returns request User-Agent or 'Unknown'.
 export const getUserAgent = (req) => {
   return req.headers['user-agent'] || 'Unknown';
 };
 
-// Maps role string to normalized value (ADMIN, BUYER, SALES_REP, GUEST).
 export const normalizeRole = (role) => {
   if (!role) return 'GUEST';
   

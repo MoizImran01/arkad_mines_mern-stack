@@ -506,7 +506,6 @@
   cursor: not-allowed;
 }
 
-/* ── AI Pricing Badge (inline on each item) ─────────────────────── */
 .ai-price-badge {
   display: inline-flex;
   align-items: center;
@@ -553,7 +552,6 @@
   background: #3730a3;
 }
 
-/* ── AI Pricing Card (summary above issue form) ──────────────────── */
 .ai-pricing-card {
   background: linear-gradient(135deg, #eef2ff, #f0f9ff);
   border: 1px solid #c7d2fe;

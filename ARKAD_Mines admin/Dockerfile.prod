@@ -1,14 +1,14 @@
 FROM node:20-alpine
 WORKDIR /workspace
 
-# Copy only manifests first for better Docker layer caching
+
 COPY ["ARKAD_Mines admin/package.json", "ARKAD_Mines admin/package-lock.json", "./admin/"]
 COPY shared/package.json ./shared/package.json
 
 WORKDIR /workspace/admin
 RUN npm install
 
-# Copy app source and shared source required by relative imports
+
 COPY ["ARKAD_Mines admin/", "./"]
 COPY shared/ ../shared/
 
