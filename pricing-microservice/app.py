@@ -35,9 +35,9 @@ logger = logging.getLogger(__name__)
 
 MONGO_URI = os.environ.get(
     "MONGO_URI",
-    "mongodb+srv://placeholder:placeholder@cluster.mongodb.net/arkad_mines"
+    "mongodb+srv://placeholder:placeholder@cluster.mongodb.net/arkadDB"
 )
-DB_NAME = os.environ.get("DB_NAME", "arkad_mines")
+DB_NAME = os.environ.get("DB_NAME", "arkadDB")
 
 # ── Database helper ───────────────────────────────────────────────────
 _client = None

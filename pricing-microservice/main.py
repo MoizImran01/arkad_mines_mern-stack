@@ -125,8 +125,13 @@ def fetch_and_aggregate_live_data():
     return final_ml_df, lead_time_dict
 
 # ==========================================
-# 3. THE API ENDPOINT
+# 3. THE API ENDPOINTS
 # ==========================================
+@app.get("/api/health")
+def health():
+    return {"status": "ok", "service": "forecasting"}
+
+
 @app.get("/api/forecast")
 def get_inventory_forecast():
     df, lead_time_dict = fetch_and_aggregate_live_data()

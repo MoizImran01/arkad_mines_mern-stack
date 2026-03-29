@@ -1,0 +1,32 @@
+# Render Blueprint — deploy both microservices from the monorepo root.
+# After first deploy, set MONGO_URI in the Render dashboard for each service (secret).
+# See conversation / Render docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: arkad-pricing-api
+    runtime: docker
+    plan: free
+    rootDir: pricing-microservice
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_NAME
+        value: arkadDB
+      - key: MONGO_URI
+        sync: false
+
+  - type: web
+    name: arkad-forecasting-api
+    runtime: docker
+    plan: free
+    rootDir: pricing-microservice
+    dockerfilePath: ./Dockerfile.forecasting
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_NAME
+        value: arkadDB
+      - key: MONGO_URI
+        sync: false
