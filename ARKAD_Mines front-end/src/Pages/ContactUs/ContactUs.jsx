@@ -3,6 +3,8 @@
 import { useState, useEffect, useContext } from "react"
 import PropTypes from "prop-types"
 import { useNavigate } from "react-router-dom"
+import axios from "axios"
+import { toast } from "react-toastify"
 import { Phone, Mail, MapPin, Clock, Copy, Check, Send, MessageSquare, Building, Users } from "lucide-react"
 import { StoreContext } from "../../context/StoreContext"
 import "./ContactUs.css"
@@ -14,7 +16,9 @@ function ContactUs({ setShowLogin }) {
   const [phoneRotation, setPhoneRotation] = useState({ x: 0, y: 0 });
   const navigate = useNavigate();
   const { token } = useContext(StoreContext);
-  
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+  const [contactSubmitting, setContactSubmitting] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -102,13 +106,32 @@ function ContactUs({ setShowLogin }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!token) {
-      setShowLoginPrompt(true);
-      return;
+    setContactSubmitting(true);
+    try {
+      const { data } = await axios.post(`${apiUrl}/api/contact`, {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        subject: formData.subject.trim(),
+        message: formData.message.trim(),
+      });
+      if (data.success) {
+        toast.success(data.message || "Message sent successfully.");
+        setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+      } else {
+        toast.error(data.message || "Could not send your message.");
+      }
+    } catch (err) {
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Could not send your message. Please try again later.";
+      toast.error(msg);
+    } finally {
+      setContactSubmitting(false);
     }
-    console.log(formData);
   };
 
   const AnimatedWave = ({ fill = "#f9fafb", className = "" }) => (
@@ -274,6 +297,7 @@ function ContactUs({ setShowLogin }) {
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     required
+                    disabled={contactSubmitting}
                   />
                 </div>
                 <div className="form-group-pro">
@@ -285,6 +309,7 @@ function ContactUs({ setShowLogin }) {
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     required
+                    disabled={contactSubmitting}
                   />
                 </div>
               </div>
@@ -298,6 +323,7 @@ function ContactUs({ setShowLogin }) {
                     placeholder="+92 XXX XXXXXXX"
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    disabled={contactSubmitting}
                   />
                 </div>
                 <div className="form-group-pro">
@@ -308,6 +334,8 @@ function ContactUs({ setShowLogin }) {
                     placeholder="How can we help?"
                     value={formData.subject}
                     onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                    required
+                    disabled={contactSubmitting}
                   />
                 </div>
               </div>
@@ -321,12 +349,13 @@ function ContactUs({ setShowLogin }) {
                   value={formData.message}
                   onChange={(e) => setFormData({...formData, message: e.target.value})}
                   required
+                  disabled={contactSubmitting}
                 ></textarea>
               </div>
               
-              <button type="submit" className="submit-btn-pro">
+              <button type="submit" className="submit-btn-pro" disabled={contactSubmitting}>
                 <Send size={18} />
-                Send Message
+                {contactSubmitting ? "Sending…" : "Send Message"}
               </button>
             </form>
           </div>

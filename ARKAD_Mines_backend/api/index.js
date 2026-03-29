@@ -15,6 +15,7 @@ import customerRouter from "../Routes/CustomerRoutes/customerRouter.js";
 import forecastingRouter from "../Routes/ForecastingRoute/ForecastingRoute.js";
 import procurementRouter from "../Routes/ProcurementRoute/ProcurementRoute.js";
 import pricingRouter from "../Routes/PricingRoute/PricingRoute.js";
+import contactRouter from "../Routes/ContactRoutes/contactRouter.js";
 const app = express();
 
 // CORS allowed origins: CLIENT_URL plus localhost dev URLs and OKE deployment URLs.
@@ -83,6 +84,7 @@ app.use("/api/customers", customerRouter);
 app.use("/api/forecasting", forecastingRouter);
 app.use("/api/procurement", procurementRouter);
 app.use("/api/pricing", pricingRouter);
+app.use("/api/contact", contactRouter);
 app.get("/", (req, res) => res.status(200).send(" Server running successfully"));
 
 // Vercel supports Express apps natively - export app directly

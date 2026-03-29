@@ -16,6 +16,14 @@ const resetTransporter = nodemailer.createTransport({
   },
 });
 
+const esc = (s) =>
+  String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/\n/g, "<br/>");
+
 export const sendQuotationEmail = async (toEmail, quotationRef, pdfBuffer) => {
   const mailOptions = {
     from: `"Arkad Sales Team" <${process.env.EMAIL_USER}>`,
@@ -93,4 +101,38 @@ export const sendVerificationEmail = async (toEmail, verificationCode) => {
     `,
   };
   await resetTransporter.sendMail(mailOptions);
+};
+
+export const sendContactInquiryEmail = async ({ name, email, phone, subject, message }) => {
+  const to = process.env.RESET_EMAIL_USER;
+  const fromUser = process.env.RESET_EMAIL_USER;
+  const rows = [
+    ["Full name", name],
+    ["Email", email],
+    ["Phone", phone],
+    ["Subject", subject],
+    ["Message", message],
+  ];
+  const tableRows = rows
+    .map(
+      ([label, val]) =>
+        `<tr><td style="padding:10px 14px;border:1px solid #e5e7eb;font-weight:600;color:#1f2937;width:140px;vertical-align:top;">${esc(label)}</td><td style="padding:10px 14px;border:1px solid #e5e7eb;color:#374151;">${esc(val)}</td></tr>`
+    )
+    .join("");
+  const html = `
+      <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:640px;margin:0 auto;padding:24px;background:#ffffff;">
+        <h2 style="color:#2f5242;margin:0 0 8px 0;">Website contact form</h2>
+        <p style="color:#6b7280;font-size:14px;margin:0 0 20px 0;">A visitor submitted the following via the ARKAD Mines website.</p>
+        <table style="width:100%;border-collapse:collapse;font-size:15px;">${tableRows}</table>
+        <p style="color:#9ca3af;font-size:12px;margin-top:24px;">Reply directly to this email to respond to ${esc(email)}.</p>
+      </div>`;
+  const text = `Website contact form\n\nFull name: ${name}\nEmail: ${email}\nPhone: ${phone}\nSubject: ${subject}\n\nMessage:\n${message}\n`;
+  await resetTransporter.sendMail({
+    from: `"ARKAD Mines Website" <${fromUser}>`,
+    to,
+    replyTo: email,
+    subject: `[Contact] ${subject}`,
+    text,
+    html,
+  });
 };

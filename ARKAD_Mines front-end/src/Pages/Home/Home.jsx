@@ -485,7 +485,6 @@ const Home = () => {
       <h2 className="scroll-words st">
         {scrollW('A modern stack for a traditional industry.')}
       </h2>
-      {/* Added the separator line for consistency */}
       <div className="rule-anim section-rule" />
     </div>
 
@@ -508,17 +507,17 @@ const Home = () => {
   </div>
 </section>
 
-      <section className="landing-contact">
-        <div className="landing-container contact-grid">
-          <div className="contact-copy">
-            <span className="eyebrow fade-up">Let&apos;s talk</span>
+      <section className="landing-showcase">
+        <div className="landing-container showcase-grid">
+          <div className="showcase-copy">
+            <span className="eyebrow fade-up">Supply chain clarity</span>
             <h2 className="scroll-words st">
-              {scrollW("Tell us what you're building next.")}
+              {scrollW("Tracked from quarry to port, in one place.")}
             </h2>
             <div className="rule-anim section-rule" />
             <p className="fade-up">
-              We&apos;ll match you with a materials specialist to scope your
-              requirements, recommend options, and map a delivery plan.
+              Inventory, quotations, and orders stay connected so your team always
+              knows what is available, what is approved, and what is on the way.
             </p>
             <div className="contact-details fade-up">
               <div>
@@ -534,32 +533,26 @@ const Home = () => {
                 <span>arkadmines@gmail.com</span>
               </div>
             </div>
+            <div className="showcase-cta fade-up">
+              <Link className="get-started-btn" to="/contact">
+                Contact us
+              </Link>
+              <Link className="showcase-link-secondary" to="/request-quote">
+                Request a quote
+              </Link>
+            </div>
           </div>
-          <form className="contact-form fade-up">
-            <label>
-              First name
-              <input type="text" placeholder="Your first name" />
-            </label>
-            <label>
-              Surname
-              <input type="text" placeholder="Your last name" />
-            </label>
-            <label>
-              Company name
-              <input type="text" placeholder="Your company name" />
-            </label>
-            <label>
-              Email address
-              <input type="email" placeholder="Your email address" />
-            </label>
-            <label>
-              How can we help?
-              <textarea rows="4" placeholder="Tell us about your project." />
-            </label>
-            <button className="submit-btn-home" type="button">
-              Submit
-            </button>
-          </form>
+          <div className="showcase-visual fade-up" aria-hidden="true">
+            <div className="orbit-scene">
+              <div className="orbit-ring orbit-ring-one" />
+              <div className="orbit-ring orbit-ring-two" />
+              <div className="orbit-ring orbit-ring-three" />
+              <div className="orbit-core">
+                <span className="orbit-core-text">ARKAD</span>
+              </div>
+            </div>
+            <p className="showcase-visual-caption">Live visibility for B2B programs</p>
+          </div>
         </div>
       </section>
 

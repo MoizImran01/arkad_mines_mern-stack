@@ -118,7 +118,7 @@ function App() {
 />
           <Route path="/industries" element={<Industries setShowLogin={setShowLogin} />} />
           <Route path="/about" element={<AboutUs />} />
-          <Route path="/contact" element={<ContactUs />} />
+          <Route path="/contact" element={<ContactUs setShowLogin={setShowLogin} />} />
           <Route
             path="/request-quote"
             element={
