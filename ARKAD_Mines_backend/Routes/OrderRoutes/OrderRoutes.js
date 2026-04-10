@@ -8,7 +8,8 @@ import {
   approvePayment,
   rejectPayment,
   getOrderDetailsWithPayment,
-  updatePaymentStatus
+  updatePaymentStatus,
+  dispatchOrderItemByQr
 } from '../../Controllers/OrderController/OrderController.js';
 import { verifyToken, authorizeRoles } from '../../Middlewares/auth.js';
 import { createRateLimiter } from '../../Middlewares/genericRateLimiting.js';
@@ -81,5 +82,6 @@ orderRouter.put('/admin/status/:orderId', verifyToken, authorizeRoles('admin'), 
 orderRouter.put('/admin/payment-status/:orderId', verifyToken, authorizeRoles('admin'), updatePaymentStatus);
 orderRouter.put('/admin/payment/approve/:orderId/:proofIndex', verifyToken, authorizeRoles('admin'), approvePayment);
 orderRouter.put('/admin/payment/reject/:orderId/:proofIndex', verifyToken, authorizeRoles('admin'), rejectPayment);
+orderRouter.post('/admin/dispatch-by-qr', verifyToken, authorizeRoles('admin'), dispatchOrderItemByQr);
 
 export default orderRouter;

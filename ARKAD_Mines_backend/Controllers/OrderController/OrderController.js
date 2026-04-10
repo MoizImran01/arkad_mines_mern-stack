@@ -550,6 +550,131 @@ const updatePaymentStatus = async (req, res) => {
   }
 };
 
+const extractQrCodeId = (qrInput) => {
+  const raw = String(qrInput || '').trim();
+  if (!raw) return '';
+  if (!raw.startsWith('{')) return raw;
+
+  try {
+    const parsed = JSON.parse(raw);
+    return String(parsed.blockId || parsed.qrCode || '').trim();
+  } catch (_err) {
+    return raw;
+  }
+};
+
+const dispatchOrderItemByQr = async (req, res) => {
+  try {
+    const { orderNumber, qrCode, quantity } = req.body || {};
+    const safeOrderNumber = String(orderNumber || '').trim();
+    const safeQrCode = extractQrCodeId(qrCode);
+    const hasQuantityInput = !(quantity === undefined || quantity === null || String(quantity).trim() === '');
+
+    if (!safeOrderNumber || !safeQrCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'orderNumber and qrCode are required.'
+      });
+    }
+
+    const order = await orderModel.findOne({ orderNumber: safeOrderNumber });
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found.' });
+    }
+
+    const stone = await stonesModel.findOne({ qrCode: safeQrCode });
+    if (!stone) {
+      return res.status(404).json({ success: false, message: 'Stone block not found for provided QR code.' });
+    }
+
+    const itemIndex = order.items.findIndex((item) => String(item.stone) === String(stone._id));
+    if (itemIndex === -1) {
+      return res.status(400).json({
+        success: false,
+        message: 'This QR block does not belong to the selected order.'
+      });
+    }
+
+    const orderItem = order.items[itemIndex];
+    const alreadyDispatched = Number(orderItem.quantityDispatched || 0);
+    const orderedQty = Number(orderItem.quantity || 0);
+    const remainingForOrder = orderedQty - alreadyDispatched;
+    const qty = hasQuantityInput ? Number.parseInt(quantity, 10) : remainingForOrder;
+
+    if (remainingForOrder <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'This order item is already fully dispatched.'
+      });
+    }
+
+    if (!Number.isFinite(qty) || qty <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Dispatch quantity must be a positive number.'
+      });
+    }
+
+    if (qty > remainingForOrder) {
+      return res.status(400).json({
+        success: false,
+        message: `Dispatch quantity exceeds remaining order quantity (${remainingForOrder}).`
+      });
+    }
+
+    orderItem.quantityDispatched = alreadyDispatched + qty;
+    orderItem.dispatchedBlocks.push({
+      blockId: stone._id,
+      quantityFromBlock: qty,
+      qrCode: stone.qrCode
+    });
+
+    stone.quantityDelivered = Number(stone.quantityDelivered || 0) + qty;
+    const remainingInventory = Number(stone.stockQuantity || 0) - Number(stone.quantityDelivered || 0);
+    stone.stockAvailability = remainingInventory <= 0 ? 'Out of Stock' : 'In Stock';
+    stone.status = remainingInventory <= 0 ? 'Dispatched' : 'In Warehouse';
+    stone.dispatchHistory.push({
+      orderId: order._id,
+      quantityDispatched: qty,
+      dispatchedAt: new Date(),
+      orderNumber: order.orderNumber
+    });
+
+    const allItemsDispatched = order.items.every(
+      (item) => Number(item.quantityDispatched || 0) >= Number(item.quantity || 0)
+    );
+    if (allItemsDispatched && order.status !== 'dispatched') {
+      order.status = 'dispatched';
+      order.timeline.push({
+        status: 'dispatched',
+        timestamp: new Date(),
+        notes: 'Order auto-marked dispatched from QR dispatch flow'
+      });
+    }
+
+    await stone.save();
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: 'Dispatch recorded successfully.',
+      dispatch: {
+        orderNumber: order.orderNumber,
+        stoneId: stone._id,
+        qrCode: stone.qrCode,
+        quantityDispatched: qty,
+        remainingForOrder: remainingForOrder - qty
+      }
+    });
+  } catch (error) {
+    logError(error, { action: 'DISPATCH_ORDER_ITEM_BY_QR', userId: req.user?.id });
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while dispatching order item by QR.'
+    });
+  }
+};
+
 export { 
   getOrderDetails, 
   getUserOrders, 
@@ -559,5 +684,6 @@ export {
   approvePayment,
   rejectPayment,
   getOrderDetailsWithPayment,
-  updatePaymentStatus
+  updatePaymentStatus,
+  dispatchOrderItemByQr
 };

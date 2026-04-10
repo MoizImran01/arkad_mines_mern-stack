@@ -8,6 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const Dispatch = () => {
   const [qrCode, setQrCode] = useState('');
+  const [orderNumber, setOrderNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [blockInfo, setBlockInfo] = useState(null);
   const [showBlockInfo, setShowBlockInfo] = useState(false);
@@ -15,6 +16,19 @@ const Dispatch = () => {
   const [showCamera, setShowCamera] = useState(false);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const isProcessingScanRef = useRef(false);
+
+  const normalizeQrValue = (rawValue) => {
+    const raw = String(rawValue || '').trim();
+    if (!raw) return '';
+    if (!raw.startsWith('{')) return raw;
+    try {
+      const parsed = JSON.parse(raw);
+      return String(parsed.blockId || parsed.qrCode || '').trim() || raw;
+    } catch (_err) {
+      return raw;
+    }
+  };
 
   // Get image URL
   const getImageUrl = (imagePath) => {
@@ -27,14 +41,14 @@ const Dispatch = () => {
     return `${API_URL}/images/${imagePath}`;
   };
 
-  const searchBlock = async () => {
-
-    if (!qrCode.trim()) {
+  const searchBlock = async (inputQrCode = qrCode) => {
+    const normalizedQrCode = normalizeQrValue(inputQrCode);
+    if (!normalizedQrCode) {
       toast.error("Please enter a QR code");
       return;
     }
-        const token = localStorage.getItem('adminToken');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const token = localStorage.getItem('adminToken');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
     if (!token) {
       toast.error('No authentication token found. Please login again.');
@@ -44,11 +58,12 @@ const Dispatch = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${API_URL}/api/stones/qr/${qrCode}`,
+        `${API_URL}/api/stones/qr/${encodeURIComponent(normalizedQrCode)}`,
         { headers }
       );
       
       if (response.data.success) {
+        setQrCode(normalizedQrCode);
         setBlockInfo(response.data.block);
         setShowBlockInfo(true);
       } else {
@@ -58,7 +73,17 @@ const Dispatch = () => {
       }
     } catch (error) {
       console.error("Error searching block:", error);
-      toast.error(error.response?.data?.message || "Block not found with this QR code");
+      const status = error?.response?.status;
+      const backendMessage = error?.response?.data?.message;
+      if (status === 404) {
+        toast.error(backendMessage || "Block not found with this QR code");
+      } else if (status === 401 || status === 403) {
+        toast.error("Session expired or unauthorized. Please login again.");
+      } else if (!error?.response) {
+        toast.error("Cannot reach backend. Check API URL/server status.");
+      } else {
+        toast.error(backendMessage || "Failed to search block. Please try again.");
+      }
       setBlockInfo(null);
       setShowBlockInfo(false);
     } finally {
@@ -67,8 +92,13 @@ const Dispatch = () => {
   };
 
   const dispatchBlock = async () => {
-    if (!blockInfo || !qrCode) {
+    if (!blockInfo || !qrCode.trim()) {
       toast.error("No block selected");
+      return;
+    }
+
+    if (!orderNumber.trim()) {
+      toast.error("Please enter order number");
       return;
     }
 
@@ -87,8 +117,11 @@ const Dispatch = () => {
       }
 
      const response = await axios.post(
-        `${API_URL}/api/stones/dispatch`,
-        { qrCode: qrCode },
+        `${API_URL}/api/orders/admin/dispatch-by-qr`,
+        {
+          qrCode: qrCode.trim(),
+          orderNumber: orderNumber.trim()
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -99,8 +132,12 @@ const Dispatch = () => {
 
       if (response.data.success) {
         toast.success(response.data.message);
-        setBlockInfo({ ...blockInfo, status: "Dispatched", stockAvailability: "Out of Stock" });
+        const remainingForOrder = response.data?.dispatch?.remainingForOrder;
+        if (typeof remainingForOrder === 'number' && remainingForOrder <= 0) {
+          setBlockInfo({ ...blockInfo, status: "Dispatched" });
+        }
         setQrCode('');
+        setOrderNumber('');
         setTimeout(() => {
           setShowBlockInfo(false);
           setBlockInfo(null);
@@ -163,33 +200,26 @@ const Dispatch = () => {
         const barcodeDetector = new globalThis.BarcodeDetector({ formats: ['qr_code'] });
         
         const detectQR = async () => {
+          if (isProcessingScanRef.current) return;
           try {
             const barcodes = await barcodeDetector.detect(video);
             if (barcodes.length > 0) {
+              isProcessingScanRef.current = true;
               const detectedCode = barcodes[0].rawValue;
-              setQrCode(detectedCode);
+              const normalizedCode = normalizeQrValue(detectedCode);
+              if (!normalizedCode) {
+                isProcessingScanRef.current = false;
+                return;
+              }
+              setQrCode(normalizedCode);
               stopCameraScan();
               toast.success("QR code detected!");
 
-              setTimeout(async () => {
-                if (detectedCode.trim()) {
-                  try {
-                    setLoading(true);
-                    const response = await axios.get(`${API_URL}/api/stones/qr/${detectedCode}`);
-                    if (response.data.success) {
-                      setBlockInfo(response.data.block);
-                      setShowBlockInfo(true);
-                    }
-                  } catch (error) {
-                    toast.error("Block not found with this QR code");
-                  } finally {
-                    setLoading(false);
-                  }
-                }
-              }, 500);
+              await searchBlock(normalizedCode);
+              isProcessingScanRef.current = false;
             }
           } catch (err) {
-            
+            isProcessingScanRef.current = false;
           }
         };
 
@@ -212,6 +242,7 @@ const Dispatch = () => {
 
   useEffect(() => {
     return () => {
+      isProcessingScanRef.current = false;
       stopCameraScan();
     };
   }, []);
@@ -269,7 +300,7 @@ const Dispatch = () => {
             />
             <button 
               className="search-btn"
-              onClick={searchBlock}
+              onClick={() => searchBlock()}
               disabled={loading || !qrCode.trim()}
             >
               {loading ? "Searching..." : <><FiSearch /> Search Block</>}
@@ -310,6 +341,16 @@ const Dispatch = () => {
             )}
           </div>
         )}
+        <div className="search-box" style={{ marginTop: '12px' }}>
+          <input
+            type="text"
+            placeholder="Enter order number (e.g. ORD-123456-789)"
+            value={orderNumber}
+            onChange={(e) => setOrderNumber(e.target.value)}
+            className="qr-input"
+            disabled={loading}
+          />
+        </div>
       </div>
 
       {/* Block Information Display */}
