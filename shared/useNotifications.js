@@ -13,7 +13,8 @@ export const formatTime = (date) => {
   return `${days}d ago`;
 };
 
-const POLL_INTERVAL_MS = 30 * 1000;
+// payment fix client side: shorter poll + tokenRef in interval + pathname/focus refetch
+const POLL_INTERVAL_MS = 15 * 1000;
 
 const normalizeFetchArg = (arg) => {
   if (arg === true) return { manual: true, silent: false };
@@ -21,23 +22,29 @@ const normalizeFetchArg = (arg) => {
   return { manual: false, silent: false };
 };
 
-const useNotifications = (token, apiBase) => {
+const useNotifications = (token, apiBase, options = {}) => {
+  const { pathname } = options;
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [refreshingNotifications, setRefreshingNotifications] = useState(false);
   const panelRef = useRef(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const tokenRef = useRef(token);
+  const pathHandledRef = useRef(false);
+
+  tokenRef.current = token;
 
   const fetchNotifications = useCallback(async (arg) => {
     const { manual, silent } = normalizeFetchArg(arg);
-    if (!token) return;
+    const t = tokenRef.current;
+    if (!t) return;
     try {
       if (!silent) {
         if (manual) setRefreshingNotifications(true);
         else setLoadingNotifications(true);
       }
       const response = await axios.get(`${apiBase}/api/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${t}` },
       });
       if (response.data.success) {
         setNotifications(response.data.notifications || []);
@@ -50,15 +57,16 @@ const useNotifications = (token, apiBase) => {
         setRefreshingNotifications(false);
       }
     }
-  }, [token, apiBase]);
+  }, [apiBase]);
 
   const clearNotifications = async (onSuccess) => {
-    if (!token) return;
+    const t = tokenRef.current;
+    if (!t) return;
     try {
       const response = await axios.post(
         `${apiBase}/api/notifications/clear`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${t}` } }
       );
       if (response.data.success) {
         setNotifications([]);
@@ -71,6 +79,7 @@ const useNotifications = (token, apiBase) => {
 
   useEffect(() => {
     if (!token) {
+      pathHandledRef.current = false;
       setNotifications([]);
       return;
     }
@@ -80,6 +89,7 @@ const useNotifications = (token, apiBase) => {
   useEffect(() => {
     if (!token) return;
     const id = setInterval(() => {
+      if (!tokenRef.current) return;
       fetchNotifications({ silent: true });
     }, POLL_INTERVAL_MS);
     return () => clearInterval(id);
@@ -87,13 +97,30 @@ const useNotifications = (token, apiBase) => {
 
   useEffect(() => {
     const onVisibility = () => {
-      if (document.visibilityState === "visible" && token) {
+      if (document.visibilityState === "visible" && tokenRef.current) {
         fetchNotifications({ silent: true });
       }
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, [token, fetchNotifications]);
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    const onFocus = () => {
+      if (tokenRef.current) fetchNotifications({ silent: true });
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    if (pathname === undefined || !token) return;
+    if (!pathHandledRef.current) {
+      pathHandledRef.current = true;
+      return;
+    }
+    fetchNotifications({ silent: true });
+  }, [pathname, token, fetchNotifications]);
 
   useEffect(() => {
     if (token && showNotifications) {

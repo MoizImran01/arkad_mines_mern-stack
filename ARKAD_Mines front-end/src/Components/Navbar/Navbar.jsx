@@ -21,11 +21,12 @@ const Navbar = ({ setShowLogin }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
+  // payment fix client side: pass pathname so notifications refetch after navigation (e.g. post-payment)
   const {
     notifications, loadingNotifications, refreshingNotifications,
     showNotifications, setShowNotifications, panelRef: notificationRef,
     fetchNotifications, clearNotifications,
-  } = useNotifications(token, API_BASE);
+  } = useNotifications(token, API_BASE, { pathname: location.pathname });
 
   const getActiveMenu = () => {
     const path = location.pathname;

@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react'
 import './Navbar.css'
 import { assets } from '../../assets/assets.js'
 import { AdminAuthContext } from '../../context/AdminAuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import axios from 'axios'
 import { FiBell, FiX, FiRefreshCw } from 'react-icons/fi'
@@ -13,6 +13,7 @@ const API_BASE = import.meta.env.VITE_API_URL ?? "";
 const Navbar = () => {
   const { adminUser, logout, token } = useContext(AdminAuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [showExpanded, setShowExpanded] = useState(false);
   const [paymentSummary, setPaymentSummary] = useState([]);
 
@@ -20,7 +21,7 @@ const Navbar = () => {
     notifications, loadingNotifications, refreshingNotifications,
     showNotifications, setShowNotifications, panelRef,
     fetchNotifications, clearNotifications,
-  } = useNotifications(token, API_BASE);
+  } = useNotifications(token, API_BASE, { pathname: location.pathname });
 
   const authHeaders = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
