@@ -38,12 +38,14 @@ spec:
               value: "45"
             - name: MONGO_CONNECT_DELAY_MS
               value: "2000"
+            - name: MONGO_SERVER_SELECTION_TIMEOUT_MS
+              value: "5000"
           startupProbe:
             httpGet:
               path: /live
               port: 4000
             periodSeconds: 5
-            failureThreshold: 36
+            failureThreshold: 70
             timeoutSeconds: 3
           readinessProbe:
             httpGet:

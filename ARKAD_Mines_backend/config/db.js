@@ -11,10 +11,19 @@ export const connectDB = async () => {
   }
   const maxAttempts = Number(process.env.MONGO_CONNECT_MAX_ATTEMPTS || 30);
   const delayMs = Number(process.env.MONGO_CONNECT_DELAY_MS || 2000);
+  // Fail each attempt quickly so retries fit under K8s startupProbe windows (default Mongoose waits 30s).
+  const serverSelectionTimeoutMS = Number(
+    process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS || 5000
+  );
+
+  const connectOpts = {
+    serverSelectionTimeoutMS,
+    connectTimeoutMS: serverSelectionTimeoutMS,
+  };
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      await mongoose.connect(uri);
+      await mongoose.connect(uri, connectOpts);
       console.log("MongoDB Connected:", mongoose.connection.name);
       return;
     } catch (err) {
@@ -22,6 +31,7 @@ export const connectDB = async () => {
         `MongoDB connection attempt ${attempt}/${maxAttempts}:`,
         err.message
       );
+      await mongoose.disconnect().catch(() => {});
       if (attempt === maxAttempts) {
         process.exit(1);
       }
