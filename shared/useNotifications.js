@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 
 export const formatTime = (date) => {
@@ -13,35 +13,53 @@ export const formatTime = (date) => {
   return `${days}d ago`;
 };
 
+const POLL_INTERVAL_MS = 30 * 1000;
+
+const normalizeFetchArg = (arg) => {
+  if (arg === true) return { manual: true, silent: false };
+  if (arg && typeof arg === 'object' && arg.silent === true) return { manual: false, silent: true };
+  return { manual: false, silent: false };
+};
+
 const useNotifications = (token, apiBase) => {
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [refreshingNotifications, setRefreshingNotifications] = useState(false);
   const panelRef = useRef(null);
   const [showNotifications, setShowNotifications] = useState(false);
-  const authHeaders = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
-  const fetchNotifications = async (isRefresh = false) => {
+  const fetchNotifications = useCallback(async (arg) => {
+    const { manual, silent } = normalizeFetchArg(arg);
     if (!token) return;
     try {
-      if (isRefresh) setRefreshingNotifications(true);
-      else setLoadingNotifications(true);
-      const response = await axios.get(`${apiBase}/api/notifications`, authHeaders);
+      if (!silent) {
+        if (manual) setRefreshingNotifications(true);
+        else setLoadingNotifications(true);
+      }
+      const response = await axios.get(`${apiBase}/api/notifications`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (response.data.success) {
         setNotifications(response.data.notifications || []);
       }
     } catch (error) {
       console.error("Notification fetch error:", error);
     } finally {
-      setLoadingNotifications(false);
-      setRefreshingNotifications(false);
+      if (!silent) {
+        setLoadingNotifications(false);
+        setRefreshingNotifications(false);
+      }
     }
-  };
+  }, [token, apiBase]);
 
   const clearNotifications = async (onSuccess) => {
     if (!token) return;
     try {
-      const response = await axios.post(`${apiBase}/api/notifications/clear`, {}, authHeaders);
+      const response = await axios.post(
+        `${apiBase}/api/notifications/clear`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       if (response.data.success) {
         setNotifications([]);
         if (onSuccess) onSuccess();
@@ -52,8 +70,36 @@ const useNotifications = (token, apiBase) => {
   };
 
   useEffect(() => {
+    if (!token) {
+      setNotifications([]);
+      return;
+    }
     fetchNotifications();
-  }, [token]);
+  }, [token, fetchNotifications]);
+
+  useEffect(() => {
+    if (!token) return;
+    const id = setInterval(() => {
+      fetchNotifications({ silent: true });
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [token, fetchNotifications]);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && token) {
+        fetchNotifications({ silent: true });
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [token, fetchNotifications]);
+
+  useEffect(() => {
+    if (token && showNotifications) {
+      fetchNotifications({ silent: true });
+    }
+  }, [showNotifications, token, fetchNotifications]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
