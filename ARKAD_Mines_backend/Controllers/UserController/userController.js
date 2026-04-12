@@ -24,7 +24,7 @@ const verifyCaptcha = async (captchaToken) => {
     
     if (!secretKey) {
       console.warn("RECAPTCHA_SECRET_KEY not configured - skipping verification");
-      return true; // Skip verification if not configured
+      return true; 
     }
 
     const response = await axios.post(

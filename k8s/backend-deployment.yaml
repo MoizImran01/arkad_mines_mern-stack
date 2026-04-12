@@ -33,4 +33,30 @@ spec:
             - name: MONGO_URI
               value: "mongodb://mongo-svc:27017/arkad_mines"
             - name: PORT
-              value: "4000"  
+              value: "4000"
+            - name: MONGO_CONNECT_MAX_ATTEMPTS
+              value: "45"
+            - name: MONGO_CONNECT_DELAY_MS
+              value: "2000"
+          startupProbe:
+            httpGet:
+              path: /live
+              port: 4000
+            periodSeconds: 5
+            failureThreshold: 36
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 4000
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: 4000
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3

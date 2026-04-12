@@ -1,6 +1,5 @@
 # Render Blueprint — deploy both microservices from the monorepo root.
-# After first deploy, set MONGO_URI in the Render dashboard for each service (secret).
-# See conversation / Render docs: https://render.com/docs/blueprint-spec
+
 
 services:
   - type: web

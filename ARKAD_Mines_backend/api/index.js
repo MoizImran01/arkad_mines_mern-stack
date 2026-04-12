@@ -3,6 +3,7 @@ dotenv.config({ path: "./config.env" });
 
 import express from "express";
 import cors from "cors";
+import mongoose from "mongoose";
 import { connectDB } from "../config/db.js";
 import userRouter from "../Routes/UserRoutes/userRouter.js";
 import adminRouter from "../Routes/AdminRoutes/adminRouter.js";
@@ -53,23 +54,13 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-connectDB().catch((e) => console.error("DB connect error:", e));
-
-(async () => {
-  try {
-    const { startRetentionCleanup } = await import("../Utils/dataRetention.js");
-    startRetentionCleanup();
-  } catch (error) {
-    console.warn("Data retention cleanup not available:", error.message);
+app.get("/live", (req, res) => res.status(200).type("text").send("ok"));
+app.get("/ready", (req, res) => {
+  if (mongoose.connection.readyState === 1) {
+    return res.status(200).type("text").send("ok");
   }
-  
-  try {
-    const { ensureAnalyticsIndexes } = await import("../Utils/analyticsIndexes.js");
-    setTimeout(() => ensureAnalyticsIndexes(), 5000);
-  } catch (error) {
-    console.warn("Analytics indexes not available:", error.message);
-  }
-})();
+  res.status(503).type("text").send("not ready");
+});
 
 app.use("/images", express.static("uploads"));
 
@@ -90,7 +81,34 @@ app.get("/", (req, res) => res.status(200).send(" Server running successfully"))
 // Vercel supports Express apps natively - export app directly
 export default app;
 
-if (!process.env.VERCEL) {
-  const port = process.env.PORT || 4000;
-  app.listen(port, () => console.log(`Local API on ${port}`));
+async function start() {
+  if (!process.env.VERCEL) {
+    await connectDB();
+  } else {
+    connectDB().catch((e) => console.error("DB connect error:", e));
+  }
+
+  try {
+    const { startRetentionCleanup } = await import("../Utils/dataRetention.js");
+    startRetentionCleanup();
+  } catch (error) {
+    console.warn("Data retention cleanup not available:", error.message);
+  }
+
+  try {
+    const { ensureAnalyticsIndexes } = await import("../Utils/analyticsIndexes.js");
+    setTimeout(() => ensureAnalyticsIndexes(), 5000);
+  } catch (error) {
+    console.warn("Analytics indexes not available:", error.message);
+  }
+
+  if (!process.env.VERCEL) {
+    const port = process.env.PORT || 4000;
+    app.listen(port, () => console.log(`Local API on ${port}`));
+  }
 }
+
+start().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
