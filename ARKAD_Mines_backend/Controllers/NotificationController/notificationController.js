@@ -55,18 +55,15 @@ export const getNotifications = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid user ID format" });
     }
 
-    const visibleQuery = {
-      ...query,
-      $or: [
-        { clearedAt: { $exists: false } },
-        { clearedAt: null },
-      ],
-    };
-
-    const notifications = await notificationModel
-      .find(visibleQuery)
+    const batch = await notificationModel
+      .find(query)
       .sort({ createdAt: -1 })
-      .limit(100);
+      .limit(300)
+      .lean();
+
+    const notifications = batch
+      .filter((doc) => doc.clearedAt == null)
+      .slice(0, 100);
 
     res.status(200).json({ success: true, notifications });
   } catch (error) {
