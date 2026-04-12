@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext, useCallback } from 'react';
 import './App.css';
 import Navbar from './Components/Navbar/Navbar';
 import LoginPopup from './Components/LoginPopup/LoginPopup';
@@ -19,13 +19,45 @@ import Dashboard from './Pages/Dashboard/Dashboard';
 import Profile from './Pages/Profile/Profile';
 import EditProfile from './Pages/EditProfile/EditProfile';
 import Footer from './Components/Footer/Footer';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { StoreContext } from './context/StoreContext';
+import { useIdleSession } from './hooks/useIdleSession';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
+
+function IdleSessionGate() {
+  const { token, logout } = useContext(StoreContext);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("arkad_logout_reason") === "inactivity") {
+        sessionStorage.removeItem("arkad_logout_reason");
+        toast.info(
+          "You have been logged out due to inactivity exceeding one hour. Please log back in."
+        );
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const onIdle = useCallback(() => {
+    try {
+      sessionStorage.setItem("arkad_logout_reason", "inactivity");
+    } catch {
+      /* ignore */
+    }
+    logout();
+  }, [logout]);
+
+  useIdleSession(token, onIdle);
+
+  return null;
+}
 
 function App() {
   const [showLogin, setShowLogin] = useState(false);
@@ -87,6 +119,7 @@ function App() {
         theme="light"
         style={{ zIndex: 30000 }}
       />
+      <IdleSessionGate />
       {showLogin ? <LoginPopup setShowLogin={setShowLogin} /> : null}
       <div className="app">
         <Navbar setShowLogin={setShowLogin} />

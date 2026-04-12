@@ -76,8 +76,15 @@ const LoginPopup = ({ setShowLogin }) => {
             if (response.data.success) {
                 const { token, user } = response.data;
                 setToken(token);
-                localStorage.setItem("token", token);
-                localStorage.setItem("userRole", user.role);
+                try {
+                  sessionStorage.setItem("token", token);
+                  sessionStorage.setItem("userRole", user.role);
+                  sessionStorage.setItem("arkad_last_activity", String(Date.now()));
+                  localStorage.removeItem("token");
+                  localStorage.removeItem("userRole");
+                } catch {
+                  /* ignore */
+                }
                 if (user.role === "admin") {
                     globalThis.location.href = import.meta.env.VITE_ADMIN_URL || "http://localhost:5174";
                 } else {

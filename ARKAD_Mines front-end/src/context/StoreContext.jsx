@@ -1,14 +1,33 @@
 import { createContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
-// Global context for token, user, quote items, and app URL.
 export const StoreContext = createContext(null);
 
-// Wraps the app and syncs auth/quote state with localStorage and sessionStorage.
+const migrateTokenFromLegacyStorage = () => {
+  try {
+    let t = sessionStorage.getItem("token") || "";
+    if (t) return t;
+    const legacy = localStorage.getItem("token");
+    if (legacy) {
+      sessionStorage.setItem("token", legacy);
+      localStorage.removeItem("token");
+      const role = localStorage.getItem("userRole");
+      if (role) {
+        sessionStorage.setItem("userRole", role);
+        localStorage.removeItem("userRole");
+      }
+      return legacy;
+    }
+  } catch {
+    /* ignore */
+  }
+  return "";
+};
+
 const StoreContextProvider = (props) => {
   const url = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
+  const [token, setToken] = useState(() => migrateTokenFromLegacyStorage());
   const [user, setUser] = useState(null);
   const [quoteItems, setQuoteItems] = useState(() => {
     const stored = localStorage.getItem("quoteItems");
@@ -22,10 +41,19 @@ const StoreContextProvider = (props) => {
   );
 
   useEffect(() => {
-    if (token) {
-      localStorage.setItem("token", token);
-    } else {
-      localStorage.removeItem("token");
+    try {
+      if (token) {
+        sessionStorage.setItem("token", token);
+        localStorage.removeItem("token");
+      } else {
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("userRole");
+        sessionStorage.removeItem("arkad_last_activity");
+        localStorage.removeItem("token");
+        localStorage.removeItem("userRole");
+      }
+    } catch {
+      /* ignore */
     }
   }, [token]);
 
@@ -144,7 +172,15 @@ const StoreContextProvider = (props) => {
   const logout = () => {
     setToken("");
     setUser(null);
-    localStorage.removeItem("token");
+    try {
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("userRole");
+      sessionStorage.removeItem("arkad_last_activity");
+      localStorage.removeItem("token");
+      localStorage.removeItem("userRole");
+    } catch {
+      /* ignore */
+    }
     clearQuoteItems();
   };
 
