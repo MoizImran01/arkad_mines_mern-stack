@@ -19,6 +19,7 @@ import {
   FiLock
 } from "react-icons/fi";
 import Pagination from '../../../../shared/Pagination.jsx';
+import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
@@ -88,13 +89,7 @@ const Quotations = () => {
   };
   fetchQuotesRef.current = fetchQuotes;
 
-  useEffect(() => {
-    const onLive = (e) => {
-      if (e.detail?.channel === "quotations") fetchQuotesRef.current();
-    };
-    window.addEventListener("arkad:live", onLive);
-    return () => window.removeEventListener("arkad:live", onLive);
-  }, []);
+  useEffect(() => subscribeLive("quotations", () => fetchQuotesRef.current()), []);
 
   const filterQuotationsByTab = (quotations, tab) => {
     switch (tab) {

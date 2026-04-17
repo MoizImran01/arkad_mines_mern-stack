@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import { FiBox, FiTrash2 } from 'react-icons/fi';
 import Pagination from '../../../../shared/Pagination.jsx';
+import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
 
@@ -50,13 +51,7 @@ const List = () => {
   const fetchListRef = useRef(fetchList);
   fetchListRef.current = fetchList;
 
-  useEffect(() => {
-    const onLive = (e) => {
-      if (e.detail?.channel === "stones") fetchListRef.current();
-    };
-    window.addEventListener("arkad:live", onLive);
-    return () => window.removeEventListener("arkad:live", onLive);
-  }, []);
+  useEffect(() => subscribeLive("stones", () => fetchListRef.current()), []);
 
   const removeStoneItem = async (stoneID)=>{
       try{

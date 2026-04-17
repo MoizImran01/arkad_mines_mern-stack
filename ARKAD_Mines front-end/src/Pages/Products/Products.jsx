@@ -4,6 +4,7 @@ import axios from 'axios';
 import { FiFilter, FiX, FiSearch, FiSliders, FiAlertTriangle } from 'react-icons/fi';
 import { StoreContext } from '../../context/StoreContext';
 import { useNavigate } from 'react-router-dom';
+import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 
 // Stone catalog with category, price, stock filters and add-to-quote.
 const Products = () => {
@@ -107,13 +108,7 @@ const Products = () => {
   const applyFiltersRef = useRef(applyFilters);
   applyFiltersRef.current = applyFilters;
 
-  useEffect(() => {
-    const onLive = (e) => {
-      if (e.detail?.channel === "stones") applyFiltersRef.current();
-    };
-    window.addEventListener("arkad:live", onLive);
-    return () => window.removeEventListener("arkad:live", onLive);
-  }, []);
+  useEffect(() => subscribeLive("stones", () => applyFiltersRef.current()), []);
 
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({

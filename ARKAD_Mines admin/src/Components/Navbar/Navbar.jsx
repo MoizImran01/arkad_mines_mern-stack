@@ -7,6 +7,7 @@ import { toast } from 'react-toastify'
 import axios from 'axios'
 import { FiBell, FiX, FiRefreshCw } from 'react-icons/fi'
 import useNotifications, { formatTime } from '../../../../shared/useNotifications'
+import { subscribeLive } from '../../../../shared/socketLiveRegistry.js'
 
 const Navbar = () => {
   const { adminUser, logout, token, url } = useContext(AdminAuthContext);
@@ -46,12 +47,13 @@ const Navbar = () => {
   fetchPaymentSummaryRef.current = fetchPaymentSummary;
 
   useEffect(() => {
-    const onLive = (e) => {
-      const ch = e.detail?.channel;
-      if (ch === "notifications" || ch === "orders") fetchPaymentSummaryRef.current();
-    };
-    window.addEventListener("arkad:live", onLive);
-    return () => window.removeEventListener("arkad:live", onLive);
+    const fn = () => fetchPaymentSummaryRef.current()
+    const u1 = subscribeLive('notifications', fn)
+    const u2 = subscribeLive('orders', fn)
+    return () => {
+      u1()
+      u2()
+    }
   }, []);
 
   const renderNotificationItem = (notification) => (

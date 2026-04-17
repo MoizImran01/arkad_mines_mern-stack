@@ -15,6 +15,7 @@ import {
   FiTrendingUp
 } from "react-icons/fi";
 import Pagination from '../../../../shared/Pagination.jsx';
+import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 
 const Quotations = () => {
   const { token, url } = useContext(AdminAuthContext);
@@ -83,13 +84,13 @@ const Quotations = () => {
   fetchQuotesRef.current = fetchQuotes;
 
   useEffect(() => {
-    const onLive = (e) => {
-      if (e.detail?.channel === "quotations" || e.detail?.channel === "orders") {
-        fetchQuotesRef.current();
-      }
+    const fn = () => fetchQuotesRef.current();
+    const u1 = subscribeLive("quotations", fn);
+    const u2 = subscribeLive("orders", fn);
+    return () => {
+      u1();
+      u2();
     };
-    window.addEventListener("arkad:live", onLive);
-    return () => window.removeEventListener("arkad:live", onLive);
   }, []);
 
   const visibleQuotes = quotes.filter((quote) => {

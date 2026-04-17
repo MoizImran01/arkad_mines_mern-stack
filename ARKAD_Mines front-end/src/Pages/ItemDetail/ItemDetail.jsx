@@ -9,6 +9,7 @@ import {
   FiLoader,
 } from 'react-icons/fi';
 import './ItemDetail.css';
+import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 
 // Single stone product page: details, image zoom, add to quote.
 const ItemDetail = () => {
@@ -54,13 +55,7 @@ const ItemDetail = () => {
     fetchStone();
   }, [id, url]);
 
-  useEffect(() => {
-    const onLive = (e) => {
-      if (e.detail?.channel === 'stones') fetchStoneRef.current();
-    };
-    window.addEventListener('arkad:live', onLive);
-    return () => window.removeEventListener('arkad:live', onLive);
-  }, []);
+  useEffect(() => subscribeLive('stones', () => fetchStoneRef.current()), []);
 
   const handleImageMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();

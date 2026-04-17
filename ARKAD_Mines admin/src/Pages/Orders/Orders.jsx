@@ -3,6 +3,7 @@ import './Orders.css'
 import { formatOrderStatus, formatPaymentStatus } from '../../formatStatus'
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
+import { subscribeLive } from '../../../../shared/socketLiveRegistry.js'
 import { toast } from 'react-toastify'
 import {
   FiPackage, FiCheckCircle, FiXCircle, FiClock,
@@ -369,14 +370,12 @@ const Orders = () => {
   const listArgsRef = useRef({ page: 1, status: '', search: '' });
 
   useEffect(() => {
-    const onLive = (e) => {
-      if (e.detail?.channel !== 'orders') return;
-      const { page, status, search } = listArgsRef.current;
-      fetchAllOrdersRef.current(page, status, search);
-      fetchStatsRef.current();
-    };
-    window.addEventListener('arkad:live', onLive);
-    return () => window.removeEventListener('arkad:live', onLive);
+    const fn = () => {
+      const { page, status, search } = listArgsRef.current
+      fetchAllOrdersRef.current(page, status, search)
+      fetchStatsRef.current()
+    }
+    return subscribeLive('orders', fn)
   }, []);
 
   useEffect(() => {

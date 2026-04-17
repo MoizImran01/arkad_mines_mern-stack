@@ -8,6 +8,7 @@ import { FiPackage, FiCreditCard, FiMapPin, FiShoppingBag, FiEdit2, FiArrowLeft 
 import { toast } from "react-toastify";
 import usePaymentVerification from '../../../../shared/usePaymentVerification';
 import { MfaModal } from '../../../../shared/VerificationModals.jsx';
+import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 
 // Order status page: delivery info, summary, and payment proof with MFA confirmation.
 const PlaceOrder = () => {
@@ -88,13 +89,7 @@ const PlaceOrder = () => {
     if (token && orderNumber) fetchOrderDetails();
   }, [token, orderNumber, url, navigate]);
 
-  useEffect(() => {
-    const onLive = (e) => {
-      if (e.detail?.channel === 'orders') fetchOrderDetailsRef.current();
-    };
-    window.addEventListener('arkad:live', onLive);
-    return () => window.removeEventListener('arkad:live', onLive);
-  }, []);
+  useEffect(() => subscribeLive('orders', () => fetchOrderDetailsRef.current()), []);
 
   const onChangeHandler = (event) => {
     const { name, value } = event.target;

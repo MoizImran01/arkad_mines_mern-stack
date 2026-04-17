@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { StoreContext } from "../../context/StoreContext";
 import { useNavigate } from "react-router-dom";
 import Pagination from '../../../../shared/Pagination.jsx';
+import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 import usePaymentVerification from '../../../../shared/usePaymentVerification';
 import { formatOrderStatus, formatPaymentStatus } from '../../utils/formatStatus';
 import { MfaModal } from '../../../../shared/VerificationModals.jsx';
@@ -75,13 +76,7 @@ const Orders = () => {
   };
   fetchOrdersRef.current = fetchOrders;
 
-  useEffect(() => {
-    const onLive = (e) => {
-      if (e.detail?.channel === "orders") fetchOrdersRef.current();
-    };
-    window.addEventListener("arkad:live", onLive);
-    return () => window.removeEventListener("arkad:live", onLive);
-  }, []);
+  useEffect(() => subscribeLive("orders", () => fetchOrdersRef.current()), []);
 
   useEffect(() => {
     fetchOrders();

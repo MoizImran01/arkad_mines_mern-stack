@@ -15,6 +15,7 @@ import {
   FiAlertCircle
 } from "react-icons/fi";
 import { toast } from "react-toastify";
+import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 
 // Documents list with date/order/type filters and download.
 const Documents = () => {
@@ -90,14 +91,15 @@ const Documents = () => {
   fetchDocumentsRef.current = fetchDocuments;
 
   useEffect(() => {
-    const onLive = (e) => {
-      const ch = e.detail?.channel;
-      if (ch === "orders" || ch === "quotations" || ch === "notifications") {
-        fetchDocumentsRef.current();
-      }
+    const fn = () => fetchDocumentsRef.current();
+    const u1 = subscribeLive("orders", fn);
+    const u2 = subscribeLive("quotations", fn);
+    const u3 = subscribeLive("notifications", fn);
+    return () => {
+      u1();
+      u2();
+      u3();
     };
-    window.addEventListener("arkad:live", onLive);
-    return () => window.removeEventListener("arkad:live", onLive);
   }, []);
 
   useEffect(() => {

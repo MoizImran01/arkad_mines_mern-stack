@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
+import { subscribeLive } from './socketLiveRegistry.js';
 
 export const formatTime = (date) => {
   if (!date) return "";
@@ -129,13 +130,9 @@ const useNotifications = (token, apiBase, options = {}) => {
   }, [showNotifications, token, fetchNotifications]);
 
   useEffect(() => {
-    const onLive = (e) => {
-      if (e.detail?.channel === "notifications" && tokenRef.current) {
-        fetchNotifications({ silent: true });
-      }
-    };
-    window.addEventListener("arkad:live", onLive);
-    return () => window.removeEventListener("arkad:live", onLive);
+    return subscribeLive("notifications", () => {
+      if (tokenRef.current) fetchNotifications({ silent: true });
+    });
   }, [fetchNotifications]);
 
   useEffect(() => {

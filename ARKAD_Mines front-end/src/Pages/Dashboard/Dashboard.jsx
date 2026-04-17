@@ -8,6 +8,7 @@ import MaterialPreferenceChart from './Components/MaterialPreferenceChart';
 import TopStonesPanel from './Components/TopStonesPanel';
 import './Dashboard.css';
 import { formatOrderStatus, formatPaymentStatus } from '../../utils/formatStatus';
+import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 
 // Client dashboard: orders, quotes, purchase timeline, material preferences, top stones.
 const Dashboard = () => {
@@ -70,14 +71,15 @@ const Dashboard = () => {
   }, [token, url]);
 
   useEffect(() => {
-    const onLive = (e) => {
-      const ch = e.detail?.channel;
-      if (ch === "orders" || ch === "quotations" || ch === "stones") {
-        fetchDashboardDataRef.current();
-      }
+    const fn = () => fetchDashboardDataRef.current();
+    const u1 = subscribeLive("orders", fn);
+    const u2 = subscribeLive("quotations", fn);
+    const u3 = subscribeLive("stones", fn);
+    return () => {
+      u1();
+      u2();
+      u3();
     };
-    window.addEventListener("arkad:live", onLive);
-    return () => window.removeEventListener("arkad:live", onLive);
   }, []);
 
   const calculateAnalytics = (orders, stonesMap = new Map()) => {
