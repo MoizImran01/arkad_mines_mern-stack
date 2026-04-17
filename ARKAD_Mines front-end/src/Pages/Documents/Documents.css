@@ -338,25 +338,26 @@
 .status-badge.status-approved,
 .status-badge.status-paid,
 .status-badge.status-fully_paid,
-.status-badge.status-delivered {
+.status-badge.status-delivered,
+.status-badge.status-confirmed {
   background: #d1fae5;
-  color: #2f5242;
+  color: #000;
 }
 
 .status-badge.status-pending,
 .status-badge.status-payment_in_progress {
-  background: #fef3c7;
-  color: #92400e;
+  background: #caeeff;
+  color: #000;
 }
 
 .status-badge.status-dispatched {
-  background: #dbeafe;
-  color: #1e40af;
+  background: #caeeff;
+  color: #000;
 }
 
 .status-badge.status-draft {
-  background: #f3f4f6;
-  color: #374151;
+  background: #fff4aa;
+  color: #000;
 }
 
 .status-badge.status-cancelled,

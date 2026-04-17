@@ -187,11 +187,11 @@
   letter-spacing: 0.025em;
 }
 
-.status-draft { background: #f3f4f6; color: #374151; }      
-.status-confirmed { background: #dbeafe; color: #1e40af; }   
-.status-dispatched { background: #ffedd5; color: #9a3412; } 
-.status-delivered { background: #dcfce7; color: #2f5242; }  
-.status-cancelled { background: #fee2e2; color: #991b1b; }   
+.status-draft      { background: #fff4aa; color: #000; }
+.status-confirmed  { background: #d1fae5; color: #000; }
+.status-dispatched { background: #caeeff; color: #000; }
+.status-delivered  { background: #d1fae5; color: #000; }
+.status-cancelled  { background: #fee2e2; color: #991b1b; }
 
 .balance-badge {
   display: inline-flex;

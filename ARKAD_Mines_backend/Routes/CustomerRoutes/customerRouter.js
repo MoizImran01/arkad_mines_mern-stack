@@ -42,7 +42,6 @@ customerRouter.get(
   verifyToken,
   authorizeRoles(...allowedRoles),
   searchRateLimiter.userLimiter,
-  searchRateLimiter.ipLimiter,
   searchCustomers
 );
 
@@ -51,7 +50,6 @@ customerRouter.get(
   verifyToken,
   authorizeRoles(...allowedRoles),
   historyRateLimiter.userLimiter,
-  historyRateLimiter.ipLimiter,
   getCustomerHistory
 );
 
@@ -61,7 +59,6 @@ customerRouter.get(
   verifyToken,
   authorizeRoles(...allowedRoles),
   exportRateLimiter.userLimiter,
-  exportRateLimiter.ipLimiter,
   exportCustomerHistory
 );
 

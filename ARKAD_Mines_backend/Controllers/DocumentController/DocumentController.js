@@ -1,11 +1,10 @@
 import orderModel from "../../Models/orderModel/orderModel.js";
 import quotationModel from "../../Models/quotationModel/quotationModel.js";
-import { generateQuotationPDF, generateProformaPDF, generateTaxInvoicePDF, generateReceiptPDF, generateStatementPDF } from "../../Utils/pdfGenerator.js";
-import { generateOrderCSV, generateStatementCSV } from "../../Utils/csvGenerator.js";
+import { generateQuotationPDF, generateInvoicePDF, generateReceiptPDF } from "../../Utils/pdfGenerator.js";
 import { logAudit, logError, getClientIp, normalizeRole, getUserAgent } from '../../logger/auditLogger.js';
 import mongoose from "mongoose";
 
-// Lists documents for buyer (quotes, proformas, invoices, receipts, statements); supports date/order/type filter.
+// Lists documents for buyer: quotes, invoices (approved quotations), receipts.
 const listDocuments = async (req, res) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);
@@ -13,7 +12,7 @@ const listDocuments = async (req, res) => {
 
   try {
     const { startDate, endDate, orderId, documentType } = req.query;
-    
+
     const dateFilter = {};
     if (startDate || endDate) {
       dateFilter.createdAt = {};
@@ -22,12 +21,12 @@ const listDocuments = async (req, res) => {
     }
 
     const orderFilter = orderId ? { orderNumber: String(orderId) } : {};
-
     const documents = [];
 
+    // --- Quotes: every quotation belonging to this buyer ---
     if (!documentType || documentType === 'quote') {
-      const quoteFilter = { buyer: userId, ...dateFilter };
-      const quotations = await quotationModel.find(quoteFilter)
+      const quotations = await quotationModel
+        .find({ buyer: userId, ...dateFilter })
         .populate("buyer", "companyName email")
         .sort({ createdAt: -1 })
         .lean();
@@ -48,87 +47,58 @@ const listDocuments = async (req, res) => {
       });
     }
 
-    if (!documentType || ['proforma', 'tax_invoice', 'receipt', 'statement'].includes(documentType)) {
-      const orderQuery = { buyer: userId, ...dateFilter, ...orderFilter };
-      const orders = await orderModel.find(orderQuery)
+    // --- Invoices: approved quotations only ---
+    if (!documentType || documentType === 'invoice') {
+      const approvedQuotations = await quotationModel
+        .find({ buyer: userId, status: 'approved', ...dateFilter })
         .populate("buyer", "companyName email")
-        .populate("quotation", "referenceNumber")
+        .sort({ updatedAt: -1 })
+        .lean();
+
+      approvedQuotations.forEach(quote => {
+        documents.push({
+          id: `${quote._id.toString()}_invoice`,
+          documentType: 'invoice',
+          documentNumber: `INV-${quote.referenceNumber}`,
+          title: `Invoice ${quote.referenceNumber}`,
+          date: quote.updatedAt || quote.createdAt,
+          amount: quote.financials?.grandTotal || quote.totalEstimatedCost || 0,
+          status: 'approved',
+          orderNumber: quote.orderNumber || null,
+          available: true,
+          formats: ['PDF']
+        });
+      });
+    }
+
+    // --- Receipts: approved payment proofs on orders ---
+    if (!documentType || documentType === 'receipt') {
+      const orders = await orderModel
+        .find({ buyer: userId, ...dateFilter, ...orderFilter })
+        .populate("buyer", "companyName email")
         .sort({ createdAt: -1 })
         .lean();
 
       orders.forEach(order => {
-        const orderDate = order.createdAt;
         const orderNumber = order.orderNumber;
-        const grandTotal = order.financials?.grandTotal || 0;
-
-        if ((!documentType || documentType === 'proforma') && order.status !== 'draft') {
-          documents.push({
-            id: `${order._id.toString()}_proforma`,
-            documentType: 'proforma',
-            documentNumber: `PRO-${orderNumber}`,
-            title: `Proforma Invoice ${orderNumber}`,
-            date: orderDate,
-            amount: grandTotal,
-            status: order.status,
-            orderNumber: orderNumber,
-            orderId: order._id.toString(),
-            available: order.status !== 'draft',
-            formats: ['PDF']
-          });
-        }
-
-        if ((!documentType || documentType === 'tax_invoice') && ['dispatched', 'delivered'].includes(order.status)) {
-          documents.push({
-            id: `${order._id.toString()}_tax_invoice`,
-            documentType: 'tax_invoice',
-            documentNumber: `INV-${orderNumber}`,
-            title: `Tax Invoice ${orderNumber}`,
-            date: orderDate,
-            amount: grandTotal,
-            status: order.status,
-            orderNumber: orderNumber,
-            orderId: order._id.toString(),
-            available: true,
-            formats: ['PDF']
-          });
-        }
-
-        if (!documentType || documentType === 'receipt') {
-          order.paymentProofs?.forEach((proof, index) => {
-            if (proof.status === 'approved') {
-              documents.push({
-                id: `${order._id.toString()}_receipt_${index}`,
-                documentType: 'receipt',
-                documentNumber: `RCP-${orderNumber}-${index + 1}`,
-                title: `Receipt ${orderNumber} - Payment ${index + 1}`,
-                date: proof.approvedAt || proof.uploadedAt || orderDate,
-                amount: proof.amountPaid || 0,
-                status: 'paid',
-                orderNumber: orderNumber,
-                orderId: order._id.toString(),
-                paymentIndex: index,
-                available: true,
-                formats: ['PDF']
-              });
-            }
-          });
-        }
-
-        if ((!documentType || documentType === 'statement') && order.paymentStatus === 'fully_paid') {
-          documents.push({
-            id: `${order._id.toString()}_statement`,
-            documentType: 'statement',
-            documentNumber: `STMT-${orderNumber}`,
-            title: `Account Statement ${orderNumber}`,
-            date: orderDate,
-            amount: grandTotal,
-            status: order.paymentStatus,
-            orderNumber: orderNumber,
-            orderId: order._id.toString(),
-            available: true,
-            formats: ['PDF', 'CSV']
-          });
-        }
+        order.paymentProofs?.forEach((proof, index) => {
+          if (proof.status === 'approved') {
+            documents.push({
+              id: `${order._id.toString()}_receipt_${index}`,
+              documentType: 'receipt',
+              documentNumber: `RCP-${orderNumber}-${index + 1}`,
+              title: `Receipt ${orderNumber} – Payment ${index + 1}`,
+              date: proof.approvedAt || proof.uploadedAt || order.createdAt,
+              amount: proof.amountPaid || 0,
+              status: 'paid',
+              orderNumber,
+              orderId: order._id.toString(),
+              paymentIndex: index,
+              available: true,
+              formats: ['PDF']
+            });
+          }
+        });
       });
     }
 
@@ -144,32 +114,20 @@ const listDocuments = async (req, res) => {
       details: `Listed ${documents.length} documents`
     });
 
-    res.json({ 
-      success: true, 
-      documents,
-      count: documents.length 
-    });
+    res.json({ success: true, documents, count: documents.length });
 
   } catch (error) {
-    logError(error, { 
-      action: 'LIST_DOCUMENTS', 
-      userId, 
-      clientIp 
-    });
-    res.status(500).json({ 
-      success: false, 
-      message: "Error retrieving documents" 
-    });
+    logError(error, { action: 'LIST_DOCUMENTS', userId, clientIp });
+    res.status(500).json({ success: false, message: "Error retrieving documents" });
   }
 };
 
-// Downloads document by id and format (PDF/CSV); generates on demand if not stored.
+// Downloads document by id and format (PDF); generates on demand.
 const downloadDocument = async (req, res) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);
   const userId = req.user?.id;
-  const { documentId, format } = req.params;
-  const documentFormat = (format || 'PDF').toUpperCase();
+  const { documentId } = req.params;
 
   try {
     let documentType = '';
@@ -181,31 +139,20 @@ const downloadDocument = async (req, res) => {
       resourceId = parts[0];
       receiptIndex = parseInt(parts[1] || '0');
       documentType = 'receipt';
-    } else if (documentId.endsWith('_proforma')) {
-      documentType = 'proforma';
-      resourceId = documentId.replace('_proforma', '');
-    } else if (documentId.endsWith('_tax_invoice')) {
-      documentType = 'tax_invoice';
-      resourceId = documentId.replace('_tax_invoice', '');
-    } else if (documentId.endsWith('_statement')) {
-      documentType = 'statement';
-      resourceId = documentId.replace('_statement', '');
-    } else if (documentId.endsWith('_quote')) {
-      documentType = 'quote';
-      resourceId = documentId.replace('_quote', '');
+    } else if (documentId.endsWith('_invoice')) {
+      documentType = 'invoice';
+      resourceId = documentId.replace('_invoice', '');
     } else {
+      // Plain quotation ID
       documentType = 'quote';
       resourceId = documentId;
     }
 
     if (!resourceId || !mongoose.Types.ObjectId.isValid(String(resourceId))) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Invalid document ID format" 
-      });
+      return res.status(400).json({ success: false, message: "Invalid document ID format" });
     }
 
-    const fetchOrderAndAuthorize = async (model, id, notFoundMsg) => {
+    const fetchAndAuthorize = async (model, id, notFoundMsg) => {
       const record = model === quotationModel
         ? await model.findById(id).populate("buyer")
         : await model.findById(id).populate("buyer").populate("quotation");
@@ -221,63 +168,36 @@ const downloadDocument = async (req, res) => {
 
     let documentBuffer = null;
     let filename = '';
-    let contentType = 'application/pdf';
 
     switch (documentType) {
       case 'quote': {
-        const { record: quotation, error: authErr } = await fetchOrderAndAuthorize(quotationModel, resourceId, "Quotation not found. This document may have been archived.");
+        const { record: quotation, error: authErr } = await fetchAndAuthorize(quotationModel, resourceId, "Quotation not found.");
         if (authErr) return;
         documentBuffer = await generateQuotationPDF(quotation);
         filename = `Quotation-${quotation.referenceNumber}.pdf`;
         break;
       }
 
-      case 'proforma': {
-        const { record: order, error: authErr } = await fetchOrderAndAuthorize(orderModel, resourceId, "Order not found. This document may have been archived.");
+      case 'invoice': {
+        const { record: quotation, error: authErr } = await fetchAndAuthorize(quotationModel, resourceId, "Quotation not found.");
         if (authErr) return;
-        if (order.status === 'draft') {
-          return res.status(400).json({ success: false, message: "Proforma invoice not available for draft orders" });
+        if (quotation.status !== 'approved') {
+          return res.status(400).json({ success: false, message: "Invoice is only available for approved quotations." });
         }
-        documentBuffer = await generateProformaPDF(order);
-        filename = `Proforma-${order.orderNumber}.pdf`;
-        break;
-      }
-
-      case 'tax_invoice': {
-        const { record: order, error: authErr } = await fetchOrderAndAuthorize(orderModel, resourceId, "Order not found. This document may have been archived.");
-        if (authErr) return;
-        if (!['dispatched', 'delivered'].includes(order.status)) {
-          return res.status(400).json({ success: false, message: "Tax invoice not available until order is dispatched" });
-        }
-        documentBuffer = await generateTaxInvoicePDF(order);
-        filename = `TaxInvoice-${order.orderNumber}.pdf`;
+        documentBuffer = await generateInvoicePDF(quotation);
+        filename = `Invoice-${quotation.referenceNumber}.pdf`;
         break;
       }
 
       case 'receipt': {
-        const { record: order, error: authErr } = await fetchOrderAndAuthorize(orderModel, resourceId, "Order not found. This document may have been archived.");
+        const { record: order, error: authErr } = await fetchAndAuthorize(orderModel, resourceId, "Order not found.");
         if (authErr) return;
         const paymentProof = order.paymentProofs?.[receiptIndex];
         if (!paymentProof || paymentProof.status !== 'approved') {
-          return res.status(404).json({ success: false, message: "Receipt not found or payment not approved", canRequestReissue: true });
+          return res.status(404).json({ success: false, message: "Receipt not found or payment not yet approved.", canRequestReissue: true });
         }
         documentBuffer = await generateReceiptPDF(order, paymentProof, receiptIndex);
         filename = `Receipt-${order.orderNumber}-${receiptIndex + 1}.pdf`;
-        break;
-      }
-
-      case 'statement': {
-        const { record: order, error: authErr } = await fetchOrderAndAuthorize(orderModel, resourceId, "Order not found. This document may have been archived.");
-        if (authErr) return;
-        if (documentFormat === 'CSV') {
-          const csvContent = await generateStatementCSV(order);
-          contentType = 'text/csv';
-          documentBuffer = Buffer.from(csvContent, 'utf-8');
-          filename = `Statement-${order.orderNumber}.csv`;
-        } else {
-          documentBuffer = await generateStatementPDF(order);
-          filename = `Statement-${order.orderNumber}.pdf`;
-        }
         break;
       }
 
@@ -286,11 +206,7 @@ const downloadDocument = async (req, res) => {
     }
 
     if (!documentBuffer) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Document not found. This document may have been archived due to retention policies.",
-        canRequestReissue: true 
-      });
+      return res.status(404).json({ success: false, message: "Document could not be generated.", canRequestReissue: true });
     }
 
     await logAudit({
@@ -301,11 +217,11 @@ const downloadDocument = async (req, res) => {
       resourceId: documentId,
       clientIp,
       userAgent,
-      details: `Downloaded ${documentType} as ${documentFormat}`
+      details: `Downloaded ${documentType} as PDF`
     });
 
     res.set({
-      "Content-Type": contentType,
+      "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="${filename}"`,
       "Content-Length": documentBuffer.length,
     });
@@ -313,17 +229,8 @@ const downloadDocument = async (req, res) => {
     res.send(documentBuffer);
 
   } catch (error) {
-    logError(error, { 
-      action: 'DOWNLOAD_DOCUMENT', 
-      userId, 
-      documentId: req.params.documentId,
-      clientIp 
-    });
-    res.status(500).json({ 
-      success: false, 
-      message: "Error generating document",
-      canRequestReissue: true 
-    });
+    logError(error, { action: 'DOWNLOAD_DOCUMENT', userId, documentId: req.params.documentId, clientIp });
+    res.status(500).json({ success: false, message: "Error generating document", canRequestReissue: true });
   }
 };
 

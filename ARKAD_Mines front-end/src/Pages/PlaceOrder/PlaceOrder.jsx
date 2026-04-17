@@ -7,9 +7,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FiPackage, FiCreditCard, FiMapPin, FiShoppingBag, FiEdit2, FiArrowLeft } from "react-icons/fi";
 import { toast } from "react-toastify";
 import usePaymentVerification from '../../../../shared/usePaymentVerification';
-import { CaptchaModal, MfaModal } from '../../../../shared/VerificationModals.jsx';
+import { MfaModal } from '../../../../shared/VerificationModals.jsx';
 
-// Order status page: delivery info, summary, and payment proof with CAPTCHA/MFA.
+// Order status page: delivery info, summary, and payment proof with MFA confirmation.
 const PlaceOrder = () => {
   const { orderNumber } = useParams();
   const navigate = useNavigate();
@@ -158,9 +158,9 @@ const PlaceOrder = () => {
     } catch (err) {
       console.error('Error submitting payment proof:', err);
       const errData = err.response?.data;
-      const { requiresCaptcha, requiresMFA } = pv.detectVerificationNeeded(errData);
+      const { requiresMFA } = pv.detectVerificationNeeded(errData);
 
-      if (requiresCaptcha || requiresMFA) {
+      if (requiresMFA) {
         setShowPaymentModal(false);
         if (!base64 && paymentProofFile) {
           try { base64 = await compressImage(paymentProofFile); }
@@ -172,7 +172,7 @@ const PlaceOrder = () => {
           address: addressData,
           proofBase64: base64,
           proofFileName: paymentProofFile.name
-        }, requiresCaptcha);
+        });
         pv.setPaymentSubmitting(false);
         return;
       }
@@ -477,20 +477,6 @@ const PlaceOrder = () => {
         </div>
       )}
 
-      {pv.showCaptchaModal && (
-        <CaptchaModal
-          onSubmit={(e) => pv.handleCaptchaSubmit(e, onPaymentSuccess)}
-          onClose={pv.resetCaptchaState}
-          isSubmitting={pv.paymentSubmitting}
-          captchaPassword={pv.captchaPassword}
-          setCaptchaPassword={pv.setCaptchaPassword}
-          recaptchaRef={pv.recaptchaRef}
-          onCaptchaChange={pv.handleCaptchaChange}
-          onCaptchaExpired={pv.handleCaptchaExpired}
-          captchaToken={pv.captchaToken}
-        />
-      )}
-
       {pv.showMfaModal && (
         <MfaModal
           onSubmit={(e) => pv.handleMfaSubmit(e, onPaymentSuccess)}
@@ -501,7 +487,7 @@ const PlaceOrder = () => {
         />
       )}
 
-      {showPaymentModal && !pv.showCaptchaModal && !pv.showMfaModal && (
+      {showPaymentModal && !pv.showMfaModal && (
         <div 
           className="modal-overlay" 
           style={{ zIndex: 9999 }} 

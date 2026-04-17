@@ -35,11 +35,11 @@ const authHeaders = () => {
 };
 
 const STATUS_LABEL = {
-  draft: 'Draft',
-  confirmed: 'Confirmed',
-  dispatched: 'Dispatched',
-  delivered: 'Delivered',
-  cancelled: 'Cancelled',
+  draft: 'PENDING',
+  confirmed: 'CONFIRMED',
+  dispatched: 'DISPATCHED',
+  delivered: 'DELIVERED',
+  cancelled: 'CANCELLED',
 };
 
 

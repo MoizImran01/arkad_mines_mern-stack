@@ -1,27 +1,12 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const usePaymentVerification = (url, token) => {
-  const [showCaptchaModal, setShowCaptchaModal] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState(null);
-  const [captchaPassword, setCaptchaPassword] = useState("");
   const [showMfaModal, setShowMfaModal] = useState(false);
   const [mfaPassword, setMfaPassword] = useState("");
   const [pendingPayment, setPendingPayment] = useState(null);
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
-  const recaptchaRef = useRef(null);
-
-  const handleCaptchaChange = (t) => setCaptchaToken(t);
-  const handleCaptchaExpired = () => setCaptchaToken(null);
-
-  const resetCaptchaState = () => {
-    setShowCaptchaModal(false);
-    setCaptchaToken(null);
-    setCaptchaPassword("");
-    recaptchaRef.current?.reset();
-    setPendingPayment(null);
-  };
 
   const resetMfaState = () => {
     setShowMfaModal(false);
@@ -31,22 +16,19 @@ const usePaymentVerification = (url, token) => {
 
   const detectVerificationNeeded = (errData) => {
     const errMsg = errData?.message?.toLowerCase() || '';
-    const requiresCaptcha = errData?.requiresCaptcha === true || errMsg.includes('captcha');
     const requiresMFA = errData?.requiresMFA === true || errData?.requiresReauth === true ||
       errMsg.includes('re-authentication') || errMsg.includes('password') || errMsg.includes('confirm this action');
-    return { requiresCaptcha, requiresMFA };
+    return { requiresMFA };
   };
 
-  const triggerVerification = (pendingData, requiresCaptcha) => {
+  const triggerVerification = (pendingData) => {
     setPendingPayment(pendingData);
-    if (requiresCaptcha) setShowCaptchaModal(true);
-    else setShowMfaModal(true);
+    setShowMfaModal(true);
   };
 
   const submitWithVerification = async (extraPayload, onSuccess) => {
     if (!pendingPayment) {
       toast.error("Error: Payment data not found. Please try again.");
-      resetCaptchaState();
       resetMfaState();
       return;
     }
@@ -70,35 +52,16 @@ const usePaymentVerification = (url, token) => {
       }
     } catch (error) {
       console.error("Error submitting verified payment:", error);
-      if (error.response?.data?.requiresCaptcha === true) {
-        toast.error("CAPTCHA verification failed. Please try again.");
-        recaptchaRef.current?.reset();
-        setCaptchaToken(null);
-      } else if (error.response?.data?.requiresMFA === true || error.response?.status === 401) {
+      if (error.response?.data?.requiresMFA === true || error.response?.status === 401) {
         toast.error("Invalid password. Please check your password and try again.");
-        if (extraPayload.captchaToken) setCaptchaPassword("");
-        else setMfaPassword("");
+        setMfaPassword("");
       } else {
         toast.error(error.response?.data?.message || "Error submitting payment proof");
-        recaptchaRef.current?.reset();
-        setCaptchaToken(null);
       }
       return false;
     } finally {
       setPaymentSubmitting(false);
     }
-  };
-
-  const handleCaptchaSubmit = async (e, onSuccess) => {
-    e.preventDefault();
-    if (!captchaToken) { toast.error("Please complete the CAPTCHA verification."); return; }
-    if (!captchaPassword.trim()) { toast.error("Please enter your password to confirm this payment submission."); return; }
-
-    const success = await submitWithVerification(
-      { captchaToken, passwordConfirmation: captchaPassword },
-      () => { resetCaptchaState(); onSuccess(); }
-    );
-    return success;
   };
 
   const handleMfaSubmit = async (e, onSuccess) => {
@@ -113,15 +76,12 @@ const usePaymentVerification = (url, token) => {
   };
 
   return {
-    showCaptchaModal, showMfaModal,
-    captchaToken, captchaPassword, setCaptchaPassword,
+    showMfaModal,
     mfaPassword, setMfaPassword,
     pendingPayment, paymentSubmitting, setPaymentSubmitting,
-    recaptchaRef,
-    handleCaptchaChange, handleCaptchaExpired,
-    resetCaptchaState, resetMfaState,
+    resetMfaState,
     detectVerificationNeeded, triggerVerification,
-    handleCaptchaSubmit, handleMfaSubmit,
+    handleMfaSubmit,
   };
 };
 

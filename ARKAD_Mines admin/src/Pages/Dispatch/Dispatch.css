@@ -446,10 +446,10 @@
   text-transform: capitalize;
 }
 
-.order-status-chip.status-draft      { background: #f3f4f6; color: #374151; }
-.order-status-chip.status-confirmed  { background: #dbeafe; color: #1e40af; }
-.order-status-chip.status-dispatched { background: #d1fae5; color: #065f46; }
-.order-status-chip.status-delivered  { background: #dcfce7; color: #15803d; }
+.order-status-chip.status-draft      { background: #fff4aa; color: #000; }
+.order-status-chip.status-confirmed  { background: #d1fae5; color: #000; }
+.order-status-chip.status-dispatched { background: #caeeff; color: #000; }
+.order-status-chip.status-delivered  { background: #d1fae5; color: #000; }
 .order-status-chip.status-cancelled  { background: #fee2e2; color: #991b1b; }
 
 .dispatch-actions {

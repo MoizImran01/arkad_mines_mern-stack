@@ -173,14 +173,16 @@
 }
 
 .dashboard-badge.status-confirmed,
-.dashboard-badge.status-delivered { background: #d1fae5; color: #2f5242; }
-.dashboard-badge.status-dispatched { background: #dbeafe; color: #1e40af; }
-.dashboard-badge.status-draft { background: #f3f4f6; color: #4b5563; }
-.dashboard-badge.status-cancelled { background: #fee2e2; color: #991b1b; }
+.dashboard-badge.status-delivered    { background: #d1fae5; color: #000; }
+.dashboard-badge.status-dispatched   { background: #caeeff; color: #000; }
+.dashboard-badge.status-draft        { background: #fff4aa; color: #000; }
+.dashboard-badge.status-cancelled    { background: #fee2e2; color: #991b1b; }
 .dashboard-badge.payment_fully_paid,
-.dashboard-badge.payment-fully_paid { background: #d1fae5; color: #2f5242; }
+.dashboard-badge.payment-fully_paid  { background: #d1fae5; color: #000; }
 .dashboard-badge.payment_pending,
-.dashboard-badge.payment-pending { background: #fef3c7; color: #92400e; }
+.dashboard-badge.payment-pending     { background: #fff4aa; color: #000; }
+.dashboard-badge.payment_payment_in_progress,
+.dashboard-badge.payment-payment_in_progress { background: #caeeff; color: #000; }
 
 .dashboard-link-btn {
   background: none;

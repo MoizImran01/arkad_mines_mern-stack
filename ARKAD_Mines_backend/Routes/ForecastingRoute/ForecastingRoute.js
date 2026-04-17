@@ -18,7 +18,6 @@ forecastingRouter.get(
   verifyToken,
   authorizeRoles("admin", "employee"),
   forecastRateLimiter.userLimiter,
-  forecastRateLimiter.ipLimiter,
   getAIForecast
 );
 

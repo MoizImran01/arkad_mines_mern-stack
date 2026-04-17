@@ -8,7 +8,8 @@ import { StoreContext } from "../../context/StoreContext";
 import { useNavigate } from "react-router-dom";
 import Pagination from '../../../../shared/Pagination.jsx';
 import usePaymentVerification from '../../../../shared/usePaymentVerification';
-import { CaptchaModal, MfaModal } from '../../../../shared/VerificationModals.jsx';
+import { formatOrderStatus, formatPaymentStatus } from '../../utils/formatStatus';
+import { MfaModal } from '../../../../shared/VerificationModals.jsx';
 import { 
   FiLoader, FiExternalLink, FiCreditCard, FiPackage, 
   FiMapPin, FiCalendar, FiTruck, FiX, FiCheck, FiShoppingCart, FiCheckCircle, FiDownload,
@@ -88,7 +89,7 @@ const Orders = () => {
   }, [activeTab, orders.length]);
 
   useEffect(() => {
-    const hasModalOpen = trackingOrderNumber || pv.showCaptchaModal || pv.showMfaModal;
+    const hasModalOpen = trackingOrderNumber || pv.showMfaModal;
     const lenisInstance = globalThis.lenisInstance;
     let scrollY = 0;
 
@@ -116,7 +117,7 @@ const Orders = () => {
     }
 
     return () => {
-      if (!trackingOrderNumber && !pv.showCaptchaModal && !pv.showMfaModal) {
+      if (!trackingOrderNumber && !pv.showMfaModal) {
         const savedScrollY = Number.parseInt(document.body.style.top || "0", 10) * -1;
         document.body.style.position = "";
         document.body.style.width = "";
@@ -130,10 +131,10 @@ const Orders = () => {
         }
       }
     };
-  }, [trackingOrderNumber, pv.showCaptchaModal, pv.showMfaModal]);
+  }, [trackingOrderNumber, pv.showMfaModal]);
 
   useEffect(() => {
-    if (!trackingOrderNumber && !pv.showCaptchaModal && !pv.showMfaModal) return;
+    if (!trackingOrderNumber && !pv.showMfaModal) return;
 
     const modalBodies = document.querySelectorAll(".modal-body");
     const lenisInstance = globalThis.lenisInstance;
@@ -179,7 +180,7 @@ const Orders = () => {
         lenisInstance.start();
       }
     };
-  }, [trackingOrderNumber, pv.showCaptchaModal, pv.showMfaModal]);
+  }, [trackingOrderNumber, pv.showMfaModal]);
 
   const openTrackingView = (orderNumber) => {
     const order = orders.find(o => o.orderNumber === orderNumber);
@@ -251,8 +252,8 @@ const Orders = () => {
     } catch (error) {
       console.error("Error submitting payment:", error);
       const errData = error.response?.data;
-      const { requiresCaptcha, requiresMFA } = pv.detectVerificationNeeded(errData);
-      if (requiresCaptcha || requiresMFA) {
+      const { requiresMFA } = pv.detectVerificationNeeded(errData);
+      if (requiresMFA) {
         let base64ToUse = compressedBase64;
         if (!base64ToUse && paymentForm.proofFile) {
           try { base64ToUse = await compressImage(paymentForm.proofFile); }
@@ -264,7 +265,7 @@ const Orders = () => {
           address: trackingOrderDetails.deliveryAddress || {},
           proofBase64: base64ToUse,
           proofFileName: paymentForm.proofFile?.name
-        }, requiresCaptcha);
+        });
         pv.setPaymentSubmitting(false);
         return;
       }
@@ -275,7 +276,7 @@ const Orders = () => {
 
   const getStatusTimeline = (order) => {
     const timeline = [
-      { status: "draft", label: "Draft", icon: <FiShoppingCart size={16}/> },
+      { status: "draft", label: "Pending", icon: <FiShoppingCart size={16}/> },
       { status: "confirmed", label: "Confirmed", icon: <FiCheck size={16}/> },
       { status: "dispatched", label: "Dispatched", icon: <FiTruck size={16}/> },
       { status: "delivered", label: "Delivered", icon: <FiCheckCircle size={16}/> },
@@ -364,7 +365,7 @@ const Orders = () => {
             className={`tab-btn ${activeTab === status ? "active" : ""}`}
             onClick={() => setActiveTab(status)}
           >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+            {formatOrderStatus(status)}
           </button>
         ))}
       </div>
@@ -402,7 +403,7 @@ const Orders = () => {
                   </td>
                   <td>
                     <span className={`status-badge status-${order.status.toLowerCase()}`}>
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      {formatOrderStatus(order.status)}
                     </span>
                   </td>
                   <td>Rs {order.financials?.grandTotal?.toLocaleString()}</td>
@@ -441,7 +442,7 @@ const Orders = () => {
               <div>
                 <h2>Order #{trackingOrderDetails.orderNumber}</h2>
                 <span className={`status-badge status-${trackingOrderDetails.status}`}>
-                  {trackingOrderDetails.status.toUpperCase()}
+                  {formatOrderStatus(trackingOrderDetails.status)}
                 </span>
               </div>
               <button className="close-btn" onClick={closeTrackingView}><FiX size={24} /></button>
@@ -752,22 +753,6 @@ const Orders = () => {
             </div>
           </div>
         </dialog>
-      )}
-
-      {pv.showCaptchaModal && (
-        <CaptchaModal
-          onSubmit={(e) => pv.handleCaptchaSubmit(e, () => refreshAfterPayment(pv.pendingPayment?.orderId))}
-          onClose={pv.resetCaptchaState}
-          isSubmitting={pv.paymentSubmitting}
-          captchaPassword={pv.captchaPassword}
-          setCaptchaPassword={pv.setCaptchaPassword}
-          recaptchaRef={pv.recaptchaRef}
-          onCaptchaChange={pv.handleCaptchaChange}
-          onCaptchaExpired={pv.handleCaptchaExpired}
-          captchaToken={pv.captchaToken}
-          WrapperTag="dialog"
-          wrapperProps={{ open: true, "data-lenis-prevent": "true", backdrop: <button type="button" className="modal-backdrop" onClick={pv.resetCaptchaState} aria-label="Close" />, contentProps: { "data-lenis-prevent": "true" }, bodyProps: { "data-lenis-prevent": "true" } }}
-        />
       )}
 
       {pv.showMfaModal && (
