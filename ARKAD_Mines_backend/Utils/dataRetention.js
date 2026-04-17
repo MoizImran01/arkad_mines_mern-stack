@@ -60,13 +60,10 @@ export const decryptSensitiveData = (data) => {
 const RETENTION_DAYS = Number.parseInt(process.env.ANALYTICS_RETENTION_DAYS || '365', 10);
 
 export const cleanupOldAnalyticsLogs = async () => {
-  try {
-    console.log(`[DATA RETENTION] Skipping audit log cleanup (audit logs are immutable, retention: ${RETENTION_DAYS} days)`);
-    return 0;
-  } catch (error) {
-    console.error('[DATA RETENTION] Error in retention job:', error);
-    return 0;
-  }
+  // Audit logs are immutable; no DB deletes. Callers do not use a return value.
+  console.log(
+    `[DATA RETENTION] Skipping audit log cleanup (audit logs are immutable, retention: ${RETENTION_DAYS} days)`
+  );
 };
 
 let retentionInterval = null;
