@@ -4,7 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FiUploadCloud } from 'react-icons/fi';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 const STONE_NAMES = [
   "Cheeta White",
@@ -93,9 +93,8 @@ export const AddProduct = () => {
         }
       });
       if (response.data.success) {
-        // Show QR code if generated - now uses Cloudinary URL directly
+        
         if (response.data.qrCodeImage && response.data.qrCode) {
-          // Check if it's already a full URL (Cloudinary) or legacy local path
           const qrImageUrl = response.data.qrCodeImage.startsWith('http') 
             ? response.data.qrCodeImage 
             : `${API_URL}/images/${response.data.qrCodeImage}`;

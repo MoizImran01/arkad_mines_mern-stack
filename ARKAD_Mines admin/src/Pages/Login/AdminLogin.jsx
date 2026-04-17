@@ -9,7 +9,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import usePasswordReset from '../../../../shared/usePasswordReset';
 import ResetFormFields, { StatusMessages } from '../../../../shared/ResetFormFields';
 
-const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
 const AdminLogin = () => {
   const [isLoading, setIsLoading] = useState(false);

@@ -9,24 +9,16 @@ const roundToTwoDecimals = (value) => {
   return Math.round((value || 0) * 100) / 100;
 };
 
-//Deducts order item quantities from stone stock; throws if insufficient.
-const handleStockDeduction = async (orderItems) => {
-  if (!orderItems || orderItems.length === 0) return;
 
+const checkStockAvailability = async (orderItems) => {
+  if (!orderItems || orderItems.length === 0) return;
   for (const item of orderItems) {
     const stone = await stonesModel.findById(item.stone?._id || item.stoneId);
-    if (stone) {
-      const quantityToDeduct = item.quantity || 1;
-      const remainingBeforeDeduct = stone.stockQuantity - (stone.quantityDelivered || 0);
-      if (remainingBeforeDeduct < quantityToDeduct) {
-        throw new Error(`Not enough stock available for ${stone.stoneName}. Need ${quantityToDeduct}, but only ${remainingBeforeDeduct} available.`);
-      }
-      
-      stone.quantityDelivered = (stone.quantityDelivered || 0) + quantityToDeduct;
-      const remainingQuantity = stone.stockQuantity - stone.quantityDelivered;
-      if (remainingQuantity <= 0) stone.stockAvailability = "Out of Stock";
-      
-      await stone.save();
+    if (!stone) continue;
+    const quantityNeeded = item.quantity || 1;
+    const available = (stone.stockQuantity || 0) - (stone.quantityDelivered || 0);
+    if (available < quantityNeeded) {
+      throw new Error(`Not enough stock for ${stone.stoneName}. Need ${quantityNeeded}, only ${available} available.`);
     }
   }
 };
@@ -34,16 +26,14 @@ const handleStockDeduction = async (orderItems) => {
 const handleStockRestoration = async (orderItems) => {
   if (!orderItems) return;
   for (const item of orderItems) {
+    const dispatched = Number(item.quantityDispatched || 0);
+    if (dispatched <= 0) continue; // nothing was deducted, nothing to restore
     const stone = await stonesModel.findById(item.stone?._id || item.stoneId);
-    if (stone) {
-      const quantityToRestore = item.quantity || 1;
-      stone.quantityDelivered = Math.max(0, (stone.quantityDelivered || 0) - quantityToRestore);
-      
-      const remainingQuantity = stone.stockQuantity - stone.quantityDelivered;
-      if (remainingQuantity > 0) stone.stockAvailability = "In Stock";
-      
-      await stone.save();
-    }
+    if (!stone) continue;
+    stone.quantityDelivered = Math.max(0, (stone.quantityDelivered || 0) - dispatched);
+    const remaining = (stone.stockQuantity || 0) - stone.quantityDelivered;
+    if (remaining > 0) stone.stockAvailability = "In Stock";
+    await stone.save();
   }
 };
 
@@ -186,7 +176,7 @@ const getAllOrders = async (req, res) => {
     }
 
     const pageNum = Math.max(1, parseInt(page) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20)); // Max 100 per page
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20)); 
     const skip = (pageNum - 1) * limitNum;
 
     
@@ -249,8 +239,9 @@ const updateOrderStatus = async (req, res) => {
         if (order.paymentStatus !== "fully_paid") {
             return res.status(400).json({ success: false, message: "Cannot confirm order. Full payment required." });
         }
+        
         try {
-            await handleStockDeduction(order.items);
+            await checkStockAvailability(order.items);
         } catch (err) {
             return res.status(400).json({ success: false, message: err.message });
         }
@@ -271,9 +262,7 @@ const updateOrderStatus = async (req, res) => {
     }
 
     if (status === "cancelled") {
-        if ((order.status === "confirmed" || order.status === "dispatched")) {
-            await handleStockRestoration(order.items);
-        }
+        await handleStockRestoration(order.items);
     }
 
     order.status = status;
@@ -439,11 +428,13 @@ const approvePayment = async (req, res) => {
       if (order.status === "draft") {
         order.status = "confirmed";
 
+        // Inventory is NOT deducted here — it decrements per-block at QR
+        // dispatch. Just validate stock is available.
         await order.populate("items.stone");
         try {
-            await handleStockDeduction(order.items);
-        } catch (e) { console.warn(e.message); } 
-        
+            await checkStockAvailability(order.items);
+        } catch (e) { console.warn(e.message); }
+
         order.timeline.push({ status: "confirmed", timestamp: new Date(), notes: "Auto-confirmed via payment" });
       }
     }
@@ -675,15 +666,109 @@ const dispatchOrderItemByQr = async (req, res) => {
   }
 };
 
-export { 
-  getOrderDetails, 
-  getUserOrders, 
-  getAllOrders, 
+
+const getOrdersByBlockQr = async (req, res) => {
+  try {
+    const { qrCode } = req.params;
+    const safeQrCode = extractQrCodeId(qrCode);
+
+    if (!safeQrCode) {
+      return res.status(400).json({ success: false, message: 'QR code is required.' });
+    }
+
+    const stone = await stonesModel.findOne({ qrCode: safeQrCode });
+    if (!stone) {
+      return res.status(404).json({ success: false, message: 'Stone block not found for this QR code.' });
+    }
+
+    const orders = await orderModel
+      .find({ 'items.stone': stone._id, status: { $nin: ['cancelled'] } })
+      .select('orderNumber status buyer items financials createdAt')
+      .populate('buyer', 'companyName email')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const ordersWithDispatchStatus = orders.map((order) => {
+      const item = order.items.find((i) => String(i.stone) === String(stone._id));
+      const alreadyDispatched = Number(item?.quantityDispatched || 0);
+      const ordered = Number(item?.quantity || 0);
+      const remaining = ordered - alreadyDispatched;
+      return {
+        _id: order._id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        buyerName: order.buyer?.companyName || order.buyer?.email || 'Unknown',
+        orderedQuantity: ordered,
+        quantityDispatched: alreadyDispatched,
+        remainingQuantity: remaining,
+        fullyDispatched: remaining <= 0,
+        grandTotal: order.financials?.grandTotal,
+        createdAt: order.createdAt,
+      };
+    });
+
+    return res.json({
+      success: true,
+      orders: ordersWithDispatchStatus,
+      stoneId: stone._id,
+      stoneName: stone.stoneName,
+    });
+  } catch (error) {
+    logError(error, { action: 'GET_ORDERS_BY_BLOCK_QR', userId: req.user?.id });
+    return res.status(500).json({ success: false, message: 'Server error while fetching orders for block.' });
+  }
+};
+
+
+const searchOrderNumbers = async (req, res) => {
+  try {
+    const { search = '', limit = 30 } = req.query;
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 30));
+
+    const query = { status: { $nin: ['cancelled'] } };
+
+    if (search && typeof search === 'string' && search.trim().length > 0) {
+      const searchRegex = { $regex: search.trim(), $options: 'i' };
+      query.$or = [
+        { orderNumber: searchRegex },
+        { 'buyer.companyName': searchRegex },
+        { 'buyer.email': searchRegex },
+      ];
+    }
+
+    const orders = await orderModel
+      .find(query)
+      .select('orderNumber status buyer financials.grandTotal createdAt')
+      .populate('buyer', 'companyName email')
+      .sort({ createdAt: -1 })
+      .limit(limitNum)
+      .lean();
+
+    const orderList = orders.map((o) => ({
+      orderNumber: o.orderNumber,
+      status: o.status,
+      buyerName: o.buyer?.companyName || o.buyer?.email || 'Unknown',
+      grandTotal: o.financials?.grandTotal,
+    }));
+
+    return res.json({ success: true, orders: orderList });
+  } catch (error) {
+    logError(error, { action: 'SEARCH_ORDER_NUMBERS', userId: req.user?.id });
+    return res.status(500).json({ success: false, message: 'Server error while searching order numbers.' });
+  }
+};
+
+export {
+  getOrderDetails,
+  getUserOrders,
+  getAllOrders,
   updateOrderStatus,
   submitPaymentProof,
   approvePayment,
   rejectPayment,
   getOrderDetailsWithPayment,
   updatePaymentStatus,
-  dispatchOrderItemByQr
+  dispatchOrderItemByQr,
+  getOrdersByBlockQr,
+  searchOrderNumbers
 };

@@ -19,26 +19,23 @@ import {
 import ForecastingAnalytics from './ForecastingAnalytics';
 import ForecastTrendChart from './ForecastTrendChart';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 const attachActualStock = async (forecasts) => {
   try {
-    // Fetch all stones from database
     const stonesResponse = await axios.get(`${API_URL}/api/stones/list`);
     const stones = stonesResponse.data.stones_data || [];
     
-    // Create a map for quick lookup: stoneName_subcategory -> stock quantity
     const stockMap = new Map();
     stones.forEach((stone) => {
       const key = `${stone.stoneName}_${stone.subcategory}`.toLowerCase();
       const availableStock = (stone.stockQuantity || 0) - (stone.quantityDelivered || 0);
-      stockMap.set(key, Math.max(0, availableStock)); // Ensure non-negative
+      stockMap.set(key, Math.max(0, availableStock)); 
     });
     
-    // Attach actual stock to forecasts
     return forecasts.map((item) => {
       const key = `${item.stoneName}_${item.subcategory}`.toLowerCase();
-      const currentStock = stockMap.get(key) ?? 0; // Default to 0 if not found
+      const currentStock = stockMap.get(key) ?? 0; 
       return {
         ...item,
         current_stock: currentStock,
@@ -46,7 +43,6 @@ const attachActualStock = async (forecasts) => {
     });
   } catch (error) {
     console.error('Error fetching stock data:', error);
-    // Fallback: return forecasts with 0 stock if fetch fails
     return forecasts.map((item) => ({
       ...item,
       current_stock: 0,

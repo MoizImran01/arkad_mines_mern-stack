@@ -26,6 +26,11 @@ npm-debug.log*
 # Local environment overrides (optional)
 *.local
 
+# Environment files (never commit secrets)
+.env
+.env.*
+!.env.example
+
 ARKAD_Mines_backend/logs/
 ARKAD_Mines_backend/uploads/
 

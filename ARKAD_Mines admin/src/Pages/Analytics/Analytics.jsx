@@ -7,7 +7,7 @@ import { AdminAuthContext } from '../../context/AdminAuthContext';
 import { FiLock, FiX, FiAlertTriangle, FiClock, FiPackage, FiFileText, FiUsers, FiBox, FiTrendingUp, FiRefreshCw } from 'react-icons/fi';
 import './Analytics.css';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 //formatting numbers
 const formatNumber = (num) => {
@@ -1007,16 +1007,13 @@ const Analytics = () => {
     );
   }
 
-  // Don't show error if MFA modal is showing, if we're loading, or if we have a valid session (might be waiting for MFA modal)
+  
   if (!analytics && !showMFAModal && !loading) {
-    // Check if we should wait a bit for MFA modal to appear (in case of async error handling)
-    // If session is valid but we got here, it means backend rejected - show error
     return (
       <div className="analytics-container">
         <div className="analytics-error">
           <p>Failed to load analytics data</p>
           <button onClick={() => {
-            // Clear MFA session and retry
             clearMFASession();
             fetchAnalytics();
           }} className="retry-btn">Retry</button>

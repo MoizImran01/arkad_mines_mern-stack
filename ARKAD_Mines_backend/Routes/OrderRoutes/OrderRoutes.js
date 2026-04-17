@@ -1,15 +1,17 @@
 import express from 'express';
-import { 
-  getOrderDetails, 
-  getUserOrders, 
-  getAllOrders, 
+import {
+  getOrderDetails,
+  getUserOrders,
+  getAllOrders,
   updateOrderStatus,
   submitPaymentProof,
   approvePayment,
   rejectPayment,
   getOrderDetailsWithPayment,
   updatePaymentStatus,
-  dispatchOrderItemByQr
+  dispatchOrderItemByQr,
+  getOrdersByBlockQr,
+  searchOrderNumbers
 } from '../../Controllers/OrderController/OrderController.js';
 import { verifyToken, authorizeRoles } from '../../Middlewares/auth.js';
 import { createRateLimiter } from '../../Middlewares/genericRateLimiting.js';
@@ -83,5 +85,7 @@ orderRouter.put('/admin/payment-status/:orderId', verifyToken, authorizeRoles('a
 orderRouter.put('/admin/payment/approve/:orderId/:proofIndex', verifyToken, authorizeRoles('admin'), approvePayment);
 orderRouter.put('/admin/payment/reject/:orderId/:proofIndex', verifyToken, authorizeRoles('admin'), rejectPayment);
 orderRouter.post('/admin/dispatch-by-qr', verifyToken, authorizeRoles('admin'), dispatchOrderItemByQr);
+orderRouter.get('/admin/orders-by-block/:qrCode', verifyToken, authorizeRoles('admin'), getOrdersByBlockQr);
+orderRouter.get('/admin/search-order-numbers', verifyToken, authorizeRoles('admin'), searchOrderNumbers);
 
 export default orderRouter;
