@@ -19,16 +19,16 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-      # 1️⃣ Checkout the repo
-      - uses: actions/checkout@v4
+      # 1️⃣ Checkout the repo (v5 uses Node.js 24; avoids Node 20 runner deprecation)
+      - uses: actions/checkout@v5
 
       # OCI/GHCR requires lowercase repository names
       - name: Set GHCR image prefix (lowercase)
         run: echo "GHCR_IMAGE_PREFIX=ghcr.io/$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-      # 2️⃣ Install kubectl
+      # 2️⃣ Install kubectl (v5 uses Node.js 24; avoids Node 20 runner deprecation)
       - name: Install kubectl
-        uses: azure/setup-kubectl@v3
+        uses: azure/setup-kubectl@v5
         with:
           version: "v1.28.0"
 
