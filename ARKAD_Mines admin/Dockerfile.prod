@@ -12,6 +12,10 @@ RUN npm install
 COPY ["ARKAD_Mines admin/", "./"]
 COPY shared/ ../shared/
 
+# Re-install after full shared copy so linked `shared` package deps (e.g. socket.io-client) exist.
+WORKDIR /workspace/admin
+RUN npm install
+
 ENV VITE_API_URL=http://80.225.198.154
 RUN npm run build && npm install -g serve
 EXPOSE 5174
