@@ -89,7 +89,15 @@ const PlaceOrder = () => {
     if (token && orderNumber) fetchOrderDetails();
   }, [token, orderNumber, url, navigate]);
 
-  useEffect(() => subscribeLive('orders', () => fetchOrderDetailsRef.current()), []);
+  useEffect(() => {
+    const fn = () => fetchOrderDetailsRef.current();
+    const u1 = subscribeLive("orders", fn);
+    const u2 = subscribeLive("notifications", fn);
+    return () => {
+      u1();
+      u2();
+    };
+  }, []);
 
   const onChangeHandler = (event) => {
     const { name, value } = event.target;

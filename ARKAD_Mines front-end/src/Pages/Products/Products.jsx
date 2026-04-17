@@ -110,6 +110,16 @@ const Products = () => {
 
   useEffect(() => subscribeLive("stones", () => applyFiltersRef.current()), []);
 
+  // Polling: catalog must update even if Socket.IO misses (multi-bundle, proxy, serverless API, etc.)
+  useEffect(() => {
+    const tick = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      applyFiltersRef.current();
+    };
+    const id = setInterval(tick, 3500);
+    return () => clearInterval(id);
+  }, []);
+
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({
       ...prev,

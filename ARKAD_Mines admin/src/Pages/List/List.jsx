@@ -53,6 +53,14 @@ const List = () => {
 
   useEffect(() => subscribeLive("stones", () => fetchListRef.current()), []);
 
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      fetchListRef.current();
+    }, 4000);
+    return () => clearInterval(id);
+  }, []);
+
   const removeStoneItem = async (stoneID)=>{
       try{
 

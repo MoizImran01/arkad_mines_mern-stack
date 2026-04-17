@@ -57,6 +57,14 @@ const ItemDetail = () => {
 
   useEffect(() => subscribeLive('stones', () => fetchStoneRef.current()), []);
 
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      fetchStoneRef.current();
+    }, 4000);
+    return () => clearInterval(id);
+  }, []);
+
   const handleImageMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;

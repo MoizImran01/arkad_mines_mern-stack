@@ -75,10 +75,12 @@ const Dashboard = () => {
     const u1 = subscribeLive("orders", fn);
     const u2 = subscribeLive("quotations", fn);
     const u3 = subscribeLive("stones", fn);
+    const u4 = subscribeLive("notifications", fn);
     return () => {
       u1();
       u2();
       u3();
+      u4();
     };
   }, []);
 

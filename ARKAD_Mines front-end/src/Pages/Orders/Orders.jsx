@@ -76,7 +76,16 @@ const Orders = () => {
   };
   fetchOrdersRef.current = fetchOrders;
 
-  useEffect(() => subscribeLive("orders", () => fetchOrdersRef.current()), []);
+  useEffect(() => {
+    const fn = () => fetchOrdersRef.current();
+    const u1 = subscribeLive("orders", fn);
+    // Payment approve/reject emits notification; refetch orders so balances/status match without refresh
+    const u2 = subscribeLive("notifications", fn);
+    return () => {
+      u1();
+      u2();
+    };
+  }, []);
 
   useEffect(() => {
     fetchOrders();
