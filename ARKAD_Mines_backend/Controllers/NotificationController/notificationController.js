@@ -2,6 +2,10 @@ import notificationModel from "../../Models/notificationModel/notificationModel.
 import orderModel from "../../Models/orderModel/orderModel.js";
 import mongoose from "mongoose";
 import { logError } from "../../logger/auditLogger.js";
+import {
+  emitNotificationsForStaff,
+  emitNotificationsForUser,
+} from "../../socket/socketEmitter.js";
 
 export const createNotification = async (payload) => {
   try {
@@ -28,6 +32,12 @@ export const createNotification = async (payload) => {
       paymentStatus,
       amount
     });
+
+    if (recipientType === "user" && recipientId) {
+      emitNotificationsForUser(recipientId, { type, orderNumber });
+    } else if (recipientType === "admin") {
+      emitNotificationsForStaff({ type, orderNumber });
+    }
 
   } catch (error) {
     logError(error, { action: 'CREATE_NOTIFICATION', orderId: payload?.orderId });

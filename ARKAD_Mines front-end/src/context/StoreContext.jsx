@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
+import { ArkadSocketBridge } from "../../../shared/ArkadSocketBridge.jsx";
 
 export const StoreContext = createContext(null);
 
@@ -205,6 +206,7 @@ const StoreContextProvider = (props) => {
 
   return (
     <StoreContext.Provider value={contextValue}>
+      <ArkadSocketBridge apiBaseUrl={url} token={token} />
       {props.children}
     </StoreContext.Provider>
   );

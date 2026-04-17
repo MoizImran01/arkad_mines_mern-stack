@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Documents.css";
 import axios from "axios";
@@ -85,6 +85,20 @@ const Documents = () => {
       setRefreshing(false);
     }
   };
+
+  const fetchDocumentsRef = useRef(fetchDocuments);
+  fetchDocumentsRef.current = fetchDocuments;
+
+  useEffect(() => {
+    const onLive = (e) => {
+      const ch = e.detail?.channel;
+      if (ch === "orders" || ch === "quotations" || ch === "notifications") {
+        fetchDocumentsRef.current();
+      }
+    };
+    window.addEventListener("arkad:live", onLive);
+    return () => window.removeEventListener("arkad:live", onLive);
+  }, []);
 
   useEffect(() => {
     fetchDocuments();

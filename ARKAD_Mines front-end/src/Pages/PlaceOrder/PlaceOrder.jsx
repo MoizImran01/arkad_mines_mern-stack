@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import { StoreContext } from '../../context/StoreContext';
 import { compressImage } from '../../utils/compressImage';
 import './PlaceOrder.css';
@@ -27,6 +27,8 @@ const PlaceOrder = () => {
     country: "Pakistan", 
     phone: "",
   });
+
+  const fetchOrderDetailsRef = useRef(async () => {});
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -82,8 +84,17 @@ const PlaceOrder = () => {
       }
     };
 
+    fetchOrderDetailsRef.current = fetchOrderDetails;
     if (token && orderNumber) fetchOrderDetails();
   }, [token, orderNumber, url, navigate]);
+
+  useEffect(() => {
+    const onLive = (e) => {
+      if (e.detail?.channel === 'orders') fetchOrderDetailsRef.current();
+    };
+    window.addEventListener('arkad:live', onLive);
+    return () => window.removeEventListener('arkad:live', onLive);
+  }, []);
 
   const onChangeHandler = (event) => {
     const { name, value } = event.target;

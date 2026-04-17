@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState, useCallback } from "react";
+import React, { useContext, useEffect, useMemo, useState, useCallback, useRef } from "react";
 import "./Quotations.css";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -78,6 +78,19 @@ const Quotations = () => {
       setRefreshing(false);
     }
   };
+
+  const fetchQuotesRef = useRef(fetchQuotes);
+  fetchQuotesRef.current = fetchQuotes;
+
+  useEffect(() => {
+    const onLive = (e) => {
+      if (e.detail?.channel === "quotations" || e.detail?.channel === "orders") {
+        fetchQuotesRef.current();
+      }
+    };
+    window.addEventListener("arkad:live", onLive);
+    return () => window.removeEventListener("arkad:live", onLive);
+  }, []);
 
   const visibleQuotes = quotes.filter((quote) => {
     const q = searchQuery.trim().toLowerCase();

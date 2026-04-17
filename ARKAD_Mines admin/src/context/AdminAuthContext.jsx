@@ -1,12 +1,13 @@
 import { createContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import axios from "axios";
+import { ArkadSocketBridge } from "../../../shared/ArkadSocketBridge.jsx";
 
 export const AdminAuthContext = createContext(null);
 
 const AdminAuthContextProvider = (props) => {
 
-  const url = import.meta.env.VITE_API_URL ?? "";
+  const url = import.meta.env.VITE_API_URL || "http://localhost:4000";
   
 
   const [token, setToken] = useState("");
@@ -107,6 +108,7 @@ const AdminAuthContextProvider = (props) => {
 
   return (
     <AdminAuthContext.Provider value={contextValue}>
+      <ArkadSocketBridge apiBaseUrl={url} token={token} />
       {props.children}
     </AdminAuthContext.Provider>
   );

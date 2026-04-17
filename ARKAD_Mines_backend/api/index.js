@@ -1,7 +1,9 @@
 import dotenv from "dotenv";
 dotenv.config({ path: "./config.env" });
 
+import http from "http";
 import express from "express";
+import { initSocketServer } from "../socket/socketServer.js";
 import cors from "cors";
 import mongoose from "mongoose";
 import { connectDB } from "../config/db.js";
@@ -34,6 +36,17 @@ const productionOrigins = [
   'http://80.225.255.14'
 ];
 const allowedOrigins = [...configuredOrigins, ...localOrigins, ...productionOrigins];
+
+function verifySocketOrigin(origin, callback) {
+  if (!origin) return callback(null, true);
+  if (origin.endsWith('.ngrok-free.dev') || origin.endsWith('.ngrok-free.app') || origin.endsWith('.ngrok.io')) {
+    return callback(null, true);
+  }
+  const localNetworkPattern = /^https?:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)\d+\.\d+(:\d+)?$/;
+  if (localNetworkPattern.test(origin)) return callback(null, true);
+  if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+  return callback(new Error('Not allowed by CORS'));
+}
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -115,7 +128,9 @@ async function start() {
 
   if (!process.env.VERCEL) {
     const port = process.env.PORT || 4000;
-    app.listen(port, () => console.log(`Local API on ${port}`));
+    const server = http.createServer(app);
+    initSocketServer(server, verifySocketOrigin);
+    server.listen(port, () => console.log(`Local API + WebSocket on ${port}`));
   }
 }
 

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useEffect, useRef } from 'react'
 import './Navbar.css'
 import { assets } from '../../assets/assets.js'
 import { AdminAuthContext } from '../../context/AdminAuthContext'
@@ -8,10 +8,9 @@ import axios from 'axios'
 import { FiBell, FiX, FiRefreshCw } from 'react-icons/fi'
 import useNotifications, { formatTime } from '../../../../shared/useNotifications'
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "";
-
 const Navbar = () => {
-  const { adminUser, logout, token } = useContext(AdminAuthContext);
+  const { adminUser, logout, token, url } = useContext(AdminAuthContext);
+  const API_BASE = url || import.meta.env.VITE_API_URL || "http://localhost:4000";
   const navigate = useNavigate();
   const location = useLocation();
   const [showExpanded, setShowExpanded] = useState(false);
@@ -42,6 +41,18 @@ const Navbar = () => {
       console.error("Payment summary error:", error);
     }
   };
+
+  const fetchPaymentSummaryRef = useRef(fetchPaymentSummary);
+  fetchPaymentSummaryRef.current = fetchPaymentSummary;
+
+  useEffect(() => {
+    const onLive = (e) => {
+      const ch = e.detail?.channel;
+      if (ch === "notifications" || ch === "orders") fetchPaymentSummaryRef.current();
+    };
+    window.addEventListener("arkad:live", onLive);
+    return () => window.removeEventListener("arkad:live", onLive);
+  }, []);
 
   const renderNotificationItem = (notification) => (
     <div key={notification._id} className="notification-item">

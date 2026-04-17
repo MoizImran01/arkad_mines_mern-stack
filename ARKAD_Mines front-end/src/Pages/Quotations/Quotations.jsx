@@ -54,6 +54,7 @@ const Quotations = () => {
     [token]
   );
 
+  const fetchQuotesRef = useRef(async () => {});
   const fetchQuotes = async () => {
     if (!token) return;
     setRefreshing(true);
@@ -85,6 +86,15 @@ const Quotations = () => {
       setRefreshing(false);
     }
   };
+  fetchQuotesRef.current = fetchQuotes;
+
+  useEffect(() => {
+    const onLive = (e) => {
+      if (e.detail?.channel === "quotations") fetchQuotesRef.current();
+    };
+    window.addEventListener("arkad:live", onLive);
+    return () => window.removeEventListener("arkad:live", onLive);
+  }, []);
 
   const filterQuotationsByTab = (quotations, tab) => {
     switch (tab) {

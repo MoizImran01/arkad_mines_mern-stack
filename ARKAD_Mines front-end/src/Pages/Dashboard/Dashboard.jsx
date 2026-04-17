@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StoreContext } from '../../context/StoreContext';
 import axios from 'axios';
@@ -18,6 +18,8 @@ const Dashboard = () => {
   const [quotations, setQuotations] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [error, setError] = useState(null);
+
+  const fetchDashboardDataRef = useRef(async () => {});
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -63,8 +65,20 @@ const Dashboard = () => {
       }
     };
 
+    fetchDashboardDataRef.current = fetchDashboardData;
     fetchDashboardData();
   }, [token, url]);
+
+  useEffect(() => {
+    const onLive = (e) => {
+      const ch = e.detail?.channel;
+      if (ch === "orders" || ch === "quotations" || ch === "stones") {
+        fetchDashboardDataRef.current();
+      }
+    };
+    window.addEventListener("arkad:live", onLive);
+    return () => window.removeEventListener("arkad:live", onLive);
+  }, []);
 
   const calculateAnalytics = (orders, stonesMap = new Map()) => {
     if (!orders || orders.length === 0) {

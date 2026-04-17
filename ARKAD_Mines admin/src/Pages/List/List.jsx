@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './List.css';
 import { toast } from 'react-toastify';
 import axios from 'axios';
@@ -46,6 +46,17 @@ const List = () => {
           toast.error("Error fetching stone list")
       }
   }
+
+  const fetchListRef = useRef(fetchList);
+  fetchListRef.current = fetchList;
+
+  useEffect(() => {
+    const onLive = (e) => {
+      if (e.detail?.channel === "stones") fetchListRef.current();
+    };
+    window.addEventListener("arkad:live", onLive);
+    return () => window.removeEventListener("arkad:live", onLive);
+  }, []);
 
   const removeStoneItem = async (stoneID)=>{
       try{

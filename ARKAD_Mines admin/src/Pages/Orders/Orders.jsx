@@ -1,7 +1,7 @@
 import React from 'react'
 import './Orders.css'
 import { formatOrderStatus, formatPaymentStatus } from '../../formatStatus'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import {
@@ -362,6 +362,23 @@ const Orders = () => {
     return `Rs ${(amount || 0).toLocaleString()}`
   }
 
+  const fetchAllOrdersRef = useRef(fetchAllOrders);
+  fetchAllOrdersRef.current = fetchAllOrders;
+  const fetchStatsRef = useRef(fetchStats);
+  fetchStatsRef.current = fetchStats;
+  const listArgsRef = useRef({ page: 1, status: '', search: '' });
+
+  useEffect(() => {
+    const onLive = (e) => {
+      if (e.detail?.channel !== 'orders') return;
+      const { page, status, search } = listArgsRef.current;
+      fetchAllOrdersRef.current(page, status, search);
+      fetchStatsRef.current();
+    };
+    window.addEventListener('arkad:live', onLive);
+    return () => window.removeEventListener('arkad:live', onLive);
+  }, []);
+
   useEffect(() => {
     fetchAllOrders(1, '', '')
     fetchStats()
@@ -382,6 +399,8 @@ const Orders = () => {
     fetchAllOrders(1, statusFilter, searchQuery)
     setPagination(prev => ({ ...prev, page: 1 }))
   }, [statusFilter])
+
+  listArgsRef.current = { page: pagination.page, status: statusFilter, search: searchQuery }
 
   const stats = totalStats
 

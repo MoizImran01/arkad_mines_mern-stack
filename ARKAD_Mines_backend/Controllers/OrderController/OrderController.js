@@ -4,6 +4,11 @@ import { cloudinary, configureCloudinary, generateSignedUrl } from '../../config
 import { logAudit, logError, getClientIp, normalizeRole, getUserAgent } from '../../logger/auditLogger.js';
 import { createNotification } from "../NotificationController/notificationController.js";
 import mongoose from "mongoose";
+import {
+  emitOrdersChangedForBuyer,
+  emitOrdersChangedStaff,
+  emitStonesChanged,
+} from "../../socket/socketEmitter.js";
 
 const roundToTwoDecimals = (value) => {
   return Math.round((value || 0) * 100) / 100;
@@ -269,6 +274,11 @@ const updateOrderStatus = async (req, res) => {
     order.timeline.push({ status, timestamp: new Date(), notes: notes || `Order status updated to ${status}` });
 
     await order.save();
+
+    const statusBuyerId = order.buyer?.toString?.() || String(order.buyer);
+    emitOrdersChangedForBuyer(statusBuyerId, { orderNumber: order.orderNumber });
+    emitOrdersChangedStaff({ orderNumber: order.orderNumber });
+
     res.json({ success: true, message: `Order status updated to ${status}`, order });
 
   } catch (error) {
@@ -367,6 +377,9 @@ const submitPaymentProof = async (req, res) => {
     if (order.paymentStatus === "pending") order.paymentStatus = "payment_in_progress";
     
     await order.save();
+
+    emitOrdersChangedForBuyer(buyerIdString, { orderId: String(order._id), orderNumber: order.orderNumber });
+    emitOrdersChangedStaff({ orderId: String(order._id), orderNumber: order.orderNumber });
     
     await createNotification({
       recipientType: "admin",
@@ -442,6 +455,10 @@ const approvePayment = async (req, res) => {
     order.paymentTimeline.push({ action: "payment_approved", amountPaid: roundedAmountPaid, notes: notes || "Payment approved" });
     await order.save();
 
+    const payBuyer = order.buyer?.toString?.() || String(order.buyer);
+    emitOrdersChangedForBuyer(payBuyer, { orderId: String(order._id), orderNumber: order.orderNumber });
+    emitOrdersChangedStaff({ orderId: String(order._id), orderNumber: order.orderNumber });
+
     await createNotification({ recipientType: "admin", title: "Payment approved", message: `${order.orderNumber} approved`, type: "payment_approved", orderId: order._id, orderNumber: order.orderNumber, amount: roundedAmountPaid });
     await createNotification({ recipientType: "user", recipientId: order.buyer, title: "Payment approved", message: `Payment approved for ${order.orderNumber}`, type: "payment_approved", orderId: order._id, orderNumber: order.orderNumber, amount: roundedAmountPaid });
 
@@ -473,6 +490,10 @@ const rejectPayment = async (req, res) => {
 
     order.paymentTimeline.push({ action: "payment_rejected", amountPaid: paymentProof.amountPaid, notes: rejectionReason || "Rejected" });
     await order.save();
+
+    const rejBuyer = order.buyer?.toString?.() || String(order.buyer);
+    emitOrdersChangedForBuyer(rejBuyer, { orderId: String(order._id), orderNumber: order.orderNumber });
+    emitOrdersChangedStaff({ orderId: String(order._id), orderNumber: order.orderNumber });
 
     await createNotification({ recipientType: "admin", title: "Payment rejected", message: `${order.orderNumber} rejected`, type: "payment_rejected", orderId: order._id, orderNumber: order.orderNumber, amount: paymentProof.amountPaid });
     await createNotification({ recipientType: "user", recipientId: order.buyer, title: "Payment rejected", message: `Payment rejected for ${order.orderNumber}`, type: "payment_rejected", orderId: order._id, orderNumber: order.orderNumber, amount: paymentProof.amountPaid });
@@ -529,6 +550,10 @@ const updatePaymentStatus = async (req, res) => {
     order.paymentTimeline.push({ action: `payment_${paymentStatus}`, timestamp: new Date(), notes: notes || `Status updated to ${paymentStatus}` });
 
     await order.save();
+
+    const psBuyer = order.buyer?.toString?.() || String(order.buyer);
+    emitOrdersChangedForBuyer(psBuyer, { orderId: String(order._id), orderNumber: order.orderNumber });
+    emitOrdersChangedStaff({ orderId: String(order._id), orderNumber: order.orderNumber });
     
     await createNotification({ recipientType: "admin", title: "Payment status updated", message: `${order.orderNumber} - ${paymentStatus}`, type: "payment_status_updated", orderId: order._id, orderNumber: order.orderNumber, paymentStatus, amount: order.financials?.grandTotal });
     await createNotification({ recipientType: "user", recipientId: order.buyer, title: "Payment status updated", message: `Status is now ${paymentStatus}`, type: "payment_status_updated", orderId: order._id, orderNumber: order.orderNumber, paymentStatus, amount: order.financials?.grandTotal });
@@ -645,6 +670,11 @@ const dispatchOrderItemByQr = async (req, res) => {
 
     await stone.save();
     await order.save();
+
+    emitStonesChanged({ stoneId: String(stone._id) });
+    const dispatchBuyerId = order.buyer?.toString?.() || String(order.buyer);
+    emitOrdersChangedForBuyer(dispatchBuyerId, { orderNumber: order.orderNumber });
+    emitOrdersChangedStaff({ orderNumber: order.orderNumber });
 
     return res.json({
       success: true,

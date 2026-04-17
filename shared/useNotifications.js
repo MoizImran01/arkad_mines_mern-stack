@@ -129,6 +129,16 @@ const useNotifications = (token, apiBase, options = {}) => {
   }, [showNotifications, token, fetchNotifications]);
 
   useEffect(() => {
+    const onLive = (e) => {
+      if (e.detail?.channel === "notifications" && tokenRef.current) {
+        fetchNotifications({ silent: true });
+      }
+    };
+    window.addEventListener("arkad:live", onLive);
+    return () => window.removeEventListener("arkad:live", onLive);
+  }, [fetchNotifications]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (panelRef.current && !panelRef.current.contains(event.target)) {
         setShowNotifications(false);

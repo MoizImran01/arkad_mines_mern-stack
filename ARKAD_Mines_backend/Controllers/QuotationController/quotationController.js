@@ -5,6 +5,12 @@ import { generateQuotationPDF } from "../../Utils/pdfGenerator.js";
 import { logAudit, logError, getClientIp, normalizeRole, getUserAgent } from "../../logger/auditLogger.js";
 import { v4 as uuidv4 } from 'uuid';
 import mongoose from "mongoose";
+import {
+  emitOrdersChangedForBuyer,
+  emitOrdersChangedStaff,
+  emitQuotationsChangedForBuyer,
+  emitQuotationsChangedStaff,
+} from "../../socket/socketEmitter.js";
 
 const roundToTwoDecimals = (value) => {
   return Math.round((value || 0) * 100) / 100;
@@ -267,6 +273,12 @@ const createOrUpdateQuotation = async (req, res) => {
     const message = saveAsDraft
       ? "Quotation saved as draft"
       : "Quotation submitted successfully";
+
+    const buyerSocketId = String(quotation.buyer);
+    emitQuotationsChangedForBuyer(buyerSocketId, { quoteId: String(quotation._id), status });
+    if (!saveAsDraft && (status === "submitted" || status === "adjustment_required")) {
+      emitQuotationsChangedStaff({ quoteId: String(quotation._id), status });
+    }
 
     res.json({
       success: true,
@@ -598,6 +610,12 @@ const issueQuotation = async (req, res) => {
       details: `customerId=${quotation.buyer._id || quotation.buyer}, lineItems=${quotation.items.length}, discount=${discount}%, grandTotal=${grandTotal}, taxPercent=${taxPercent}`
     });
 
+    const issuedBuyerId =
+      quotation.buyer?._id?.toString?.() ||
+      (typeof quotation.buyer === "object" && quotation.buyer?.toString?.()) ||
+      String(quotation.buyer);
+    emitQuotationsChangedForBuyer(issuedBuyerId, { quoteId: String(quotation._id), status: "issued" });
+
     
     try {
       const pdfBuffer = await generateQuotationPDF(quotation);
@@ -839,6 +857,12 @@ const approveQuotation = async (req, res) => {
       ? ` | Anomaly detected: ${req.sessionAnomaly.details.join('; ')}` 
       : '';
 
+    const buyerIdStr = req.user.id.toString();
+    emitQuotationsChangedForBuyer(buyerIdStr, { quoteId: String(quotation._id) });
+    emitOrdersChangedForBuyer(buyerIdStr, { orderNumber: order.orderNumber });
+    emitQuotationsChangedStaff({ quoteId: String(quotation._id) });
+    emitOrdersChangedStaff({ orderNumber: order.orderNumber });
+
     const fullRequestPayload = {
       quoteId: quoteId,
       comment: comment || null,
@@ -947,6 +971,13 @@ const rejectQuotation = async (req, res) => {
       details: `oldStatus=issued, newStatus=rejected, hasComment=${!!comment}`
     });
 
+    const rejectBuyerId =
+      quotation.buyer?._id?.toString?.() ||
+      (typeof quotation.buyer === "object" && quotation.buyer?.toString?.()) ||
+      String(quotation.buyer);
+    emitQuotationsChangedForBuyer(rejectBuyerId, { quoteId: String(quotation._id) });
+    emitQuotationsChangedStaff({ quoteId: String(quotation._id) });
+
     res.json({
       success: true,
       message: "Quotation rejected successfully.",
@@ -991,6 +1022,13 @@ const requestRevision = async (req, res) => {
       resourceId: quoteId,
       details: `oldStatus=issued, newStatus=revision_requested, hasComment=${!!comment}`
     });
+
+    const revBuyerId =
+      quotation.buyer?._id?.toString?.() ||
+      (typeof quotation.buyer === "object" && quotation.buyer?.toString?.()) ||
+      String(quotation.buyer);
+    emitQuotationsChangedForBuyer(revBuyerId, { quoteId: String(quotation._id) });
+    emitQuotationsChangedStaff({ quoteId: String(quotation._id) });
 
     res.json({
       success: true,

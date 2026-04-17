@@ -1,5 +1,5 @@
 
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState, useRef } from "react";
 import "./Orders.css";
 import { compressImage } from "../../utils/compressImage";
 import axios from "axios";
@@ -48,6 +48,7 @@ const Orders = () => {
     Authorization: `Bearer ${token}`,
   }), [token]);
 
+  const fetchOrdersRef = useRef(async () => {});
   const fetchOrders = async () => {
     if (!token) return;
     setLoading(true);
@@ -72,6 +73,15 @@ const Orders = () => {
       setLoading(false);
     }
   };
+  fetchOrdersRef.current = fetchOrders;
+
+  useEffect(() => {
+    const onLive = (e) => {
+      if (e.detail?.channel === "orders") fetchOrdersRef.current();
+    };
+    window.addEventListener("arkad:live", onLive);
+    return () => window.removeEventListener("arkad:live", onLive);
+  }, []);
 
   useEffect(() => {
     fetchOrders();

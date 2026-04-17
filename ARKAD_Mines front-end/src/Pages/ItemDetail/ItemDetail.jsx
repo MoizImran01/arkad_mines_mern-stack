@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { StoreContext } from '../../context/StoreContext';
@@ -21,6 +21,8 @@ const ItemDetail = () => {
   const [error, setError] = useState(null);
   const [isImageHovering, setIsImageHovering] = useState(false);
   const [imagePosition, setImagePosition] = useState({ x: 50, y: 50 });
+
+  const fetchStoneRef = useRef(async () => {});
 
   useEffect(() => {
     const fetchStone = async () => {
@@ -48,8 +50,17 @@ const ItemDetail = () => {
       }
     };
 
+    fetchStoneRef.current = fetchStone;
     fetchStone();
   }, [id, url]);
+
+  useEffect(() => {
+    const onLive = (e) => {
+      if (e.detail?.channel === 'stones') fetchStoneRef.current();
+    };
+    window.addEventListener('arkad:live', onLive);
+    return () => window.removeEventListener('arkad:live', onLive);
+  }, []);
 
   const handleImageMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();

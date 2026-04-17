@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import './Products.css';
 import axios from 'axios';
 import { FiFilter, FiX, FiSearch, FiSliders, FiAlertTriangle } from 'react-icons/fi';
@@ -103,6 +103,17 @@ const Products = () => {
       setLoading(false);
     }
   };
+
+  const applyFiltersRef = useRef(applyFilters);
+  applyFiltersRef.current = applyFilters;
+
+  useEffect(() => {
+    const onLive = (e) => {
+      if (e.detail?.channel === "stones") applyFiltersRef.current();
+    };
+    window.addEventListener("arkad:live", onLive);
+    return () => window.removeEventListener("arkad:live", onLive);
+  }, []);
 
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({

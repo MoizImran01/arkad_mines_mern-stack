@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { uploadBuffer, deleteImage, getPublicIdFromUrl } from '../../config/cloudinary.js';
 import { logAudit, logError, getClientIp, normalizeRole } from '../../logger/auditLogger.js';
 import mongoose from 'mongoose';
+import { emitStonesChanged } from '../../socket/socketEmitter.js';
 
 // Creates stone with image and QR code (Cloudinary); audits success/failure.
 const addStones = async (req, res) => {
@@ -110,6 +111,8 @@ const addStones = async (req, res) => {
             clientIp,
             details: `stoneName=${stoneName}, category=${category}, price=${price}, qrCode=${qrCodeId}`
         });
+
+        emitStonesChanged({ stoneId: stones._id.toString() });
         
         res.json({ 
             success: true, 
@@ -218,6 +221,8 @@ const removeStones = async (req, res) => {
             clientIp,
             details: `stoneName=${stones.stoneName}, qrCode=${stones.qrCode}`
         });
+
+        emitStonesChanged({ removedId: id });
 
         res.json({ success: true, message: "Stone Removed" });
     } catch (error) {
@@ -505,6 +510,8 @@ const markStoneForPO = async (req, res) => {
             clientIp,
             details: `stoneName=${safeStoneName}, subcategory=${safeSubcategory}, sku=${sku || 'N/A'}`
         });
+
+        emitStonesChanged({ stoneId: stone._id.toString() });
 
         res.json({ 
             success: true, 
