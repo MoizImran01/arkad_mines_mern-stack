@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { subscribeLive } from './socketLiveRegistry.js';
+import { LIVE_REST_POLL_INTERVAL_MS } from './liveRestPoll.js';
 
 export const formatTime = (date) => {
   if (!date) return "";
@@ -13,9 +14,6 @@ export const formatTime = (date) => {
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
 };
-
-// payment fix client side: shorter poll + tokenRef in interval + pathname/focus refetch
-const POLL_INTERVAL_MS = 15 * 1000;
 
 const normalizeFetchArg = (arg) => {
   if (arg === true) return { manual: true, silent: false };
@@ -92,7 +90,7 @@ const useNotifications = (token, apiBase, options = {}) => {
     const id = setInterval(() => {
       if (!tokenRef.current) return;
       fetchNotifications({ silent: true });
-    }, POLL_INTERVAL_MS);
+    }, LIVE_REST_POLL_INTERVAL_MS);
     return () => clearInterval(id);
   }, [token, fetchNotifications]);
 

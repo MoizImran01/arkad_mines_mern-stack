@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import './List.css';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { FiBox, FiTrash2 } from 'react-icons/fi';
 import Pagination from '../../../../shared/Pagination.jsx';
 import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
+import { LIVE_REST_POLL_INTERVAL_MS } from '../../../../shared/liveRestPoll.js';
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 const List = () => {
+  const location = useLocation();
+  const pathHandledRef = useRef(false);
 
   const [list, setList] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -60,9 +64,31 @@ const List = () => {
     const id = setInterval(() => {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
       fetchListRef.current();
-    }, 4000);
+    }, LIVE_REST_POLL_INTERVAL_MS);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") fetchListRef.current();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
+  useEffect(() => {
+    const onFocus = () => fetchListRef.current();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
+  useEffect(() => {
+    if (!pathHandledRef.current) {
+      pathHandledRef.current = true;
+      return;
+    }
+    fetchListRef.current();
+  }, [location.pathname]);
 
   const removeStoneItem = async (stoneID)=>{
       try{

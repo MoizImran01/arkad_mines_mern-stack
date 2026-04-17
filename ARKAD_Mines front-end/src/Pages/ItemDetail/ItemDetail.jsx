@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { StoreContext } from '../../context/StoreContext';
 import { useContext } from 'react';
@@ -10,11 +10,14 @@ import {
 } from 'react-icons/fi';
 import './ItemDetail.css';
 import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
+import { LIVE_REST_POLL_INTERVAL_MS } from '../../../../shared/liveRestPoll.js';
 
 // Single stone product page: details, image zoom, add to quote.
 const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const pathHandledRef = useRef(false);
   const { url, token, addItemToQuote } = useContext(StoreContext);
 
   const [stone, setStone] = useState(null);
@@ -70,9 +73,31 @@ const ItemDetail = () => {
     const tick = setInterval(() => {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
       fetchStoneRef.current();
-    }, 4000);
+    }, LIVE_REST_POLL_INTERVAL_MS);
     return () => clearInterval(tick);
   }, []);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") fetchStoneRef.current();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
+  useEffect(() => {
+    const onFocus = () => fetchStoneRef.current();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
+  useEffect(() => {
+    if (!pathHandledRef.current) {
+      pathHandledRef.current = true;
+      return;
+    }
+    fetchStoneRef.current();
+  }, [location.pathname]);
 
   const handleImageMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();

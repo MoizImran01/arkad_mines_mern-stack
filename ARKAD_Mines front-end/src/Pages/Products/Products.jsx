@@ -3,13 +3,17 @@ import './Products.css';
 import axios from 'axios';
 import { FiFilter, FiX, FiSearch, FiSliders, FiAlertTriangle } from 'react-icons/fi';
 import { StoreContext } from '../../context/StoreContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
+import { LIVE_REST_POLL_INTERVAL_MS } from '../../../../shared/liveRestPoll.js';
 
 // Stone catalog with category, price, stock filters and add-to-quote.
 const Products = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { url, addItemToQuote } = useContext(StoreContext);
+  const pathHandledRef = useRef(false);
+  const skipFirstFiltersOpenRefetchRef = useRef(true);
   
   const [filters, setFilters] = useState({
     category: 'all',
@@ -132,15 +136,48 @@ const Products = () => {
     return () => window.removeEventListener("arkad:live", onLive);
   }, []);
 
-  // Polling: catalog must update even if Socket.IO misses (multi-bundle, proxy, HTTP cache, etc.)
+  // Same live pattern as shared/useNotifications: interval + visibility + focus + route changes (Vercel-friendly REST).
   useEffect(() => {
-    const tick = () => {
+    const id = setInterval(() => {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
       applyFiltersRef.current({ silent: true });
-    };
-    const id = setInterval(tick, 2500);
+    }, LIVE_REST_POLL_INTERVAL_MS);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        applyFiltersRef.current({ silent: true });
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
+  useEffect(() => {
+    const onFocus = () => applyFiltersRef.current({ silent: true });
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
+  useEffect(() => {
+    if (!pathHandledRef.current) {
+      pathHandledRef.current = true;
+      return;
+    }
+    applyFiltersRef.current({ silent: true });
+  }, [location.pathname]);
+
+  // Like notifications refetch when the panel opens — refetch when filters sidebar is expanded after being collapsed.
+  useEffect(() => {
+    if (!showFilters) return;
+    if (skipFirstFiltersOpenRefetchRef.current) {
+      skipFirstFiltersOpenRefetchRef.current = false;
+      return;
+    }
+    applyFiltersRef.current({ silent: true });
+  }, [showFilters]);
 
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({
