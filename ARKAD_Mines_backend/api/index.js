@@ -102,7 +102,7 @@ app.use("/api/pricing", pricingRouter);
 app.use("/api/contact", contactRouter);
 app.get("/", (req, res) => res.status(200).send(" Server running successfully"));
 
-// Vercel supports Express apps natively - export app directly
+
 export default app;
 
 async function start() {
@@ -124,6 +124,15 @@ async function start() {
     setTimeout(() => ensureAnalyticsIndexes(), 5000);
   } catch (error) {
     console.warn("Analytics indexes not available:", error.message);
+  }
+
+  
+  try {
+    const { warmUpPricingService } = await import("../Controllers/PricingController.js");
+    setTimeout(() => warmUpPricingService(), 2000);
+    setInterval(() => warmUpPricingService(), 10 * 60 * 1000);
+  } catch (error) {
+    console.warn("Pricing warm-up not available:", error.message);
   }
 
   if (!process.env.VERCEL) {

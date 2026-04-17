@@ -477,12 +477,14 @@ const LoginPopup = ({ setShowLogin }) => {
                     </button>
 
                     <div className="form-footer">
-                        <div className="terms-agreement">
-                            <input type='checkbox' id="terms" required disabled={isLoading} />
-                            <label htmlFor="terms">
-                                I agree to the <a href="/terms" target="_blank">Terms of Use</a> and <a href="/privacy" target="_blank">Privacy Policy</a>
-                            </label>
-                        </div>
+                        {currentState === "Sign Up" && (
+                            <div className="terms-agreement">
+                                <input type='checkbox' id="terms" required disabled={isLoading} />
+                                <label htmlFor="terms">
+                                    I agree to the <a href="/terms" target="_blank">Terms of Use</a> and <a href="/privacy" target="_blank">Privacy Policy</a>
+                                </label>
+                            </div>
+                        )}
                         <div className="state-toggle">
                             {currentState === "Login" ? (
                                 <p>Don&apos;t have a business account? <button type="button" onClick={toggleState}>Register here</button></p>
