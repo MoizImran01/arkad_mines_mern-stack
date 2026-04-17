@@ -76,35 +76,35 @@ const Orders = () => {
     return `${API_URL}/images/${imagePath}`
   }
 
-  const fetchAllOrders = async (page = pagination.page, status = statusFilter, search = searchQuery) => {
+  const fetchAllOrders = async (page = pagination.page, status = statusFilter, search = searchQuery, { silent = false } = {}) => {
     try {
-      setLoading(true)
+      if (!silent) setLoading(true)
       setRefreshing(true)
       const token = localStorage.getItem('adminToken')
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
-      
+
       const params = new URLSearchParams({
         page: page.toString(),
         limit: pagination.limit.toString()
       })
       if (status) params.append('status', status)
       if (search) params.append('search', search)
-      
+
       const response = await axios.get(`${API_URL}/api/orders/admin/all?${params.toString()}`, { headers })
-      
+
       if (response.data.success) {
         setOrders(response.data.orders)
         if (response.data.pagination) {
           setPagination(response.data.pagination)
         }
       } else {
-        toast.error("Error loading orders")
+        if (!silent) toast.error("Error loading orders")
       }
     } catch (error) {
       console.error("Error fetching orders:", error)
-      toast.error("Failed to load orders")
+      if (!silent) toast.error("Failed to load orders")
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
       setRefreshing(false)
     }
   }
@@ -372,7 +372,7 @@ const Orders = () => {
   useEffect(() => {
     const fn = () => {
       const { page, status, search } = listArgsRef.current
-      fetchAllOrdersRef.current(page, status, search)
+      fetchAllOrdersRef.current(page, status, search, { silent: true })
       fetchStatsRef.current()
     }
     return subscribeLive('orders', fn)

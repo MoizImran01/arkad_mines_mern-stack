@@ -42,6 +42,12 @@ const STATUS_LABEL = {
   cancelled: 'CANCELLED',
 };
 
+const PAYMENT_LABEL = {
+  pending: 'UNPAID',
+  payment_in_progress: 'PARTIAL / IN PROGRESS',
+  fully_paid: 'FULLY PAID',
+};
+
 
 const Dispatch = () => {
   const [qrCode, setQrCode]                           = useState('');
@@ -217,6 +223,20 @@ const Dispatch = () => {
       toast.error('QR code and order are required');
       return;
     }
+
+    //Warn the admin if the selected order isn't fully paid yet
+    const selectedOrder = blockOrders.find((o) => o.orderNumber === selectedOrderNumber);
+    if (selectedOrder && selectedOrder.paymentStatus !== 'fully_paid') {
+      const label = PAYMENT_LABEL[selectedOrder.paymentStatus] || 'NOT FULLY PAID';
+      const proceed = window.confirm(
+        `⚠️ Payment warning\n\n` +
+        `Order ${selectedOrder.orderNumber} is currently: ${label}.\n\n` +
+        `This order has NOT been fully paid yet. Are you sure you want to dispatch this block?\n\n` +
+        `Click OK to dispatch anyway, or Cancel to review the payment first.`
+      );
+      if (!proceed) return;
+    }
+
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
@@ -452,6 +472,21 @@ const Dispatch = () => {
                         <span className="order-option-number">{order.orderNumber}</span>
                         <span className={`order-status-chip status-${order.status}`}>
                           {STATUS_LABEL[order.status] || order.status}
+                        </span>
+                        <span
+                          className={`order-status-chip payment-${order.paymentStatus || 'pending'}`}
+                          style={{
+                            backgroundColor:
+                              order.paymentStatus === 'fully_paid' ? '#d1fae5' :
+                              order.paymentStatus === 'payment_in_progress' ? '#fef3c7' : '#fee2e2',
+                            color:
+                              order.paymentStatus === 'fully_paid' ? '#065f46' :
+                              order.paymentStatus === 'payment_in_progress' ? '#92400e' : '#991b1b',
+                            marginLeft: '6px',
+                          }}
+                          title="Payment status"
+                        >
+                          {PAYMENT_LABEL[order.paymentStatus] || 'UNPAID'}
                         </span>
                       </div>
                       <div className="order-option-meta">

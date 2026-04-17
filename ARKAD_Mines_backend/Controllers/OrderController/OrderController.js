@@ -32,7 +32,7 @@ const handleStockRestoration = async (orderItems) => {
   if (!orderItems) return;
   for (const item of orderItems) {
     const dispatched = Number(item.quantityDispatched || 0);
-    if (dispatched <= 0) continue; // nothing was deducted, nothing to restore
+    if (dispatched <= 0) continue; 
     const stone = await stonesModel.findById(item.stone?._id || item.stoneId);
     if (!stone) continue;
     stone.quantityDelivered = Math.max(0, (stone.quantityDelivered || 0) - dispatched);
@@ -442,8 +442,7 @@ const approvePayment = async (req, res) => {
       if (order.status === "draft") {
         order.status = "confirmed";
 
-        // Inventory is NOT deducted here — it decrements per-block at QR
-        // dispatch. Just validate stock is available.
+        
         await order.populate("items.stone");
         try {
             await checkStockAvailability(order.items);
@@ -714,7 +713,7 @@ const getOrdersByBlockQr = async (req, res) => {
 
     const orders = await orderModel
       .find({ 'items.stone': stone._id, status: { $nin: ['cancelled'] } })
-      .select('orderNumber status buyer items financials createdAt')
+      .select('orderNumber status paymentStatus buyer items financials createdAt')
       .populate('buyer', 'companyName email')
       .sort({ createdAt: -1 })
       .lean();
@@ -728,6 +727,7 @@ const getOrdersByBlockQr = async (req, res) => {
         _id: order._id,
         orderNumber: order.orderNumber,
         status: order.status,
+        paymentStatus: order.paymentStatus || 'pending',
         buyerName: order.buyer?.companyName || order.buyer?.email || 'Unknown',
         orderedQuantity: ordered,
         quantityDispatched: alreadyDispatched,

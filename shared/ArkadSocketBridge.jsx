@@ -51,12 +51,15 @@ export function ArkadSocketBridge({ apiBaseUrl, token }) {
 
     const startFallback = () => {
       if (fallbackRef.current) return;
+      // 60s interval (was 12s) — when Socket.IO can't connect (e.g. Vercel
+      // serverless can't host WebSockets), we still give users fresh data
+      // without hammering the API or flashing spinners every ~10s.
       fallbackRef.current = setInterval(() => {
         fireLive("stones");
         fireLive("quotations");
         fireLive("orders");
         fireLive("notifications");
-      }, 12000);
+      }, 60000);
     };
 
     const stopFallback = () => {
