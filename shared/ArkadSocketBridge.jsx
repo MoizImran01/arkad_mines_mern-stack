@@ -25,7 +25,12 @@ export function ArkadSocketBridge({ apiBaseUrl, token }) {
     const socket = io(base, {
       path: "/socket.io",
       auth: { token },
-      transports: ["websocket", "polling"],
+      // Polling first: some networks/firewalls block WebSocket upgrade; still upgrades when possible.
+      transports: ["polling", "websocket"],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      timeout: 20000,
       autoConnect: true,
     });
     socketRef.current = socket;

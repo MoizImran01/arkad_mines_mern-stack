@@ -268,6 +268,7 @@ const updateOrderStatus = async (req, res) => {
 
     if (status === "cancelled") {
         await handleStockRestoration(order.items);
+        emitStonesChanged({ reason: "order_cancelled" });
     }
 
     order.status = status;

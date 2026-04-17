@@ -1,5 +1,6 @@
 import procurementModel from '../Models/procurementModel/procurementModel.js';
 import stonesModel from '../Models/stonesModel/stonesModel.js';
+import { emitStonesChanged } from '../socket/socketEmitter.js';
 
 export const listPurchaseOrders = async (req, res) => {
   try {
@@ -63,6 +64,8 @@ export const createPurchaseOrder = async (req, res) => {
           await stone.save();
         }
       }
+
+      emitStonesChanged({ reason: "purchase_order_created" });
 
       const po = new procurementModel({
         poNumber,
@@ -164,6 +167,10 @@ export const updatePurchaseOrderStatus = async (req, res) => {
 
     po.status = status;
     await po.save();
+
+    if (status === "received" || status === "cancelled") {
+      emitStonesChanged({ reason: "purchase_order_status", status });
+    }
 
     res.json({ success: true, message: `Status updated to ${status}`, purchaseOrder: po });
   } catch (error) {

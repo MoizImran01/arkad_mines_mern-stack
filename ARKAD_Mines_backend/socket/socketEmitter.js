@@ -6,8 +6,6 @@ export const setSocketIO = (io) => {
 
 export const getIO = () => ioRef;
 
-const buyerRoom = (buyerId) => `user:${String(buyerId)}`;
-
 const safeEmit = (fn) => {
   try {
     fn();
@@ -16,48 +14,62 @@ const safeEmit = (fn) => {
   }
 };
 
-/** All authenticated catalog viewers (buyers + staff). */
+const stamp = (payload = {}) => ({ at: Date.now(), ...payload });
+
+/**
+ * Catalog / inventory changed — broadcast to every connected authenticated socket.
+ */
 export function emitStonesChanged(payload = {}) {
   safeEmit(() => {
-    ioRef?.to("catalog").emit("stones:changed", { at: Date.now(), ...payload });
+    if (!ioRef) return;
+    ioRef.emit("stones:changed", stamp(payload));
   });
 }
 
-export function emitQuotationsChangedForBuyer(buyerId, payload = {}) {
-  if (!buyerId || !ioRef) return;
+/**
+ * Quotation updates — broadcast; each client still loads only its own data via JWT on REST.
+ */
+export function emitQuotationsChangedForBuyer(_buyerId, payload = {}) {
   safeEmit(() => {
-    ioRef.to(buyerRoom(buyerId)).emit("quotations:changed", payload);
+    if (!ioRef) return;
+    ioRef.emit("quotations:changed", stamp(payload));
   });
 }
 
 export function emitQuotationsChangedStaff(payload = {}) {
   safeEmit(() => {
-    ioRef?.to("staff").emit("quotations:changed", payload);
+    if (!ioRef) return;
+    ioRef.emit("quotations:changed", stamp(payload));
   });
 }
 
-export function emitOrdersChangedForBuyer(buyerId, payload = {}) {
-  if (!buyerId || !ioRef) return;
+/**
+ * Order / payment updates — broadcast; REST remains scoped by token.
+ */
+export function emitOrdersChangedForBuyer(_buyerId, payload = {}) {
   safeEmit(() => {
-    ioRef.to(buyerRoom(buyerId)).emit("orders:changed", payload);
+    if (!ioRef) return;
+    ioRef.emit("orders:changed", stamp(payload));
   });
 }
 
 export function emitOrdersChangedStaff(payload = {}) {
   safeEmit(() => {
-    ioRef?.to("staff").emit("orders:changed", payload);
+    if (!ioRef) return;
+    ioRef.emit("orders:changed", stamp(payload));
   });
 }
 
-export function emitNotificationsForUser(userId, payload = {}) {
-  if (!userId || !ioRef) return;
+export function emitNotificationsForUser(_userId, payload = {}) {
   safeEmit(() => {
-    ioRef.to(buyerRoom(userId)).emit("notifications:changed", payload);
+    if (!ioRef) return;
+    ioRef.emit("notifications:changed", stamp(payload));
   });
 }
 
 export function emitNotificationsForStaff(payload = {}) {
   safeEmit(() => {
-    ioRef?.to("staff").emit("notifications:changed", payload);
+    if (!ioRef) return;
+    ioRef.emit("notifications:changed", stamp(payload));
   });
 }

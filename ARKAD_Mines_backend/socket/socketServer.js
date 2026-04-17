@@ -35,9 +35,10 @@ export function initSocketServer(httpServer, verifyOrigin) {
 
   io.on("connection", (socket) => {
     const { id, role } = socket.user;
+    const uid = id != null && typeof id.toString === "function" ? id.toString() : String(id ?? "");
     const r = String(role || "").toLowerCase();
     if (r === "admin" || r === "employee") socket.join("staff");
-    else socket.join(`user:${String(id)}`);
+    else socket.join(`user:${uid}`);
     socket.join("catalog");
   });
 
