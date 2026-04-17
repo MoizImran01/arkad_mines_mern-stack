@@ -67,15 +67,18 @@ const Products = () => {
     ...categories.filter(cat => cat.value !== 'all')
   ];
 
-  // Apply filters and fetch products
-  const applyFilters = async () => {
-    setLoading(true);
-    setError(null);
-    setHasSearched(true);
-    
+  // Apply filters and fetch products (optional silent: background refresh, no loading spinner)
+  const applyFilters = async (options = {}) => {
+    const silent = Boolean(options.silent);
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+      setHasSearched(true);
+    }
+
     try {
       const params = new URLSearchParams();
-      
+
       if (filters.category !== 'all') params.append('category', filters.category);
       if (filters.subcategory !== 'all') params.append('subcategory', filters.subcategory);
       if (filters.minPrice) params.append('minPrice', filters.minPrice);
@@ -85,38 +88,57 @@ const Products = () => {
       if (filters.sortBy) params.append('sortBy', filters.sortBy);
       if (filters.source !== 'all') params.append('source', filters.source);
 
-      const response = await axios.get(`${url}/api/stones/filter?${params.toString()}`);
-      
+      // Bust HTTP caches (CDN/browser) that key only on URL without this param
+      params.append('_cb', String(Date.now()));
+
+      const response = await axios.get(`${url}/api/stones/filter?${params.toString()}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          Pragma: 'no-cache',
+        },
+      });
+
       if (response.data.success) {
         setProducts(response.data.stones);
       } else {
-        setProducts([]);
+        if (!silent) setProducts([]);
       }
     } catch (err) {
       console.error("Error fetching filtered products:", err);
-      const errorMessage = 
-        err.response?.data?.error || 
-        err.response?.statusText || 
-        "Unable to load products. Please check your connection.";
-      setError(errorMessage);
-      setProducts([]);
+      if (!silent) {
+        const errorMessage =
+          err.response?.data?.error ||
+          err.response?.statusText ||
+          "Unable to load products. Please check your connection.";
+        setError(errorMessage);
+        setProducts([]);
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   const applyFiltersRef = useRef(applyFilters);
   applyFiltersRef.current = applyFilters;
 
-  useEffect(() => subscribeLive("stones", () => applyFiltersRef.current()), []);
+  useEffect(() => subscribeLive("stones", () => applyFiltersRef.current({ silent: true })), []);
 
-  // Polling: catalog must update even if Socket.IO misses (multi-bundle, proxy, serverless API, etc.)
+  // Same-tab fallback: fireLive dispatches this even if a duplicate bundle missed subscribeLive
+  useEffect(() => {
+    const onLive = (e) => {
+      if (e?.detail?.channel === "stones") applyFiltersRef.current({ silent: true });
+    };
+    window.addEventListener("arkad:live", onLive);
+    return () => window.removeEventListener("arkad:live", onLive);
+  }, []);
+
+  // Polling: catalog must update even if Socket.IO misses (multi-bundle, proxy, HTTP cache, etc.)
   useEffect(() => {
     const tick = () => {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
-      applyFiltersRef.current();
+      applyFiltersRef.current({ silent: true });
     };
-    const id = setInterval(tick, 3500);
+    const id = setInterval(tick, 2500);
     return () => clearInterval(id);
   }, []);
 

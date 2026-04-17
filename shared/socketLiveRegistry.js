@@ -12,6 +12,9 @@ const emptyRegistry = () => ({
   notifications: new Set(),
 });
 
+/** Module fallback when globalThis is unavailable — must be one object, not a new one per call. */
+let moduleFallbackRegistry = null;
+
 function getRegistry() {
   try {
     const g = typeof globalThis !== "undefined" ? globalThis : null;
@@ -22,7 +25,8 @@ function getRegistry() {
   } catch {
     /* ignore */
   }
-  return emptyRegistry();
+  if (!moduleFallbackRegistry) moduleFallbackRegistry = emptyRegistry();
+  return moduleFallbackRegistry;
 }
 
 /**

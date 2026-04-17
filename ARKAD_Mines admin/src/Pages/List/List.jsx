@@ -30,7 +30,10 @@ const List = () => {
 
   const fetchList = async ()=>{
       try{
-      const response = await axios.get(`${API_URL}/api/stones/list`);
+      const response = await axios.get(`${API_URL}/api/stones/list`, {
+        params: { _cb: Date.now() },
+        headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+      });
 
       if(response.data.success)
       {

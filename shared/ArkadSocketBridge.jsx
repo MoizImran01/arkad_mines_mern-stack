@@ -5,11 +5,25 @@ import { fireLive } from "./socketLiveRegistry.js";
 /**
  * Connects to the API Socket.IO server when `token` is set.
  * Forwards server events to subscribeLive() + window "arkad:live" for legacy listeners.
+ *
+ * Without a token the socket does not run; a light interval still nudges catalog
+ * subscribers (guests) so pages can refetch when admins change inventory.
  */
 export function ArkadSocketBridge({ apiBaseUrl, token }) {
   const socketRef = useRef(null);
   const fallbackRef = useRef(null);
   const connectWatchRef = useRef(null);
+
+  useEffect(() => {
+    const t = token != null ? String(token).trim() : "";
+    if (!t) {
+      const guestNudge = setInterval(() => {
+        fireLive("stones");
+      }, 6000);
+      return () => clearInterval(guestNudge);
+    }
+    return undefined;
+  }, [token]);
 
   useEffect(() => {
     const raw = apiBaseUrl != null ? String(apiBaseUrl).trim() : "";

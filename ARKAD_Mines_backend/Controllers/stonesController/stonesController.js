@@ -6,6 +6,14 @@ import { logAudit, logError, getClientIp, normalizeRole } from '../../logger/aud
 import mongoose from 'mongoose';
 import { emitStonesChanged } from '../../socket/socketEmitter.js';
 
+/** Catalog GETs must not be cached by browsers or reverse proxies — stale counts break live UX. */
+function setCatalogNoCacheHeaders(res) {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.set('Surrogate-Control', 'no-store');
+}
+
 // Creates stone with image and QR code (Cloudinary); audits success/failure.
 const addStones = async (req, res) => {
     const clientIp = getClientIp(req);
@@ -149,6 +157,7 @@ const addStones = async (req, res) => {
 const listStones = async (req, res) => {
     try {
         const stones = await stonesModel.find({});
+        setCatalogNoCacheHeaders(res);
         res.json({ success: true, stones_data: stones });
     } catch (error) {
         logError(error, {
@@ -299,6 +308,7 @@ const getStoneById = async (req, res) => {
             details
         });
 
+        setCatalogNoCacheHeaders(res);
         res.json({
             success: true,
             stone: stone
@@ -455,6 +465,7 @@ const filterStones = async (req, res) => {
         let stones = await stonesModel.find(query).select('-__v').sort(sortQuery);
         if (needsCaseInsensitiveSort) stones = sortStonesByName(stones, sortBy);
 
+        setCatalogNoCacheHeaders(res);
         res.json({ success: true, count: stones.length, stones });
     } catch (error) {
         logError(error, { action: 'FILTER_STONES', userId: req.user?.id, clientIp: getClientIp(req) });

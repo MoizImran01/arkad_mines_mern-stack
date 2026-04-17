@@ -26,43 +26,52 @@ const ItemDetail = () => {
   const fetchStoneRef = useRef(async () => {});
 
   useEffect(() => {
-    const fetchStone = async () => {
+    const fetchStone = async (silent = false) => {
       if (!id) {
-        setError('Invalid item ID');
-        setLoading(false);
+        if (!silent) {
+          setError('Invalid item ID');
+          setLoading(false);
+        }
         return;
       }
 
-      setLoading(true);
-      setError(null);
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+      }
 
       try {
-        const response = await axios.get(`${url}/api/stones/${id}`);
+        const response = await axios.get(`${url}/api/stones/${encodeURIComponent(id)}`, {
+          params: { _cb: Date.now() },
+          headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+        });
         if (response.data.success) {
           setStone(response.data.stone);
-        } else {
+        } else if (!silent) {
           setError(response.data.message || 'Failed to load item details');
         }
       } catch (err) {
         console.error('Error fetching stone:', err);
-        setError(err.response?.data?.message || 'Unable to load item details');
+        if (!silent) {
+          setError(err.response?.data?.message || 'Unable to load item details');
+        }
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
     };
 
-    fetchStoneRef.current = fetchStone;
-    fetchStone();
+    fetchStoneRef.current = () => fetchStone(true);
+    fetchStone(false);
   }, [id, url]);
 
   useEffect(() => subscribeLive('stones', () => fetchStoneRef.current()), []);
 
   useEffect(() => {
-    const id = setInterval(() => {
+    const tick = setInterval(() => {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
       fetchStoneRef.current();
     }, 4000);
-    return () => clearInterval(id);
+    return () => clearInterval(tick);
   }, []);
 
   const handleImageMouseMove = (e) => {
