@@ -32,7 +32,6 @@ documentRouter.get(
   verifyToken,
   wafProtection,
   documentListRateLimiter.userLimiter,
-  documentListRateLimiter.ipLimiter,
   listDocuments
 );
 
@@ -42,7 +41,6 @@ documentRouter.get(
   verifyToken,
   wafProtection,
   documentDownloadRateLimiter.userLimiter,
-  documentDownloadRateLimiter.ipLimiter,
   downloadDocument
 );
 
@@ -52,7 +50,6 @@ documentRouter.get(
   verifyToken,
   wafProtection,
   documentDownloadRateLimiter.userLimiter,
-  documentDownloadRateLimiter.ipLimiter,
   downloadDocument
 );
 

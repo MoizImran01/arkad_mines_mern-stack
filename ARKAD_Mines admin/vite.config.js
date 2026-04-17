@@ -9,6 +9,18 @@ const __dirname = path.dirname(__filename)
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    host: true,
+    port: 5174,
+    allowedHosts: true,
+    hmr: {
+      clientPort: 443,   
+    },
+    proxy: {
+      '/api':    { target: 'http://localhost:4000', changeOrigin: true, secure: false },
+      '/images': { target: 'http://localhost:4000', changeOrigin: true, secure: false },
+    },
+  },
   resolve: {
     alias: {
       react: path.resolve(__dirname, 'node_modules/react'),
@@ -30,7 +42,7 @@ export default defineConfig({
         assetFileNames: `assets/[name].[hash].[ext]`
       }
     },
-    // Increase chunk size warning limit if needed
+    
     chunkSizeWarningLimit: 1000
   }
 })

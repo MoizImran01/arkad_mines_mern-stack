@@ -64,24 +64,76 @@ const createPDFHeader = (doc, headerTop) => {
   const __dirname = path.dirname(__filename);
   const logoPath = path.join(__dirname, '../../ARKAD_Mines front-end/src/assets/logo.png');
 
+  const LOGO_SIZE = 52;
+  const TEXT_X = 115;
+
   if (fs.existsSync(logoPath)) {
-    doc.image(logoPath, 50, headerTop, { 
-      width: 60, 
-      height: 60,
-      fit: [60, 60]
+    doc.image(logoPath, 50, headerTop, {
+      width: LOGO_SIZE,
+      height: LOGO_SIZE,
+      fit: [LOGO_SIZE, LOGO_SIZE]
     });
   }
 
+  // Company name sits to the right of the logo, vertically centred
   doc.fontSize(16)
      .fillColor('#000000')
      .font('Helvetica-Bold')
-     .text('ARKAD MINES & MINERALS', 50, headerTop + 10);
+     .text('ARKAD MINES & MINERALS', TEXT_X, headerTop + 17, { width: 435 });
 
-  doc.moveTo(50, headerTop + 35)
-     .lineTo(550, headerTop + 35)
+  // Divider line clears the bottom of the logo
+  const lineY = headerTop + LOGO_SIZE + 12;
+  doc.moveTo(50, lineY)
+     .lineTo(550, lineY)
      .strokeColor('#333333')
      .lineWidth(1)
      .stroke();
+
+  // Advance cursor to below the header block
+  doc.y = lineY + 14;
+};
+
+// Generates official invoice PDF from an approved quotation.
+export const generateInvoicePDF = (quotation) => {
+  const { doc, promise } = initPDF({ Title: `Invoice ${quotation.referenceNumber}`, Author: "ARKAD MINES & MINERALS", Subject: "Official Invoice" });
+
+  const headerTop = 50;
+  createPDFHeader(doc, headerTop);
+  doc.fontSize(18).font("Helvetica-Bold").fillColor("#436650").text("OFFICIAL INVOICE", { align: "center" }).moveDown(0.5);
+
+  const detailsTop = doc.y;
+  const buyerName = quotation.buyer?.companyName || quotation.buyer?.name || "Valued Customer";
+  const buyerEmail = quotation.buyer?.email || "N/A";
+
+  doc.fontSize(10).font("Helvetica-Bold").fillColor("#000000").text("BILL TO:", 50, detailsTop);
+  doc.font("Helvetica").text(buyerName, 50, detailsTop + 15);
+  if (quotation.buyer?.address) {
+    doc.text(quotation.buyer.address, 50, detailsTop + 30, { width: 200 });
+  }
+  doc.text(`Email: ${buyerEmail}`, 50, detailsTop + 60);
+
+  const metaData = [
+    { label: "INVOICE NO:", value: `INV-${quotation.referenceNumber}` },
+    { label: "QUOTATION REF:", value: quotation.referenceNumber },
+    { label: "DATE ISSUED:", value: new Date(quotation.validity?.start || quotation.createdAt || new Date()).toLocaleDateString("en-GB") },
+    { label: "STATUS:", value: "APPROVED" }
+  ];
+  writeMetaDataTable(doc, metaData, detailsTop);
+  doc.moveDown(3);
+
+  const itemsEndY = createItemsTable(doc, quotation.items || [], doc.y);
+  const financialsEndY = createFinancialSummary(doc, quotation.financials || {}, itemsEndY);
+  const notesTop = Math.max(financialsEndY, itemsEndY + 40);
+
+  if (quotation.adminNotes) {
+    doc.fontSize(10).font("Helvetica-Bold").fillColor("#436650").text("NOTES", 50, notesTop);
+    doc.rect(50, notesTop + 15, 500, 60).fill("#fff9e6");
+    doc.fontSize(9).font("Helvetica").fillColor("#5c4b00").text(quotation.adminNotes, 55, notesTop + 25, { width: 490, align: "left" });
+  }
+
+  addStandardFooter(doc, "This is an official invoice. Payment is due as per agreed terms.");
+  doc.end();
+  return promise;
 };
 
 const createItemsTable = (doc, items, startY) => {

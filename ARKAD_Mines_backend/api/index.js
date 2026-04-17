@@ -20,12 +20,12 @@ import contactRouter from "../Routes/ContactRoutes/contactRouter.js";
 const app = express();
 
 // CORS allowed origins: CLIENT_URL plus localhost dev URLs and OKE deployment URLs.
-const configuredOrigins = process.env.CLIENT_URL 
-  ? process.env.CLIENT_URL.split(',') 
+const configuredOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',')
   : [];
 const localOrigins = [
-  'http://localhost:5173', 
-  'http://localhost:3000', 
+  'http://localhost:5173',
+  'http://localhost:3000',
   'http://localhost:5174',
   'http://localhost:4000'
 ];
@@ -41,7 +41,18 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-    
+
+    // Allow any ngrok tunnel (covers both .dev and .app free subdomains)
+    if (origin.endsWith('.ngrok-free.dev') || origin.endsWith('.ngrok-free.app') || origin.endsWith('.ngrok.io')) {
+      return callback(null, true);
+    }
+
+    // Allow local network IPs for mobile testing on the same WiFi
+    const localNetworkPattern = /^https?:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)\d+\.\d+(:\d+)?$/;
+    if (localNetworkPattern.test(origin)) {
+      return callback(null, true);
+    }
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {

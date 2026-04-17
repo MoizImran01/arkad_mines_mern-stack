@@ -28,7 +28,7 @@ stonesRouter.post("/remove", verifyToken, authorizeRoles('admin'), removeStones)
 stonesRouter.post("/dispatch", verifyToken, authorizeRoles('admin'), dispatchBlock)
 
 stonesRouter.get("/list", listStones)
-stonesRouter.get("/filter", catalogRateLimiter.userLimiter, catalogRateLimiter.ipLimiter, filterStones)
+stonesRouter.get("/filter", catalogRateLimiter.ipLimiter, filterStones)
 stonesRouter.get("/marked-for-po", verifyToken, authorizeRoles('admin'), async (req, res) => {
     try {
         const stones = await stonesModel.find({ markedForPO: true }).sort({ createdAt: -1 });
@@ -39,5 +39,5 @@ stonesRouter.get("/marked-for-po", verifyToken, authorizeRoles('admin'), async (
 })
 stonesRouter.post("/mark-for-po", verifyToken, authorizeRoles('admin'), markStoneForPO)
 stonesRouter.get("/qr/:qrCode", getBlockByQRCode)
-stonesRouter.get("/:id", catalogRateLimiter.userLimiter, catalogRateLimiter.ipLimiter, getStoneById)
+stonesRouter.get("/:id", catalogRateLimiter.ipLimiter, getStoneById)
 export default stonesRouter;

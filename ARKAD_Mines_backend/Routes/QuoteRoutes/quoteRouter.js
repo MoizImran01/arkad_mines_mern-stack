@@ -12,7 +12,6 @@ import {
 } from "../../Controllers/QuotationController/quotationController.js";
 import { verifyToken, authorizeRoles } from "../../Middlewares/auth.js";
 import { createRateLimiter } from "../../Middlewares/genericRateLimiting.js";
-import { createReauthMiddleware } from "../../Middlewares/genericReauth.js";
 import { createCaptchaChallenge } from "../../Middlewares/genericCaptchaChallenge.js";
 import { createRequestQueue } from "../../Middlewares/genericRequestQueue.js";
 import { createOwnershipValidator } from "../../Middlewares/genericOwnershipValidation.js";
@@ -59,18 +58,6 @@ const approvalRateLimiter = createRateLimiter({
   captchaThreshold: 3
 });
 
-const requireQuotationReauth = createReauthMiddleware({
-  actionName: 'APPROVE_QUOTATION_REAUTH',
-  actionType: 'REAUTH_REQUIRED',
-  passwordField: 'passwordConfirmation',
-  responseFlag: 'requiresReauth',
-  getResourceId: (req) => req.params.quoteId,
-  getAdditionalContext: (req) => ({
-    quotationRequestId: req.validatedQuotation?.quotationRequestId || null,
-    quotationId: req.validatedQuotation?.referenceNumber || null
-  })
-});
-
 const requireQuotationCaptcha = createCaptchaChallenge({
   endpoint: '/api/quotes',
   windowMs: 60 * 60 * 1000,
@@ -113,11 +100,11 @@ const validateQuotationOwnership = createOwnershipValidator({
 });
 
 
-quoteRouter.post("/", verifyToken, createQuoteRateLimiter.userLimiter, createQuoteRateLimiter.ipLimiter, createOrUpdateQuotation);
+quoteRouter.post("/", verifyToken, createQuoteRateLimiter.userLimiter, createOrUpdateQuotation);
 quoteRouter.get("/my", verifyToken, getMyQuotations);
 quoteRouter.get("/admin", verifyToken, authorizeRoles("admin"), getAllQuotations);
 quoteRouter.put("/:quoteId/issue", verifyToken, authorizeRoles("admin"), issueQuotation);
-quoteRouter.get("/:quoteId/download", verifyToken, pdfDownloadRateLimiter.userLimiter, pdfDownloadRateLimiter.ipLimiter, downloadQuotation);
+quoteRouter.get("/:quoteId/download", verifyToken, pdfDownloadRateLimiter.userLimiter, downloadQuotation);
 quoteRouter.put("/:quoteId/approve", 
   verifyToken,
   requirePermission('canApproveQuotation'),
@@ -125,17 +112,14 @@ quoteRouter.put("/:quoteId/approve",
   quotationThrottling,
   requireQuotationCaptcha,
   approvalRateLimiter.userLimiter,
-  approvalRateLimiter.ipLimiter,
   actionRateLimiter.userLimiter,
-  actionRateLimiter.ipLimiter,
   detectAnomalies,
   validateQuotationOwnership,
   validateQuotationStatus,
-  requireQuotationReauth,
   approveQuotation
 );
-quoteRouter.put("/:quoteId/reject", verifyToken, actionRateLimiter.userLimiter, actionRateLimiter.ipLimiter, rejectQuotation);
-quoteRouter.put("/:quoteId/request-revision", verifyToken, actionRateLimiter.userLimiter, actionRateLimiter.ipLimiter, requestRevision);
-quoteRouter.post("/:quoteId/convert-to-order", verifyToken, actionRateLimiter.userLimiter, actionRateLimiter.ipLimiter, convertToSalesOrder);
+quoteRouter.put("/:quoteId/reject", verifyToken, actionRateLimiter.userLimiter, rejectQuotation);
+quoteRouter.put("/:quoteId/request-revision", verifyToken, actionRateLimiter.userLimiter, requestRevision);
+quoteRouter.post("/:quoteId/convert-to-order", verifyToken, actionRateLimiter.userLimiter, convertToSalesOrder);
 
 export default quoteRouter;

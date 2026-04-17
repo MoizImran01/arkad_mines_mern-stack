@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import '../Dashboard.css';
+import { formatOrderStatus, formatPaymentStatus } from '../../../utils/formatStatus';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -110,11 +111,11 @@ const PurchaseTimeline = ({ orders }) => {
                   <td>{order.orderNumber}</td>
                   <td>{formatDate(order.createdAt)}</td>
                   <td>
-                    <span className={`dashboard-badge status-${order.status}`}>{order.status}</span>
+                    <span className={`dashboard-badge status-${order.status}`}>{formatOrderStatus(order.status)}</span>
                   </td>
                   <td>
                     <span className={`dashboard-badge payment-${order.paymentStatus}`}>
-                      {order.paymentStatus || '—'}
+                      {order.paymentStatus ? formatPaymentStatus(order.paymentStatus) : '—'}
                     </span>
                   </td>
                   <td>{formatMoney(order.financials?.grandTotal)}</td>

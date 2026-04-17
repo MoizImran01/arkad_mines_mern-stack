@@ -316,9 +316,25 @@ const getStoneById = async (req, res) => {
 const getBlockByQRCode = async (req, res) => {
     try {
         const { qrCode } = req.params;
-        const safeQrCode = String(qrCode);
+        const rawQrValue = String(qrCode || '').trim();
+        let normalizedQrCode = rawQrValue;
 
-        const block = await stonesModel.findOne({ qrCode: safeQrCode }).select('-__v');
+        if (rawQrValue.startsWith('{')) {
+            try {
+                const parsed = JSON.parse(rawQrValue);
+                normalizedQrCode = String(parsed.blockId || parsed.qrCode || '').trim() || rawQrValue;
+            } catch (_err) {
+                normalizedQrCode = rawQrValue;
+            }
+        }
+
+        const candidates = [
+            normalizedQrCode,
+            normalizedQrCode.toLowerCase(),
+            normalizedQrCode.toUpperCase()
+        ].filter(Boolean);
+
+        const block = await stonesModel.findOne({ qrCode: { $in: [...new Set(candidates)] } }).select('-__v');
 
         if (!block) {
             return res.status(404).json({

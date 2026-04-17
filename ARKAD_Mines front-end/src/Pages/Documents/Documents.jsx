@@ -24,7 +24,7 @@ const Documents = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState("quote");
   
   const [showFilters, setShowFilters] = useState(false);
   const [startDate, setStartDate] = useState("");
@@ -92,11 +92,7 @@ const Documents = () => {
   }, [token]);
 
   useEffect(() => {
-    if (activeFilter === "all") {
-      setFilteredDocuments(documents);
-    } else {
-      setFilteredDocuments(documents.filter(doc => doc.documentType === activeFilter));
-    }
+    setFilteredDocuments(documents.filter(doc => doc.documentType === activeFilter));
   }, [activeFilter, documents]);
   useEffect(() => {
     setCurrentPage(1);
@@ -222,17 +218,15 @@ const Documents = () => {
     setEndDate("");
     setOrderIdFilter("");
     setDocumentTypeFilter("");
-    setActiveFilter("all");
+    setActiveFilter("quote");
     fetchDocuments();
   };
 
   const getDocumentTypeLabel = (type) => {
     const labels = {
       quote: "Quote",
-      proforma: "Proforma Invoice",
-      tax_invoice: "Tax Invoice",
-      receipt: "Receipt",
-      statement: "Statement"
+      invoice: "Invoice",
+      receipt: "Receipt"
     };
     return labels[type] || type;
   };
@@ -344,10 +338,8 @@ const Documents = () => {
               >
                 <option value="all">All Types</option>
                 <option value="quote">Quotes</option>
-                <option value="proforma">Proforma Invoices</option>
-                <option value="tax_invoice">Tax Invoices</option>
+                <option value="invoice">Invoices</option>
                 <option value="receipt">Receipts</option>
-                <option value="statement">Statements</option>
               </select>
             </div>
           </div>
@@ -365,26 +357,14 @@ const Documents = () => {
 
       <div className="documents-tabs">
         <button
-          className={`tab-button ${activeFilter === "all" ? "active" : ""}`}
-          onClick={() => setActiveFilter("all")}
-        >
-          All Documents
-        </button>
-        <button
           className={`tab-button ${activeFilter === "quote" ? "active" : ""}`}
           onClick={() => setActiveFilter("quote")}
         >
           Quotes
         </button>
         <button
-          className={`tab-button ${activeFilter === "proforma" ? "active" : ""}`}
-          onClick={() => setActiveFilter("proforma")}
-        >
-          Proformas
-        </button>
-        <button
-          className={`tab-button ${activeFilter === "tax_invoice" ? "active" : ""}`}
-          onClick={() => setActiveFilter("tax_invoice")}
+          className={`tab-button ${activeFilter === "invoice" ? "active" : ""}`}
+          onClick={() => setActiveFilter("invoice")}
         >
           Invoices
         </button>
@@ -393,12 +373,6 @@ const Documents = () => {
           onClick={() => setActiveFilter("receipt")}
         >
           Receipts
-        </button>
-        <button
-          className={`tab-button ${activeFilter === "statement" ? "active" : ""}`}
-          onClick={() => setActiveFilter("statement")}
-        >
-          Statements
         </button>
       </div>
 

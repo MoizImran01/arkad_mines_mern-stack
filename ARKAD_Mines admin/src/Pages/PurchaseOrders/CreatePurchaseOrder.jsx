@@ -16,7 +16,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 const formatCurrency = (amount) => `Rs ${(amount || 0).toLocaleString()}`;
 
@@ -44,7 +44,6 @@ const CreatePurchaseOrder = () => {
     else setLoading(true);
 
     try {
-      // Fetch both marked stones and forecasting data
       const [stonesRes, forecastRes] = await Promise.all([
         axios.get(`${API_URL}/api/stones/marked-for-po`, { headers: authHeaders() }),
         axios.get(`${API_URL}/api/forecasting/forecast`, { headers: authHeaders() })
@@ -54,14 +53,12 @@ const CreatePurchaseOrder = () => {
         const stones = stonesRes.data.stones;
         const forecasts = forecastRes.data.forecasts || forecastRes.data.data || [];
 
-        // Create a map of forecasting data by stoneName + subcategory
         const forecastMap = {};
         forecasts.forEach((f) => {
           const key = `${f.stoneName}_${f.subcategory}`;
           forecastMap[key] = f;
         });
 
-        // Merge forecasting data with stones
         const mergedStones = stones.map((stone) => {
           const key = `${stone.stoneName}_${stone.subcategory}`;
           const forecast = forecastMap[key];
@@ -94,7 +91,6 @@ const CreatePurchaseOrder = () => {
     const newSelected = new Set(selectedStoneIds);
     if (newSelected.has(stoneId)) {
       newSelected.delete(stoneId);
-      // Clear quantities and prices for deselected stone
       setStoneQuantities((prev) => {
         const updated = { ...prev };
         delete updated[stoneId];
@@ -107,7 +103,6 @@ const CreatePurchaseOrder = () => {
       });
     } else {
       newSelected.add(stoneId);
-      // Initialize with suggested quantity from reorder point (if available)
       const stone = markedStones.find((s) => s._id === stoneId);
       if (stone && (stone.suggested_po_quantity || stone.dynamic_reorder_point)) {
         setStoneQuantities((prev) => ({
@@ -172,7 +167,6 @@ const CreatePurchaseOrder = () => {
       return;
     }
 
-    // Validate all selected stones have quantity and price
     for (const stone of selectedStones) {
       if (!stoneQuantities[stone._id] || !stonePrices[stone._id]) {
         toast.error(`Please enter quantity and price for ${stone.stoneName}`);

@@ -74,8 +74,4 @@ export const validatePaymentFileSize = async (req, res, next) => {
   }
 };
 
-// No-op; dimensions are enforced by client compression and Cloudinary.
-export const validatePaymentImageDimensions = async (req, res, next) => {
-  next();
-};
 

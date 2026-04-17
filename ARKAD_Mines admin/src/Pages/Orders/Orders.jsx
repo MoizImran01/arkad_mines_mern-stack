@@ -1,5 +1,6 @@
 import React from 'react'
 import './Orders.css'
+import { formatOrderStatus, formatPaymentStatus } from '../../formatStatus'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
@@ -10,7 +11,7 @@ import {
   FiChevronLeft, FiChevronRight
 } from 'react-icons/fi'
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000"
+const API_URL = import.meta.env.VITE_API_URL ?? ""
 
 const Orders = () => {
   const [orders, setOrders] = useState([])
@@ -53,7 +54,7 @@ const Orders = () => {
   })
 
   const statusOptions = [
-    { value: 'draft', label: 'Draft', color: '#6b7280' },
+    { value: 'draft', label: 'Pending', color: '#6b7280' },
     { value: 'confirmed', label: 'Confirmed', color: '#3b82f6' },
     { value: 'dispatched', label: 'Dispatched', color: '#8b5cf6' },
     { value: 'delivered', label: 'Delivered', color: '#2f5242' },
@@ -449,7 +450,7 @@ const Orders = () => {
           </div>
           <div className="stat-info">
             <h3>{stats.draft}</h3>
-            <p>Draft</p>
+            <p>Pending</p>
           </div>
         </div>
         <div className="stat-card">
@@ -556,7 +557,7 @@ const Orders = () => {
                       </td>
                       <td className="payment-status">
                         <div className={`payment-badge payment-${order.paymentStatus}`}>
-                          {order.paymentStatus?.charAt(0).toUpperCase() + order.paymentStatus?.slice(1) || 'Pending'}
+                          {formatPaymentStatus(order.paymentStatus || 'pending')}
                         </div>
                       </td>
                       <td className="order-date">
@@ -580,7 +581,7 @@ const Orders = () => {
                           tabIndex="0"
                           title="Click to edit status"
                         >
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          {formatOrderStatus(order.status)}
                         </div>
                       </td>
                       <td className="order-actions">
@@ -852,7 +853,7 @@ const Orders = () => {
                                       <div className={`timeline-dot status-${entry.status}`} />
                                       <div className="timeline-content">
                                         <strong>
-                                          {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
+                                          {formatOrderStatus(entry.status)}
                                         </strong>
                                         <p>{formatDate(entry.timestamp)}</p>
                                         {entry.notes && (

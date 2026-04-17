@@ -211,12 +211,12 @@ body {
   flex-shrink: 0;
 }
 
-.stat-icon.total { background: linear-gradient(135deg, var(--primary-color), var(--primary-light)); }
-.stat-icon.draft { background: linear-gradient(135deg, var(--gray-500), var(--gray-400)); }
-.stat-icon.confirmed { background: linear-gradient(135deg, var(--info-color), #138496); }
-.stat-icon.dispatched { background: linear-gradient(135deg, var(--primary-light), var(--primary-color)); }
-.stat-icon.delivered { background: linear-gradient(135deg, var(--success-color), #28a745); }
-.stat-icon.revenue { background: linear-gradient(135deg, #2f5242, var(--success-color)); }
+.stat-icon.total     { background: #f9e146; }
+.stat-icon.draft     { background: #fff4aa; color: #000; }
+.stat-icon.confirmed { background: #d1fae5; color: #000; }
+.stat-icon.dispatched{ background: #caeeff; color: #000; }
+.stat-icon.delivered { background: #d1fae5; color: #000; }
+.stat-icon.revenue { background: #2f5242; color: #fff; }
 
 .stat-info h3 {
   font-size: 1.5rem;
@@ -234,7 +234,7 @@ body {
 }
 
 .stat-info p {
-  color: var(--gray-600);
+  color: #000;
   font-size: 0.875rem;
 }
 
@@ -475,27 +475,27 @@ body {
 }
 
 .status-badge.status-draft {
-  background-color: var(--gray-100);
-  color: var(--gray-700);
-  border: 1px solid var(--gray-300);
+  background-color: #fff4aa;
+  color: #000;
+  border: 1px solid #f5e000;
 }
 
 .status-badge.status-confirmed {
-  background-color: var(--info-light);
-  color: var(--info-color);
-  border: 1px solid var(--info-light);
+  background-color: #d1fae5;
+  color: #000;
+  border: 1px solid #a7f3d0;
 }
 
 .status-badge.status-dispatched {
-  background-color: #e6ffd3;
-  color: var(--primary-dark);
-  border: 1px solid #c8e6a8;
+  background-color: #caeeff;
+  color: #000;
+  border: 1px solid #93d5f5;
 }
 
 .status-badge.status-delivered {
-  background-color: var(--success-light);
-  color: var(--success-color);
-  border: 1px solid var(--success-light);
+  background-color: #d1fae5;
+  color: #000;
+  border: 1px solid #a7f3d0;
 }
 
 .status-badge.status-cancelled {
@@ -516,21 +516,21 @@ body {
 }
 
 .payment-badge.payment-pending {
-  background-color: var(--warning-light);
-  color: var(--warning-color);
-  border: 1px solid var(--warning-light);
+  background-color: #fff4aa;
+  color: #000;
+  border: 1px solid #f5e000;
 }
 
 .payment-badge.payment-payment_in_progress {
-  background-color: var(--info-light);
-  color: var(--info-color);
-  border: 1px solid var(--info-light);
+  background-color: #caeeff;
+  color: #000;
+  border: 1px solid #93d5f5;
 }
 
 .payment-badge.payment-fully_paid {
-  background-color: var(--success-light);
-  color: var(--success-color);
-  border: 1px solid var(--success-light);
+  background-color: #d1fae5;
+  color: #000;
+  border: 1px solid #a7f3d0;
 }
 
 .payment-badge.payment-refunded {
@@ -549,13 +549,13 @@ body {
 }
 
 .balance-badge.pending {
-  background-color: var(--warning-light);
-  color: var(--warning-color);
+  background-color: #fff4aa;
+  border: 1px solid #fff4aa;
 }
 
 .balance-badge.paid {
-  background-color: var(--success-light);
-  color: var(--success-color);
+  background-color: #d1fae5;
+  border: 1px solid #c8e6a8;
 }
 
 .details-btn {
@@ -794,12 +794,12 @@ body {
   border: 2px solid var(--white);
 }
 
-.timeline-dot.status-draft { background-color: var(--gray-500); }
-.timeline-dot.status-confirmed { background-color: var(--info-color); }
-.timeline-dot.status-dispatched { background-color: var(--primary-color); }
-.timeline-dot.status-delivered { background-color: var(--success-color); }
-.timeline-dot.status-cancelled { background-color: var(--danger-color); }
-.timeline-dot.payment-pending { background-color: var(--warning-color); }
+.timeline-dot.status-draft      { background-color: #e8c900; }
+.timeline-dot.status-confirmed  { background-color: #34d399; }
+.timeline-dot.status-dispatched { background-color: #38bdf8; }
+.timeline-dot.status-delivered  { background-color: #34d399; }
+.timeline-dot.status-cancelled  { background-color: var(--danger-color); }
+.timeline-dot.payment-pending   { background-color: #e8c900; }
 .timeline-dot.payment-approved { background-color: var(--success-color); }
 .timeline-dot.payment-rejected { background-color: var(--danger-color); }
 .timeline-dot.payment-partial { background-color: var(--warning-color); }

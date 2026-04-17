@@ -8,7 +8,7 @@ import axios from 'axios'
 import { FiBell, FiX, FiRefreshCw } from 'react-icons/fi'
 import useNotifications, { formatTime } from '../../../../shared/useNotifications'
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
 const Navbar = () => {
   const { adminUser, logout, token } = useContext(AdminAuthContext);

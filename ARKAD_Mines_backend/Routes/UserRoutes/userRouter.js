@@ -31,8 +31,8 @@ const resetRateLimiter = createRateLimiter({
   actionType: 'PASSWORD_RESET_RATE_LIMIT_EXCEEDED'
 });
 
-userRouter.post("/register", authRateLimiter.userLimiter, authRateLimiter.ipLimiter, registerUser);
-userRouter.post("/login", authRateLimiter.userLimiter, authRateLimiter.ipLimiter, loginUser);
+userRouter.post("/register", authRateLimiter.ipLimiter, registerUser);
+userRouter.post("/login", authRateLimiter.ipLimiter, loginUser);
 userRouter.post("/forgot-password", resetRateLimiter.ipLimiter, forgotPassword);
 userRouter.post("/reset-password", resetRateLimiter.ipLimiter, resetPassword);
 userRouter.post("/send-verification", resetRateLimiter.ipLimiter, sendVerificationCode);

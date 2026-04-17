@@ -23,7 +23,6 @@ pricingRouter.post(
     verifyToken,
     authorizeRoles("admin", "employee"),
     pricingRateLimiter.userLimiter,
-    pricingRateLimiter.ipLimiter,
     getPriceSuggestion
 );
 
@@ -33,7 +32,6 @@ pricingRouter.post(
     verifyToken,
     authorizeRoles("admin", "employee"),
     pricingRateLimiter.userLimiter,
-    pricingRateLimiter.ipLimiter,
     getBatchPriceSuggestions
 );
 

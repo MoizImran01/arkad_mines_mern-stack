@@ -1,5 +1,6 @@
 import React, { useState, useContext } from "react";
 import "./CustomerHistory.css";
+import { formatOrderStatus, formatPaymentStatus } from "../../formatStatus";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { AdminAuthContext } from "../../context/AdminAuthContext";
@@ -230,8 +231,8 @@ const CustomerHistory = () => {
                     {history.orders.map((o) => (
                       <tr key={o.id}>
                         <td>{o.orderNumber}</td>
-                        <td>{o.status}</td>
-                        <td>{o.paymentStatus}</td>
+                        <td>{formatOrderStatus(o.status)}</td>
+                        <td>{formatPaymentStatus(o.paymentStatus)}</td>
                         <td>{Number(o.grandTotal).toFixed(2)}</td>
                         <td>{formatDate(o.createdAt)}</td>
                       </tr>

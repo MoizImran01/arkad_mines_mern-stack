@@ -7,6 +7,7 @@ import PurchaseTimeline from './Components/PurchaseTimeline';
 import MaterialPreferenceChart from './Components/MaterialPreferenceChart';
 import TopStonesPanel from './Components/TopStonesPanel';
 import './Dashboard.css';
+import { formatOrderStatus, formatPaymentStatus } from '../../utils/formatStatus';
 
 // Client dashboard: orders, quotes, purchase timeline, material preferences, top stones.
 const Dashboard = () => {
