@@ -16,6 +16,8 @@ export default defineConfig({
       'react-toastify': path.resolve(__dirname, 'node_modules/react-toastify'),
       'react-google-recaptcha': path.resolve(__dirname, 'node_modules/react-google-recaptcha'),
       'react-icons': path.resolve(__dirname, 'node_modules/react-icons'),
+      // shared/ imports resolve from repo root, not this app — force app node_modules
+      'socket.io-client': path.resolve(__dirname, 'node_modules/socket.io-client'),
     },
     dedupe: ['react', 'react-dom'],
   },
