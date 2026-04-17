@@ -1,71 +1,143 @@
-.sidebar{
-    width: 18%;
+/* ------------------------------------------------------------------
+   Sidebar – tightened layout, grouped sections, subtle hover state.
+   Active state colors preserved exactly (#2f5242 dark green fill).
+------------------------------------------------------------------ */
+
+.sidebar {
+    width: 240px;
+    min-width: 240px;
+    max-width: 240px;
+    flex-shrink: 0;
     min-height: 100vh;
-    border: 1.5px solid;
-    border-top: 0;
-    font-size: max(1vw);
+    border-right: 1px solid #e5e7eb;
+    background-color: #ffffff;
+    font-size: 14px;
     overflow-y: auto;
+    box-sizing: border-box;
 }
+
 .sidebar-options {
-    padding-top: 50px;
-    padding-bottom: 24px;
-    padding-left: 20%;
+    padding: 24px 10px 24px 12px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 4px;
+    box-sizing: border-box;
 }
-.sidebar-option{
+
+/* ── Section grouping ─────────────────────────────────────────── */
+
+.sidebar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sidebar-section-header {
+    margin: 10px 8px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    user-select: none;
+}
+
+.sidebar-divider {
+    height: 1px;
+    background-color: #f0f1f3;
+    margin: 8px 4px;
+    border: none;
+}
+
+/* ── Nav item ─────────────────────────────────────────────────── */
+
+.sidebar-option {
     display: flex;
     align-items: center;
-    gap: 12px;
-    border: 1px solid #a9a9a9;
-    border-radius: 5px 0px 0px 5px;
-    border-right: 0;
-    padding: 10px 12px;
+    gap: 10px;
+    padding: 8px 12px;
+    min-height: 38px;
+    border-radius: 6px;
     cursor: pointer;
-    min-height: 44px;
-    font-size: 14px;
+    color: #4b5563;
+    text-decoration: none;
+    font-size: 13.5px;
     font-weight: 500;
-    color: #333;
-    transition: all 0.2s ease;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
-.sidebar-option:hover{
-    background-color: #1c3127;
-    color: #ffffff;
+
+/* Subtle hover — light green tint, feels interactive but not active */
+.sidebar-option:hover {
+    background-color: #eef4f0;
+    color: #1f2937;
 }
-.sidebar-option.active{
+
+/* Active state preserved exactly: dark green fill */
+.sidebar-option.active {
     background-color: #2f5242;
-    border-color: #2f5242;
     color: #ffffff;
 }
+
+/* ── Icons ────────────────────────────────────────────────────── */
+
 .sidebar-option img {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     object-fit: contain;
     flex-shrink: 0;
 }
+
 .sidebar-icon {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: inherit;
 }
+
+/* ── Label text ───────────────────────────────────────────────── */
+
 .sidebar-option p {
     margin: 0;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 500;
-    color: #333;
+    color: inherit;
     white-space: nowrap;
+    letter-spacing: 0;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+
 .sidebar-option:hover p,
 .sidebar-option.active p {
-    color: #ffffff;
+    color: inherit;
 }
-@media (max-width:900px){
-    .sidebar-option p{
+
+/* ── Responsive ───────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+    .sidebar {
+        width: 64px;
+    }
+    .sidebar-options {
+        padding: 16px 8px;
+    }
+    .sidebar-option {
+        justify-content: center;
+        padding: 10px;
+    }
+    .sidebar-option p {
         display: none;
+    }
+    .sidebar-section-header {
+        display: none;
+    }
+    .sidebar-divider {
+        margin: 6px 8px;
     }
 }
