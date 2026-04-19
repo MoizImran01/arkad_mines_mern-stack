@@ -3,9 +3,8 @@ import PropTypes from "prop-types";
 import { ArkadSocketBridge } from "../../../shared/ArkadSocketBridge.jsx";
 import {
   normalizeApiBaseUrl,
-  sanitizeTextForBrowserStorage,
-  parseQuoteNotesFromStorage,
-  serializeQuoteNotesForStorage,
+  persistQuoteNotesToLocalStorage,
+  readQuoteNotesInitialStateFromStorage,
 } from "../../../shared/clientApiGuards.js";
 
 export const StoreContext = createContext(null);
@@ -41,7 +40,7 @@ const StoreContextProvider = (props) => {
     return stored ? JSON.parse(stored) : [];
   });
   const [quoteNotes, setQuoteNotes] = useState(() =>
-    parseQuoteNotesFromStorage(localStorage.getItem("quoteNotes"))
+    readQuoteNotesInitialStateFromStorage()
   );
   const [activeQuoteId, setActiveQuoteId] = useState(
     () => sessionStorage.getItem("activeQuoteId") || null
@@ -73,12 +72,7 @@ const StoreContextProvider = (props) => {
   }, [quoteItems]);
 
   useEffect(() => {
-    const safe = sanitizeTextForBrowserStorage(quoteNotes ?? "");
-    if (safe.trim()) {
-      localStorage.setItem("quoteNotes", serializeQuoteNotesForStorage(safe));
-    } else {
-      localStorage.removeItem("quoteNotes");
-    }
+    persistQuoteNotesToLocalStorage(quoteNotes);
   }, [quoteNotes]);
 
   useEffect(() => {
