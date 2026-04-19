@@ -8,6 +8,10 @@ import { StoreContext } from '../../context/StoreContext';
 import { assets } from '../../assets/assets.js';
 import { FiBell, FiFileText, FiFolder, FiRefreshCw, FiUser } from 'react-icons/fi';
 import useNotifications, { formatTime } from '../../../../shared/useNotifications';
+import {
+  toSafeMongoObjectId,
+  sanitizeOrderNumberForRoute,
+} from '../../../../shared/clientApiGuards.js';
 
 
 const Navbar = ({ setShowLogin }) => {
@@ -27,6 +31,26 @@ const Navbar = ({ setShowLogin }) => {
     showNotifications, setShowNotifications, panelRef: notificationRef,
     fetchNotifications, clearNotifications,
   } = useNotifications(token, API_BASE, { pathname: location.pathname });
+
+  const handleNotificationNavigate = (notification) => {
+    setShowNotifications(false);
+    const orderNum = notification.orderNumber
+      ? sanitizeOrderNumberForRoute(String(notification.orderNumber))
+      : null;
+    if (orderNum) {
+      navigate('/orders', { state: { focusOrderNumber: orderNum } });
+      return;
+    }
+    const oid =
+      notification.orderId != null
+        ? toSafeMongoObjectId(String(notification.orderId))
+        : null;
+    if (oid) {
+      navigate('/orders', { state: { focusOrderId: oid } });
+      return;
+    }
+    navigate('/orders');
+  };
 
   const getActiveMenu = () => {
     const path = location.pathname;
@@ -150,14 +174,19 @@ const Navbar = ({ setShowLogin }) => {
                       <p className="client-notifications-empty">No updates yet</p>
                     )}
                     {notifications.map((notification) => (
-                      <div key={notification._id} className="client-notification-item">
+                      <button
+                        key={notification._id}
+                        type="button"
+                        className="client-notification-item"
+                        onClick={() => handleNotificationNavigate(notification)}
+                      >
                         <div className="client-notification-title">{notification.title}</div>
                         <div className="client-notification-message">{notification.message}</div>
                         <div className="client-notification-meta">
                           <span>{formatTime(notification.createdAt)}</span>
                           {notification.clearedAt && <span className="client-notification-cleared">Cleared</span>}
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>

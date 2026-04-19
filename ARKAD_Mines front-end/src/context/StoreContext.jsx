@@ -1,6 +1,10 @@
 import { createContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { ArkadSocketBridge } from "../../../shared/ArkadSocketBridge.jsx";
+import {
+  normalizeApiBaseUrl,
+  sanitizeTextForBrowserStorage,
+} from "../../../shared/clientApiGuards.js";
 
 export const StoreContext = createContext(null);
 
@@ -26,7 +30,7 @@ const migrateTokenFromLegacyStorage = () => {
 };
 
 const StoreContextProvider = (props) => {
-  const url = import.meta.env.VITE_API_URL || "http://localhost:4000";
+  const url = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
 
   const [token, setToken] = useState(() => migrateTokenFromLegacyStorage());
   const [user, setUser] = useState(null);
@@ -34,8 +38,8 @@ const StoreContextProvider = (props) => {
     const stored = localStorage.getItem("quoteItems");
     return stored ? JSON.parse(stored) : [];
   });
-  const [quoteNotes, setQuoteNotes] = useState(
-    () => localStorage.getItem("quoteNotes") || ""
+  const [quoteNotes, setQuoteNotes] = useState(() =>
+    sanitizeTextForBrowserStorage(localStorage.getItem("quoteNotes") || "")
   );
   const [activeQuoteId, setActiveQuoteId] = useState(
     () => sessionStorage.getItem("activeQuoteId") || null
@@ -67,8 +71,9 @@ const StoreContextProvider = (props) => {
   }, [quoteItems]);
 
   useEffect(() => {
-    if (quoteNotes?.trim()) {
-      localStorage.setItem("quoteNotes", quoteNotes);
+    const safe = sanitizeTextForBrowserStorage(quoteNotes ?? "");
+    if (safe.trim()) {
+      localStorage.setItem("quoteNotes", safe);
     } else {
       localStorage.removeItem("quoteNotes");
     }

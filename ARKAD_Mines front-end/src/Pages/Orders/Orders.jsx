@@ -5,7 +5,7 @@ import { compressImage } from "../../utils/compressImage";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { StoreContext } from "../../context/StoreContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Pagination from '../../../../shared/Pagination.jsx';
 import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 import usePaymentVerification from '../../../../shared/usePaymentVerification';
@@ -16,6 +16,11 @@ import {
   FiMapPin, FiCalendar, FiTruck, FiX, FiCheck, FiShoppingCart, FiCheckCircle, FiDownload,
   FiBriefcase, FiRefreshCw
 } from "react-icons/fi";
+import {
+  toSafeMongoObjectId,
+  sanitizeOrderNumberForRoute,
+  safeImageFilenameSegment,
+} from "../../../../shared/clientApiGuards.js";
 
 const Orders = () => {
   const { token, url, replaceQuoteItems, setActiveQuoteId } = useContext(StoreContext);
@@ -42,6 +47,7 @@ const Orders = () => {
   const pv = usePaymentVerification(url, token);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const ORDER_STATUSES = ["draft", "confirmed", "dispatched", "delivered", "cancelled"];
 
@@ -90,6 +96,28 @@ const Orders = () => {
   useEffect(() => {
     fetchOrders();
   }, [token]);
+
+  // Open relevant order from notification navigation (see Navbar notification click handler).
+  useEffect(() => {
+    if (loading || orders.length === 0) return;
+    const st = location.state;
+    if (!st?.focusOrderNumber && !st?.focusOrderId) return;
+    let order = null;
+    if (st.focusOrderNumber) {
+      const n = sanitizeOrderNumberForRoute(st.focusOrderNumber);
+      if (n) order = orders.find((o) => o.orderNumber === n);
+    }
+    if (!order && st.focusOrderId) {
+      const id = toSafeMongoObjectId(st.focusOrderId);
+      if (id) order = orders.find((o) => String(o._id) === id);
+    }
+    if (order) {
+      setTrackingOrderDetails(order);
+      setTrackingOrderNumber(order.orderNumber);
+      setModalTab("payment");
+      navigate(".", { replace: true, state: {} });
+    }
+  }, [loading, orders, location.state, navigate]);
 
   useEffect(() => {
     if (activeTab === "all") {
@@ -218,8 +246,10 @@ const Orders = () => {
 
   const refreshAfterPayment = async (orderId) => {
     setPaymentForm({ amount: "", proofFile: null });
+    const safeId = toSafeMongoObjectId(orderId);
+    if (!safeId) return;
     try {
-      const updatedOrder = await axios.get(`${url}/api/orders/details/${orderId}`, { headers });
+      const updatedOrder = await axios.get(`${url}/api/orders/details/${safeId}`, { headers });
       if (updatedOrder.data.success) setTrackingOrderDetails(updatedOrder.data.order);
     } catch { /* ignore */ }
     fetchOrders();
@@ -256,7 +286,13 @@ const Orders = () => {
         proofBase64: compressedBase64,
         proofFileName: paymentForm.proofFile.name
       };
-      const response = await axios.post(`${url}/api/orders/payment/submit/${trackingOrderDetails._id}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+      const payId = toSafeMongoObjectId(trackingOrderDetails._id);
+      if (!payId) {
+        toast.error("Invalid order reference");
+        pv.setPaymentSubmitting(false);
+        return;
+      }
+      const response = await axios.post(`${url}/api/orders/payment/submit/${payId}`, payload, { headers: { Authorization: `Bearer ${token}` } });
       if (response.data.success) {
         toast.success("Payment proof submitted successfully! Awaiting admin verification.");
         await refreshAfterPayment(trackingOrderDetails._id);
@@ -335,8 +371,10 @@ const Orders = () => {
 
   const refreshOrderDetails = async () => {
     if (!trackingOrderDetails || !trackingOrderDetails._id) return;
+    const safeId = toSafeMongoObjectId(trackingOrderDetails._id);
+    if (!safeId) return;
     try {
-      const response = await axios.get(`${url}/api/orders/details/${trackingOrderDetails._id}`, { headers });
+      const response = await axios.get(`${url}/api/orders/details/${safeId}`, { headers });
       if (response.data.success) {
         const updatedOrder = response.data.order;
         setTrackingOrderDetails(updatedOrder);
@@ -734,7 +772,18 @@ const Orders = () => {
                                     <button
                                       onClick={async () => {
                                         try {
-                                          const proofUrl = (entry.proofFile && entry.proofFile.toString().startsWith('http')) ? entry.proofFile : `${url}/images/${entry.proofFile}`;
+                                          const raw = entry.proofFile && entry.proofFile.toString();
+                                          const proofUrl =
+                                            raw && raw.startsWith("http")
+                                              ? raw
+                                              : (() => {
+                                                  const seg = safeImageFilenameSegment(raw);
+                                                  return seg ? `${url}/images/${seg}` : null;
+                                                })();
+                                          if (!proofUrl) {
+                                            toast.error("Invalid file reference");
+                                            return;
+                                          }
                                           const response = await fetch(proofUrl);
                                           const blob = await response.blob();
                                           const downloadUrl = globalThis.URL.createObjectURL(blob);

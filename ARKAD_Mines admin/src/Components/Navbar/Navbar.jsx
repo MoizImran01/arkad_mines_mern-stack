@@ -8,6 +8,7 @@ import axios from 'axios'
 import { FiBell, FiX, FiRefreshCw } from 'react-icons/fi'
 import useNotifications, { formatTime } from '../../../../shared/useNotifications'
 import { subscribeLive } from '../../../../shared/socketLiveRegistry.js'
+import { toSafeMongoObjectId } from '../../../../shared/clientApiGuards.js'
 
 const Navbar = () => {
   const { adminUser, logout, token, url } = useContext(AdminAuthContext);
@@ -56,15 +57,33 @@ const Navbar = () => {
     }
   }, []);
 
+  const handleAdminNotificationNavigate = (notification) => {
+    setShowNotifications(false);
+    const oid =
+      notification.orderId != null
+        ? toSafeMongoObjectId(String(notification.orderId))
+        : null;
+    if (oid) {
+      navigate('/orders', { state: { expandOrderId: oid } });
+      return;
+    }
+    navigate('/orders');
+  };
+
   const renderNotificationItem = (notification) => (
-    <div key={notification._id} className="notification-item">
+    <button
+      key={notification._id}
+      type="button"
+      className="notification-item"
+      onClick={() => handleAdminNotificationNavigate(notification)}
+    >
       <div className="notification-title">{notification.title}</div>
       <div className="notification-message">{notification.message}</div>
       <div className="notification-meta">
         <span>{formatTime(notification.createdAt)}</span>
         {notification.clearedAt && <span className="notification-cleared">Cleared</span>}
       </div>
-    </div>
+    </button>
   );
 
   const isRefreshing = refreshingNotifications || loadingNotifications;

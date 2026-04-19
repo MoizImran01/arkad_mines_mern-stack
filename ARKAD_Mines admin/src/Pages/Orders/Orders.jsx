@@ -2,7 +2,13 @@ import React from 'react'
 import './Orders.css'
 import { formatOrderStatus, formatPaymentStatus } from '../../formatStatus'
 import { useState, useEffect, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import {
+  toSafeMongoObjectId,
+  toSafePathInt,
+  safeImageFilenameSegment,
+} from '../../../../shared/clientApiGuards.js'
 import { subscribeLive } from '../../../../shared/socketLiveRegistry.js'
 import { toast } from 'react-toastify'
 import {
@@ -15,6 +21,8 @@ import {
 const API_URL = import.meta.env.VITE_API_URL ?? ""
 
 const Orders = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [expandedOrder, setExpandedOrder] = useState(null)
@@ -73,7 +81,9 @@ const Orders = () => {
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath
     }
-    return `${API_URL}/images/${imagePath}`
+    const seg = safeImageFilenameSegment(imagePath)
+    if (!seg) return 'https://via.placeholder.com/50?text=No+Image'
+    return `${API_URL}/images/${seg}`
   }
 
   const fetchAllOrders = async (page = pagination.page, status = statusFilter, search = searchQuery, { silent = false } = {}) => {
@@ -108,6 +118,18 @@ const Orders = () => {
       setRefreshing(false)
     }
   }
+
+  useEffect(() => {
+    if (!orders.length) return
+    const raw = location.state?.expandOrderId
+    const safe = toSafeMongoObjectId(raw)
+    if (!safe) return
+    const has = orders.some((o) => String(o._id) === safe)
+    if (has) {
+      setExpandedOrder(safe)
+      navigate('.', { replace: true, state: {} })
+    }
+  }, [location.state, orders, navigate])
 
   const fetchStats = async () => {
     try {
@@ -149,6 +171,11 @@ const Orders = () => {
 
   const updateOrderStatus = async (orderId) => {
     try {
+      const safeOrderId = toSafeMongoObjectId(orderId)
+      if (!safeOrderId) {
+        toast.error('Invalid order')
+        return
+      }
       if (statusForm.status === 'dispatched' && (!statusForm.courierService || !statusForm.trackingNumber)) {
         toast.error("Courier service and tracking number required for dispatched status")
         return
@@ -158,7 +185,7 @@ const Orders = () => {
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
       const response = await axios.put(
-        `${API_URL}/api/orders/admin/status/${orderId}`,
+        `${API_URL}/api/orders/admin/status/${safeOrderId}`,
         {
           ...statusForm,
           dispatchedBlocks: []
@@ -189,6 +216,11 @@ const Orders = () => {
 
   const updatePaymentStatus = async (orderId) => {
     try {
+      const safeOrderId = toSafeMongoObjectId(orderId)
+      if (!safeOrderId) {
+        toast.error('Invalid order')
+        return
+      }
       if (!statusForm.paymentStatus) {
         toast.error("Please select a payment status")
         return
@@ -198,7 +230,7 @@ const Orders = () => {
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
       const response = await axios.put(
-        `${API_URL}/api/orders/admin/payment-status/${orderId}`,
+        `${API_URL}/api/orders/admin/payment-status/${safeOrderId}`,
         {
           paymentStatus: statusForm.paymentStatus,
           notes: statusForm.notes || ''
@@ -229,10 +261,16 @@ const Orders = () => {
 
   const approvePayment = async (orderId, proofIndex) => {
     try {
+      const safeOrderId = toSafeMongoObjectId(orderId)
+      const safeIdx = toSafePathInt(proofIndex)
+      if (!safeOrderId || safeIdx === null) {
+        toast.error('Invalid request')
+        return
+      }
       const token = localStorage.getItem('adminToken')
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
       const response = await axios.put(
-        `${API_URL}/api/orders/admin/payment/approve/${orderId}/${proofIndex}`,
+        `${API_URL}/api/orders/admin/payment/approve/${safeOrderId}/${safeIdx}`,
         { notes: 'Approved by admin' },
         { headers }
       )
@@ -251,10 +289,16 @@ const Orders = () => {
 
   const rejectPayment = async (orderId, proofIndex, rejectionReason) => {
     try {
+      const safeOrderId = toSafeMongoObjectId(orderId)
+      const safeIdx = toSafePathInt(proofIndex)
+      if (!safeOrderId || safeIdx === null) {
+        toast.error('Invalid request')
+        return
+      }
       const token = localStorage.getItem('adminToken')
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
       const response = await axios.put(
-        `${API_URL}/api/orders/admin/payment/reject/${orderId}/${proofIndex}`,
+        `${API_URL}/api/orders/admin/payment/reject/${safeOrderId}/${safeIdx}`,
         { rejectionReason: rejectionReason || '', notes: rejectionReason || '' },
         { headers }
       )
@@ -274,14 +318,16 @@ const Orders = () => {
 
   const fetchOrderDetails = async (orderId) => {
     try {
+      const safeOrderId = toSafeMongoObjectId(orderId)
+      if (!safeOrderId) return
       const token = localStorage.getItem('adminToken')
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
-      const response = await axios.get(`${API_URL}/api/orders/details/${orderId}`, { headers })
+      const response = await axios.get(`${API_URL}/api/orders/details/${safeOrderId}`, { headers })
       
       if (response.data.success && response.data.order) {
         setOrders(prevOrders => 
           prevOrders.map(order => 
-            order._id === orderId ? response.data.order : order
+            order._id === safeOrderId ? response.data.order : order
           )
         )
       }

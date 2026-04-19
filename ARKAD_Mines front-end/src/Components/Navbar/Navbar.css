@@ -340,8 +340,19 @@
 }
 
 .client-notification-item {
+  display: block;
+  width: 100%;
   padding: 12px 14px;
+  border: none;
   border-bottom: 1px solid #f3f4f6;
+  background: #fff;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.client-notification-item:hover {
+  background: #f9fafb;
 }
 
 .client-notification-title {
