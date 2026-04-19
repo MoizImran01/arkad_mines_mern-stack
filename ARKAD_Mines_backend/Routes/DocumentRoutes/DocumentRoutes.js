@@ -5,7 +5,7 @@ import { createRateLimiter } from '../../Middlewares/genericRateLimiting.js';
 import { wafProtection } from '../../Middlewares/waf.js';
 import { enforceHTTPS } from '../../Middlewares/securityHeaders.js';
 
-// Document routes: list and download by format (buyer/admin).
+/** Document routes: list and download by format (buyer/admin). */
 const documentRouter = express.Router();
 
 const documentListRateLimiter = createRateLimiter({

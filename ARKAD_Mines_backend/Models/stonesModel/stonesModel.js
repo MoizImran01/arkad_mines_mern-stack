@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-// Stone product schema: name, dimensions, price, image, category, stock.
+/** Stone product schema: name, dimensions, price, image, category, stock. */
 const stonesSchema = new mongoose.Schema({
     stoneName: { 
         type: String, 
@@ -91,7 +91,7 @@ const stonesSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Text index for safe keyword search (no RegExp from user input).
+/** Text index for keyword search without user-supplied RegExp. */
 stonesSchema.index({
     stoneName: "text",
     dimensions: "text",

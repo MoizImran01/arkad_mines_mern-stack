@@ -1,3 +1,6 @@
+/**
+ * Proxies the ML pricing API for single-item and batch predictions with retries.
+ */
 import axios from 'axios';
 
 const PRICING_API_URL = process.env.PRICING_API_URL || 'https://arkad-pricing-api.onrender.com';

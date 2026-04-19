@@ -10,6 +10,7 @@ import factory from '../../assets/factory.jpg';
 import black from '../../assets/black-counter.jpg';
 import light from '../../assets/light-counter.jpg';
 
+/** Hero image carousel with autoplay progress indicator. */
 function ControlledCarousel() {
   const progressCircle = useRef(null);
   const progressContent = useRef(null);

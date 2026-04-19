@@ -14,7 +14,7 @@ function setCatalogNoCacheHeaders(res) {
     res.set('Surrogate-Control', 'no-store');
 }
 
-// Creates stone with image and QR code (Cloudinary); audits success/failure.
+/** Creates stone with image and QR code (Cloudinary); audits success/failure. */
 const addStones = async (req, res) => {
     const clientIp = getClientIp(req);
     try {
@@ -153,7 +153,7 @@ const addStones = async (req, res) => {
     }
 }
 
-// Returns all stones (no filter).
+/** Returns all stones (no filter). */
 const listStones = async (req, res) => {
     try {
         const stones = await stonesModel.find({});
@@ -169,7 +169,7 @@ const listStones = async (req, res) => {
     }
 }
 
-// Deletes stone by id; Cloudinary cleanup is non-blocking.
+/** Deletes stone by id; Cloudinary cleanup is non-blocking. */
 const removeStones = async (req, res) => {
     const clientIp = getClientIp(req);
     try {
@@ -267,7 +267,7 @@ const dispatchBlock = async (req, res) => {
     }
 }
 
-// Returns stone by id; audits view.
+/** Returns stone by id; audits view. */
 const getStoneById = async (req, res) => {
 
     const clientIp = getClientIp(req);
@@ -327,7 +327,7 @@ const getStoneById = async (req, res) => {
     }
 }
 
-// Returns block by qrCode param.
+/** Returns block by qrCode param. */
 const getBlockByQRCode = async (req, res) => {
     try {
         const { qrCode } = req.params;
@@ -455,7 +455,7 @@ function sortStonesByName(stones, sortBy) {
     });
 }
 
-// Filters stones by category, price, stock, keywords, sort; sanitizes query.
+/** Filters stones by category, price, stock, keywords, sort; sanitizes query. */
 const filterStones = async (req, res) => {
     try {
         const params = req.query;
@@ -473,7 +473,7 @@ const filterStones = async (req, res) => {
     }
 }
 
-// Marks a stone for purchase order by SKU (stoneName + subcategory match)
+/** Marks a stone for purchase order by SKU (stoneName + subcategory match). */
 const markStoneForPO = async (req, res) => {
     const clientIp = getClientIp(req);
     try {

@@ -1,3 +1,6 @@
+/**
+ * Rejects buyer attempts to set order paymentStatus via request body (audit + 400).
+ */
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";
 
 

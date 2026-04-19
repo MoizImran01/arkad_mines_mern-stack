@@ -18,6 +18,7 @@ import Forecasting from './Pages/Forecasting/Forecasting'
 import PurchaseOrdersList from './Pages/PurchaseOrders/PurchaseOrdersList'
 import CreatePurchaseOrder from './Pages/PurchaseOrders/CreatePurchaseOrder'
 
+/** Admin shell: auth gate, sidebar layout, and feature routes. */
 const App = () => {
   const { token, adminUser, loading } = useContext(AdminAuthContext);
 

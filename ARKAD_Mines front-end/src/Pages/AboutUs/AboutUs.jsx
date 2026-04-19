@@ -5,6 +5,7 @@ import "./AboutUs.css";
 import { Link } from "react-router-dom";
 import { Mountain, Award, Users, Layers, Sparkles, Target, Shield, Zap, Scissors, Truck, ChevronRight } from "lucide-react";
 
+/** Company story, stats, and values (marketing page). */
 export default function AboutUs() {
   const [hoveredId, setHoveredId] = useState(null);
   const [isVisible, setIsVisible] = useState({});

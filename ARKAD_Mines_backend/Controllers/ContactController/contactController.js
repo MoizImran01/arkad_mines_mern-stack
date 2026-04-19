@@ -1,3 +1,6 @@
+/**
+ * Validates and forwards public contact form submissions to email.
+ */
 import validator from "validator";
 import { sendContactInquiryEmail } from "../../Utils/emailService.js";
 

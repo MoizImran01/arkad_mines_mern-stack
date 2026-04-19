@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { StoreContext } from "../../context/StoreContext";
 
+/** Industries served and use-case sections with scroll animations. */
 function Industries({ setShowLogin }) {
   const [activeSection, setActiveSection] = useState(0);
   const [scrollY, setScrollY] = useState(0);

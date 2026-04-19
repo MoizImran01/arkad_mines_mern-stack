@@ -9,6 +9,7 @@ import {
 
 export const StoreContext = createContext(null);
 
+/** Moves legacy localStorage tokens into sessionStorage on first load. */
 const migrateTokenFromLegacyStorage = () => {
   try {
     let t = sessionStorage.getItem("token") || "";
@@ -25,11 +26,11 @@ const migrateTokenFromLegacyStorage = () => {
       return legacy;
     }
   } catch {
-    /* ignore */
   }
   return "";
 };
 
+/** Provides API URL, auth, quote cart, and realtime bridge to the client app. */
 const StoreContextProvider = (props) => {
   const url = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
 
@@ -59,7 +60,6 @@ const StoreContextProvider = (props) => {
         localStorage.removeItem("userRole");
       }
     } catch {
-      /* ignore */
     }
   }, [token]);
 
@@ -181,7 +181,6 @@ const StoreContextProvider = (props) => {
       localStorage.removeItem("token");
       localStorage.removeItem("userRole");
     } catch {
-      /* ignore */
     }
     clearQuoteItems();
   };

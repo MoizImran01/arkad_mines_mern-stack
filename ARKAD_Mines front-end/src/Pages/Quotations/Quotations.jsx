@@ -23,7 +23,7 @@ import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
-// List of user quotations; approve/reject with CAPTCHA and re-auth modals.
+/** Buyer quotation list with approve/reject, CAPTCHA, and re-auth modals. */
 const Quotations = () => {
   const { token, url } = useContext(StoreContext);
   const [quotes, setQuotes] = useState([]);

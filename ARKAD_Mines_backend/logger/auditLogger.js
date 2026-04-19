@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'url';
 import AuditLog from '../Models/AuditLog/auditLogModel.js';
 
-// Writes audit entry to DB (redacts passwords); used for security and compliance.
+/** Writes audit entry to DB (redacts passwords); used for security and compliance. */
 export const logAudit = async ({
   userId = null,
   role = null,
@@ -64,7 +64,7 @@ export const logAudit = async ({
   }
 };
 
-// Logs error and optional context to console for debugging and monitoring.
+/** Logs error and optional context to console for debugging and monitoring. */
 export const logError = (error, context = {}) => {
   try {
     const errorEntry = {

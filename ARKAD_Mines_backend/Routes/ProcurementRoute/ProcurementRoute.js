@@ -1,3 +1,6 @@
+/**
+ * Admin purchase order routes: list, create, and update status.
+ */
 import express from 'express';
 import { listPurchaseOrders, createPurchaseOrder, updatePurchaseOrderStatus } from '../../Controllers/ProcurementController.js';
 import { verifyToken, authorizeRoles } from '../../Middlewares/auth.js';

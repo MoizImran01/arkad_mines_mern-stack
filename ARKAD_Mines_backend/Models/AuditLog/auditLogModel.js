@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-// Immutable audit log schema for security and compliance (do not update/delete).
+/** Immutable audit log schema for security and compliance (do not update/delete). */
 const auditLogSchema = new mongoose.Schema({
   timestamp: {
     type: Date,

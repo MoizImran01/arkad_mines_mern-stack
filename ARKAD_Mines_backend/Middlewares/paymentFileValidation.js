@@ -4,7 +4,7 @@ const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 const MAX_IMAGE_WIDTH = 5000;
 const MAX_IMAGE_HEIGHT = 5000;
 
-// Estimates decoded size in bytes from base64 string length.
+/** Estimates decoded size in bytes from base64 string length. */
 const estimateBase64Size = (base64String) => {
   if (!base64String) return 0;
   
@@ -17,7 +17,7 @@ const estimateBase64Size = (base64String) => {
   return approximateSize;
 };
 
-// Rejects request if proofBase64 exceeds max size (5MB); logs and audits.
+/** Rejects request if proofBase64 exceeds max size (5MB); logs and audits. */
 export const validatePaymentFileSize = async (req, res, next) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);

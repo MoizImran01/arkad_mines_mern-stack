@@ -10,7 +10,7 @@ import './Dashboard.css';
 import { formatOrderStatus, formatPaymentStatus } from '../../utils/formatStatus';
 import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 
-// Client dashboard: orders, quotes, purchase timeline, material preferences, top stones.
+/** Client dashboard: orders, quotes, timeline, charts, and top stones. */
 const Dashboard = () => {
   const { token, url } = useContext(StoreContext);
   const navigate = useNavigate();

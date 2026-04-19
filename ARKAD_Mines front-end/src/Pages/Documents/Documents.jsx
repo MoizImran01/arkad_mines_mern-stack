@@ -17,7 +17,7 @@ import {
 import { toast } from "react-toastify";
 import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 
-// Documents list with date/order/type filters and download.
+/** Documents list with filters and download actions. */
 const Documents = () => {
   const { token, url } = useContext(StoreContext);
   const [documents, setDocuments] = useState([]);

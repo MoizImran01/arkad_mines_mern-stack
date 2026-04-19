@@ -9,7 +9,7 @@ import './Analytics.css';
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
 
-//formatting numbers
+/** Formats axis tick values with K/M suffixes. */
 const formatNumber = (num) => {
   if (num === undefined || num === null) return '0';
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -17,12 +17,13 @@ const formatNumber = (num) => {
   return Math.round(num).toLocaleString();
 };
 
+/** Formats an amount as PKR. */
 const formatCurrency = (num) => {
   if (num === undefined || num === null) return 'PKR 0.00';
   return 'PKR ' + num.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
-
+/** SVG bar chart for dashboard metrics. */
 const BarChart = ({ data, dataKey, nameKey, fill, height = 300, expanded = false }) => {
   if (!data || data.length === 0) return <div className="no-data">No data available</div>;
   
@@ -33,7 +34,7 @@ const BarChart = ({ data, dataKey, nameKey, fill, height = 300, expanded = false
   
   return (
     <svg viewBox={`0 0 500 ${height}`} className="chart-svg bar-chart">
-      {/* Grid lines */}
+      
       {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
         <g key={i}>
           <line
@@ -57,7 +58,7 @@ const BarChart = ({ data, dataKey, nameKey, fill, height = 300, expanded = false
         </g>
       ))}
       
-      {/* Bars */}
+      
       {data.map((item, index) => {
         const barHeight = maxValue > 0 ? (item[dataKey] / maxValue) * (height - padding * 2) : 0;
         const x = padding + (index * (barWidth + 15)) + 20;
@@ -79,7 +80,7 @@ const BarChart = ({ data, dataKey, nameKey, fill, height = 300, expanded = false
               rx="4"
               className="bar"
             />
-            {/* Value on top of bar */}
+            
             <text
               x={x + barWidth / 2}
               y={height - padding - barHeight - 8}
@@ -117,6 +118,7 @@ BarChart.propTypes = {
   expanded: PropTypes.bool,
 };
 
+/** SVG pie chart for proportional data. */
 const PieChart = ({ data, dataKey, nameKey, colors, size = 200, expanded = false }) => {
   if (!data || data.length === 0) return <div className="no-data">No data available</div>;
   
@@ -252,6 +254,7 @@ PieChart.propTypes = {
   expanded: PropTypes.bool,
 };
 
+/** SVG line chart with area fill for trends. */
 const LineChart = ({ data, dataKey, nameKey, stroke, height = 250, expanded = false }) => {
   if (!data || data.length === 0) return <div className="no-data">No data available</div>;
   
@@ -272,7 +275,7 @@ const LineChart = ({ data, dataKey, nameKey, stroke, height = 250, expanded = fa
   
   return (
     <svg viewBox={`0 0 500 ${height}`} className="chart-svg line-chart">
-      {/* Grid lines */}
+      
       {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
         <g key={i}>
           <line
@@ -296,7 +299,7 @@ const LineChart = ({ data, dataKey, nameKey, stroke, height = 250, expanded = fa
         </g>
       ))}
       
-      {/* Area fill */}
+      
       <defs>
         <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor={stroke} stopOpacity="0.3"/>
@@ -305,7 +308,7 @@ const LineChart = ({ data, dataKey, nameKey, stroke, height = 250, expanded = fa
       </defs>
       <path d={areaD} fill="url(#areaGradient)" />
       
-      {/* Line */}
+      
       <path
         d={pathD}
         fill="none"
@@ -315,7 +318,7 @@ const LineChart = ({ data, dataKey, nameKey, stroke, height = 250, expanded = fa
         strokeLinejoin="round"
       />
       
-      {/* Points */}
+      
       {points.map((point, index) => (
         <g key={index}>
           <circle
@@ -354,6 +357,7 @@ LineChart.propTypes = {
   expanded: PropTypes.bool,
 };
 
+/** SVG horizontal bar chart for ranked lists. */
 const HorizontalBarChart = ({ data, dataKey, nameKey, fill, height = 300, expanded = false }) => {
   if (!data || data.length === 0) return <div className="no-data">No data available</div>;
   
@@ -421,6 +425,7 @@ HorizontalBarChart.propTypes = {
   expanded: PropTypes.bool,
 };
 
+/** Full-screen modal for expanded chart view. */
 const ChartModal = ({ isOpen, onClose, title, description, children }) => {
   if (!isOpen) return null;
   
@@ -457,6 +462,7 @@ ChartModal.propTypes = {
   children: PropTypes.node,
 };
 
+/** Chart tile that opens a detail modal on click. */
 const ChartCard = ({ title, description, children, expandedContent, detailView, data }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -509,6 +515,7 @@ ChartCard.propTypes = {
   data: PropTypes.array,
 };
 
+/** Admin business analytics dashboard with MFA, charts, and exports. */
 const Analytics = () => {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -545,6 +552,7 @@ const Analytics = () => {
   const MFA_SESSION_DURATION_MS = 30 * 60 * 1000;
   const MFA_VERIFIED_AT_KEY = 'analytics_mfa_verified_at';
 
+  /** Returns whether the in-browser MFA grace window is still valid. */
   const isMFASessionValid = () => {
     const sessionData = localStorage.getItem(MFA_VERIFIED_AT_KEY);
     if (!sessionData) return false;
@@ -562,10 +570,12 @@ const Analytics = () => {
     }
   };
 
+  /** Persists MFA verification timestamp in localStorage. */
   const setMFASession = () => {
     localStorage.setItem(MFA_VERIFIED_AT_KEY, JSON.stringify({ timestamp: Date.now() }));
   };
 
+  /** Clears stored MFA verification. */
   const clearMFASession = () => {
     localStorage.removeItem(MFA_VERIFIED_AT_KEY);
   };
@@ -574,9 +584,7 @@ const Analytics = () => {
     fetchAnalytics();
   }, [token]);
 
-  useEffect(() => {
-  }, [showMFAModal]);
-
+  /** Loads dashboard analytics; optional password for re-authentication. */
   const fetchAnalytics = async (passwordConfirmation = null) => {
     try {
       setLoading(true);
@@ -666,6 +674,7 @@ const Analytics = () => {
     }
   };
 
+  /** Submits MFA password and refetches analytics. */
   const handleMFASubmit = async (e) => {
     e.preventDefault();
     if (!mfaPassword.trim()) {
@@ -676,6 +685,7 @@ const Analytics = () => {
     await fetchAnalytics(mfaPassword);
   };
 
+  /** Builds CSV string from current analytics payload. */
   const generateCSVData = () => {
     if (!analytics) return '';
     
@@ -737,7 +747,7 @@ const Analytics = () => {
     return csv.join('\n');
   };
 
-
+  /** Opens a printable HTML report and logs export server-side. */
   const exportPDF = async () => {
     try {
       await axios.post(`${API_URL}/api/dashboard/export/pdf`, {}, {
@@ -898,6 +908,7 @@ const Analytics = () => {
     toast.success('Report preview opened - use buttons to print or close');
   };
 
+  /** Returns a truncated CSV preview for the export modal. */
   const getCSVPreview = () => {
     const csvData = generateCSVData();
     return csvData.split('\n').slice(0, 35).join('\n') + '\n... (more data below)';
@@ -1073,7 +1084,7 @@ const Analytics = () => {
 
   return (
     <>
-      {/* MFA Modal - Render first so it appears on top */}
+      
       {showMFAModal && (
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal-content" style={{ maxWidth: '500px', width: '90%' }} role="document">
@@ -1157,7 +1168,7 @@ const Analytics = () => {
         </button>
       </div>
 
-      {/* Summary Cards */}
+      
       <div className="summary-grid">
         <button type="button" className="summary-card revenue clickable" onClick={() => navigate('/orders')} title="View Orders">
           <div className="card-icon rupee-icon">
@@ -1246,9 +1257,9 @@ const Analytics = () => {
         </button>
       </div>
 
-      {/* Charts Section */}
+      
       <div className="charts-grid">
-        {/* Monthly Sales Trend */}
+        
         <ChartCard 
           title="Monthly Sales Trend"
           description={chartDescriptions.monthlySales}
@@ -1299,7 +1310,7 @@ const Analytics = () => {
           <LineChart data={monthlySales || []} dataKey="totalSales" nameKey="month" stroke="#2f5242" height={280} />
         </ChartCard>
 
-        {/* Top Clients */}
+        
         <ChartCard 
           title="Top Clients by Revenue"
           description={chartDescriptions.topClients}
@@ -1344,7 +1355,7 @@ const Analytics = () => {
           <HorizontalBarChart data={(topClients || []).slice(0, 7)} dataKey="totalPurchases" nameKey="companyName" fill="#2f5242" height={280} />
         </ChartCard>
 
-        {/* Most Sold Stones */}
+        
         <ChartCard 
           title="Best Selling Stones"
           description={chartDescriptions.bestSelling}
@@ -1389,7 +1400,7 @@ const Analytics = () => {
           <HorizontalBarChart data={(mostSoldStones || []).slice(0, 7)} dataKey="totalQuantity" nameKey="stoneName" fill="#73df58" height={280} />
         </ChartCard>
 
-        {/* Order Status Distribution */}
+        
         <ChartCard 
           title="Order Status Distribution"
           description={chartDescriptions.orderStatus}
@@ -1448,7 +1459,7 @@ const Analytics = () => {
           <PieChart data={orderStatusData} dataKey="value" nameKey="name" colors={orderStatusData.map(d => statusColors[d.name] || '#6c757d')} size={220} />
         </ChartCard>
 
-        {/* Quotation Status */}
+        
         <ChartCard 
           title="Quotation Status"
           description={chartDescriptions.quotationStatus}
@@ -1507,7 +1518,7 @@ const Analytics = () => {
           <PieChart data={quotationStatusData} dataKey="value" nameKey="name" colors={quotationStatusData.map(d => statusColors[d.name] || '#6c757d')} size={220} />
         </ChartCard>
 
-        {/* Weekly Sales Pattern */}
+        
         <ChartCard 
           title="Weekly Sales Pattern"
           description={chartDescriptions.weeklySales}
@@ -1551,7 +1562,7 @@ const Analytics = () => {
           <BarChart data={weeklySalesPattern || []} dataKey="totalSales" nameKey="day" fill="#2f5242" height={260} />
         </ChartCard>
 
-        {/* Category Sales */}
+        
         <ChartCard 
           title="Sales by Category"
           description={chartDescriptions.categorySales}
@@ -1598,7 +1609,7 @@ const Analytics = () => {
           <PieChart data={categoryData} dataKey="value" nameKey="name" colors={pieColors} size={220} />
         </ChartCard>
 
-        {/* Payment Status */}
+        
         <ChartCard 
           title="Payment Status Overview"
           description={chartDescriptions.paymentStatus}
@@ -1661,7 +1672,7 @@ const Analytics = () => {
           <PieChart data={paymentData} dataKey="value" nameKey="name" colors={paymentData.map(d => statusColors[d.name] || '#6c757d')} size={220} />
         </ChartCard>
 
-        {/* Stock Status */}
+        
         <ChartCard 
           title="Stock Availability"
           description={chartDescriptions.stockAvailability}
@@ -1728,7 +1739,7 @@ const Analytics = () => {
         </ChartCard>
       </div>
 
-      {/* Top Clients Table */}
+      
       <div className="data-table-section">
         <h3>Top Clients Detailed View</h3>
         <div className="table-container">
@@ -1764,7 +1775,7 @@ const Analytics = () => {
         </div>
       </div>
 
-      {/* Most Sold Stones Table */}
+      
       <div className="data-table-section">
         <h3>Best Selling Stones Detailed View</h3>
         <div className="table-container">
@@ -1800,7 +1811,7 @@ const Analytics = () => {
         </div>
       </div>
 
-      {/* Export Section */}
+      
       <div className="export-section">
         <h3>Export Analytics Data</h3>
         <p className="export-description">Download your analytics data for reporting or further analysis</p>
@@ -1816,7 +1827,7 @@ const Analytics = () => {
         </div>
       </div>
 
-      {/* CSV Preview Modal */}
+      
       {exportModal.show && exportModal.type === 'csv' && (
         <div 
           className="modal-overlay" 

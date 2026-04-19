@@ -460,7 +460,7 @@ const Orders = () => {
 
   return (
     <div className="orders-admin-container">
-      {/* Header */}
+      
       <div className="orders-header">
         <div>
           <div className="orders-title-row">
@@ -476,7 +476,7 @@ const Orders = () => {
         </div>
       </div>
 
-      {/* Search and Filter Bar */}
+      
       <div className="orders-filters" style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
         <input
           type="text"
@@ -497,7 +497,7 @@ const Orders = () => {
         </select>
       </div>
 
-      {/* Statistics Cards */}
+      
       <div className="orders-stats">
         <div className="stat-card">
           <div className="stat-icon total">
@@ -555,7 +555,7 @@ const Orders = () => {
         </div>
       </div>
 
-      {/* Orders Table */}
+      
       <div className="orders-table-container">
         <div className="table-responsive">
           <table className="orders-table">
@@ -658,12 +658,12 @@ const Orders = () => {
                       </td>
                     </tr>
 
-                    {/* Expanded Order Details */}
+                    
                     {expandedOrder === order._id && (
                       <tr className="order-details-row">
                         <td colSpan="10">
                           <div className="order-details">
-                            {/* Customer Information */}
+                            
                             <div className="details-section">
                               <h4><FiUser className="section-icon" /> Customer Information</h4>
                               <div className="details-grid">
@@ -685,7 +685,7 @@ const Orders = () => {
                               </div>
                             </div>
 
-                            {/* Delivery Address */}
+                            
                             <div className="details-section">
                               <h4><FiMapPin className="section-icon" /> Delivery Address</h4>
                               {order.deliveryAddress ? (
@@ -705,7 +705,7 @@ const Orders = () => {
                               )}
                             </div>
 
-                            {/* Order Items */}
+                            
                             <div className="details-section">
                               <h4><FiBox className="section-icon" /> Order Items ({order.items?.length || 0})</h4>
                               <div className="order-items">
@@ -736,7 +736,7 @@ const Orders = () => {
                               </div>
                             </div>
 
-                            {/* Order Summary */}
+                            
                             <div className="details-section">
                               <h4><FiFileText className="section-icon" /> Order Summary</h4>
                               <div className="summary-details">
@@ -775,7 +775,7 @@ const Orders = () => {
                               </div>
                             </div>
 
-                            {/* Payment Timeline */}
+                            
                             {order.paymentTimeline && order.paymentTimeline.length > 0 && (
                               <div className="payment-timeline-section">
                                 <h4> Payment Timeline</h4>
@@ -814,7 +814,7 @@ const Orders = () => {
                                             )}
                                           </div>
 
-                                          {/* Action buttons for pending payments */}
+                                          
                                           {entry.action === 'payment_submitted' && proof?.status === 'pending' && (
                                             <div className="proof-actions">
                                               {entry.proofFile && (
@@ -864,14 +864,14 @@ const Orders = () => {
                                             </div>
                                           )}
 
-                                          {/* Rejection reason */}
+                                          
                                           {proof?.status === 'rejected' && proof.notes && (
                                             <div className="rejection-reason">
                                               <strong>Rejection Reason:</strong> {proof.notes}
                                             </div>
                                           )}
 
-                                          {/* Download button for approved payments */}
+                                          
                                           {entry.action === 'payment_approved' && entry.proofFile && (
                                             <div className="proof-actions">
                                               <button
@@ -907,7 +907,7 @@ const Orders = () => {
                               </div>
                             )}
 
-                            {/* Order Timeline */}
+                            
                             {order.timeline && order.timeline.length > 0 && (
                               <div className="order-timeline-section">
                                 <h4><FiClock className="section-icon" /> Order Timeline</h4>
@@ -930,7 +930,7 @@ const Orders = () => {
                               </div>
                             )}
 
-                            {/* Courier Tracking */}
+                            
                             {order.status === 'dispatched' && order.courierTracking?.isDispatched && (
                               <div className="details-section courier-section">
                                 <h4><FiTruck className="section-icon" /> Courier Tracking</h4>
@@ -964,7 +964,7 @@ const Orders = () => {
                               </div>
                             )}
 
-                            {/* Status Update */}
+                            
                             <div className="details-section status-update-section">
                               <h4>Update Order Status</h4>
                               {editingStatus === order._id ? (
@@ -1074,7 +1074,7 @@ const Orders = () => {
         </div>
       </div>
 
-      {/* Pagination Controls */}
+      
       {pagination.pages > 1 && (
         <div className="orders-pagination">
           <div className="pagination-info">
@@ -1125,7 +1125,7 @@ const Orders = () => {
         </div>
       )}
 
-      {/* Status Update Modal */}
+      
       {statusModalOrder && (
         <div 
           className="status-modal-overlay" 
@@ -1251,7 +1251,7 @@ const Orders = () => {
         </div>
       )}
 
-      {/* Rejection Reason Modal */}
+      
       {rejectModal.show && (
         <div 
           className="status-modal-overlay" 

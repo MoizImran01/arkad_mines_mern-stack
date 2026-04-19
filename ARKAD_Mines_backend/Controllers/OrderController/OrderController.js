@@ -28,7 +28,7 @@ const checkStockAvailability = async (orderItems) => {
   }
 };
 
-// Commits inventory at order confirmation (one deduction per line quantity).
+/** Commits inventory at order confirmation (one deduction per line quantity). */
 const handleStockDeduction = async (orderItems) => {
   if (!orderItems || orderItems.length === 0) return;
   for (const item of orderItems) {
@@ -48,7 +48,7 @@ const handleStockDeduction = async (orderItems) => {
   }
 };
 
-// Restores inventory committed at confirmation when order is cancelled (full line qty per item).
+/** Restores inventory committed at confirmation when order is cancelled (full line qty per item). */
 const handleStockRestoration = async (orderItems) => {
   if (!orderItems) return;
   for (const item of orderItems) {
@@ -689,7 +689,6 @@ const dispatchOrderItemByQr = async (req, res) => {
       qrCode: stone.qrCode
     });
 
-    // Stock was already reduced at order confirmation; QR records physical dispatch only.
     stone.status = 'Dispatched';
     stone.dispatchHistory.push({
       orderId: order._id,

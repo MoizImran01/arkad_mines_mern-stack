@@ -1,7 +1,7 @@
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";
 import userModel from "../Models/Users/userModel.js";
 
-// Allows only authenticated users with ADMIN role to access analytics.
+/** Allows only authenticated users with ADMIN role to access analytics. */
 export const strictAnalyticsRBAC = async (req, res, next) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);
@@ -58,7 +58,7 @@ export const strictAnalyticsRBAC = async (req, res, next) => {
   next();
 };
 
-// Confirms admin role from DB (not just JWT) and sets req.verifiedAdminRole.
+/** Confirms admin role from DB (not just JWT) and sets req.verifiedAdminRole. */
 export const verifyAdminInDatabase = async (req, res, next) => {
   try {
     const userId = req.user?.id;

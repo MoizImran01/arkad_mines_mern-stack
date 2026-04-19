@@ -1,3 +1,6 @@
+/**
+ * Sanitizes analytics API payloads (e.g. masks client emails in top-clients data).
+ */
 const maskEmail = (email) => {
   if (!email || typeof email !== 'string') return email;
   const [localPart, domain] = email.split('@');

@@ -1,3 +1,6 @@
+/**
+ * Creates compound MongoDB indexes used by dashboard analytics aggregations.
+ */
 import orderModel from "../Models/orderModel/orderModel.js";
 import quotationModel from "../Models/quotationModel/quotationModel.js";
 

@@ -3,6 +3,7 @@ import fs from "fs";
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+/** Maps internal quotation status keys to PDF label text. */
 const formatQuotationStatus = (status) => {
   const statusMap = {
     draft: "DRAFT",
@@ -16,7 +17,7 @@ const formatQuotationStatus = (status) => {
   return statusMap[status] || (status || "").toUpperCase();
 };
 
-// Generates quotation PDF (header, items, financials, validity).
+/** Generates quotation PDF (header, items, financials, validity). */
 export const generateQuotationPDF = (quotation) => {
   const { doc, promise } = initPDF({ Title: `Quotation ${quotation.referenceNumber}`, Author: "ARKAD MINES & MINERALS", Subject: "Official Quotation" });
 
@@ -59,6 +60,7 @@ export const generateQuotationPDF = (quotation) => {
     return promise;
 };
 
+/** Draws letterhead with logo and divider line. */
 const createPDFHeader = (doc, headerTop) => {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
@@ -75,13 +77,11 @@ const createPDFHeader = (doc, headerTop) => {
     });
   }
 
-  // Company name sits to the right of the logo, vertically centred
   doc.fontSize(16)
      .fillColor('#000000')
      .font('Helvetica-Bold')
      .text('ARKAD MINES & MINERALS', TEXT_X, headerTop + 17, { width: 435 });
 
-  // Divider line clears the bottom of the logo
   const lineY = headerTop + LOGO_SIZE + 12;
   doc.moveTo(50, lineY)
      .lineTo(550, lineY)
@@ -89,11 +89,10 @@ const createPDFHeader = (doc, headerTop) => {
      .lineWidth(1)
      .stroke();
 
-  // Advance cursor to below the header block
   doc.y = lineY + 14;
 };
 
-// Generates official invoice PDF from an approved quotation.
+/** Generates official invoice PDF from an approved quotation. */
 export const generateInvoicePDF = (quotation) => {
   const { doc, promise } = initPDF({ Title: `Invoice ${quotation.referenceNumber}`, Author: "ARKAD MINES & MINERALS", Subject: "Official Invoice" });
 
@@ -136,6 +135,7 @@ export const generateInvoicePDF = (quotation) => {
   return promise;
 };
 
+/** Renders quotation/order line items table; returns Y below last row. */
 const createItemsTable = (doc, items, startY) => {
   const tableTop = startY;
   
@@ -202,6 +202,7 @@ const createItemsTable = (doc, items, startY) => {
   return currentY;
 };
 
+/** Renders financial summary panel; returns Y below the panel. */
 const createFinancialSummary = (doc, financials, startY) => {
   const financialsTop = startY + 20;
   
@@ -247,6 +248,7 @@ const createFinancialSummary = (doc, financials, startY) => {
   return financialsTop + 140;
 };
 
+/** Creates a PDFKit document and buffer Promise. */
 const initPDF = (info) => {
   const doc = new PDFDocument({ margin: 50, size: "A4", info });
   const buffers = [];
@@ -261,6 +263,7 @@ const initPDF = (info) => {
 const FOOTER_Y = 750;
 const TAGLINE = "ARKAD MINES & MINERALS - Your Trusted Partner in Quality Minerals";
 
+/** Adds footer rule, optional note, and tagline. */
 const addStandardFooter = (doc, line1Text) => {
   doc.moveTo(50, FOOTER_Y)
     .lineTo(550, FOOTER_Y)
@@ -273,6 +276,7 @@ const addStandardFooter = (doc, line1Text) => {
   doc.text(TAGLINE, 50, FOOTER_Y + 25, { width: 500, align: "center" });
 };
 
+/** Writes order BILL TO block; returns Y after the block. */
 const writeOrderBillToAddress = (doc, order, detailsTop) => {
   const buyerName = order.buyer?.companyName || order.buyer?.name || "Valued Customer";
   const buyerEmail = order.buyer?.email || "N/A";
@@ -313,6 +317,7 @@ const writeOrderBillToAddress = (doc, order, detailsTop) => {
   return currentY;
 };
 
+/** Writes metadata label/value rows in the right column. */
 const writeMetaDataTable = (doc, metaData, detailsTop) => {
   let metaY = detailsTop;
   metaData.forEach((item) => {
@@ -324,7 +329,7 @@ const writeMetaDataTable = (doc, metaData, detailsTop) => {
   });
 };
 
-// Generates proforma invoice PDF for an order.
+/** Generates proforma invoice PDF for an order. */
 export const generateProformaPDF = (order) => {
   const { doc, promise } = initPDF({ Title: `Proforma Invoice ${order.orderNumber}`, Author: "ARKAD MINES & MINERALS", Subject: "Proforma Invoice" });
 
@@ -352,7 +357,7 @@ export const generateProformaPDF = (order) => {
     return promise;
 };
 
-// Generates tax invoice PDF for an order.
+/** Generates tax invoice PDF for an order. */
 export const generateTaxInvoicePDF = (order) => {
   const { doc, promise } = initPDF({ Title: `Tax Invoice ${order.orderNumber}`, Author: "ARKAD MINES & MINERALS", Subject: "Tax Invoice" });
 
@@ -388,7 +393,7 @@ export const generateTaxInvoicePDF = (order) => {
     return promise;
 };
 
-// Generates receipt PDF for a single payment proof.
+/** Generates receipt PDF for a single payment proof. */
 export const generateReceiptPDF = (order, paymentProof, receiptIndex) => {
   const { doc, promise } = initPDF({ Title: `Receipt ${order.orderNumber}`, Author: 'ARKAD MINES & MINERALS', Subject: 'Payment Receipt' });
 
@@ -459,7 +464,7 @@ export const generateReceiptPDF = (order, paymentProof, receiptIndex) => {
     return promise;
 };
 
-// Generates account statement PDF for an order.
+/** Generates account statement PDF for an order. */
 export const generateStatementPDF = (order) => {
   const { doc, promise } = initPDF({ Title: `Account Statement ${order.orderNumber}`, Author: 'ARKAD MINES & MINERALS', Subject: 'Account Statement' });
 
@@ -537,7 +542,7 @@ export const generateStatementPDF = (order) => {
     return promise;
 };
 
-// Generates customer history PDF (contact, quotes, orders).
+/** Generates customer history PDF (contact, quotes, orders). */
 export const generateCustomerHistoryPDF = (customer, quotations = [], orders = []) => {
   const { doc, promise } = initPDF({ Title: `Customer History - ${customer.companyName || customer.email}`, Author: 'ARKAD MINES & MINERALS', Subject: 'Customer History' });
 

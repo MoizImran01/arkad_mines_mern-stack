@@ -5,6 +5,7 @@ import { FiEdit3, FiMail, FiBriefcase, FiUserCheck, FiLoader } from "react-icons
 import { StoreContext } from "../../context/StoreContext";
 import "./Profile.css";
 
+/** Read-only account summary for the signed-in buyer. */
 const Profile = () => {
   const { token, url } = useContext(StoreContext);
   const navigate = useNavigate();

@@ -17,7 +17,7 @@ const pricingRateLimiter = createRateLimiter({
     actionType: "PRICING_RATE_LIMIT_EXCEEDED",
 });
 
-// Single item price prediction
+/** Single-item price prediction. */
 pricingRouter.post(
     "/predict-price",
     verifyToken,
@@ -26,7 +26,7 @@ pricingRouter.post(
     getPriceSuggestion
 );
 
-// Batch price prediction (for all items in a quotation)
+/** Batch price prediction for quotation line items. */
 pricingRouter.post(
     "/predict-prices",
     verifyToken,
@@ -35,7 +35,7 @@ pricingRouter.post(
     getBatchPriceSuggestions
 );
 
-// Health check
+/** Pricing service health check. */
 pricingRouter.get(
     "/health",
     verifyToken,

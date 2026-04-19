@@ -1,3 +1,6 @@
+/**
+ * Per-resource request queue limiting concurrent handler execution per endpoint.
+ */
 const requestQueues = new Map();
 
 export const createRequestQueue = ({

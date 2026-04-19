@@ -1,3 +1,6 @@
+/**
+ * Mongoose model for per-endpoint rate limit and CAPTCHA attempt tracking.
+ */
 import mongoose from "mongoose";
 
 const rateLimitTrackingSchema = new mongoose.Schema({

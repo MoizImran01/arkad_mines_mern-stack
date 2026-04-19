@@ -10,6 +10,7 @@ import Lenis from 'lenis';
 
 gsap.registerPlugin(ScrollTrigger);
 
+/** Marketing home: hero, features, and scroll-driven sections. */
 const Home = () => {
   const mainRef = useRef(null);
 

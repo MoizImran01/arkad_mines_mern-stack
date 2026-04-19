@@ -10,7 +10,7 @@ const roundToTwoDecimals = (value) => {
   return Math.round((value || 0) * 100) / 100;
 };
 
-// Aggregates dashboard analytics (clients, stones, trends, revenue, conversion, etc.); cached.
+/** Aggregates dashboard analytics (clients, stones, trends, revenue, conversion, etc.); cached. */
 const auditBase = (req) => ({
   userId: req.user?.id || null,
   role: normalizeRole(req.user?.role),

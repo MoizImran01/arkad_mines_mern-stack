@@ -12,7 +12,7 @@ import './ItemDetail.css';
 import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 import { LIVE_REST_POLL_INTERVAL_MS } from '../../../../shared/liveRestPoll.js';
 
-// Single stone product page: details, image zoom, add to quote.
+/** Single product page: details, image, and add-to-quote. */
 const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();

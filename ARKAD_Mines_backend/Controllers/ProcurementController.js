@@ -1,3 +1,6 @@
+/**
+ * Admin purchase order HTTP handlers (list, create, status) and stone linkage.
+ */
 import procurementModel from '../Models/procurementModel/procurementModel.js';
 import stonesModel from '../Models/stonesModel/stonesModel.js';
 import { emitStonesChanged } from '../socket/socketEmitter.js';
@@ -124,7 +127,6 @@ export const updatePurchaseOrderStatus = async (req, res) => {
 
     const previousStatus = po.status;
 
-    // Collect all stones from this PO
     const getStoneItems = () => {
       if (po.stones && po.stones.length > 0) {
         return po.stones.map(s => ({ stoneId: s.stoneId, quantity: s.quantityOrdered }));

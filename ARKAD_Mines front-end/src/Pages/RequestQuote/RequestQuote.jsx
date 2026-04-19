@@ -16,7 +16,7 @@ import {
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
-// Quote request form: items from cart, quantities, notes, submit to backend.
+/** Quote request form: cart line items, notes, and submit to API. */
 const RequestQuote = () => {
   const {
     quoteItems,

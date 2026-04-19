@@ -1,7 +1,7 @@
 import { getClientIp, getUserAgent, logAudit, normalizeRole } from "../logger/auditLogger.js";
 import { RateLimitTracking } from "./rateLimitModel.js";
 
-// Checks user-agent, query, body, and path for common attack patterns.
+/** Checks user-agent, query, body, and path for common attack patterns. */
 const detectMaliciousPatterns = (req) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);
@@ -73,7 +73,7 @@ const detectMaliciousPatterns = (req) => {
   return suspiciousPatterns;
 };
 
-// Blocks requests with malicious patterns or too many failed CAPTCHA attempts; logs and 403.
+/** Blocks requests with malicious patterns or too many failed CAPTCHA attempts; logs and 403. */
 export const wafProtection = async (req, res, next) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);

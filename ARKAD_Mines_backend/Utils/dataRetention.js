@@ -1,3 +1,6 @@
+/**
+ * Field-level encryption helpers and retention-related utilities for sensitive values.
+ */
 import crypto from "crypto";
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
@@ -60,7 +63,6 @@ export const decryptSensitiveData = (data) => {
 const RETENTION_DAYS = Number.parseInt(process.env.ANALYTICS_RETENTION_DAYS || '365', 10);
 
 export const cleanupOldAnalyticsLogs = async () => {
-  // Audit logs are immutable; no DB deletes. Callers do not use a return value.
   console.log(
     `[DATA RETENTION] Skipping audit log cleanup (audit logs are immutable, retention: ${RETENTION_DAYS} days)`
   );

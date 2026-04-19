@@ -10,6 +10,7 @@ import ResetFormFields, { StatusMessages } from '../../../../shared/ResetFormFie
 
 const RECAPTCHA_SITE_KEY = "6LfIkB0sAAAAANTjmfzZnffj2xE1POMF-Tnl3jYC";
 
+/** Auth modal: login, register, password reset, and CAPTCHA. */
 const LoginPopup = ({ setShowLogin }) => {
     const [currentState, setCurrentState] = useState("Login")
     const [isLoading, setIsLoading] = useState(false)
@@ -83,7 +84,6 @@ const LoginPopup = ({ setShowLogin }) => {
                   localStorage.removeItem("token");
                   localStorage.removeItem("userRole");
                 } catch {
-                  /* ignore */
                 }
                 if (user.role === "admin") {
                     globalThis.location.href = import.meta.env.VITE_ADMIN_URL || "http://localhost:5174";

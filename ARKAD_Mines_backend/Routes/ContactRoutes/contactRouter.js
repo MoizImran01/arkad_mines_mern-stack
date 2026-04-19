@@ -1,3 +1,6 @@
+/**
+ * Public contact form submission (rate-limited POST).
+ */
 import express from "express";
 import { submitContact } from "../../Controllers/ContactController/contactController.js";
 import { createRateLimiter } from "../../Middlewares/genericRateLimiting.js";

@@ -115,7 +115,7 @@ const ForecastingAnalytics = ({ forecasts = [] }) => {
       <h2 className="analytics-section-title">Forecasting Analytics</h2>
       
       <div className="analytics-grid">
-        {/* Top Forecasted Demand - Bar Chart */}
+        
         <div className="analytics-card">
           <div className="analytics-card-header">
             <h3 className="analytics-card-title">Top 7 Demand Forecasts</h3>
@@ -149,7 +149,7 @@ const ForecastingAnalytics = ({ forecasts = [] }) => {
           </div>
         </div>
 
-        {/* Safety Stock vs Reorder Point - Grouped Bar Chart */}
+        
         <div className="analytics-card">
           <div className="analytics-card-header">
             <h3 className="analytics-card-title">Safety Stock & Reorder Point</h3>
@@ -197,7 +197,7 @@ const ForecastingAnalytics = ({ forecasts = [] }) => {
           </div>
         </div>
 
-        {/* Category Purchasing Breakdown - Donut Chart */}
+        
         <div className="analytics-card">
           <div className="analytics-card-header">
             <h3 className="analytics-card-title">Category Breakdown</h3>

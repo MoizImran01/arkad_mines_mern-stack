@@ -1,3 +1,6 @@
+/**
+ * Cloudinary SDK setup and multer storage for stone image uploads.
+ */
 import cloudinaryPackage from 'cloudinary';
 import multer from 'multer';
 import { createRequire } from 'module';

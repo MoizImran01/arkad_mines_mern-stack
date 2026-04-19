@@ -23,7 +23,7 @@ import { validatePaymentFileSize } from '../../Middlewares/paymentFileValidation
 import { rejectClientPaymentStatus } from '../../Middlewares/paymentStatusValidation.js';
 import { enforceHTTPS } from '../../Middlewares/securityHeaders.js';
 
-// Order routes: my orders, payment submit, admin order management.
+/** Order routes: my orders, payment submit, admin order management. */
 const orderRouter = express.Router();
 
 const paymentRateLimiter = createRateLimiter({

@@ -13,7 +13,7 @@ import {
   sanitizeOrderNumberForRoute,
 } from '../../../../shared/clientApiGuards.js';
 
-
+/** Top navigation, mobile menu, and notification dropdown. */
 const Navbar = ({ setShowLogin }) => {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,7 +25,7 @@ const Navbar = ({ setShowLogin }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
-  // payment fix client side: pass pathname so notifications refetch after navigation (e.g. post-payment)
+  /** Refetches notifications when the route changes (e.g. after payment). */
   const {
     notifications, loadingNotifications, refreshingNotifications,
     showNotifications, setShowNotifications, panelRef: notificationRef,

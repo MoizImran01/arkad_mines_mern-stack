@@ -1,3 +1,6 @@
+/**
+ * Nodemailer transporters and helpers for password reset, verification, and contact mail.
+ */
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({

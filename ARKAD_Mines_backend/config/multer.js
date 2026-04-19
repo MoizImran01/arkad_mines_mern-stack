@@ -2,7 +2,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-// Disk storage and image-only filter; 5MB limit. Creates uploads dir if missing.
+/** Disk storage and image-only filter; 5MB limit. Creates uploads dir if missing. */
 const uploadDir = 'uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });

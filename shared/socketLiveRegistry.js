@@ -23,7 +23,6 @@ function getRegistry() {
       return g[REGISTRY_KEY];
     }
   } catch {
-    /* ignore */
   }
   if (!moduleFallbackRegistry) moduleFallbackRegistry = emptyRegistry();
   return moduleFallbackRegistry;

@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 import { LIVE_REST_POLL_INTERVAL_MS } from '../../../../shared/liveRestPoll.js';
 
-// Stone catalog with category, price, stock filters and add-to-quote.
+/** Stone catalog with filters and add-to-quote flow. */
 const Products = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -71,7 +71,7 @@ const Products = () => {
     ...categories.filter(cat => cat.value !== 'all')
   ];
 
-  // Apply filters and fetch products (optional silent: background refresh, no loading spinner)
+  /** Refetches filtered stones; silent skips loading UI for background refresh. */
   const applyFilters = async (options = {}) => {
     const silent = Boolean(options.silent);
     if (!silent) {
@@ -92,7 +92,6 @@ const Products = () => {
       if (filters.sortBy) params.append('sortBy', filters.sortBy);
       if (filters.source !== 'all') params.append('source', filters.source);
 
-      // Bust HTTP caches (CDN/browser) that key only on URL without this param
       params.append('_cb', String(Date.now()));
 
       const response = await axios.get(`${url}/api/stones/filter?${params.toString()}`, {
@@ -127,7 +126,6 @@ const Products = () => {
 
   useEffect(() => subscribeLive("stones", () => applyFiltersRef.current({ silent: true })), []);
 
-  // Same-tab fallback: fireLive dispatches this even if a duplicate bundle missed subscribeLive
   useEffect(() => {
     const onLive = (e) => {
       if (e?.detail?.channel === "stones") applyFiltersRef.current({ silent: true });
@@ -136,7 +134,6 @@ const Products = () => {
     return () => window.removeEventListener("arkad:live", onLive);
   }, []);
 
-  // Same live pattern as shared/useNotifications: interval + visibility + focus + route changes (Vercel-friendly REST).
   useEffect(() => {
     const id = setInterval(() => {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
@@ -169,7 +166,6 @@ const Products = () => {
     applyFiltersRef.current({ silent: true });
   }, [location.pathname]);
 
-  // Like notifications refetch when the panel opens — refetch when filters sidebar is expanded after being collapsed.
   useEffect(() => {
     if (!showFilters) return;
     if (skipFirstFiltersOpenRefetchRef.current) {
@@ -179,6 +175,7 @@ const Products = () => {
     applyFiltersRef.current({ silent: true });
   }, [showFilters]);
 
+  /** Updates one filter field in local state. */
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({
       ...prev,
@@ -186,6 +183,7 @@ const Products = () => {
     }));
   };
 
+  /** Resets all filters to defaults. */
   const clearFilters = () => {
     setFilters({
       category: 'all',
@@ -226,6 +224,7 @@ const Products = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.keywords]);
 
+  /** Maps stock availability text to a CSS modifier class. */
   const getStockStatusClass = (status) => {
     if (!status) return 'unknown';
     const statusLower = status.toLowerCase();
@@ -243,6 +242,7 @@ const Products = () => {
     return 'unknown';
   };
 
+  /** Resolves a relative or absolute image path to a full URL. */
   const getImageUrl = (imagePath) => {
     if (!imagePath) return 'https://via.placeholder.com/300x200?text=No+Image';
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
@@ -259,7 +259,7 @@ const Products = () => {
       </div>
 
       <div className="products-content">
-        {/* Filters Sidebar */}
+        
         <div className={`filters-sidebar ${showFilters ? 'open' : 'closed'}`}>
           <div className="filters-header">
             <h2><FiFilter /> Filters</h2>

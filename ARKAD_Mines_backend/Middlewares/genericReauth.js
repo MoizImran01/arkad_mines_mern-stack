@@ -1,3 +1,6 @@
+/**
+ * Factory for password re-confirmation middleware on sensitive operations.
+ */
 import bcrypt from "bcrypt";
 import userModel from "../Models/Users/userModel.js";
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";

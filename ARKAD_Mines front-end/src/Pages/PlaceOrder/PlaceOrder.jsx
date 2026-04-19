@@ -10,7 +10,7 @@ import usePaymentVerification from '../../../../shared/usePaymentVerification';
 import { MfaModal } from '../../../../shared/VerificationModals.jsx';
 import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 
-// Order status page: delivery info, summary, and payment proof with MFA confirmation.
+/** Order detail: delivery, summary, payment proof, and MFA where required. */
 const PlaceOrder = () => {
   const { orderNumber } = useParams();
   const navigate = useNavigate();

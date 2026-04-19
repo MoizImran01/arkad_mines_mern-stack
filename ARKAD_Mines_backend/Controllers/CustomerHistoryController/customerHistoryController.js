@@ -7,7 +7,7 @@ import { logAudit, getClientIp, getUserAgent, normalizeRole, logError } from "..
 import { toCustomerHistoryDTO, toCustomerSearchResultDTO } from "../../Utils/DTOs/customerHistoryDTO.js";
 import { generateCustomerHistoryPDF } from "../../Utils/pdfGenerator.js";
 
-// Search customers by email or company name; returns minimal fields (admin/sales rep).
+/** Search customers by email or company name; returns minimal fields (admin/sales rep). */
 export const searchCustomers = async (req, res) => {
   const clientIp = getClientIp(req);
   try {
@@ -37,7 +37,7 @@ export const searchCustomers = async (req, res) => {
   }
 };
 
-// Returns customer history (contact, quotes, orders) as DTO; audits and validates customerId.
+/** Returns customer history (contact, quotes, orders) as DTO; audits and validates customerId. */
 export const getCustomerHistory = async (req, res) => {
   const { customerId } = req.params;
   const clientIp = getClientIp(req);
@@ -99,7 +99,7 @@ export const getCustomerHistory = async (req, res) => {
   }
 };
 
-// Exports customer history as PDF or CSV; rate-limited and audited.
+/** Exports customer history as PDF or CSV; rate-limited and audited. */
 export const exportCustomerHistory = async (req, res) => {
   const { customerId } = req.params;
   const format = (req.query.format || "pdf").toLowerCase();

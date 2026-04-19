@@ -1,3 +1,6 @@
+/**
+ * Mongoose schemas for quotations, line items, validity, and financials.
+ */
 import mongoose from "mongoose";
 
 const quotationItemSchema = new mongoose.Schema(

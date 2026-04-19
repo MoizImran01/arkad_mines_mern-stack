@@ -1,3 +1,6 @@
+/**
+ * Session activity storage and anomaly hints (IP/UA changes, rapid actions).
+ */
 import mongoose from "mongoose";
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";
 
@@ -39,7 +42,7 @@ sessionActivitySchema.index({ userId: 1, lastActivity: -1 });
 
 const SessionActivity = mongoose.models.SessionActivity || mongoose.model("SessionActivity", sessionActivitySchema);
 
-// Loads or creates session record for userId (IP, user-agent, last activity).
+/** Loads or creates session record for userId (IP, user-agent, last activity). */
 const getOrCreateSessionActivity = async (userId) => {
   let sessionActivity = await SessionActivity.findOne({ userId });
   
@@ -55,7 +58,7 @@ const getOrCreateSessionActivity = async (userId) => {
   return sessionActivity;
 };
 
-// Flags IP/user-agent changes and rapid actions; sets req.sessionAnomaly and logs warnings.
+/** Flags IP/user-agent changes and rapid actions; sets req.sessionAnomaly and logs warnings. */
 export const detectAnomalies = async (req, res, next) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-// User schema: company, email, password, role.
+/** User schema: company, email, password, role. */
 const userSchema = new mongoose.Schema({
   companyName: {
     type: String,
@@ -54,7 +54,7 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Text index for safe search on email and companyName (no RegExp from user input).
+/** Text index for email and company search without user RegExp. */
 userSchema.index({ email: "text", companyName: "text" });
 
 const userModel = mongoose.models.user || mongoose.model("user", userSchema);

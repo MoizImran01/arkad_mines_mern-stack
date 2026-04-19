@@ -280,7 +280,7 @@ export const AddProduct = () => {
         <button type='submit' className='add-product-btn'>Register Block</button>
       </form>
 
-{/* QR Code Display Modal */}
+
 {showQRCode && qrCodeImage && qrCodeId && (
         <div 
           className="qr-code-modal" 

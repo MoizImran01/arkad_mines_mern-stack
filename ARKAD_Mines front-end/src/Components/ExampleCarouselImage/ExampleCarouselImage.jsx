@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+/** Single slide image for the legacy carousel wrapper. */
 const ExampleCarouselImage = ({ src, text }) => {
   return (
     <div>

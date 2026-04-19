@@ -1,6 +1,4 @@
-/**
- * Compresses an image file to JPEG base64 for upload
- */
+/** Resizes and encodes an image file to JPEG base64 for upload. */
 export function compressImage(file, maxWidth = 1000, maxHeight = 1000, quality = 0.6, maxSizeBytes = 3 * 1024 * 1024) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -29,6 +27,7 @@ export function compressImage(file, maxWidth = 1000, maxHeight = 1000, quality =
         ctx.imageSmoothingQuality = "medium";
         ctx.drawImage(img, 0, 0, width, height);
 
+        /** Reads a canvas blob as a data URL and validates the image prefix. */
         const readBlobAsDataUrl = (blob) => {
           const reader2 = new FileReader();
           reader2.onload = () => {

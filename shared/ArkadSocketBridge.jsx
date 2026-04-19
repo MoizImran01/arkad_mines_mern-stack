@@ -49,11 +49,9 @@ export function ArkadSocketBridge({ apiBaseUrl, token }) {
       return undefined;
     }
 
+    /** Starts REST polling when the socket cannot connect. */
     const startFallback = () => {
       if (fallbackRef.current) return;
-      // 60s interval (was 12s) — when Socket.IO can't connect (e.g. Vercel
-      // serverless can't host WebSockets), we still give users fresh data
-      // without hammering the API or flashing spinners every ~10s.
       fallbackRef.current = setInterval(() => {
         fireLive("stones");
         fireLive("quotations");
@@ -62,6 +60,7 @@ export function ArkadSocketBridge({ apiBaseUrl, token }) {
       }, 60000);
     };
 
+    /** Clears the REST polling fallback interval. */
     const stopFallback = () => {
       if (fallbackRef.current) {
         clearInterval(fallbackRef.current);
@@ -81,6 +80,7 @@ export function ArkadSocketBridge({ apiBaseUrl, token }) {
     });
     socketRef.current = socket;
 
+    /** Forwards a server channel event to local subscribers. */
     const forward = (channel) => {
       fireLive(channel);
     };

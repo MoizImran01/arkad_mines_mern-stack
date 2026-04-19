@@ -1,3 +1,6 @@
+/**
+ * Quotation lifecycle: create/update, issue, buyer actions, conversion to order, PDFs, sockets.
+ */
 import quotationModel from "../../Models/quotationModel/quotationModel.js";
 import stonesModel from "../../Models/stonesModel/stonesModel.js";
 import orderModel from "../../Models/orderModel/orderModel.js";
@@ -54,7 +57,7 @@ const buildUnavailableResponse = (unavailableItems) => ({
   requiresReview: true,
 });
 
-// Creates or updates quotation; validates items, availability, and drafts.
+/** Creates or updates quotation; validates items, availability, and drafts. */
 const createOrUpdateQuotation = async (req, res) => {
   const clientIp = getClientIp(req);
   const quotationRequestId = uuidv4();

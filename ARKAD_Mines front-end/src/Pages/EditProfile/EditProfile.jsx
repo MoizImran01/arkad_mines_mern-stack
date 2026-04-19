@@ -6,6 +6,7 @@ import { FiArrowLeft, FiSave, FiLoader } from "react-icons/fi";
 import { StoreContext } from "../../context/StoreContext";
 import "./EditProfile.css";
 
+/** Edit company profile and change password. */
 const EditProfile = () => {
   const { token, url } = useContext(StoreContext);
   const navigate = useNavigate();

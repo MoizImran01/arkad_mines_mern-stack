@@ -1,3 +1,6 @@
+/**
+ * Validates quotation exists and is in an allowed state for the requested action.
+ */
 import quotationModel from "../Models/quotationModel/quotationModel.js";
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";
 

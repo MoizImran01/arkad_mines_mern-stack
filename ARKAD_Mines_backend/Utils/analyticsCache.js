@@ -1,3 +1,6 @@
+/**
+ * Simple in-memory TTL cache for expensive analytics aggregation results.
+ */
 const cache = new Map();
 const CACHE_TTL = Number.parseInt(process.env.ANALYTICS_CACHE_TTL || '600', 10) * 1000;
 

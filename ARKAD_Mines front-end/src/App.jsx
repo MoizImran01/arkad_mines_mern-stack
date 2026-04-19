@@ -29,6 +29,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+/** Hooks idle timeout into logout when a session token exists. */
 function IdleSessionGate() {
   const { token, logout } = useContext(StoreContext);
 
@@ -41,7 +42,6 @@ function IdleSessionGate() {
         );
       }
     } catch {
-      /* ignore */
     }
   }, []);
 
@@ -49,7 +49,6 @@ function IdleSessionGate() {
     try {
       sessionStorage.setItem("arkad_logout_reason", "inactivity");
     } catch {
-      /* ignore */
     }
     logout();
   }, [logout]);
@@ -59,6 +58,7 @@ function IdleSessionGate() {
   return null;
 }
 
+/** Root layout: routes, Lenis scroll, login modal, and idle logout. */
 function App() {
   const [showLogin, setShowLogin] = useState(false);
   const lenisRef = useRef(null);

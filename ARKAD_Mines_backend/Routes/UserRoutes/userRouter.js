@@ -1,3 +1,6 @@
+/**
+ * User API routes: registration, login, password reset, email verification, and /me profile.
+ */
 import express from "express";
 import {
   loginUser,

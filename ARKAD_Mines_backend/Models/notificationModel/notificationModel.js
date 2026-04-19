@@ -1,3 +1,6 @@
+/**
+ * In-app notification schema for buyers and staff (read state, links, metadata).
+ */
 import mongoose from "mongoose";
 
 const notificationSchema = new mongoose.Schema(

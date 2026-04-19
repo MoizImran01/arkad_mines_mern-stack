@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 
+/** Promise-based delay between connection retries. */
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Connects to MongoDB using MONGO_URI with retries (for K8s when Mongo starts first).
+/** Connects to MongoDB using MONGO_URI with retries (for K8s when Mongo starts first). */
 export const connectDB = async () => {
   const uri = process.env.MONGO_URI;
   if (!uri) {
@@ -11,7 +12,6 @@ export const connectDB = async () => {
   }
   const maxAttempts = Number(process.env.MONGO_CONNECT_MAX_ATTEMPTS || 30);
   const delayMs = Number(process.env.MONGO_CONNECT_DELAY_MS || 2000);
-  // Fail each attempt quickly so retries fit under K8s startupProbe windows (default Mongoose waits 30s).
   const serverSelectionTimeoutMS = Number(
     process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS || 5000
   );

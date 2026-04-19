@@ -4,9 +4,11 @@ const IDLE_MS = 60 * 60 * 1000;
 const CHECK_MS = 30 * 1000;
 const BUMP_THROTTLE_MS = 5000;
 
+/** Calls onIdleLogout after one hour without recorded activity while token is set. */
 export function useIdleSession(token, onIdleLogout) {
   const lastBumpRef = useRef(0);
 
+  /** Records user activity and refreshes the idle timestamp in sessionStorage. */
   const bumpActivity = useCallback(() => {
     if (!token) return;
     const now = Date.now();
@@ -15,7 +17,6 @@ export function useIdleSession(token, onIdleLogout) {
     try {
       sessionStorage.setItem("arkad_last_activity", String(now));
     } catch {
-      /* ignore */
     }
   }, [token]);
 
@@ -27,7 +28,6 @@ export function useIdleSession(token, onIdleLogout) {
     try {
       sessionStorage.setItem("arkad_last_activity", String(now));
     } catch {
-      /* ignore */
     }
 
     const onAct = () => bumpActivity();
@@ -45,7 +45,6 @@ export function useIdleSession(token, onIdleLogout) {
           if (!Number.isNaN(parsed)) last = Math.max(last, parsed);
         }
       } catch {
-        /* ignore */
       }
       if (Date.now() - last > IDLE_MS) {
         onIdleLogout();

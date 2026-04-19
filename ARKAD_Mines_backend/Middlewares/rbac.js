@@ -1,3 +1,6 @@
+/**
+ * Role-based permissions and middleware for quotation/order actions by role.
+ */
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";
 
 const ROLE_PERMISSIONS = {

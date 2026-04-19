@@ -21,6 +21,7 @@ import ForecastTrendChart from './ForecastTrendChart';
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
 
+/** Merges live catalog stock into forecast rows by SKU key. */
 const attachActualStock = async (forecasts) => {
   try {
     const stonesResponse = await axios.get(`${API_URL}/api/stones/list`);
@@ -50,13 +51,16 @@ const attachActualStock = async (forecasts) => {
   }
 };
 
+/** Formats a number to two decimal places for display. */
 const fmt = (n) => Number(n).toFixed(2);
 
+/** Marble / granite label chip. */
 const CategoryBadge = ({ category }) => {
   const cls = category === 'Marble' ? 'marble' : 'granite';
   return <span className={`category-badge ${cls}`}>{category}</span>;
 };
 
+/** Stock health indicator vs reorder point. */
 const StatusPill = ({ currentStock, reorderPoint }) => {
   const needsReorder = currentStock <= reorderPoint;
   const cls = needsReorder ? 'reorder' : 'healthy';
@@ -68,6 +72,7 @@ const StatusPill = ({ currentStock, reorderPoint }) => {
   );
 };
 
+/** Summary metric tile with icon accent. */
 const KpiCard = ({ icon: Icon, label, value, subtitle, accent }) => (
   <div className="kpi-card">
     <div className="kpi-card-inner">
@@ -84,6 +89,7 @@ const KpiCard = ({ icon: Icon, label, value, subtitle, accent }) => (
   </div>
 );
 
+/** Loading placeholder for KPI cards. */
 const SkeletonCard = () => (
   <div className="skeleton-card">
     <div className="skeleton-card-inner">
@@ -97,6 +103,7 @@ const SkeletonCard = () => (
   </div>
 );
 
+/** Loading placeholder row for the forecast table. */
 const SkeletonRow = () => (
   <tr className="skeleton-row">
     {Array.from({ length: 9 }).map((_, i) => (
@@ -107,6 +114,7 @@ const SkeletonRow = () => (
   </tr>
 );
 
+/** Admin inventory forecasting view with charts and table. */
 const Forecasting = () => {
   const [forecasts, setForecasts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,6 +124,7 @@ const Forecasting = () => {
   const [sortDir, setSortDir] = useState('asc');
   const [searchQuery, setSearchQuery] = useState('');
 
+  /** Loads forecast API data and enriches rows with current stock. */
   const fetchData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
@@ -133,7 +142,6 @@ const Forecasting = () => {
         return;
       }
 
-      //Attach actual stock values from database
       const forecastsWithStock = await attachActualStock(items);
       setForecasts(forecastsWithStock);
       setLastUpdated(new Date());
@@ -239,7 +247,7 @@ const Forecasting = () => {
     <div className="forecast-page">
       <div className="forecast-container">
 
-        {/* Header */}
+        
         <div className="forecast-header">
           <div className="forecast-header-left">
             <div className="forecast-title-row">
@@ -270,7 +278,7 @@ const Forecasting = () => {
           </button>
         </div>
 
-        {/* KPI Cards */}
+        
         {loading ? (
           <div className="kpi-grid">
             {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
@@ -308,13 +316,13 @@ const Forecasting = () => {
           </div>
         )}
 
-        {/* Forecasting Analytics Charts */}
+        
         {!loading && <ForecastingAnalytics forecasts={forecasts} />}
 
-        {/* Forecast Trend Chart */}
+        
         {!loading && <ForecastTrendChart forecasts={forecasts} />}
 
-        {/* Table */}
+        
         <div className="forecast-table-wrapper">
           <div className="forecast-table-toolbar">
             <div className="forecast-table-title-row">

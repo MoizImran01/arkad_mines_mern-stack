@@ -1,3 +1,6 @@
+/**
+ * Purchase order document schema (supplier, stones, status, totals).
+ */
 import mongoose from "mongoose";
 
 const procurementSchema = new mongoose.Schema(

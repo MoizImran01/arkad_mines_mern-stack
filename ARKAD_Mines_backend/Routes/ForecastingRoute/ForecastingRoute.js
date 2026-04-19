@@ -1,3 +1,6 @@
+/**
+ * Inventory forecasting route: proxies AI forecast with per-user rate limits (admin/employee).
+ */
 import express from "express"
 import { verifyToken, authorizeRoles } from "../../Middlewares/auth.js"
 import { createRateLimiter } from "../../Middlewares/genericRateLimiting.js"

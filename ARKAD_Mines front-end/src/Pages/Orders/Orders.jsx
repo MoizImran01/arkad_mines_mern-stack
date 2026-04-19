@@ -22,6 +22,7 @@ import {
   safeImageFilenameSegment,
 } from "../../../../shared/clientApiGuards.js";
 
+/** Buyer order list, tracking modal, and payment submission. */
 const Orders = () => {
   const { token, url, replaceQuoteItems, setActiveQuoteId } = useContext(StoreContext);
   
@@ -85,7 +86,6 @@ const Orders = () => {
   useEffect(() => {
     const fn = () => fetchOrdersRef.current();
     const u1 = subscribeLive("orders", fn);
-    // Payment approve/reject emits notification; refetch orders so balances/status match without refresh
     const u2 = subscribeLive("notifications", fn);
     return () => {
       u1();
@@ -97,7 +97,7 @@ const Orders = () => {
     fetchOrders();
   }, [token]);
 
-  // Open relevant order from notification navigation (see Navbar notification click handler).
+  /** Opens payment/tracking focus when navigated from a notification. */
   useEffect(() => {
     if (loading || orders.length === 0) return;
     const st = location.state;
@@ -251,7 +251,7 @@ const Orders = () => {
     try {
       const updatedOrder = await axios.get(`${url}/api/orders/details/${safeId}`, { headers });
       if (updatedOrder.data.success) setTrackingOrderDetails(updatedOrder.data.order);
-    } catch { /* ignore */ }
+    } catch {}
     fetchOrders();
   };
 

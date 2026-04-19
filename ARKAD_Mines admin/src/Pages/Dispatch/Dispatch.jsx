@@ -105,7 +105,7 @@ const BlockInfo = () => {
           setQrCode(code);
           await searchBlock(code);
         },
-        () => { /* scan failure — keep trying, ignore */ }
+        () => {}
       );
 
       setCameraActive(true);
@@ -195,7 +195,7 @@ const BlockInfo = () => {
 
       <div className="dispatch-search-section">
 
-        {/* ── Manual / Camera toggle ── */}
+        
         <div className="scan-mode-toggle">
           <button
             className={`mode-btn ${scanMode === 'manual' ? 'active' : ''}`}
@@ -222,7 +222,7 @@ const BlockInfo = () => {
           </ul>
         </div>
 
-        {/* ── Manual input ── */}
+        
         {scanMode === 'manual' && (
           <div className="search-box">
             <FiGrid className="search-icon" />
@@ -246,7 +246,7 @@ const BlockInfo = () => {
           </div>
         )}
 
-        {/* ── Camera scan ── */}
+        
         {scanMode === 'camera' && (
           <CameraScanner
             onStart={startCamera}
@@ -257,7 +257,7 @@ const BlockInfo = () => {
         )}
       </div>
 
-      {/* ── Block info + related orders ── */}
+      
       {blockInfo && (
         <div className="block-info-card">
           <div className="block-info-header">
@@ -288,7 +288,7 @@ const BlockInfo = () => {
             )}
           </div>
 
-          {/* ── Orders linked to this block ── */}
+          
           <div className="order-picker-section">
             <h4 className="order-picker-title">
               <FiHash /> Orders for this Block
@@ -347,7 +347,7 @@ const BlockInfo = () => {
             )}
           </div>
 
-          {/* ── Clear ── */}
+          
           <div className="dispatch-actions">
             <button className="cancel-btn" onClick={resetAll}>
               <FiXCircle /> Clear
@@ -380,7 +380,7 @@ const CameraScanner = ({ onStart, onStop, cameraActive, cameraError }) => {
         </div>
       ) : (
         <>
-          {/* html5-qrcode renders the video feed directly inside this div */}
+          
           <div id="qr-reader-box" className="qr-reader-box" />
           {!cameraActive && (
             <div className="camera-starting">

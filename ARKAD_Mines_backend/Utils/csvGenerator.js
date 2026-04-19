@@ -1,4 +1,4 @@
-//Statement CSV for a single order (summary, items, financials, payment history).
+/** Statement CSV for a single order (summary, items, financials, payment history). */
 export const generateStatementCSV = async (order) => {
   const lines = [];
   
@@ -61,7 +61,7 @@ export const generateStatementCSV = async (order) => {
   return lines.join('\n');
 };
 
-// Order history CSV (list of orders with financials).
+/** Order history CSV (list of orders with financials). */
 export const generateOrderCSV = async (orders) => {
   const lines = [];
   
@@ -98,7 +98,7 @@ export const generateOrderCSV = async (orders) => {
   return lines.join('\n');
 };
 
-// Customer history CSV for offline export (contact, quotes, orders).
+/** Customer history CSV for offline export (contact, quotes, orders). */
 export const generateCustomerHistoryCSV = (customer, quotations = [], orders = []) => {
   const lines = [];
 

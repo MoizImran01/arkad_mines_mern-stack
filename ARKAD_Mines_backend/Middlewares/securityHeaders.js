@@ -1,4 +1,4 @@
-// In production, rejects non-HTTPS requests.
+/** In production, rejects non-HTTPS requests. */
 export const enforceHTTPS = (req, res, next) => {
   const isProduction = process.env.NODE_ENV === 'production';
   const isHTTPS = req.secure || 
@@ -15,7 +15,7 @@ export const enforceHTTPS = (req, res, next) => {
   next();
 };
 
-// Sets HSTS, CSP, X-Content-Type-Options, X-Frame-Options, and related headers.
+/** Sets HSTS, CSP, X-Content-Type-Options, X-Frame-Options, and related headers. */
 export const securityHeaders = (req, res, next) => {
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
 

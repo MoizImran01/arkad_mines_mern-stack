@@ -1,3 +1,6 @@
+/**
+ * User auth, JWT sessions, profile, password reset, and email verification flows.
+ */
 import userModel from "../../Models/Users/userModel.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
@@ -327,7 +330,7 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// Updates user role (admin only).
+/** Updates user role (admin only). */
 const updateUserRole = async (req, res) => {
   const clientIp = getClientIp(req);
   try {

@@ -17,6 +17,7 @@ import {
 import Pagination from '../../../../shared/Pagination.jsx';
 import { subscribeLive } from '../../../../shared/socketLiveRegistry.js';
 
+/** Admin quotation list, issue flow, and AI price suggestions. */
 const Quotations = () => {
   const { token, url } = useContext(AdminAuthContext);
   const [quotes, setQuotes] = useState([]);
@@ -24,7 +25,7 @@ const Quotations = () => {
   const [selectedQuote, setSelectedQuote] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("all"); // Filter by tab: all, draft, submitted, adjustment_required, revision_requested, issued, approved, rejected
+  const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
@@ -38,7 +39,6 @@ const Quotations = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // AI Pricing Suggestion State
   const [priceSuggestions, setPriceSuggestions] = useState({});
   const [pricingLoading, setPricingLoading] = useState(false);
   const [pricingError, setPricingError] = useState(null);
@@ -50,19 +50,18 @@ const Quotations = () => {
     [token]
   );
 
+  /** Loads quotations from the admin API and applies the active tab filter. */
   const fetchQuotes = async () => {
     if (!token) return;
     setRefreshing(true);
     setError(null);
     try {
-      // Fetch all quotations - we'll filter client-side by tab
       const response = await axios.get(`${url}/api/quotes/admin`, { 
         headers
       });
       if (response.data.success) {
         let quotations = response.data.quotations || [];
         
-        // Filter by active tab
         quotations = filterQuotationsByTab(quotations, activeTab);
         
         setQuotes(quotations);
@@ -112,6 +111,7 @@ const Quotations = () => {
     setCurrentPage(1);
   }, [searchQuery, activeTab, quotes.length]);
 
+  /** Filters quotations by status tab. */
   const filterQuotationsByTab = (quotations, tab) => {
     if (tab === "all") {
       return quotations;
@@ -124,6 +124,7 @@ const Quotations = () => {
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
+  /** Toggles detail panel and seeds issue form from the quote. */
   const handleSelectQuote = (quote) => {
     if (selectedQuote?._id === quote._id) {
       setSelectedQuote(null);
@@ -145,7 +146,7 @@ const Quotations = () => {
     }
   };
 
-  // Fetch AI pricing suggestions for the selected quotation's items
+  /** Fetches ML price suggestions for the selected quotation line items. */
   const fetchPriceSuggestions = useCallback(async (quote) => {
     if (!quote?.items?.length) return;
     const isEditable = ["draft", "submitted", "adjustment_required"].includes(quote.status);
@@ -156,7 +157,6 @@ const Quotations = () => {
     setPriceSuggestions({});
 
     try {
-      // Fetch stone details to get category/subcategory/grade
       const stoneIds = quote.items.map(item => item.stone).filter(Boolean);
       let stoneDetails = {};
 
@@ -170,7 +170,6 @@ const Quotations = () => {
             });
           }
         } catch {
-          // Proceed without stone details — use what's in the quotation
         }
       }
 
@@ -210,17 +209,19 @@ const Quotations = () => {
     }
   }, [url, headers]);
 
-  // Auto-fetch pricing when a quote is selected
+  /** Prefetches pricing hints when the selected quotation changes. */
   useEffect(() => {
     if (selectedQuote) {
       fetchPriceSuggestions(selectedQuote);
     }
   }, [selectedQuote?._id]);
 
+  /** Applies a suggested unit price into the issue form. */
   const handleApplySuggestedPrice = (itemIndex, price) => {
     handleItemPriceChange(itemIndex, price);
   };
 
+  /** Updates tax/shipping/discount/notes fields on the issue form. */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setIssueFormData((prev) => ({
@@ -229,6 +230,7 @@ const Quotations = () => {
     }));
   };
 
+  /** Updates a single line item unit price on the issue form. */
   const handleItemPriceChange = (itemIndex, value) => {
     const price = value === "" ? "" : Number(value);
     setIssueFormData((prev) => ({
@@ -240,10 +242,10 @@ const Quotations = () => {
     }));
   };
 
+  /** Validates line prices and issues the quotation to the buyer. */
   const handleIssueQuote = async () => {
     if (!selectedQuote) return;
     
-    //Validation
     const invalidPrices = [];
     selectedQuote.items?.forEach((item, idx) => {
       const price = issueFormData.itemPrices[idx];
@@ -539,7 +541,7 @@ const Quotations = () => {
                             />
                             <small>Base: Rs {item.priceSnapshot}</small>
 
-                            {/* AI Price Badge */}
+                            
                             {suggestion && (
                               <div className="ai-price-badge" title={`Based on ${suggestion.based_on_samples} historical quotes`}>
                                 <FiCpu className="ai-badge-icon" />
@@ -574,7 +576,7 @@ const Quotations = () => {
             </div>
 
 
-            {/* AI Pricing Suggestion Card */}
+            
             {["draft", "submitted", "adjustment_required", "revision_requested"].includes(selectedQuote.status) && Object.keys(priceSuggestions).length > 0 && (
               <div className="ai-pricing-card">
                 <div className="ai-pricing-header">

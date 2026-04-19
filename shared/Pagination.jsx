@@ -1,5 +1,6 @@
 import React from 'react';
 
+/** Page controls with numeric window and prev/next. */
 const Pagination = ({ currentPage, setCurrentPage, totalItems, itemsPerPage, label = "items" }) => {
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
   const pageStart = (currentPage - 1) * itemsPerPage;

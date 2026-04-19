@@ -4,7 +4,7 @@ import { generateQuotationPDF, generateInvoicePDF, generateReceiptPDF } from "..
 import { logAudit, logError, getClientIp, normalizeRole, getUserAgent } from '../../logger/auditLogger.js';
 import mongoose from "mongoose";
 
-// Lists documents for buyer: quotes, invoices (approved quotations), receipts.
+/** Lists documents for buyer: quotes, invoices (approved quotations), receipts. */
 const listDocuments = async (req, res) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);
@@ -23,7 +23,6 @@ const listDocuments = async (req, res) => {
     const orderFilter = orderId ? { orderNumber: String(orderId) } : {};
     const documents = [];
 
-    // --- Quotes: every quotation belonging to this buyer ---
     if (!documentType || documentType === 'quote') {
       const quotations = await quotationModel
         .find({ buyer: userId, ...dateFilter })
@@ -47,7 +46,6 @@ const listDocuments = async (req, res) => {
       });
     }
 
-    // --- Invoices: approved quotations only ---
     if (!documentType || documentType === 'invoice') {
       const approvedQuotations = await quotationModel
         .find({ buyer: userId, status: 'approved', ...dateFilter })
@@ -71,7 +69,6 @@ const listDocuments = async (req, res) => {
       });
     }
 
-    // --- Receipts: approved payment proofs on orders ---
     if (!documentType || documentType === 'receipt') {
       const orders = await orderModel
         .find({ buyer: userId, ...dateFilter, ...orderFilter })
@@ -122,7 +119,7 @@ const listDocuments = async (req, res) => {
   }
 };
 
-// Downloads document by id and format (PDF); generates on demand.
+/** Downloads document by id and format (PDF); generates on demand. */
 const downloadDocument = async (req, res) => {
   const clientIp = getClientIp(req);
   const userAgent = getUserAgent(req);
@@ -143,7 +140,6 @@ const downloadDocument = async (req, res) => {
       documentType = 'invoice';
       resourceId = documentId.replace('_invoice', '');
     } else {
-      // Plain quotation ID
       documentType = 'quote';
       resourceId = documentId;
     }

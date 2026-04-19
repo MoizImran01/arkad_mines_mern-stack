@@ -1,4 +1,4 @@
-// Buyer-facing quotation DTO; strips admin-only and internal fields.
+/** Buyer-facing quotation DTO; strips admin-only and internal fields. */
 export const quotationBuyerDTO = (quotation) => {
   if (!quotation) return null;
 
@@ -58,7 +58,7 @@ export const quotationBuyerDTO = (quotation) => {
   return buyerQuotation;
 };
 
-// Admin/sales rep quotation DTO; includes all fields.
+/** Admin/sales rep quotation DTO; includes all fields. */
 export const quotationAdminDTO = (quotation) => {
   if (!quotation) return null;
 
@@ -84,7 +84,7 @@ export const quotationAdminDTO = (quotation) => {
   };
 };
 
-// Approve response DTO for buyer (quotation + order summary).
+/** Approve response DTO for buyer (quotation + order summary). */
 export const approveQuotationBuyerDTO = (quotation, order) => {
   return {
     success: true,
@@ -97,13 +97,13 @@ export const approveQuotationBuyerDTO = (quotation, order) => {
   };
 };
 
-// Maps quotations array to buyer DTOs.
+/** Maps quotations array to buyer DTOs. */
 export const quotationsListBuyerDTO = (quotations) => {
   if (!Array.isArray(quotations)) return [];
   return quotations.map(quote => quotationBuyerDTO(quote));
 };
 
-// Maps quotations array to admin DTOs.
+/** Maps quotations array to admin DTOs. */
 export const quotationsListAdminDTO = (quotations) => {
   if (!Array.isArray(quotations)) return [];
   return quotations.map(quote => quotationAdminDTO(quote));

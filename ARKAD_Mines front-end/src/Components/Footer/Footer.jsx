@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import './Footer.css';
 
+/** Site-wide footer with links and company blurb. */
 const Footer = () => {
   return (
     <footer className="site-footer">

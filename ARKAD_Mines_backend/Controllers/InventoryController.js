@@ -1,6 +1,9 @@
+/**
+ * Proxies the external AI inventory forecast service with a configurable timeout (default 5 minutes).
+ */
 import axios from 'axios';
 
-const FIVE_MINUTES_MS = 5 * 60 * 1000; //300_000 — forecasting + Render cold start can exceed short defaults
+const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
 export const getAIForecast = async (req, res) => {
     const FORECAST_API_URL = process.env.FORECASTING_API_URL || 'https://arkad-forecasting-api.onrender.com/api/forecast';

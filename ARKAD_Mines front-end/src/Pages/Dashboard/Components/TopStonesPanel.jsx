@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import '../Dashboard.css';
 
-// Renders top 3 purchased stones with tilt cards and images.
+/** Top purchased stones with tilt cards and images. */
 const TopStonesPanel = ({ stones }) => {
   if (!stones || stones.length === 0) {
     return null;

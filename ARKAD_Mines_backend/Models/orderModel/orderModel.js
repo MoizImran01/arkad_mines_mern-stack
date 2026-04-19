@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-// Order item and order schemas: buyer, items, financials, payment proofs, timeline, courier.
+/** Order item and order schemas: buyer, items, financials, payment proofs, timeline, courier. */
 const orderItemSchema = new mongoose.Schema(
   {
     stone: {
@@ -125,12 +125,12 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-//Add indexes for better query performance
+/** Indexes for list, filter, and text search on orders. */
 orderSchema.index({ buyer: 1, createdAt: -1 }); 
 orderSchema.index({ status: 1, createdAt: -1 });
 orderSchema.index({ orderNumber: 1 }); 
 orderSchema.index({ createdAt: -1 });
-orderSchema.index({ "buyer.companyName": "text", "buyer.email": "text", orderNumber: "text" }); // Text search index
+orderSchema.index({ "buyer.companyName": "text", "buyer.email": "text", orderNumber: "text" });
 
 const orderModel = mongoose.models.order || mongoose.model("order", orderSchema);
 

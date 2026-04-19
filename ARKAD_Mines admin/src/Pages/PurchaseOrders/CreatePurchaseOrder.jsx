@@ -231,7 +231,7 @@ const CreatePurchaseOrder = () => {
 
   return (
     <div className="cpo-container">
-      {/* Header */}
+      
       <div className="cpo-header">
         <div className="cpo-header-left">
           <div className="cpo-title-row">
@@ -260,7 +260,7 @@ const CreatePurchaseOrder = () => {
         )}
       </div>
 
-      {/* Stats */}
+      
       <div className="cpo-stats">
         <div className="cpo-stat-card">
           <Package className="cpo-stat-icon" />
@@ -278,7 +278,7 @@ const CreatePurchaseOrder = () => {
         </div>
       </div>
 
-      {/* Search */}
+      
       <div className="cpo-search-bar">
         <Search className="cpo-search-icon" />
         <input
@@ -290,7 +290,7 @@ const CreatePurchaseOrder = () => {
         />
       </div>
 
-      {/* Stones List */}
+      
       <div className="cpo-stones-container">
         {filteredStones.length === 0 ? (
           <div className="cpo-empty-state">
@@ -353,7 +353,7 @@ const CreatePurchaseOrder = () => {
         )}
       </div>
 
-      {/* Create PO Modal — portaled to body so fixed centering is not clipped by .cpo-container overflow */}
+      
       {createModal &&
         createPortal(
           <div
@@ -382,7 +382,7 @@ const CreatePurchaseOrder = () => {
             </div>
 
             <div className="cpo-modal-body">
-              {/* Supplier Info */}
+              
               <div className="cpo-form-section">
                 <h4><MapPin className="cpo-section-icon" /> Supplier Information</h4>
                 <div className="cpo-form-group">
@@ -422,7 +422,7 @@ const CreatePurchaseOrder = () => {
                 </div>
               </div>
 
-              {/* Selected Stones */}
+              
               <div className="cpo-form-section">
                 <h4><Layers className="cpo-section-icon" /> Selected Stones ({selectedStones.length})</h4>
                 <div className="cpo-stones-list">
@@ -496,7 +496,7 @@ const CreatePurchaseOrder = () => {
                 </div>
               </div>
 
-              {/* Total */}
+              
               <div className="cpo-total-section">
                 <div className="cpo-total-row">
                   <span className="cpo-total-label-lg">Total Cost:</span>

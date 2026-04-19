@@ -194,7 +194,7 @@ const Users = () => {
         <p>Manage all users, roles, and permissions</p>
       </div>
 
-      {/* Statistics Cards */}
+      
       <div className="users-stats">
         <div className="stat-card">
           <div className="stat-icon total">
@@ -343,7 +343,7 @@ const Users = () => {
         <Pagination currentPage={currentPage} setCurrentPage={setCurrentPage} totalItems={totalItems} itemsPerPage={ITEMS_PER_PAGE} label="users" />
       </div>
 
-      {/* Customer History Modal */}
+      
       {historyModalUserId && (
         <dialog open className="history-modal-overlay">
           <button type="button" className="history-modal-backdrop" onClick={closeHistoryModal} aria-label="Close" />

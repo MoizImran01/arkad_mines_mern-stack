@@ -1,3 +1,6 @@
+/**
+ * Notification creation, listing, clearing, and Socket.IO fan-out for users and staff.
+ */
 import notificationModel from "../../Models/notificationModel/notificationModel.js";
 import orderModel from "../../Models/orderModel/orderModel.js";
 import mongoose from "mongoose";

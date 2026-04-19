@@ -241,7 +241,7 @@ const List = () => {
             <Pagination currentPage={currentPage} setCurrentPage={setCurrentPage} totalItems={totalItems} itemsPerPage={ITEMS_PER_PAGE} label="items" />
         </div>
 
-        {/* QR Code Modal */}
+        
         {qrModal.isOpen && (
           <div 
             className="qr-modal-overlay" 

@@ -8,7 +8,7 @@ import {
   exportCustomerHistory,
 } from "../../Controllers/CustomerHistoryController/customerHistoryController.js";
 
-// Customer routes: search, history, export (admin/sales rep only).
+/** Customer routes: search, history, export (admin/sales rep only). */
 const customerRouter = express.Router();
 
 const allowedRoles = ["admin", "employee"];

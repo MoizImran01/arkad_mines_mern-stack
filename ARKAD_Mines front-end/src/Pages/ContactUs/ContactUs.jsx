@@ -9,6 +9,7 @@ import { Phone, Mail, MapPin, Clock, Copy, Check, Send, MessageSquare, Building,
 import { StoreContext } from "../../context/StoreContext"
 import "./ContactUs.css"
 
+/** Contact form and office details; optional login gate for authenticated flows. */
 function ContactUs({ setShowLogin }) {
   const [isVisible, setIsVisible] = useState({});
   const [copied, setCopied] = useState(false);

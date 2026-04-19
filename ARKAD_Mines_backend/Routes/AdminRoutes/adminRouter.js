@@ -7,7 +7,7 @@ import { wafProtection } from "../../Middlewares/waf.js";
 import { verifyAdminInDatabase } from "../../Middlewares/analyticsRBAC.js";
 import { detectAnalyticsAnomalies } from "../../Middlewares/analyticsSecurity.js";
 
-// Admin routes: dashboard, users, role update, delete user, analytics, analytics PDF export.
+/** Admin routes: dashboard, users, role update, delete user, analytics, analytics PDF export. */
 const adminRouter = express.Router();
 
 adminRouter.get("/admin-dashboard", verifyToken, authorizeRoles("admin", "employee"), (req, res) => {
@@ -34,7 +34,7 @@ adminRouter.post("/dashboard/export/pdf",
   exportAnalyticsPDF
 );
 
-// Backward compatibility aliases (temporary)
+/** Backward compatibility aliases for legacy analytics paths. */
 adminRouter.get("/analytics", 
   verifyToken,
   authorizeRoles("admin"),

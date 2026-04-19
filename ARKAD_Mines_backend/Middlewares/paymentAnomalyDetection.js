@@ -1,3 +1,6 @@
+/**
+ * Flags rapid or inconsistent payment proof submissions before handler runs.
+ */
 import orderModel from "../Models/orderModel/orderModel.js";
 import AuditLog from "../Models/AuditLog/auditLogModel.js";
 import { logAudit, getClientIp, normalizeRole, getUserAgent } from "../logger/auditLogger.js";

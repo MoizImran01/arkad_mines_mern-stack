@@ -135,7 +135,7 @@ const PurchaseOrdersList = () => {
 
   return (
     <div className="po-container">
-      {/* Header */}
+      
       <div className="po-header">
         <div className="po-header-left">
           <div className="po-title-row">
@@ -158,7 +158,7 @@ const PurchaseOrdersList = () => {
         </div>
       </div>
 
-      {/* Stats */}
+      
       <div className="po-stats-grid">
         <div className="po-stat-card">
           <div className="po-stat-icon total"><ClipboardList /></div>
@@ -182,7 +182,7 @@ const PurchaseOrdersList = () => {
         </div>
       </div>
 
-      {/* Search bar */}
+      
       <div className="po-search-bar">
         <Search className="po-search-icon" />
         <input
@@ -194,7 +194,7 @@ const PurchaseOrdersList = () => {
         />
       </div>
 
-      {/* Table */}
+      
       <div className="po-table-container">
         <div className="po-table-responsive">
           <table className="po-table">
@@ -336,7 +336,7 @@ const PurchaseOrdersList = () => {
         </div>
       </div>
 
-      {/* Detail Modal */}
+      
       {detailModal && (
         <div className="po-modal-overlay" role="dialog" aria-modal="true">
           <div className="po-modal" role="document">

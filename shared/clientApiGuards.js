@@ -76,7 +76,6 @@ export function parseQuoteNotesFromStorage(raw) {
       return sanitizeTextForBrowserStorage(parsed);
     }
   } catch {
-    /* legacy plain string */
   }
   return sanitizeTextForBrowserStorage(stored);
 }
@@ -113,6 +112,5 @@ export function persistQuoteNotesToLocalStorage(rawInput) {
       globalThis.localStorage?.removeItem(QUOTE_NOTES_STORAGE_KEY);
     }
   } catch {
-    /* ignore quota / private mode */
   }
 }
