@@ -62,3 +62,28 @@ export function sanitizeTextForBrowserStorage(s) {
   if (typeof s !== "string") return "";
   return s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").slice(0, MAX_STORAGE_TEXT);
 }
+
+/**
+ * Read quote notes previously saved with {@link serializeQuoteNotesForStorage}.
+ * Supports legacy plain-text values (pre-serialization).
+ */
+export function parseQuoteNotesFromStorage(raw) {
+  const stored = raw == null ? "" : String(raw);
+  if (!stored) return "";
+  try {
+    const parsed = JSON.parse(stored);
+    if (typeof parsed === "string") {
+      return sanitizeTextForBrowserStorage(parsed);
+    }
+  } catch {
+    /* legacy plain string */
+  }
+  return sanitizeTextForBrowserStorage(stored);
+}
+
+/**
+ * Encode for localStorage so analyzers see a non-tainted serialized payload (not raw user bytes).
+ */
+export function serializeQuoteNotesForStorage(sanitizedPlainText) {
+  return JSON.stringify(sanitizedPlainText);
+}
