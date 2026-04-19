@@ -11,7 +11,7 @@ import AdminLogin from './Pages/Login/AdminLogin'
 import ProtectedRoute from './Components/ProtectedRoute/ProtectedRoute'
 import { AdminAuthContext } from './context/AdminAuthContext'
 import Users from './Pages/Users/Users'
-import Dispatch from './Pages/Dispatch/Dispatch'
+import BlockInfo from './Pages/Dispatch/Dispatch'
 import Quotations from './Pages/Quotations/Quotations'
 import Analytics from './Pages/Analytics/Analytics'
 import Forecasting from './Pages/Forecasting/Forecasting'
@@ -101,14 +101,14 @@ const App = () => {
           </ProtectedRoute>
         }/>
         
-        <Route path="/dispatch" element={
+        <Route path="/block-info" element={
           <ProtectedRoute>
             <>
               <Navbar/>
               <hr/>
               <div className="app-content">
                 <Siderbar/>
-                <Dispatch/>
+                <BlockInfo/>
               </div>
             </>
           </ProtectedRoute>

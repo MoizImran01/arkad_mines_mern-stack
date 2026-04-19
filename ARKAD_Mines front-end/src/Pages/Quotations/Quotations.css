@@ -325,16 +325,25 @@
 }
 
 .action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 10px 16px;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.action-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .action-btn:disabled {
@@ -370,12 +379,15 @@
 }
 
 .download-btn {
-  background: #6b7280;
-  color: white;
+  background: #ffffff;
+  color: #2f5242;
+  border-color: #2f5242;
 }
 
 .download-btn:hover:not(:disabled) {
-  background: #4b5563;
+  background: #f0fdf4;
+  color: #1c3127;
+  border-color: #1c3127;
 }
 
 .convert-order-btn {

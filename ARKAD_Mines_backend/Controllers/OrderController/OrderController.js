@@ -28,16 +28,36 @@ const checkStockAvailability = async (orderItems) => {
   }
 };
 
+// Commits inventory at order confirmation (one deduction per line quantity).
+const handleStockDeduction = async (orderItems) => {
+  if (!orderItems || orderItems.length === 0) return;
+  for (const item of orderItems) {
+    const stone = await stonesModel.findById(item.stone?._id || item.stoneId);
+    if (!stone) continue;
+    const quantityToDeduct = item.quantity || 1;
+    const remainingBeforeDeduct = (stone.stockQuantity || 0) - (stone.quantityDelivered || 0);
+    if (remainingBeforeDeduct < quantityToDeduct) {
+      throw new Error(
+        `Not enough stock available for ${stone.stoneName}. Need ${quantityToDeduct}, but only ${remainingBeforeDeduct} available.`
+      );
+    }
+    stone.quantityDelivered = (stone.quantityDelivered || 0) + quantityToDeduct;
+    const remainingQuantity = (stone.stockQuantity || 0) - stone.quantityDelivered;
+    if (remainingQuantity <= 0) stone.stockAvailability = "Out of Stock";
+    await stone.save();
+  }
+};
+
+// Restores inventory committed at confirmation when order is cancelled (full line qty per item).
 const handleStockRestoration = async (orderItems) => {
   if (!orderItems) return;
   for (const item of orderItems) {
-    const dispatched = Number(item.quantityDispatched || 0);
-    if (dispatched <= 0) continue; 
+    const quantityToRestore = item.quantity || 1;
     const stone = await stonesModel.findById(item.stone?._id || item.stoneId);
     if (!stone) continue;
-    stone.quantityDelivered = Math.max(0, (stone.quantityDelivered || 0) - dispatched);
-    const remaining = (stone.stockQuantity || 0) - stone.quantityDelivered;
-    if (remaining > 0) stone.stockAvailability = "In Stock";
+    stone.quantityDelivered = Math.max(0, (stone.quantityDelivered || 0) - quantityToRestore);
+    const remainingQuantity = (stone.stockQuantity || 0) - stone.quantityDelivered;
+    if (remainingQuantity > 0) stone.stockAvailability = "In Stock";
     await stone.save();
   }
 };
@@ -244,11 +264,15 @@ const updateOrderStatus = async (req, res) => {
         if (order.paymentStatus !== "fully_paid") {
             return res.status(400).json({ success: false, message: "Cannot confirm order. Full payment required." });
         }
-        
-        try {
-            await checkStockAvailability(order.items);
-        } catch (err) {
-            return res.status(400).json({ success: false, message: err.message });
+        const alreadyCommitted = ["confirmed", "dispatched", "delivered"].includes(order.status);
+        if (!alreadyCommitted) {
+            try {
+                await checkStockAvailability(order.items);
+                await handleStockDeduction(order.items);
+                emitStonesChanged({ reason: "order_confirmed" });
+            } catch (err) {
+                return res.status(400).json({ success: false, message: err.message });
+            }
         }
     }
 
@@ -267,8 +291,10 @@ const updateOrderStatus = async (req, res) => {
     }
 
     if (status === "cancelled") {
-        await handleStockRestoration(order.items);
-        emitStonesChanged({ reason: "order_cancelled" });
+        if (["confirmed", "dispatched", "delivered"].includes(order.status)) {
+            await handleStockRestoration(order.items);
+            emitStonesChanged({ reason: "order_cancelled" });
+        }
     }
 
     order.status = status;
@@ -428,26 +454,37 @@ const approvePayment = async (req, res) => {
     }
 
     const paymentProof = order.paymentProofs[proofIndex];
+
+    const roundedAmountPaid = roundToTwoDecimals(paymentProof.amountPaid);
+    const newTotalPaid = roundToTwoDecimals(order.totalPaid + roundedAmountPaid);
+    const newOutstanding = roundToTwoDecimals(order.financials.grandTotal - newTotalPaid);
+
+    if (newOutstanding <= 0 && order.status === "draft") {
+      await order.populate("items.stone");
+      try {
+        await checkStockAvailability(order.items);
+        await handleStockDeduction(order.items);
+        emitStonesChanged({ reason: "order_confirmed_payment" });
+      } catch (e) {
+        return res.status(400).json({
+          success: false,
+          message: e.message || "Insufficient stock to confirm order.",
+        });
+      }
+    }
+
     paymentProof.status = "approved";
     paymentProof.approvedAt = new Date();
     paymentProof.approvedBy = adminId;
     paymentProof.notes = notes || "";
 
-    const roundedAmountPaid = roundToTwoDecimals(paymentProof.amountPaid);
-    order.totalPaid = roundToTwoDecimals(order.totalPaid + roundedAmountPaid);
-    order.outstandingBalance = roundToTwoDecimals(order.financials.grandTotal - order.totalPaid);
+    order.totalPaid = newTotalPaid;
+    order.outstandingBalance = newOutstanding;
 
     if (order.outstandingBalance <= 0) {
       order.paymentStatus = "fully_paid";
       if (order.status === "draft") {
         order.status = "confirmed";
-
-        
-        await order.populate("items.stone");
-        try {
-            await checkStockAvailability(order.items);
-        } catch (e) { console.warn(e.message); }
-
         order.timeline.push({ status: "confirmed", timestamp: new Date(), notes: "Auto-confirmed via payment" });
       }
     }
@@ -598,6 +635,13 @@ const dispatchOrderItemByQr = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found.' });
     }
 
+    if (!['confirmed', 'dispatched'].includes(order.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `QR dispatch requires a confirmed order. Current status: ${order.status}.`,
+      });
+    }
+
     const stone = await stonesModel.findOne({ qrCode: safeQrCode });
     if (!stone) {
       return res.status(404).json({ success: false, message: 'Stone block not found for provided QR code.' });
@@ -645,10 +689,8 @@ const dispatchOrderItemByQr = async (req, res) => {
       qrCode: stone.qrCode
     });
 
-    stone.quantityDelivered = Number(stone.quantityDelivered || 0) + qty;
-    const remainingInventory = Number(stone.stockQuantity || 0) - Number(stone.quantityDelivered || 0);
-    stone.stockAvailability = remainingInventory <= 0 ? 'Out of Stock' : 'In Stock';
-    stone.status = remainingInventory <= 0 ? 'Dispatched' : 'In Warehouse';
+    // Stock was already reduced at order confirmation; QR records physical dispatch only.
+    stone.status = 'Dispatched';
     stone.dispatchHistory.push({
       orderId: order._id,
       quantityDispatched: qty,
