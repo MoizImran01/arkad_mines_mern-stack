@@ -1,7 +1,7 @@
 import React from 'react';
 import './Sidebar.css';
 import { NavLink } from 'react-router-dom';
-import { FiUser, FiPackage, FiFileText, FiTrendingUp, FiTruck, FiPlusSquare, FiList, FiShoppingCart, FiHome } from 'react-icons/fi';
+import { FiUser, FiPackage, FiFileText, FiTrendingUp, FiTruck, FiPlusSquare, FiList, FiShoppingCart, FiHome, FiInfo } from 'react-icons/fi';
 
 const Siderbar = () => {
   return (
@@ -31,6 +31,11 @@ const Siderbar = () => {
             <FiTrendingUp className="sidebar-icon" />
             <p>Inventory Forecasting</p>
           </NavLink>
+
+          <NavLink to='/block-info' className="sidebar-option">
+            <FiInfo className="sidebar-icon" />
+            <p>Block Info</p>
+          </NavLink>
         </div>
 
         <div className="sidebar-divider" aria-hidden="true" />
@@ -41,11 +46,6 @@ const Siderbar = () => {
           <NavLink to='/orders' className="sidebar-option">
             <FiShoppingCart className="sidebar-icon" />
             <p>Orders</p>
-          </NavLink>
-
-          <NavLink to='/dispatch' className="sidebar-option">
-            <FiPackage className="sidebar-icon" />
-            <p>Dispatch</p>
           </NavLink>
 
           <NavLink to='/quotes' className="sidebar-option">

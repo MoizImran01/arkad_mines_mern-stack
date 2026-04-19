@@ -4,11 +4,13 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Html5Qrcode } from 'html5-qrcode';
 import {
-  FiPackage, FiCheckCircle, FiXCircle, FiSearch,
-  FiGrid, FiCamera, FiType, FiHash, FiChevronDown, FiChevronUp
+  FiInfo, FiXCircle, FiSearch,
+  FiGrid, FiCamera, FiType, FiHash
 } from 'react-icons/fi';
+import Pagination from '../../../../shared/Pagination.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL ?? '';
+const ORDERS_PER_PAGE = 10;
 
 
 const normalizeQrValue = (rawValue) => {
@@ -49,25 +51,18 @@ const PAYMENT_LABEL = {
 };
 
 
-const Dispatch = () => {
-  const [qrCode, setQrCode]                           = useState('');
-  const [loading, setLoading]                         = useState(false);
-  const [blockInfo, setBlockInfo]                     = useState(null);
-  const [blockOrders, setBlockOrders]                 = useState([]);
-  const [selectedOrderNumber, setSelectedOrderNumber] = useState('');
-  const [scanMode, setScanMode]                       = useState('manual');
-  const [cameraActive, setCameraActive]               = useState(false);
-  const [cameraError, setCameraError]                 = useState('');
+const BlockInfo = () => {
+  const [qrCode, setQrCode]             = useState('');
+  const [loading, setLoading]           = useState(false);
+  const [blockInfo, setBlockInfo]       = useState(null);
+  const [blockOrders, setBlockOrders]   = useState([]);
+  const [scanMode, setScanMode]         = useState('manual');
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError]   = useState('');
+  const [currentPage, setCurrentPage]   = useState(1);
 
-  const [showOrderSearch, setShowOrderSearch]     = useState(false);
-  const [orderSearch, setOrderSearch]             = useState('');
-  const [orderOptions, setOrderOptions]           = useState([]);
-  const [orderDropdownOpen, setOrderDropdownOpen] = useState(false);
-
-  const html5QrcodeRef   = useRef(null);
-  const scanLockedRef    = useRef(false);
-  const orderDebounceRef = useRef(null);
-  const orderDropdownRef = useRef(null);
+  const html5QrcodeRef = useRef(null);
+  const scanLockedRef  = useRef(false);
 
 
   const stopCamera = useCallback(async () => {
@@ -134,40 +129,6 @@ const Dispatch = () => {
 
   useEffect(() => () => { stopCamera(); }, [stopCamera]);
 
-  useEffect(() => {
-    const handler = (e) => {
-      if (orderDropdownRef.current && !orderDropdownRef.current.contains(e.target)) {
-        setOrderDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-
-  const fetchOrderSuggestions = useCallback(async (term) => {
-    try {
-      const res = await axios.get(`${API_URL}/api/orders/admin/search-order-numbers`, {
-        headers: authHeaders(),
-        params: { search: term, limit: 30 },
-      });
-      if (res.data.success) setOrderOptions(res.data.orders || []);
-    } catch {
-      setOrderOptions([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (showOrderSearch && orderOptions.length === 0) fetchOrderSuggestions('');
-  }, [showOrderSearch]);
-
-  useEffect(() => {
-    if (!showOrderSearch) return;
-    clearTimeout(orderDebounceRef.current);
-    orderDebounceRef.current = setTimeout(() => fetchOrderSuggestions(orderSearch), 300);
-    return () => clearTimeout(orderDebounceRef.current);
-  }, [orderSearch, showOrderSearch, fetchOrderSuggestions]);
-
 
   const searchBlock = async (inputQrCode = qrCode) => {
     const code = normalizeQrValue(inputQrCode);
@@ -180,7 +141,7 @@ const Dispatch = () => {
       setLoading(true);
       setBlockInfo(null);
       setBlockOrders([]);
-      setSelectedOrderNumber('');
+      setCurrentPage(1);
 
       const [blockRes, ordersRes] = await Promise.all([
         axios.get(`${API_URL}/api/stones/qr/${encodeURIComponent(code)}`, { headers: authHeaders() }),
@@ -196,12 +157,7 @@ const Dispatch = () => {
       setBlockInfo(blockRes.data.block);
 
       if (ordersRes.data.success) {
-        const pendingOrders = (ordersRes.data.orders || []).filter((o) => !o.fullyDispatched);
-        setBlockOrders(pendingOrders);
-        if (pendingOrders.length === 1) setSelectedOrderNumber(pendingOrders[0].orderNumber);
-        if (pendingOrders.length === 0) {
-          toast.info('All orders for this block are already fully dispatched.');
-        }
+        setBlockOrders(ordersRes.data.orders || []);
       }
     } catch (error) {
       const status = error?.response?.status;
@@ -217,65 +173,24 @@ const Dispatch = () => {
     }
   };
 
-
-  const dispatchBlock = async () => {
-    if (!qrCode || !selectedOrderNumber) {
-      toast.error('QR code and order are required');
-      return;
-    }
-
-    //Warn the admin if the selected order isn't fully paid yet
-    const selectedOrder = blockOrders.find((o) => o.orderNumber === selectedOrderNumber);
-    if (selectedOrder && selectedOrder.paymentStatus !== 'fully_paid') {
-      const label = PAYMENT_LABEL[selectedOrder.paymentStatus] || 'NOT FULLY PAID';
-      const proceed = window.confirm(
-        `⚠️ Payment warning\n\n` +
-        `Order ${selectedOrder.orderNumber} is currently: ${label}.\n\n` +
-        `This order has NOT been fully paid yet. Are you sure you want to dispatch this block?\n\n` +
-        `Click OK to dispatch anyway, or Cancel to review the payment first.`
-      );
-      if (!proceed) return;
-    }
-
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('adminToken');
-      if (!token) { toast.error('Not authenticated. Please login.'); return; }
-
-      const response = await axios.post(
-        `${API_URL}/api/orders/admin/dispatch-by-qr`,
-        { qrCode: qrCode.trim(), orderNumber: selectedOrderNumber.trim() },
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-      );
-
-      if (response.data.success) {
-        toast.success(response.data.message || 'Dispatched successfully!');
-        resetAll();
-      } else {
-        toast.error(response.data.message || 'Failed to dispatch block');
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Error dispatching block');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const resetAll = () => {
     setBlockInfo(null);
     setBlockOrders([]);
-    setSelectedOrderNumber('');
     setQrCode('');
-    setOrderSearch('');
+    setCurrentPage(1);
     scanLockedRef.current = false;
   };
+
+  const totalOrders = blockOrders.length;
+  const pageStart = (currentPage - 1) * ORDERS_PER_PAGE;
+  const paginatedOrders = blockOrders.slice(pageStart, pageStart + ORDERS_PER_PAGE);
 
 
   return (
     <div className="dispatch-container">
       <div className="dispatch-header">
-        <h1><FiPackage className="header-icon" /> Dispatch Block</h1>
-        <p>Scan or enter a QR code — matching pending orders appear automatically</p>
+        <h1><FiInfo className="header-icon" /> Block Information</h1>
+        <p>Scan or enter a QR code to view block details and related orders</p>
       </div>
 
       <div className="dispatch-search-section">
@@ -299,11 +214,11 @@ const Dispatch = () => {
         </div>
 
         <div className="instructions-box">
-          <p><strong>How to dispatch a block:</strong></p>
+          <p><strong>How to look up a block:</strong></p>
           <ul>
-            <li><strong>Step 1 — QR code:</strong> Type the QR code ID manually, or tap <em>Camera Scan</em> to use your phone camera.</li>
-            <li><strong>Step 2 — Pick order:</strong> All pending orders for this block appear. Select the correct one.</li>
-            <li><strong>Step 3:</strong> Tap <em>Mark as Dispatched</em>.</li>
+            <li><strong>Manual:</strong> Type the QR code ID (UUID) and press <em>Search Block</em>.</li>
+            <li><strong>Camera:</strong> Tap <em>Camera Scan</em> and point your device at the QR code.</li>
+            <li>Block details and any related orders will appear below.</li>
           </ul>
         </div>
 
@@ -340,83 +255,13 @@ const Dispatch = () => {
             cameraError={cameraError}
           />
         )}
-
-        {/* ── "Search by Order Number" accordion ── */}
-        <div className="order-search-accordion">
-          <button
-            className="accordion-toggle"
-            onClick={() => setShowOrderSearch((v) => !v)}
-          >
-            <FiHash />
-            <span>Search by Order Number</span>
-            {showOrderSearch ? <FiChevronUp className="acc-chevron" /> : <FiChevronDown className="acc-chevron" />}
-          </button>
-
-          {showOrderSearch && (
-            <div className="accordion-body" ref={orderDropdownRef}>
-              <p className="accordion-hint">
-                Know the order number already? Search and select it here — it will be pre-selected when the block loads.
-              </p>
-              <div className="order-search-box">
-                <FiSearch className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Type order number or buyer name…"
-                  value={orderSearch}
-                  onChange={(e) => { setOrderSearch(e.target.value); setOrderDropdownOpen(true); }}
-                  onFocus={() => setOrderDropdownOpen(true)}
-                  className="qr-input"
-                />
-                <FiChevronDown className={`dropdown-chevron ${orderDropdownOpen ? 'open' : ''}`} />
-              </div>
-
-              {orderDropdownOpen && (
-                <div className="order-dropdown">
-                  {orderOptions.length === 0 ? (
-                    <div className="order-dropdown-empty">No orders found</div>
-                  ) : (
-                    orderOptions.map((o) => (
-                      <button
-                        key={o.orderNumber}
-                        className={`order-dropdown-item ${selectedOrderNumber === o.orderNumber ? 'active' : ''}`}
-                        onClick={() => {
-                          setSelectedOrderNumber(o.orderNumber);
-                          setOrderSearch(o.orderNumber);
-                          setOrderDropdownOpen(false);
-                        }}
-                      >
-                        <span className="ddi-number">{o.orderNumber}</span>
-                        <span className="ddi-meta">
-                          {o.buyerName}
-                          <span className={`order-status-chip status-${o.status}`}>
-                            {STATUS_LABEL[o.status] || o.status}
-                          </span>
-                        </span>
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-
-              {selectedOrderNumber && !blockInfo && (
-                <div className="order-prefill-notice">
-                  <FiCheckCircle className="pfn-icon" />
-                  <span>Order <strong>{selectedOrderNumber}</strong> pre-selected. Now scan or enter the QR code above.</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
       </div>
 
-      {/* ── Block info + pending orders ── */}
+      {/* ── Block info + related orders ── */}
       {blockInfo && (
         <div className="block-info-card">
           <div className="block-info-header">
             <h3>Block Information</h3>
-            <span className={`status-badge ${blockInfo.status.toLowerCase().replace(' ', '-')}`}>
-              {blockInfo.status}
-            </span>
           </div>
 
           <div className="block-details">
@@ -443,30 +288,20 @@ const Dispatch = () => {
             )}
           </div>
 
-          {/* ── Pending orders for this block ── */}
+          {/* ── Orders linked to this block ── */}
           <div className="order-picker-section">
             <h4 className="order-picker-title">
-              <FiHash /> Pending Orders for this Block
+              <FiHash /> Orders for this Block
             </h4>
 
             {blockOrders.length === 0 ? (
               <div className="no-orders-notice">
-                No pending orders found for this block. All orders may already be fully dispatched, or the block hasn't been assigned to a confirmed order yet.
+                No orders found for this block yet.
               </div>
             ) : (
               <div className="order-list">
-                {blockOrders.map((order) => (
-                  <label
-                    key={order.orderNumber}
-                    className={`order-option ${selectedOrderNumber === order.orderNumber ? 'selected' : ''}`}
-                  >
-                    <input
-                      type="radio"
-                      name="orderNumber"
-                      value={order.orderNumber}
-                      checked={selectedOrderNumber === order.orderNumber}
-                      onChange={() => setSelectedOrderNumber(order.orderNumber)}
-                    />
+                {paginatedOrders.map((order) => (
+                  <div key={order.orderNumber} className="order-option">
                     <div className="order-option-body">
                       <div className="order-option-top">
                         <span className="order-option-number">{order.orderNumber}</span>
@@ -496,31 +331,26 @@ const Dispatch = () => {
                         </span>
                       </div>
                     </div>
-                  </label>
+                  </div>
                 ))}
               </div>
             )}
+
+            {totalOrders > ORDERS_PER_PAGE && (
+              <Pagination
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                totalItems={totalOrders}
+                itemsPerPage={ORDERS_PER_PAGE}
+                label="orders"
+              />
+            )}
           </div>
 
-          {/* ── Actions ── */}
+          {/* ── Clear ── */}
           <div className="dispatch-actions">
-            {blockInfo.status !== 'Dispatched' ? (
-              <button
-                className="dispatch-btn"
-                onClick={dispatchBlock}
-                disabled={loading || !selectedOrderNumber}
-                title={!selectedOrderNumber ? 'Select an order above first' : ''}
-              >
-                <FiCheckCircle /> {loading ? 'Dispatching…' : 'Mark as Dispatched'}
-              </button>
-            ) : (
-              <div className="already-dispatched">
-                <FiCheckCircle className="dispatched-icon" />
-                <span>This block has already been fully dispatched</span>
-              </div>
-            )}
             <button className="cancel-btn" onClick={resetAll}>
-              <FiXCircle /> Cancel
+              <FiXCircle /> Clear
             </button>
           </div>
         </div>
@@ -567,4 +397,4 @@ const CameraScanner = ({ onStart, onStop, cameraActive, cameraError }) => {
   );
 };
 
-export default Dispatch;
+export default BlockInfo;
