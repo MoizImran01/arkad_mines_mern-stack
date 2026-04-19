@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { Html5Qrcode } from 'html5-qrcode';
 import {
   FiPackage, FiCheckCircle, FiXCircle, FiSearch,
-  FiGrid, FiCamera, FiType, FiHash
+  FiGrid, FiCamera, FiType, FiHash, FiChevronDown, FiChevronUp
 } from 'react-icons/fi';
 
 const API_URL = import.meta.env.VITE_API_URL ?? '';
@@ -59,8 +59,15 @@ const Dispatch = () => {
   const [cameraActive, setCameraActive]               = useState(false);
   const [cameraError, setCameraError]                 = useState('');
 
-  const html5QrcodeRef = useRef(null);
-  const scanLockedRef  = useRef(false);
+  const [showOrderSearch, setShowOrderSearch]     = useState(false);
+  const [orderSearch, setOrderSearch]             = useState('');
+  const [orderOptions, setOrderOptions]           = useState([]);
+  const [orderDropdownOpen, setOrderDropdownOpen] = useState(false);
+
+  const html5QrcodeRef   = useRef(null);
+  const scanLockedRef    = useRef(false);
+  const orderDebounceRef = useRef(null);
+  const orderDropdownRef = useRef(null);
 
 
   const stopCamera = useCallback(async () => {
@@ -126,6 +133,41 @@ const Dispatch = () => {
   }, [scanMode, stopCamera]);
 
   useEffect(() => () => { stopCamera(); }, [stopCamera]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (orderDropdownRef.current && !orderDropdownRef.current.contains(e.target)) {
+        setOrderDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+
+  const fetchOrderSuggestions = useCallback(async (term) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/orders/admin/search-order-numbers`, {
+        headers: authHeaders(),
+        params: { search: term, limit: 30 },
+      });
+      if (res.data.success) setOrderOptions(res.data.orders || []);
+    } catch {
+      setOrderOptions([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showOrderSearch && orderOptions.length === 0) fetchOrderSuggestions('');
+  }, [showOrderSearch]);
+
+  useEffect(() => {
+    if (!showOrderSearch) return;
+    clearTimeout(orderDebounceRef.current);
+    orderDebounceRef.current = setTimeout(() => fetchOrderSuggestions(orderSearch), 300);
+    return () => clearTimeout(orderDebounceRef.current);
+  }, [orderSearch, showOrderSearch, fetchOrderSuggestions]);
+
 
   const searchBlock = async (inputQrCode = qrCode) => {
     const code = normalizeQrValue(inputQrCode);
@@ -224,6 +266,7 @@ const Dispatch = () => {
     setBlockOrders([]);
     setSelectedOrderNumber('');
     setQrCode('');
+    setOrderSearch('');
     scanLockedRef.current = false;
   };
 
@@ -298,6 +341,72 @@ const Dispatch = () => {
           />
         )}
 
+        {/* ── "Search by Order Number" accordion ── */}
+        <div className="order-search-accordion">
+          <button
+            className="accordion-toggle"
+            onClick={() => setShowOrderSearch((v) => !v)}
+          >
+            <FiHash />
+            <span>Search by Order Number</span>
+            {showOrderSearch ? <FiChevronUp className="acc-chevron" /> : <FiChevronDown className="acc-chevron" />}
+          </button>
+
+          {showOrderSearch && (
+            <div className="accordion-body" ref={orderDropdownRef}>
+              <p className="accordion-hint">
+                Know the order number already? Search and select it here — it will be pre-selected when the block loads.
+              </p>
+              <div className="order-search-box">
+                <FiSearch className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Type order number or buyer name…"
+                  value={orderSearch}
+                  onChange={(e) => { setOrderSearch(e.target.value); setOrderDropdownOpen(true); }}
+                  onFocus={() => setOrderDropdownOpen(true)}
+                  className="qr-input"
+                />
+                <FiChevronDown className={`dropdown-chevron ${orderDropdownOpen ? 'open' : ''}`} />
+              </div>
+
+              {orderDropdownOpen && (
+                <div className="order-dropdown">
+                  {orderOptions.length === 0 ? (
+                    <div className="order-dropdown-empty">No orders found</div>
+                  ) : (
+                    orderOptions.map((o) => (
+                      <button
+                        key={o.orderNumber}
+                        className={`order-dropdown-item ${selectedOrderNumber === o.orderNumber ? 'active' : ''}`}
+                        onClick={() => {
+                          setSelectedOrderNumber(o.orderNumber);
+                          setOrderSearch(o.orderNumber);
+                          setOrderDropdownOpen(false);
+                        }}
+                      >
+                        <span className="ddi-number">{o.orderNumber}</span>
+                        <span className="ddi-meta">
+                          {o.buyerName}
+                          <span className={`order-status-chip status-${o.status}`}>
+                            {STATUS_LABEL[o.status] || o.status}
+                          </span>
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {selectedOrderNumber && !blockInfo && (
+                <div className="order-prefill-notice">
+                  <FiCheckCircle className="pfn-icon" />
+                  <span>Order <strong>{selectedOrderNumber}</strong> pre-selected. Now scan or enter the QR code above.</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Block info + pending orders ── */}
